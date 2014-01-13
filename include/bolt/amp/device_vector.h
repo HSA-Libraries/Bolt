@@ -631,6 +631,30 @@ public:
         return m_devMemory->section( Concurrency::index<1>((int)offset), ext );
     }
 
+	/*! \brief A get accessor function to return the encapsulated device buffer for const objects based on the iterator getIndex() and size.
+    *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+    *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument
+    *   to the C++ AMP parallel_for_each constructs.
+	*   \param itr An iterator pointing at the beginning of the range. 
+	*   \param size Size of buffer. 
+    *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
+    *   this location seems less intrusive to the design of the vector class.
+    */
+	arrayview_type getBuffer( const_iterator itr, size_t size ) const
+    {
+		size_type offset = itr.getIndex();
+        concurrency::extent<1> ext( static_cast< int >( size));
+        return m_devMemory->section( Concurrency::index<1>((int)offset), ext );
+    }
+
+
+	arrayview_type getBuffer( const_reverse_iterator itr, size_t size  ) const
+    {
+		size_type offset = itr.getIndex();
+        concurrency::extent<1> ext( static_cast< int >( size));
+        return m_devMemory->section( Concurrency::index<1>((int)offset), ext );
+    }
+
     /*! \brief Change the number of elements in device_vector to reqSize.
     *   If the new requested size is less than the original size, the data is truncated and lost.  If the
 	*   new size is greater than the original
