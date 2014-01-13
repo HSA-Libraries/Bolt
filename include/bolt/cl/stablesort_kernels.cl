@@ -282,7 +282,7 @@ kernel void mergeTemplate(
 }
 
 template< typename dPtrType, typename dIterType, typename StrictWeakOrdering >
-kernel void blockInsertionSortTemplate( 
+kernel void LocalMergeSortTemplate( 
                 global dPtrType* data_ptr,
                 dIterType    data_iter, 
                 const uint vecSize,

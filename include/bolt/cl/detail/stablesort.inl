@@ -82,7 +82,7 @@ sort_enqueue(control &ctl,
     public:
         StableSort_KernelTemplateSpecializer() : KernelTemplateSpecializer( )
         {
-            addKernelName( "blockInsertionSort" );
+            addKernelName( "LocalMergeSort" );
             addKernelName( "merge" );
         }
 
