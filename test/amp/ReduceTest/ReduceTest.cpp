@@ -1645,15 +1645,15 @@ INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatVector, ::testing::Range( 0, 10
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
 
 #if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerVector, ::testing::ValuesIn( TestValues1.begin(),TestValues1.end()));
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerVector, ::testing::ValuesIn( TestValues1.begin(),TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
 #endif
 
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleVector, ::testing::Range( 0, 1024, 21 ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
 #if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceDoubleVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
 #endif
 #endif
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
@@ -1663,9 +1663,9 @@ INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatDeviceVector, ::testing::Range(
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
 #if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerDeviceVector, ::testing::ValuesIn( TestValues1.begin(),
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerDeviceVector, ::testing::ValuesIn( TestValues1.begin(),
                                                                                     TestValues1.end() ) );
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
 #endif
 
@@ -1674,7 +1674,7 @@ INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleDeviceVector, ::testing::Range
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
 #if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
 #endif
 #endif
@@ -1685,16 +1685,16 @@ INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatNakedPointer, ::testing::Range(
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
 #if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
-INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
 #endif
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( Reduce, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
 #if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( Reduce, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues1.begin(),TestValue1s.end()));
+INSTANTIATE_TEST_CASE_P( Reduce1, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues1.begin(),TestValue1s.end()));
 #endif
 #endif
 

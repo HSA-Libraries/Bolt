@@ -936,10 +936,10 @@ INSTANTIATE_TEST_CASE_P( MaxERange, MaxEFloatDeviceVector, ::testing::Range( 0, 
 INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEFloatDeviceVector, ::testing::ValuesIn(TestValues.begin(),TestValues.end()));
 
 #if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEIntegerVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
-INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEFloatVector, ::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
-INSTANTIATE_TEST_CASE_P( MaxEValues,MaxEIntegerDeviceVector,::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
-INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEFloatDeviceVector, ::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( MaxEValues1, MaxEIntegerVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( MaxEValues1, MaxEFloatVector, ::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( MaxEValues1,MaxEIntegerDeviceVector,::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( MaxEValues1, MaxEFloatDeviceVector, ::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
 #endif
 
 typedef ::testing::Types<
