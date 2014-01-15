@@ -20,7 +20,7 @@
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 1
 #define TEST_LARGE_BUFFERS 0
-#define TEST_OFFSET_BUFFERS 0 // OFFSET BUffers not working in C++ AMP
+#define TEST_OFFSET_BUFFERS 1 
 #define GOOGLE_TEST 1
 #define BKND amp 
 #define SORT_FUNC stable_sort
@@ -102,7 +102,22 @@ struct AddD4
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 
+//This test cse fails
+TEST(StableSortUDD_largepower_test, AddDouble4)
+{
+    //setup containers
+    int length = 33554432; // 2^25
+    bolt::amp::device_vector< uddtD4 > input(  length, initialAddD4, true  );
+    std::vector< uddtD4 > refInput( length, initialAddD4 );
 
+    // call sort
+    AddD4 ad4gt;
+    bolt::BKND::SORT_FUNC(input.begin(),    input.end(), ad4gt);
+    std::SORT_FUNC( refInput.begin(), refInput.end(), ad4gt );
+
+    // compare results
+    cmpArrays(refInput, input);
+}
 
 TEST(StableSortUDD, AddDouble4)
 {
@@ -197,7 +212,7 @@ float func()
 #if(TEST_LARGE_BUFFERS == 1)
 TEST( DefaultGPU, Normal )
 {
-    int length = 1<<23;
+    int length = 1<<21;
     std::vector< float > stdInput( length, 0.0 );
 
     std::generate(stdInput.begin(), stdInput.end(), func );
@@ -1628,92 +1643,69 @@ TEST_P( StableSortDoubleNakedPointer, MulticoreInplace )
 #endif
 
 #endif
-std::array<int, 11> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048};
-std::array<int, 4> TestValues2 = {4096,8192,16384,32768};
+//std::array<int, 12> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096}; // 2^1 to 2^12
+//std::array<int, 5> TestValues2 = {4096, 8192,16384,32768, 65536};  // 2^12 to 2^16
+//std::array<int, 6> TestValues3 = {65536, 131072, 262144, 524288, 1048576, 2097152}; // 2^16 to 2^21
+//std::array<int, 8> TestValues4 = {2, 8, 64, 512, 4096,32768, 262144, 2097152}; // 2^1 to 2^21 in steps of 2^3
+
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerVector, ::testing::Range( 1, 1024, 6 ) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerVector, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^22
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																			
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
-                                                                            TestValues2.end() ) );
-#endif
+
                                                                             
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatVector, ::testing::Range( 1, 1024, 2 ) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16															
+//INSTANTIATE_TEST_CASE_P( StableSortValues2, StableSortFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
+//                                                                        TestValues2.end() ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
-                                                                        TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																		
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                        TestValues2.end() ) );
-#endif																		
+                                                                        TestValues.end() ) );																	
                                                                         
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleVector, ::testing::Range( 1, 1024, 20 ) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleVector, ::testing::Range( 65536, 2097152, 55555 ) ); //2^16 to 2^21
+//INSTANTIATE_TEST_CASE_P( StableSortValues2, StableSortDoubleVector, ::testing::ValuesIn( TestValues3.begin(), 
+//                                                                            TestValues3.end() ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
-                                                                            TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																		
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleVector, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                            TestValues2.end() ) );
-#endif																			
+                                                                            TestValues.end() ) );																	
 #endif
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerDeviceVector, ::testing::Range( 1, 1024, 52 ) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                                TestValues2.end() ) );
-#endif
                                                                                 
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortUDDDeviceVector, ::testing::Range( 1, 1024, 52 ) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortUDDDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
+//INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUDDDeviceVector, ::testing::ValuesIn( TestValues4.begin(), 
+//                                                                                TestValues4.end() ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUDDDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUDDDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                                TestValues2.end() ) );
-#endif
                                                                                 
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatDeviceVector, ::testing::Range( 1, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
+//INSTANTIATE_TEST_CASE_P( StableSortValues2, StableSortFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
+//                                                                                TestValues2.end()));
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),
-                                                                                TestValues.end()));
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
-                                                                                TestValues2.end()));
-#endif
-                                                                                
+                                                                                TestValues.end()));                                                                               
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleDeviceVector, ::testing::Range( 1, 1024, 52 ) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
+//INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleDeviceVector, ::testing::ValuesIn(TestValues3.begin(),
+//                                                                                    TestValues3.end()));
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
                                                                                     TestValues.end()));
-#if(TEST_LARGE_BUFFERS == 1)																						
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleDeviceVector, ::testing::ValuesIn(TestValues2.begin(),
-                                                                                    TestValues2.end()));
-#endif																					
 #endif
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerNakedPointer, ::testing::Range( 1, 1024, 12) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                                     TestValues.end()));
-#if(TEST_LARGE_BUFFERS == 1)																					
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
-                                                                                    TestValues2.end()));
-#endif
-                                                                                    
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatNakedPointer, ::testing::Range( 1, 1024, 12) );
+                                                                       
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
+//INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
+//                                                                                TestValues2.end() ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
-                                                                                TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                                TestValues2.end() ) );
-#endif
-                                                                                
+                                                                                TestValues.end() ) );                                                                               
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleNakedPointer, ::testing::Range( 1, 1024, 12) );
+INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
+//INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::ValuesIn( TestValues3.begin(),
+//                                                                            TestValues3.end() ) );
 INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
-                                                                            TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																			
-INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
-                                                                            TestValues2.end() ) );		
-#endif																			
+                                                                            TestValues.end() ) );																		
 #endif
 
 
@@ -1774,7 +1766,7 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 262144 > >,//18    
     std::tuple< unsigned int, TypeValue< 524288 > >,//19    
     std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
-    std::tuple< unsigned int, TypeValue< 2097152 > >//21    
+    std::tuple< unsigned int, TypeValue< 2097152 > >,//21    
     std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
     std::tuple< unsigned int, TypeValue< 8388608 > >,//23
     std::tuple< unsigned int, TypeValue< 16777216 > >,//24

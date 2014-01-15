@@ -199,7 +199,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     //  Make a copy of the entire input array into fast local memory
     iType val = inputBuffer[ gloId ];
     lds[ locId ] = val;
-    //t_idx.barrier.wait();
 
     //  Sorts a workgroup using a naive insertion sort
     //  The sort uses one thread within a workgroup to sort the entire workgroup
@@ -227,19 +226,20 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
             lds[ scanIndex ] = val;
         }
     }
-    //t_idx.barrier.wait();
 
     val = lds[ locId ];
     inputBuffer[ gloId ] = val;
     
-  } );
+    } );
+
     }
-     catch(std::exception &e)
-      {
+
+    catch(std::exception &e)
+    {
         std::cout << "Exception while calling bolt::amp::stablesort parallel_for_each " ;
         std::cout<< e.what() << std::endl;
         throw std::exception();
-      }	
+    }	
 
 
     //  An odd number of elements requires an extra merge pass to sort
@@ -271,29 +271,25 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     concurrency::extent< 1 > globalSizeK1( globalRange );
     concurrency::tiled_extent< localRange > tileK1 = globalSizeK1.tile< localRange >();
 
-    for( size_t pass = 1; pass <= numMerges; ++pass )
+    for( unsigned int pass = 1; pass <= numMerges; ++pass )
     {
 
-         //  For each pass, the merge window doubles
+        //  For each pass, the merge window doubles
         unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
 
-
-        if( pass & 0x1 )
-
+        try
         {
-
-            try
-            {
-    concurrency::parallel_for_each( av, tileK1,
+        concurrency::parallel_for_each( av, tileK1,
         [
             inputBuffer,
             tmpBuffer,
             vecSize,
             comp,
             localRange,
-            srcLogicalBlockSize
+            srcLogicalBlockSize,
+			pass
         ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
-  {
+   {
 
     unsigned int gloID = t_idx.global[ 0 ];
     unsigned int groID = t_idx.tile[ 0 ];
@@ -301,7 +297,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     unsigned int wgSize = localRange;
 
     tile_static iType lds[BUFFER_SIZE]; 
-     //  Abort threads that are passed the end of the input vector
+    //  Abort threads that are passed the end of the input vector
     if( gloID >= vecSize )
         return; // on SI this doesn't mess-up barriers
 
@@ -321,107 +317,61 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     leftBlockIndex = min( leftBlockIndex, vecSize );
     unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, vecSize );
     
-    //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
+	//  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
     // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
     unsigned int insertionIndex = 0;
-    if( (srcBlockNum & 0x1) == 0 )
-    {
+
+	if( pass & 0x1 )
+	{
+      if( (srcBlockNum & 0x1) == 0 )
+      {
         insertionIndex = lowerBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
-    }
-    else
-    {
+      }
+      else
+      {
         insertionIndex = upperBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
-    }
+      }
     
-    //  The index of an element in the result sequence is the summation of it's indixes in the two input 
-    //  sequences
-    unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
-    unsigned int dstBlockNum = srcBlockNum/2;
+      //  The index of an element in the result sequence is the summation of it's indixes in the two input 
+      //  sequences
+      unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
+      unsigned int dstBlockNum = srcBlockNum/2;
     
-    tmpBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = inputBuffer[ gloID ];
+      tmpBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = inputBuffer[ gloID ];
+	}
+
+	else
+	{
     
-  } );
-    }
-     catch(std::exception &e)
+	  if( (srcBlockNum & 0x1) == 0 )
       {
-        std::cout << "Exception while calling bolt::amp::stablesort parallel_for_each " ;
-        std::cout<< e.what() << std::endl;
-        throw std::exception();
-      }	 
-        }
-
-
-        else
-        {
-			
-            try
-            {
-    concurrency::parallel_for_each( av, tileK1,
-        [
-            inputBuffer,
-            tmpBuffer,
-            vecSize,
-            comp,
-            localRange,
-            srcLogicalBlockSize
-        ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
-  {
-
-    unsigned int gloID = t_idx.global[ 0 ];
-    unsigned int groID = t_idx.tile[ 0 ];
-    unsigned int locID = t_idx.local[ 0 ];
-    unsigned int wgSize = localRange;
-
-    tile_static iType lds[BUFFER_SIZE]; 
-     //  Abort threads that are passed the end of the input vector
-    if( gloID >= vecSize )
-        return; // on SI this doesn't mess-up barriers
-
-    //  For an element in sequence A, find the lowerbound index for it in sequence B
-    unsigned int srcBlockNum = gloID / srcLogicalBlockSize;
-    unsigned int srcBlockIndex = gloID % srcLogicalBlockSize;
-    
-    //printf( "mergeTemplate: srcBlockNum[%i]=%i\n", srcBlockNum, srcBlockIndex );
-
-    //  Pairs of even-odd blocks will be merged together 
-    //  An even block should search for an insertion point in the next odd block, 
-    //  and the odd block should look for an insertion point in the corresponding previous even block
-    unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
-    unsigned int leftBlockIndex = gloID & ~(dstLogicalBlockSize - 1 );
-    //printf("mergeTemplate: leftBlockIndex=%d\n", leftBlockIndex );
-    leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
-    leftBlockIndex = min( leftBlockIndex, vecSize );
-    unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, vecSize );
-    
-    //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
-    // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
-    unsigned int insertionIndex = 0;
-    if( (srcBlockNum & 0x1) == 0 )
-    {
         insertionIndex = lowerBoundBinary( tmpBuffer, leftBlockIndex, rightBlockIndex, tmpBuffer[ gloID ], comp ) - leftBlockIndex;
-    }
-    else
-    {
-        insertionIndex = upperBoundBinary( tmpBuffer, leftBlockIndex, rightBlockIndex, tmpBuffer[ gloID ], comp ) - leftBlockIndex;
-    }
-    
-    //  The index of an element in the result sequence is the summation of it's indixes in the two input 
-    //  sequences
-    unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
-    unsigned int dstBlockNum = srcBlockNum/2;
-    
-    inputBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpBuffer[ gloID ];
-    
-  } );
-    }
-     catch(std::exception &e)
+      }
+      else
       {
+        insertionIndex = upperBoundBinary( tmpBuffer, leftBlockIndex, rightBlockIndex, tmpBuffer[ gloID ], comp ) - leftBlockIndex;
+      }
+    
+      //  The index of an element in the result sequence is the summation of it's indixes in the two input 
+      //  sequences
+      unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
+      unsigned int dstBlockNum = srcBlockNum/2;
+    
+      inputBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpBuffer[ gloID ];
+
+	}
+
+    } );
+
+    }
+
+    catch(std::exception &e)
+    {
         std::cout << "Exception while calling bolt::amp::stablesort parallel_for_each " ;
         std::cout<< e.what() << std::endl;
         throw std::exception();
-      }	 
-        } 
-
+    }	 
+       
     }
 
      //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
@@ -429,7 +379,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     if( numMerges & 1 )
     {
        for(unsigned int i=0; i<vecSize; i++)
-           inputBuffer[i] = tmpBuffer[i];  
+           inputBuffer[i] = tmpBuffer[i]; 
     }
 
     return;

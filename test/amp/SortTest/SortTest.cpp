@@ -96,6 +96,30 @@ uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 //BOLT_CREATE_TYPENAME( bolt::BKND::device_vector< uddtD4 >::iterator );
 //BOLT_CREATE_CLCODE( bolt::BKND::device_vector< uddtD4 >::iterator, bolt::BKND::deviceVectorIteratorTemplate );
 
+TEST(Sort_large_power, StdclLong)  
+{
+        // test length
+        int length = 33554432;
+
+        std::vector<long> bolt_source(length);
+        std::vector<long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::BKND::SORT_FUNC(bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
 TEST(Sort, StdclLong)  
 {
         // test length
@@ -1856,41 +1880,41 @@ TEST_P( SortDoubleNakedPointer, MulticoreInplace )
 
 
 #endif
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768}; // 2 to 2^15
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range(  1, 4096, 54 ) );  //   1 to 2^22
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 0, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16	
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                         TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range(65536, 2097152, 55555 ) ); //2^16 to 2^21
 INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                             TestValues.end() ) );
 #endif
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( SortRange, SortUDDDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortUDDDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortUDDDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                 TestValues.end()));
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
                                                                                     TestValues.end()));
 #endif
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 1, 32768, 3276  )); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                                     TestValues.end()));
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
 #endif

@@ -78,7 +78,7 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as(modified_ext));
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getContainer().getBuffer(first).copy_to( dest );
+        first.getContainer().getBuffer(first, orig_szElements).copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
@@ -295,7 +295,7 @@ else
     {
         //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first) );
+        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first, orig_szElements) );
         first.getContainer().getBuffer(first).synchronize( );
         delete pLocalArray;
     }
@@ -332,7 +332,7 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as( modified_ext ) );
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getContainer().getBuffer(first).copy_to( dest );
+        first.getContainer().getBuffer(first, orig_szElements).copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
@@ -604,7 +604,7 @@ else
     {
         //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first) );
+        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first, orig_szElements) );
         first.getContainer().getBuffer(first).synchronize( );
         delete pLocalArray;
     }
@@ -1496,152 +1496,6 @@ unsigned int  upperBoundBinary( Container& data, unsigned int left, unsigned int
     }
     //printf( "end of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
     return upperBound;
-}
-
-//  This kernel implements merging of blocks of sorted data.  The input to this kernel most likely is
-//  the output of blockInsertionSortTemplate.  It is expected that the source array contains multiple
-//  blocks, each block is independently sorted.  The goal is to write into the output buffer half as 
-//  many blocks, of double the size.  The even and odd blocks are stably merged together to form
-//  a new sorted block of twice the size.  The algorithm is out-of-place.
-template< typename sPtrType, typename Container, typename StrictWeakOrdering >
-void AMP_mergeTemplate( bolt::amp::control &ctl,
-                Container & source_ptr,
-                Container & result_ptr,
-                const int srcVecSize,
-                const int srcLogicalBlockSize,
-                StrictWeakOrdering& lessOp,
-                int globalRange
-            )
-{
-    //size_t globalID     = get_global_id( 0 );
-    //size_t groupID      = get_group_id( 0 );
-    //size_t localID      = get_local_id( 0 );
-    //size_t wgSize       = get_local_size( 0 );
-    concurrency::extent< 1 > globalSizeK0( globalRange );
-    concurrency::tiled_extent< MERGE_SORT_WAVESIZE > tileK0 = globalSizeK0.tile< MERGE_SORT_WAVESIZE >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each(av, tileK0,
-        [
-            source_ptr,
-            result_ptr,
-            srcVecSize,
-            srcLogicalBlockSize,
-            tileK0,
-            lessOp
-        ]
-    ( concurrency::tiled_index< MERGE_SORT_WAVESIZE > t_idx ) restrict (amp)
-    {
-        int globalID    = t_idx.global[ 0 ];
-        int groupID     = t_idx.tile[ 0 ];
-        int localID     = t_idx.local[ 0 ];
-        int wgSize      = tileK0.tile_dim0;
-        tile_static sPtrType lds[MERGE_SORT_WAVESIZE];
-
-        //  Abort threads that are passed the end of the input vector
-        if( globalID >= srcVecSize )
-            return; // on SI this doesn't mess-up barriers
-
-        //  For an element in sequence A, find the lowerbound index for it in sequence B
-        int srcBlockNum = globalID / srcLogicalBlockSize;
-        int srcBlockIndex = globalID % srcLogicalBlockSize;
-    
-        //printf( "mergeTemplate: srcBlockNum[%i]=%i\n", srcBlockNum, srcBlockIndex );
-
-        //  Pairs of even-odd blocks will be merged together 
-        //  An even block should search for an insertion point in the next odd block, 
-        //  and the odd block should look for an insertion point in the corresponding previous even block
-        int dstLogicalBlockSize = srcLogicalBlockSize<<1;
-        int leftBlockIndex = globalID & ~(dstLogicalBlockSize - 1 );
-        //printf("mergeTemplate: leftBlockIndex=%d\n", leftBlockIndex );
-        leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
-        leftBlockIndex = min( leftBlockIndex, srcVecSize );
-        int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, srcVecSize );
-    
-        //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
-        // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
-        int insertionIndex = 0;
-        if( (srcBlockNum & 0x1) == 0 )
-        {
-            insertionIndex = lowerBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
-        }
-        else
-        {
-            insertionIndex = upperBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
-        }
-    
-        //  The index of an element in the result sequence is the summation of it's indixes in the two input 
-        //  sequences
-        int dstBlockIndex = srcBlockIndex + insertionIndex;
-        int dstBlockNum = srcBlockNum/2;
-    
-        result_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = source_ptr[ globalID ];
-    } );
-}
-
-
-template< typename T, typename StrictWeakOrdering, typename Container >
-void AMP_BlockInsertionSortTemplate( bolt::amp::control &ctl,
-                Container  &data_ptr,
-                int vecSize,
-                StrictWeakOrdering &lessOp,
-                int globalRange,
-                int localRange
-            )
-{
-    const int BLOCK_SORT_WAVESIZE = 64;
-    concurrency::extent< 1 > globalSizeK0( globalRange );
-    concurrency::tiled_extent< BLOCK_SORT_WAVESIZE > tileK0 = globalSizeK0.tile< BLOCK_SORT_WAVESIZE >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each(av, tileK0,
-        [
-            data_ptr,
-            tileK0,
-            lessOp,
-            vecSize
-        ]
-    ( concurrency::tiled_index< BLOCK_SORT_WAVESIZE > t_idx ) restrict (amp)
-    {
-        int gloId    = t_idx.global[ 0 ];
-        int groId     = t_idx.tile[ 0 ];
-        int locId     = t_idx.local[ 0 ];
-        int wgSize   = tileK0.tile_dim0;
-        tile_static T lds[64];
-        // Abort threads that are passed the end of the input vector
-
-        if (gloId < vecSize) 
-            lds[ locId ] = data_ptr[ gloId ];
-
-        t_idx.barrier.wait();
-
-        //  Sorts a workgroup using a naive insertion sort
-        //  The sort uses one thread within a workgroup to sort the entire workgroup
-        if( locId == 0 )
-        {
-            //  The last workgroup may have an irregular size, so we calculate a per-block endIndex
-            //  endIndex is essentially emulating a mod operator with subtraction and multiply
-            int endIndex = vecSize - ( groId * wgSize );
-            endIndex = min( endIndex, wgSize );
-
-            //  Indices are signed because the while loop will generate a -1 index inside of the max function
-            for( int currIndex = 1; currIndex < endIndex; ++currIndex )
-            {
-                T val = lds[ currIndex ];
-                int scanIndex = currIndex;
-                T ldsVal = lds[scanIndex - 1];
-                while( scanIndex > 0 && lessOp( val, ldsVal ) )
-                {
-                    lds[ scanIndex ] = ldsVal;
-                    scanIndex = scanIndex - 1;
-                    ldsVal = lds[ max(0, scanIndex - 1) ];  // scanIndex-1 may be -1
-                }
-                lds[ scanIndex ] = val;
-            }
-        }
-        t_idx.barrier.wait();
-        if(gloId < vecSize)
-            data_ptr[ gloId ] = lds[ locId ];//In C++ AMP we don;t need to store in a local variable
-    }
-    );
 }
 
 
