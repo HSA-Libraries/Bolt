@@ -2367,7 +2367,7 @@ TEST (rawArrayTest, floatarray){
         float fValue = (float)rand();
         fValue = fValue/rand();
         fValue = fValue*rand()*rand();
-        stdArray[i] = boltArray[i] = fValue;
+        stdArray[i] = boltArray[i] = backupArray[i] = fValue;
     }
     std::SORT_FUNC( stdArray, stdArray+sizeOfInputBufer, std::greater<float>( ) );
     bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
@@ -2384,7 +2384,7 @@ TEST (rawArrayTest, floatarray){
     }
 
     std::SORT_FUNC( stdArray+17, stdArray+sizeOfInputBufer-129, std::greater<float>( ) );
-    bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
+    bolt::BKND::SORT_FUNC( boltArray+17, boltArray+sizeOfInputBufer-129, bolt::cl::greater<float>( ) );
 
     for (int i = 0 ; i < sizeOfInputBufer; i++)
     {

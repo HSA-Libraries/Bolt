@@ -29,14 +29,15 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
+#include "bolt/cl/sort.h"
 
-#include "bolt/cl/detail/sort.inl"
+//#include "bolt/cl/detail/sort.inl"
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/stable_sort.h"
 #endif
 
-#define BOLT_CL_STABLESORT_CPU_THRESHOLD 64
+#define BOLT_CL_STABLESORT_CPU_THRESHOLD 256
 
 namespace bolt {
 namespace cl {
@@ -81,11 +82,11 @@ sort_enqueue(control &ctl,
     public:
         StableSort_KernelTemplateSpecializer() : KernelTemplateSpecializer( )
         {
-            addKernelName( "blockInsertionSort" );
+            addKernelName( "LocalMergeSort" );
             addKernelName( "merge" );
         }
 
-        const ::std::string operator( ) ( const ::std::vector< ::std::string >& typeNames ) const
+         const ::std::string operator( ) ( const ::std::vector< ::std::string >& typeNames ) const
         {
             const std::string templateSpecializationString =
                 "template __attribute__((mangled_name(" + name( 0 ) + "Instantiated)))\n"
@@ -94,6 +95,7 @@ sort_enqueue(control &ctl,
                 ""        + typeNames[stableSort_iIterType] + " data_iter,\n"
                 "const uint vecSize,\n"
                 "local "  + typeNames[stableSort_iValueType] + "* lds,\n"
+				"local "  + typeNames[stableSort_iValueType] + "* lds2,\n"
                 "global " + typeNames[stableSort_lessFunction] + " * lessOp\n"
                 ");\n\n"
 
@@ -140,9 +142,6 @@ stablesort_enqueue(control &ctl,
     return;
 }
 
-
-
-
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if<
     !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
@@ -182,6 +181,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
      *********************************************************************************/
     std::string compileOptions;
 
+
     StableSort_KernelTemplateSpecializer ss_kts;
     std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
         ctrl,
@@ -192,10 +192,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         compileOptions );
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-    size_t localRange= kernels[0].getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>( ctrl.getDevice( ),
-                                                                                                  &l_Error );
-    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-
+    size_t localRange= BOLT_CL_STABLESORT_CPU_THRESHOLD;
 
     //  Make sure that globalRange is a multiple of localRange
     size_t globalRange = vecSize;
@@ -210,11 +207,12 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ),CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
                                                            &aligned_comp );
 
-    //  kernels[ 0 ] sorts values within a workgroup, in parallel across the entire vector
-    //  kernels[ 0 ] reads and writes to the same vector
     cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
+	//  Allocate a flipflop buffer because the merge passes are out of place
+    control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
 
     typename DVRandomAccessIterator::Payload first_payload = first.gpuPayload();
+	typename DVRandomAccessIterator::Payload first_payload2 = first.gpuPayload( );
     // Input buffer
     V_OPENCL( kernels[ 0 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" );
     V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ),&first_payload),"Error setting a kernel argument" );
@@ -222,21 +220,18 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" );
      // Scratch buffer
     V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+	V_OPENCL( kernels[ 0 ].setArg( 4, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
      // User provided functor
-    V_OPENCL( kernels[ 0 ].setArg( 4, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
-
-
-
+    V_OPENCL( kernels[ 0 ].setArg( 5, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
 
     ::cl::CommandQueue& myCQ = ctrl.getCommandQueue( );
-
     ::cl::Event blockSortEvent;
     l_Error = myCQ.enqueueNDRangeKernel( kernels[ 0 ], ::cl::NullRange,
             ::cl::NDRange( globalRange ), ::cl::NDRange( localRange ), NULL, &blockSortEvent );
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
     //  Early exit for the case of no merge passes, values are already in destination vector
-    if( vecSize <= localRange )
+    if( vecSize <= localRange)
     {
         wait( ctrl, blockSortEvent );
         return;
@@ -244,21 +239,18 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
     //  An odd number of elements requires an extra merge pass to sort
     size_t numMerges = 0;
-
-    //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
+    //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 256
     //  this is how many merge passes we want
-    size_t log2BlockSize = vecSize >> 6;
+    size_t log2BlockSize = vecSize >> 8;
+
     for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
     {
         ++numMerges;
     }
-
     //  Check to see if the input vector size is a power of 2, if not we will need last merge pass
     size_t vecPow2 = (vecSize & (vecSize-1));
     numMerges += vecPow2? 1: 0;
-
-    //  Allocate a flipflop buffer because the merge passes are out of place
-    control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
+	ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
      // Size of scratch buffer
     V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
      // Scratch buffer
@@ -266,17 +258,13 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
      // User provided functor
     V_OPENCL( kernels[ 1 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
 
-
-
     ::cl::Event kernelEvent;
     for( size_t pass = 1; pass <= numMerges; ++pass )
     {
         //  For each pass, flip the input-output buffers
        typename DVRandomAccessIterator::Payload first1 = first.gpuPayload( );
        typename DVRandomAccessIterator::Payload first2 = first.gpuPayload( );
-
-        if( pass & 0x1 )
-
+       if( pass & 0x1 )
         {
              // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" );
@@ -303,7 +291,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
         V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( srcLogicalBlockSize ) ),
                                        "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-
         if( pass == numMerges )
         {
             //  Grab the event to wait on from the last enqueue call
@@ -337,7 +324,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     }
 
     return;
-}// END of sort_enqueue
+}
 
 
 //Non Device Vector specialization.
