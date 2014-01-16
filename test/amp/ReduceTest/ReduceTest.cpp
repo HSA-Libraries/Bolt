@@ -31,6 +31,7 @@
 #define TEST_CPU_DEVICE 0
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 0
+#define TEST_LARGE_BUFFERS 0
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -420,23 +421,23 @@ class ReduceIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ReduceIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                     stdOutput( GetParam( ) ), boltOutput( static_cast<size_t>( GetParam( ) ) )
+    ReduceIntegerDeviceVector( ): stdInput( GetParam( ) ), /*boltInput( static_cast<size_t>( GetParam( ) ) ),*/
+                                     stdOutput( GetParam( ) )/*, boltOutput( static_cast<size_t>( GetParam( ) ) )*/
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< int > stdInput, stdOutput;
-    bolt::amp::device_vector< int > boltInput, boltOutput;
+    //bolt::amp::device_vector< int > boltInput, boltOutput;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -444,22 +445,22 @@ class ReduceFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ReduceFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( stdInput ), boltOutput( stdInput )
+    ReduceFloatDeviceVector( ): stdInput( GetParam( ) )/*, boltInput( stdInput ), boltOutput( stdInput )*/
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
         stdOutput = stdInput;
 
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< float > stdInput, stdOutput;
-    bolt::amp::device_vector< float, concurrency::array_view > boltInput, boltOutput;
+    //bolt::amp::device_vector< float, concurrency::array_view > boltInput, boltOutput;
 };
 
 #if (TEST_DOUBLE == 1)
@@ -468,23 +469,23 @@ class ReduceDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ReduceDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                                        boltOutput( static_cast<size_t>( GetParam( ) ) )
+    ReduceDoubleDeviceVector( ): stdInput( GetParam( ) )/*, boltInput( static_cast<size_t>( GetParam( ) ) ),
+                                                        boltOutput( static_cast<size_t>( GetParam( ) ) )*/
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<double>);
         stdOutput = stdInput;
 
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /* for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
-        }
+        } */
     }
 
 protected:
     std::vector< double > stdInput, stdOutput;
-    bolt::amp::device_vector< double > boltInput, boltOutput;
+    //bolt::amp::device_vector< double > boltInput, boltOutput;
 };
 #endif
 
@@ -940,6 +941,7 @@ TEST_P( StdVectCountingIterator, withCountingIterator)
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
 
+#if 0
 TEST_P( StdVectCountingIterator, SerialwithCountingIterator)
 {
     std::vector<int> stdInput( mySize );
@@ -962,6 +964,7 @@ TEST_P( StdVectCountingIterator, SerialwithCountingIterator)
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
 
+
 TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
 {
     std::vector<int> stdInput( mySize );
@@ -983,7 +986,7 @@ TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
 
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
-
+#endif
 
 INSTANTIATE_TEST_CASE_P( withIntWithInitValue, ReduceStdVectWithInit, ::testing::Range(1, 100, 1) );
 INSTANTIATE_TEST_CASE_P( withCountingIterator, StdVectCountingIterator, ::testing::Range(1, 100, 1) );
@@ -1632,15 +1635,26 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
     cmpArrays( stdInput, boltInput, endIndex );
 }
 #endif
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
+std::array<int, 5> TestValues1 = {2048,4096,8192,16384,32768};
+
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerVector, ::testing::Range( 0, 1024, 7 ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerVector, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatVector, ::testing::Range( 0, 1024, 3 ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
+
+#if TEST_LARGE_BUFFERS
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerVector, ::testing::ValuesIn( TestValues1.begin(),TestValues1.end()));
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
+#endif
+
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleVector, ::testing::Range( 0, 1024, 21 ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
+#if TEST_LARGE_BUFFERS
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceDoubleVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
+#endif
 #endif
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(),
@@ -1648,10 +1662,21 @@ INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerDeviceVector, ::testing::Val
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
+#if TEST_LARGE_BUFFERS
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerDeviceVector, ::testing::ValuesIn( TestValues1.begin(),
+                                                                                    TestValues1.end() ) );
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
+                                                                                    TestValues1.end() ) );
+#endif
+
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
+#if TEST_LARGE_BUFFERS
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
+                                                                                    TestValues1.end() ) );
+#endif
 #endif
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
@@ -1659,9 +1684,18 @@ INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerNakedPointer, ::testing::Val
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
+#if TEST_LARGE_BUFFERS
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
+                                                                                    TestValues1.end() ) );
+INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
+                                                                                    TestValues1.end() ) );
+#endif
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( Reduce, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
+#if TEST_LARGE_BUFFERS
+INSTANTIATE_TEST_CASE_P( Reduce1, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues1.begin(),TestValue1s.end()));
+#endif
 #endif
 
 typedef ::testing::Types< 
@@ -1674,11 +1708,14 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 128 > >,
     std::tuple< int, TypeValue< 129 > >,
     std::tuple< int, TypeValue< 1000 > >,
-    std::tuple< int, TypeValue< 1053 > >,
+    std::tuple< int, TypeValue< 1053 > >
+	#if TEST_LARGE_BUFFERS
+	,
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 65535 > >,
     std::tuple< int, TypeValue< 65536 > >
+    #endif
 > IntegerTests;
 
 typedef ::testing::Types< 
@@ -1691,11 +1728,14 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 128 > >,
     std::tuple< float, TypeValue< 129 > >,
     std::tuple< float, TypeValue< 1000 > >,
-    std::tuple< float, TypeValue< 1053 > >,
+    std::tuple< float, TypeValue< 1053 > >
+	#if TEST_LARGE_BUFFERS
+	,
     std::tuple< float, TypeValue< 4096 > >,
     std::tuple< float, TypeValue< 4097 > >,
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
+    #endif
 > FloatTests;
 
 #if (TEST_DOUBLE == 1)
@@ -1709,11 +1749,14 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 128 > >,
     std::tuple< double, TypeValue< 129 > >,
     std::tuple< double, TypeValue< 1000 > >,
-    std::tuple< double, TypeValue< 1053 > >,
+    std::tuple< double, TypeValue< 1053 > >
+	#if TEST_LARGE_BUFFERS
+	,
     std::tuple< double, TypeValue< 4096 > >,
     std::tuple< double, TypeValue< 4097 > >,
     std::tuple< double, TypeValue< 65535 > >,
     std::tuple< double, TypeValue< 65536 > >
+    #endif
 > DoubleTests;
 #endif 
 

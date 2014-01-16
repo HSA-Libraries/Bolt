@@ -31,6 +31,7 @@
 #include "bolt/amp/iterator/counting_iterator.h"
 
 #define SERIAL_TBB_OFFSET 1
+#define TEST_LARGE_BUFFERS 0
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
@@ -3782,6 +3783,7 @@ TEST(ExclusiveScanByKey, Multicore_DeviceVectorExclUdd)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if TEST_LARGE_BUFFERS
 TEST(InclusiveScanByKey, MulticoreInclUdd)
 {
     //setup keys
@@ -3824,7 +3826,7 @@ TEST(InclusiveScanByKey, MulticoreInclUdd)
     // compare results
     cmpArrays(refInput, input);
 }
-
+#endif
 
 TEST(InclusiveScanByKey, InclFloat)
 {
@@ -3872,7 +3874,7 @@ TEST(InclusiveScanByKey, InclFloat)
     cmpArrays(refInput, input);
 }
 
-
+#if TEST_LARGE_BUFFERS
 TEST(InclusiveScanByKey,SerialInclFloat)
 {
     //setup keys
@@ -4017,7 +4019,7 @@ TEST(InclusiveScanByKey, MulticoreInclDouble)
     // compare results
     cmpArrays(refInput, input);
 }
-
+#endif
 
 TEST(ExclusiveScanByKey, ExclFloat)
 {
@@ -4068,6 +4070,7 @@ TEST(ExclusiveScanByKey, ExclFloat)
 
 }
 
+#if TEST_LARGE_BUFFERS
 TEST(ExclusiveScanByKey, SerialExclFloat)
 {
     //setup keys
@@ -4254,6 +4257,7 @@ TEST(ExclusiveScanByKey, MulticoreExclUdd)
     cmpArrays(refInput, input);
 
 }
+#endif
 
 /////////////////////////////////////////////////CL Exclusive test Cases after fix ///////////////////////////
 
