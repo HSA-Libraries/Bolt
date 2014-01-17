@@ -24,30 +24,6 @@
 *  GPU path first, then Multicore CPU (Intel TBB), then SerialCpu, control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the
 *  function with that code path. All Bolt functions have OpenCL™, Multicore CPU and Serial path implementation.
 *
-* \subsection examples Example:
-* \subsubsection transform_scan Transform Scan:
-* Transform_inclusive_scan performs, on a sequence, the transformation defined by a unary operator, then the inclusive scan defined by a binary operator.
-* As Multicore path for transform_inclusive_scan function is not implemented yet, forcing transform_inclusive_scan to MultiCoreCpu will run Serial code in the example below.
-*
-* \code
-* #include <bolt/cl/control.h>
-* #include <bolt/cl/transform_scan.h>
-*
-* .....
-*
-* int length = 10;
-* std::vector< float > input( length );
-* std::vector< float > output( length );
-*
-* bolt::cl::control ctl = bolt::cl::control::getDefault( );
-* ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-*   
-* bolt::cl::negate<float> unary_op;
-* bolt::cl::plus<float> binary_op;
-* bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), output.begin(), unary_op, binary_op  );  // run with serial path.
-* \endcode
-*
-*
 * \subsection FunctionsSupported List of Supported Function and Code Paths
 
 <table border="6" cellpadding="10">
@@ -61,21 +37,21 @@
 <tr>
 <td align="center">constant_iterator</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">copy</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">copy_n</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -96,7 +72,7 @@
 <tr>
 <td align="center">counting_iterator</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -117,35 +93,35 @@
 <tr>
 <td align="center">exclusive_scan_by_key</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">fill</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">fill_n</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">generate</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">generate_n</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -159,28 +135,28 @@
 <tr>
 <td align="center">inclusive_scan_by_key</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">inner_product</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">max_element</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">min_element</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -194,7 +170,7 @@
 <tr>
 <td align="center">reduce_by_key</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -215,7 +191,7 @@
 <tr>
 <td align="center">stable_sort</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -236,14 +212,14 @@
 <tr>
 <td align="center">transform_exclusive_scan</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">transform_inclusive_scan</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -257,14 +233,14 @@
 <tr>
 <td align="center">binary_search</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">merge</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>

@@ -42,7 +42,7 @@ namespace bolt {
         *    The min_element finds the location of the first smallest element in the range [first, last]
         */
 
-        /*! \addtogroup amp-min_element
+        /*! \addtogroup AMP-min_element
         *   \ingroup reductions
         *   \{
         */

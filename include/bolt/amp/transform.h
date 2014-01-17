@@ -50,7 +50,7 @@ namespace bolt
         *   for a detailed description.
         */
 
-        /*! \addtogroup amp-transform
+        /*! \addtogroup AMP-transform
         *   \ingroup transformations
         *   \{
         */

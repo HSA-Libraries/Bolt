@@ -43,7 +43,7 @@ namespace amp
  *   The sorting Algorithm for sorting the given InputIterator.
  */ 
 
-/*! \addtogroup amp-scan
+/*! \addtogroup AMP-scan
  *   \ingroup PrefixSums
  *   \{
  */

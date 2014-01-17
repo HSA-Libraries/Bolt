@@ -93,7 +93,7 @@
 * directory inside any folder which has a \c .git folder as a sibling or as a parent structure.
 * \image html cmake.bolt_build.blank.png "Bolt superbuild"
 * Then, click on the Configure button. This will ask you for your choice of generator. You can choose to use
-* Visual Studio 10 or Visual Studio 11. In this example, 'Visual Studio 11 Win64' generator is selected. The selected
+* Visual Studio 10/11/12. In this example, 'Visual Studio 11 Win64' generator is selected. The selected
 * bin directory should be descriptive of the generator used ; otherwise it's easy to start over 
 * (delete the binaries directory). 
 * <b> On Linux &reg;</b>, choose the Unix Makefiles option.

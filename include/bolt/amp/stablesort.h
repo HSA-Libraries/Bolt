@@ -34,7 +34,7 @@ namespace amp {
     *   Either fundamental or user-defined data types can be sorted.
     */ 
 
-    /*! \addtogroup stable_sort
+    /*! \addtogroup AMP-stable_sort
     *   \ingroup sorting
     *   \{
     */

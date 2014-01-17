@@ -44,7 +44,7 @@ namespace bolt {
         *   for a detailed description.
         */
 
-        /*! \addtogroup CL-sort
+        /*! \addtogroup CL-sort_by_key
         *   \ingroup sorting
         *   \{
         */

@@ -48,7 +48,7 @@ namespace bolt {
         *   See the Bolt Tools for Split-Source for a detailed description.
         */
 
-        /*! \addtogroup amp-sort
+        /*! \addtogroup AMP-sort
         *   \ingroup sorting
         *   \{
         */
