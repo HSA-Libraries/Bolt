@@ -36,7 +36,7 @@ namespace cl {
     *   the key array, but the value array follows suite.  Fundamental or user-defined data types can be sorted.
     */ 
 
-    /*! \addtogroup stable_sort_by_key
+    /*! \addtogroup CL-stable_sort_by_key
     *   \ingroup sorting
     *   \{
     */

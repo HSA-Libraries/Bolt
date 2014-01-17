@@ -34,7 +34,7 @@ namespace cl {
     *   Either fundamental or user-defined data types can be sorted.
     */ 
 
-    /*! \addtogroup stable_sort
+    /*! \addtogroup CL-stable_sort
     *   \ingroup sorting
     *   \{
     */

@@ -33,13 +33,16 @@ namespace bolt
 namespace amp
 {
 
-/*! \addtogroup miscellaneous
- */
+ /*! \addtogroup miscellaneous
+        */
 
-/*! \addtogroup control
- * \ingroup miscellaneous
- * \{
- */
+        /*! \addtogroup miscellaneous
+        */
+
+        /*! \addtogroup AMP-control
+        * \ingroup miscellaneous
+        * \{
+        */
 
 /*! The \p control class lets you control the parameters of a specific Bolt algorithm call,
  * such as the debug information, load-balancing with  the host, and more.  Each Bolt Algorithm call

@@ -261,7 +261,7 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  
 * \subsection Prerequisites Prerequisites
 * \subsubsection Windows Windows
-* -# Visual Studio 2010 onwards (VS2012 for C++ AMP)
+* -# Visual Studio 2010 onwards (VS 2012/2013 for C++ AMP)
 * -# Tested with 32/64 bit Windows® 7/8 and Windows® Blue
 * -# CMake 2.8.10
 * -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.

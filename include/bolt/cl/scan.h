@@ -43,7 +43,6 @@ namespace cl
 
 /*! \addtogroup PrefixSums Prefix Sums
  *   \ingroup algorithms
- *   The sorting Algorithm for sorting the given InputIterator.
  */ 
 
 /*! \addtogroup CL-scan

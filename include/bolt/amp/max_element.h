@@ -42,7 +42,7 @@ namespace bolt {
         *    The max_element finds the location of the first maximum element in the range [first, last]
         */
 
-        /*! \addtogroup amp-max_element
+        /*! \addtogroup AMP-max_element
         *   \ingroup reductions
         *   \{
         */

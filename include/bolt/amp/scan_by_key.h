@@ -38,7 +38,7 @@ namespace amp
  *   \ingroup algorithms
  */
 
-/*! \addtogroup SegmentedPrefixSums AMP-Segmented Prefix Sums
+/*! \addtogroup AMPSegmentedPrefixSums AMP-Segmented Prefix Sums
  *   \ingroup PrefixSums
  *   \{
  */

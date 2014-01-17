@@ -40,7 +40,7 @@ namespace bolt {
         *   \p generate assigns to each element of a sequence the value returned by a generator.
         */
 
-        /*! \addtogroup CL-filling
+        /*! \addtogroup CL-generate
         *   \ingroup transformations
         *   \{
         */

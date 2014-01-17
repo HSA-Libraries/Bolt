@@ -36,7 +36,7 @@ namespace amp
 *   \ingroup algorithms
 */ 
 
-/*! \addtogroup TransformedPrefixSums AMP-Transformed Prefix Sums
+/*! \addtogroup AMPTransformedPrefixSums AMP-Transformed Prefix Sums
 *   \ingroup PrefixSums
 *   \{
 */

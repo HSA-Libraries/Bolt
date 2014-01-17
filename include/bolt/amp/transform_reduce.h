@@ -39,7 +39,7 @@ namespace bolt {
         *   \ingroup algorithms
         */
 
-        /*! \addtogroup amp-transform_reduce
+        /*! \addtogroup AMP-transform_reduce
         *   \ingroup reductions
         *   \{
         *

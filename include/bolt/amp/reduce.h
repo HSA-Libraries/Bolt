@@ -43,7 +43,7 @@ namespace bolt {
         *   and more.
         */
 
-        /*! \addtogroup amp-reduce
+        /*! \addtogroup AMP-reduce
         *   \ingroup reductions
         *   \{
         *
