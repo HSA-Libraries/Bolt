@@ -21,108 +21,222 @@
 #include "bolt/cl/iterator/iterator_traits.h"
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-//#include <boost/utility/result_of.hpp>
 
-namespace bolt
-{
-namespace cl 
-{
+/*! \file bolt/cl/iterator/counting_iterator.h
+    \brief Return Incremented Value on dereferencing.
+*/
+
+namespace bolt {
+namespace cl {
 
     struct transform_iterator_tag
         : public fancy_iterator_tag
         {   // identifying tag for random-access iterators
         };
-    template <class UnaryFunc, class Iterator>
-    class transform_iterator : public boost::transform_iterator <UnaryFunc, Iterator>
-    {
-          
-    public:
-        typedef typename std::iterator_traits<Iterator>::value_type      value_type;
-        //typedef typename std::iterator_traits<Iterator>::size_type       size_type;
-        typedef typename std::iterator_traits<Iterator>::difference_type difference_type;
-        typedef typename std::iterator_traits<Iterator>::pointer         pointer;
-        typedef transform_iterator_tag                                   iterator_category;
-        typedef UnaryFunc                                                unary_func;
 
-        //typedef typename Iterator::container                             container;
-        //friend class boost::transform_iterator <UnaryFunc, Iterator>;
-        transform_iterator(Iterator const& x, UnaryFunc f): boost::transform_iterator<UnaryFunc, Iterator>( x,  f), m_it( x )//, m_Index(0)
-          { 
-              //ClCode<bolt::cl::transform_iterator<UnaryFunc, Iterator> >::addDependency(ClCode<UnaryFunc>::get());//BOLT_ADD_DEPENDENCY(UnaryFunc,);
-          }
-
-        struct Payload
+    //  This represents the host side definition of the counting_iterator template
+    //BOLT_TEMPLATE_FUNCTOR3( counting_iterator, int, float, double,
+        template< typename UnaryFunction,
+                  typename Iterator >
+        class transform_iterator: public boost::iterator_facade< transform_iterator< UnaryFunction, Iterator >, typename Iterator::value_type,
+            transform_iterator_tag, typename Iterator::value_type, int >
         {
+        public:
+
+		    typedef typename boost::iterator_facade< transform_iterator< UnaryFunction, Iterator >,
+		                                             typename Iterator::value_type,
+            										 transform_iterator_tag,
+            										 typename Iterator::value_type, int >::difference_type  difference_type;
+
+		    typedef typename transform_iterator< UnaryFunction, Iterator >::value_type value_type;
+
+            struct Payload
+            {
+                value_type m_Value;
+            };
+
+            //  Basic constructor requires a reference to the container and a positional element
+            // transform iterators are read only.
+            // TODO - a specialization for counting and constant iterator is required.
+            transform_iterator( const Iterator it, UnaryFunction u_f, const control& ctl = control::getDefault( ) ):
+                m_Index( 0 )
+            {
+                //static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
+                //    "iterator value_type does not convert to device_vector value_type" );
+                //static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
+				cl_int l_Error = CL_SUCCESS;
+                m_f = u_f;
+                m_index = it.getIndex();
+
+            }
+
+            //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+            template< typename OtherIterator >
+            transform_iterator( const transform_iterator< UnaryFunction, OtherIterator >& rhs ): m_devMemory( rhs.m_devMemory ),
+                m_Index( rhs.m_Index ), m_initValue( rhs.m_initValue )
+            {
+            }
+
+			//non mutable so not allowed.
+            /*transform_iterator< UnaryFunction, Iterator::value_type >& operator = ( const transform_iterator< UnaryFunction, Iterator::value_type >& rhs )
+            {
+                if( this == &rhs )
+                    return *this;
+
+                m_devMemory = rhs.m_devMemory;
+                m_initValue = rhs.m_initValue;
+                m_Index = rhs.m_Index;
+                return *this;
+            }*/
+
+
+            transform_iterator< UnaryFunction, Iterator >& operator+= ( const difference_type & n )
+            {
+                advance( n );
+                return *this;
+            }
+
+            const transform_iterator< UnaryFunction, Iterator > operator+ ( const difference_type & n ) const
+            {
+                transform_iterator< UnaryFunction, Iterator > result( *this );
+                result.advance( n );
+                return result;
+            }
+
+            const ::cl::Buffer& getBuffer( ) const
+            {
+                return m_devMemory;
+            }
+
+            const transform_iterator< UnaryFunction, Iterator > & getContainer( ) const
+            {
+                return *this;
+            }
+
+            Payload gpuPayload( ) const
+            {
+                Payload payload = { m_initValue };
+                return payload;
+            }
+
+            const difference_type gpuPayloadSize( ) const
+            {
+                return sizeof( Payload );
+            }
+
+
+            difference_type distance_to( const transform_iterator< UnaryFunction, Iterator >& rhs ) const
+            {
+                //return static_cast< typename iterator_facade::difference_type >( 1 );
+                return rhs.m_Index - m_Index;
+            }
+
+            //  Public member variables
             difference_type m_Index;
-            difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
-            UnaryFunc       m_f;
+
+        private:
+            //  Implementation detail of boost.iterator
+            friend class boost::iterator_core_access;
+
+            //  Used for templatized copy constructor and the templatized equal operator
+            template < typename, typename > friend class transform_iterator;
+
+            //  For a counting_iterator, do nothing on an advance
+            void advance(difference_type n )
+            {
+                m_Index += n;
+            }
+
+            void increment( )
+            {
+                advance( 1 );
+            }
+
+            void decrement( )
+            {
+                advance( -1 );
+            }
+
+            template< typename OtherIterator >
+            bool equal( const transform_iterator< UnaryFunction, OtherIterator >& rhs ) const
+            {
+                bool sameIndex = (rhs.m_initValue == m_initValue) && (rhs.m_Index == m_Index);
+                return sameIndex;
+            }
+
+            typename boost::iterator_facade< transform_iterator< UnaryFunction, Iterator >, typename Iterator::value_type,
+                                             transform_iterator_tag, typename Iterator::value_type, int >::reference  dereference( ) const
+            {
+                return m_initValue + m_Index;
+            }
+
+            //::cl::Buffer m_devMemory;
+            value_type m_initValue;
+            UnaryFunction m_f;
+            Iterator &it;
+            
         };
+    //)
 
-        /*TODO - RAVI Probably I can acheive this using friend class device_vector. But the problem would be 
-                 multiple defintions of functions like advance()*/        
-        template<typename Container >
-        Container getContainer( ) const
-        {
-            return m_it.getContainer( );
-        }
+    //  This string represents the device side definition of the counting_iterator template
+    static std::string deviceTransformIterator = STRINGIFY_CODE(
 
-        const Payload  gpuPayload( ) const
-        {
-            Payload payload = { 0/*m_Index*/, { 0, 0, 0 } };
-            return payload;
-        }
-
-        /*TODO - This should throw a compilation error if the Iterator is of type std::vector*/
-        const difference_type gpuPayloadSize( ) const
-        {
-            return m_it.gpuPayloadSize( );
-        }
-        //difference_type m_Index;
-        Iterator m_it;  
-    };
-
-    //  This string represents the device side definition of the Transform Iterator template
-    static std::string deviceTransformIteratorTemplate = STRINGIFY_CODE(
         namespace bolt { namespace cl { \n
-        template< typename UnaryFunc, typename Iterator > \n
+        template< typename UnaryFunction, typename Iterator > \n
         class transform_iterator \n
         { \n
-            public:    \n
-                typedef int iterator_category;        \n
-                typedef typename Iterator::value_type value_type; \n
-                typedef int difference_type; \n
-                typedef int size_type; \n
-                typedef value_type* pointer; \n
-                typedef value_type& reference; \n
+        public: \n
+            UnaryFunction m_f; \n
+            typedef int iterator_category;      // device code does not understand std:: tags \n
+            typedef Iterator::value_type  value_type; \n
+            typedef Iterator::difference_type difference_type; \n
+            typedef Iterator::size_type size_type; \n
+            typedef Iterator::pointer pointer; \n
+            typedef Iterator::reference reference; \n
 
-                transform_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
-                {}; \n
+			transform_iterator(Iterator const& x, UnaryFunction f): m_StartIndex( init ), m_Ptr( 0 ), m_f(f) \n
+			{};\n
+			\n
 
-                void init( global value_type* ptr )\n
-                { \n
-                    m_Ptr = ptr; \n
-                }; \n
+            void init( global value_type* ptr ) \n
+            { \n
 
-                value_type operator[]( size_type threadID ) const \n
-                { \n
-                   return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
-                } \n
+                m_Ptr = ptr; \n
+            }; \n
 
-                value_type operator*( ) const \n
-                { \n
-                    return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
-                } \n
+            value_type operator[]( size_type threadID ) const \n
+            { \n
+                return m_f( m_Ptr[m_StartIndex + threadID] ); \n
+            } \n
 
-                size_type m_StartIndex; \n
-                global value_type* m_Ptr; \n
-                UnaryFunc          m_f; \n
+            value_type operator*( ) const \n
+            { \n
+                return m_f( m_Ptr[m_StartIndex + threadID] ); \n
+            } \n
+
+            value_type m_StartIndex; \n
+
         }; \n
     } } \n
     );
+
+
+    template< typename UnaryFunction, typename Iterator >
+    transform_iterator< UnaryFunction, Iterator > make_transform_iterator( Iterator it, UnaryFunction fun )
+    {
+        transform_iterator< UnaryFunction, Iterator > tmp( it, fun );
+        return tmp;
+    }
+
 }
 }
 
+//BOLT_CREATE_TYPENAME( bolt::cl::transform_iterator< int > );
+//BOLT_CREATE_CLCODE( bolt::cl::transform_iterator< int >, bolt::cl::deviceTransformIterator );
 
-
+//BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::transform_iterator, int, unsigned int );
+//BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::transform_iterator, int, float );
+//BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::transform_iterator, int, double );
+//BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::transform_iterator, int, cl_long );
 
 #endif

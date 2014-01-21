@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 #include "common/stdafx.h"
 #include <vector>
@@ -283,6 +283,32 @@ TYPED_TEST_P( CountingIterator, DeviceTransformVector )
     EXPECT_EQ( 43, devVec[ 1 ] );
     EXPECT_EQ( 44, devVec[ 2 ] );
 }
+BOLT_FUNCTOR(square<int>,
+    template< typename T >
+    struct square
+    {
+        T operator() (const T& x)  const { return x * x; }
+        typedef T result_type;
+    };
+);
+
+TEST( TransformIterator, FirstTest)
+{
+    // initialize the data vector to be sequential numbers
+    std::vector< int > devVec( 100 );
+    std::vector< int > outVec( 100 );
+    std::generate(devVec.begin(), devVec.end(), rand);
+    square<int> sq;
+    std::vector< int >::const_iterator it;
+    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_begin( devVec.begin(), devVec.end(), sq );
+    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_end = trf_begin + devVec.size();
+    bolt::cl::transform( trf_begin, trf_end, outVec.begin(), sq );
+
+    EXPECT_EQ( 42, devVec[ 0 ] );
+    EXPECT_EQ( 43, devVec[ 1 ] );
+    EXPECT_EQ( 44, devVec[ 2 ] );
+}
+
 
 REGISTER_TYPED_TEST_CASE_P( CountingIterator, HostSideNaive, StdTransformVector, DeviceTransformVector );
 
@@ -348,7 +374,7 @@ int _tmain(int argc, _TCHAR* argv[])
         {
             deviceType	= CL_DEVICE_TYPE_GPU;
         }
-        
+
         if( vm.count( "cpu" ) )
         {
             deviceType	= CL_DEVICE_TYPE_CPU;
