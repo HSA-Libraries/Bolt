@@ -68,12 +68,15 @@ stablesort_enqueue(control &ctl,
     return;
 }
 
-template< typename sType, typename StrictWeakOrdering >
-unsigned int lowerBoundBinary( sType* data, unsigned int left, unsigned int right, sType searchVal, const StrictWeakOrdering& lessOp )
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+
+template< typename sType, typename Container, typename StrictWeakOrdering >
+unsigned int lowerBoundBinary( Container& data, int left, int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
 {
     //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
-    unsigned int firstIndex = left;
-    unsigned int lastIndex = right;
+    int firstIndex = left;
+    int lastIndex = right;
     
     //  This loops through [firstIndex, lastIndex)
     //  Since firstIndex and lastIndex will be different for every thread depending on the nested branch,
@@ -88,20 +91,27 @@ unsigned int lowerBoundBinary( sType* data, unsigned int left, unsigned int righ
         if( lessOp( midValue, searchVal ) )
         {
             firstIndex = midIndex+1;
+             //printf( "lowerBound: lastIndex[ %i ]=%i\n", get_local_id( 0 ), lastIndex );
         }
         else
         {
             lastIndex = midIndex;
+             //printf( "lowerBound: firstIndex[ %i ]=%i\n", get_local_id( 0 ), firstIndex );
         }
     }
     //printf("lowerBoundBinary: left=%d, right=%d, firstIndex=%d\n", left, right, firstIndex);
     return firstIndex;
 }
 
-template< typename sType, typename StrictWeakOrdering >
-unsigned int upperBoundBinary(sType* data, unsigned int left, unsigned int right, sType searchVal, const StrictWeakOrdering& lessOp )
+//  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
+//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
+//  passed as a functor parameter lessOp
+//  This function returns an index that is the first index whos value would be greater than the searched value
+//  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
+template< typename sType, typename Container, typename StrictWeakOrdering >
+unsigned int  upperBoundBinary( Container& data, unsigned int left, unsigned int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
 {
-    uint upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
+    unsigned int upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
     
      //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
     //  upperBound is always between left and right or equal to right
@@ -109,7 +119,7 @@ unsigned int upperBoundBinary(sType* data, unsigned int left, unsigned int right
     if( upperBound != right )
     {
         //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
-        uint mid = 0;
+        int mid = 0;
         sType upperValue = data[ upperBound ];
         //This loop is a kind of a specialized binary search. 
         //This will find the first index location which is not equal to searchVal.
@@ -134,8 +144,6 @@ unsigned int upperBoundBinary(sType* data, unsigned int left, unsigned int right
     return upperBound;
 }
 
-#define max(a,b)    (((a) > (b)) ? (a) : (b))
-#define min(a,b)    (((a) < (b)) ? (a) : (b))
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if<
@@ -296,7 +304,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     unsigned int locID = t_idx.local[ 0 ];
     unsigned int wgSize = localRange;
 
-    tile_static iType lds[BUFFER_SIZE]; 
     //  Abort threads that are passed the end of the input vector
     if( gloID >= vecSize )
         return; // on SI this doesn't mess-up barriers

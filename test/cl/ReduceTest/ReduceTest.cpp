@@ -1293,29 +1293,29 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
 
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerVector, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^22
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerVector, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatVector, ::testing::Range( 0, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatVector, ::testing::Range(4096, 65536, 555 ) ); //2^12 to 2^16
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatVector, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleVector, ::testing::Range(  65536, 2097152, 55555 ) ); //2^16 to 2^21
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
 #endif
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerDeviceVector, ::testing::Range(  1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                       TestValues.end()));
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatDeviceVector, ::testing::Range(  1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                    TestValues.end()));
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleDeviceVector, ::testing::Range(  1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                    TestValues.end() ) );
 #endif
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerNakedPointer, ::testing::Range(  1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                      TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatNakedPointer, ::testing::Range(  1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                    TestValues.end() ) );
 

@@ -2345,83 +2345,79 @@ std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
 std::array<int, 5> TestValues2 = {2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 
-//INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchStdVector_MulValues, ::testing::Range( 1, 1024, 23 ) );
-//INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchStdVector_MulValues, ::testing::ValuesIn( TestValues.begin(), 
-//                                                                          TestValues.end() ) );
-
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchIntegerVector, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchIntegerVector, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^12
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchFloatVector, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16	
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchFloatVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                         TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchDoubleVector, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchDoubleVector, ::testing::Range( 65536, 2097152, 55555 ) ); //2^16 to 2^21
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                             TestValues.end() ) );
-#if (TEST_LARGE_BUFFERS == 1)
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchDoubleVector, ::testing::ValuesIn( TestValues2.begin(), 
+//#if (TEST_LARGE_BUFFERS == 1)
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchDoubleVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                             TestValues2.end() ) );
-#endif
+//#endif
 #endif
 
-INSTANTIATE_TEST_CASE_P(BSearchRange, BSearchCountingIterator, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P(BSearchRange, BSearchCountingIterator, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^12
 INSTANTIATE_TEST_CASE_P( BSearchValues,BSearchCountingIterator, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
 
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchIntegerDeviceVector, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchIntegerDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchUDDDeviceVector, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchUDDDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchUDDDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchFloatDeviceVector, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchFloatDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                 TestValues.end()));
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchDoubleDeviceVector, ::testing::Range( 1, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchDoubleDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
                                                                                     TestValues.end()));
-#if (TEST_LARGE_BUFFERS == 1)
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchDoubleDeviceVector, ::testing::ValuesIn(TestValues2.begin(),
+//#if (TEST_LARGE_BUFFERS == 1)
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchDoubleDeviceVector, ::testing::ValuesIn(TestValues2.begin(),
                                                                                     TestValues2.end()));
+//#endif
 #endif
-#endif
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchIntegerNakedPointer, ::testing::Range( 1, 1024, 23) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchIntegerNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                                     TestValues.end()));
-INSTANTIATE_TEST_CASE_P( BSearchtRange, BSearchFloatNakedPointer, ::testing::Range( 1, 1024, 23) );
+INSTANTIATE_TEST_CASE_P( BSearchtRange, BSearchFloatNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P(BSearchValues, BSearchFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchDoubleNakedPointer, ::testing::Range( 1, 1024, 23) );
+INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchDoubleNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( BSearch, BSearchDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                      TestValues.end() ) );
-#if (TEST_LARGE_BUFFERS == 1)
-INSTANTIATE_TEST_CASE_P( BSearch, BSearchDoubleNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
+//#if (TEST_LARGE_BUFFERS == 1)
+INSTANTIATE_TEST_CASE_P( BSearch2, BSearchDoubleNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
                                                                      TestValues2.end() ) );
-#endif
+//#endif
 #endif
 
 
-#if (TEST_LARGE_BUFFERS == 1)
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
+//#if (TEST_LARGE_BUFFERS == 1)
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
                                                                             TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                         TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchValues,BSearchCountingIterator, ::testing::ValuesIn( TestValues2.begin(), 
+INSTANTIATE_TEST_CASE_P( BSearchValues2,BSearchCountingIterator, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchUDDDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchUDDDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
                                                                                 TestValues2.end()));
-INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
+INSTANTIATE_TEST_CASE_P( BSearchValues2, BSearchIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
                                                                                     TestValues2.end()));
-INSTANTIATE_TEST_CASE_P(BSearchValues, BSearchFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
+INSTANTIATE_TEST_CASE_P(BSearchValues2, BSearchFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
-#endif
+//#endif
 
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
@@ -2445,8 +2441,8 @@ typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 262144 > >,//18    
     std::tuple< cl_long, TypeValue< 524288 > >,//19    
     std::tuple< cl_long, TypeValue< 1048576 > >,//20    
-    std::tuple< cl_long, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
+    std::tuple< cl_long, TypeValue< 2097152 > >//21
+	#if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< cl_long, TypeValue< 4194304 > >,//22    
     std::tuple< cl_long, TypeValue< 8388608 > >,//23
@@ -2478,8 +2474,8 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 262144 > >,//18    
     std::tuple< int, TypeValue< 524288 > >,//19    
     std::tuple< int, TypeValue< 1048576 > >,//20    
-    std::tuple< int, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
+    std::tuple< int, TypeValue< 2097152 > >//21 
+	#if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< int, TypeValue< 4194304 > >,//22    
     std::tuple< int, TypeValue< 8388608 > >,//23
@@ -2511,8 +2507,8 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 262144 > >,//18    
     std::tuple< unsigned int, TypeValue< 524288 > >,//19    
     std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
-    std::tuple< unsigned int, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
+    std::tuple< unsigned int, TypeValue< 2097152 > >//21
+	#if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
     std::tuple< unsigned int, TypeValue< 8388608 > >,//23
@@ -2864,6 +2860,7 @@ int main(int argc, char* argv[])
 
 #include "bolt/cl/iterator/counting_iterator.h"
 #include <bolt/cl/sort.h>
+#include "bolt/cl/binary_search.h"
 #include <bolt/cl/functional.h>
 #undef NOMINMAX
 #include <array>
@@ -2889,13 +2886,15 @@ int main ()
     boltOffsetIn = stdInput;
     stdOffsetIn = stdInput;
 
+	bool stdresult, myresult;
+
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ) );
     bolt::BKND::sort( boltInput.begin( ), boltInput.end( ) );
-    for(int i=0;i< ArraySize;i++)
+    /*for(int i=0;i< ArraySize;i++)
     {
             std::cout << stdInput[i]  << "\n";
-    }
+    }*/
  
     int my_val, std_val;
 
@@ -2924,8 +2923,8 @@ int main ()
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex );
-        bolt::BKND::SORT_FUNC( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex );
+        std::sort( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex );
+        bolt::BKND::sort( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex );
 
         //  Loop through the array and compare all the values with each other
         for(int i=0;i< ArraySize;i++)
@@ -2939,7 +2938,7 @@ int main ()
             if(stdresult == myresult)
                 continue;
             else
-                std::<<"Offset Test Failed at i = "<<i<<std::endl;
+                std::cout<<"Offset Test Failed at i = "<<i<<std::endl;
         }
     }
 

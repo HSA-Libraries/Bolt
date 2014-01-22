@@ -157,7 +157,7 @@ TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
   size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(6,10)) ;
 
   EXPECT_EQ (stdCount, boltCount)<<"Failed as: STD Count = "<<stdCount<<"\nBolt Count = "<<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange2)
@@ -175,7 +175,7 @@ TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange2)
   size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(1,10)) ;
 
   EXPECT_EQ (stdCount, boltCount)<<"Failed as: STD Count = "<<stdCount<<"\nBolt Count = "<<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
 }
 
 //
@@ -271,7 +271,7 @@ TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue){
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<
       "Bolt Count = "<<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue){
@@ -290,7 +290,7 @@ TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue){
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue){
@@ -310,7 +310,7 @@ TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue){
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue2){
@@ -323,7 +323,7 @@ TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue2){
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue2){
@@ -340,7 +340,7 @@ TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue2){
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue2){
@@ -357,7 +357,7 @@ TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue2)
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 
@@ -386,7 +386,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue){
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue){
@@ -404,7 +404,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue)
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 
@@ -424,7 +424,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameVal
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
@@ -437,7 +437,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue2){
@@ -455,7 +455,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue2
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameValue2){
@@ -473,7 +473,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameVal
 
   EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
-  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 //test case: 1, test: 1
@@ -754,7 +754,7 @@ TEST(countFloatValueOccuranceStdVect, CountUDD){
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST(countFloatValueOccuranceStdVect, SerialCountUDD){
@@ -782,7 +782,7 @@ TEST(countFloatValueOccuranceStdVect, SerialCountUDD){
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 
@@ -813,7 +813,7 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountUDDTBB){
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST(countFloatValueOccuranceStdVect,DeviceCountUDDTBB){
@@ -841,7 +841,7 @@ TEST(countFloatValueOccuranceStdVect,DeviceCountUDDTBB){
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
 
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST(countFloatValueOccuranceStdVect,Serial_DeviceCountUDDTBB){
@@ -866,7 +866,7 @@ TEST(countFloatValueOccuranceStdVect,Serial_DeviceCountUDDTBB){
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST(countFloatValueOccuranceStdVect,MultiCore_DeviceCountUDDTBB){
@@ -891,7 +891,7 @@ TEST(countFloatValueOccuranceStdVect,MultiCore_DeviceCountUDDTBB){
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST(countFloatValueOccuranceStdVect, STDCountUDD){
@@ -916,7 +916,7 @@ TEST(countFloatValueOccuranceStdVect, STDCountUDD){
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 
@@ -944,7 +944,7 @@ TEST(countFloatValueOccuranceStdVect, Serial_STDCountUDD){
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST(countFloatValueOccuranceStdVect, MultiCore_STDCountUDDTBB){
@@ -972,7 +972,7 @@ TEST(countFloatValueOccuranceStdVect, MultiCore_STDCountUDDTBB){
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
-    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST(countFloatValueOccuranceStdVect, CountifInt){

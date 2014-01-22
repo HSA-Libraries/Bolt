@@ -32,6 +32,8 @@
 namespace po = boost::program_options;
 
 #define TEST_DOUBLE 1
+#define TEST_LARGE_BUFFERS 0
+
 #define SERIAL_TBB_OFFSET 0
 
 
@@ -1164,10 +1166,11 @@ TEST(ExclusiveScan,SerialExcluddtM3)
     cmpArrays(refInput, input); 
 } 
 
+//#if TEST_LARGE_BUFFERS
 TEST(ExclusiveScan, MulticoreExcluddtM3)
 {
     //setup containers
-    int length = 1<<24;
+    int length = 1048576; // 2^20
   
     std::vector< uddtM3 > input( length, initialMixM3  );
     //std::vector< uddtM3 > output( length);
@@ -1187,6 +1190,7 @@ TEST(ExclusiveScan, MulticoreExcluddtM3)
     
     cmpArrays(refInput, input);  
 } 
+//#endif
 #endif
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2299,7 +2303,7 @@ TEST_P (scanStdVectorWithIters, MulticorefloatDefiniteValues){
     EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 }
 
-
+#if TEST_LARGE_BUFFERS
 TEST_P (ScanOffsetTest, InclOffsetTestFloat)
 {
 	float n = 1.f + rand()%3;
@@ -2330,6 +2334,7 @@ TEST_P (ScanOffsetTest, ExclOffsetTestFloat)
     cmpArrays(input, refInput);
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
 } 
+#endif
 
 #if (SERIAL_TBB_OFFSET == 1)
 TEST_P (ScanOffsetTest, InclOffsetTestFloatSerial)
@@ -2410,7 +2415,7 @@ TEST_P (ScanOffsetTest, ExclOffsetTestFloatMultiCore)
 #endif
 
 #if (TEST_DOUBLE == 1)
-
+#if TEST_LARGE_BUFFERS
 TEST_P (ScanOffsetTest, InclOffsetTestDouble)
 {
 	double n = 1.0 + rand()%3;
@@ -2481,6 +2486,7 @@ TEST (ScanOffsetTest, ExclOffsetTestUDD)
     printf("\nPass for size=%d Offset=%d\n",length, length/4);
 } 
 
+#endif
 
 TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
     
@@ -2502,12 +2508,10 @@ TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
 #endif
 
 
-////INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
-//INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range(1025, 25535, 1000)); 
-INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range( 1, 1024, 47 )); 
-INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanOffsetTest, ::testing::Range(1025, 65535, 5111)); 
-INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 5111)); 
-INSTANTIATE_TEST_CASE_P(withCountingIterator, StdVectCountingIterator, ::testing::Range(1025, 65535, 5111));
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range( 1, 1024, 87 )); 
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanOffsetTest, ::testing::Range(1025, 65535, 6552)); 
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 6552)); 
+INSTANTIATE_TEST_CASE_P(withCountingIterator, StdVectCountingIterator, ::testing::Range(1, 32768, 3276 ) ); // 1 to 2^15
 
 
 TEST_P( ScanIntegerVector, InclusiveInplace )
@@ -3121,7 +3125,7 @@ TEST_P( ScanFloatVector, MulticoreintSameValuesSerialInPlace )
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 23 ) );
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 23 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 73 ) );
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 23) );
 INSTANTIATE_TEST_CASE_P( Exclusive, ScanFloatVector, ::testing::Range( 1, 1024, 23 ) );
 

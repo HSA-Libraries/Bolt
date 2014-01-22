@@ -19,6 +19,8 @@
 #define ENABLE_DEBUGGING 0
 #define UDD 1
 #define TEST_DOUBLE 1
+#define TEST_LARGE_BUFFERS 0
+
 //#include "common/stdafx.h"
 #include <vector>
 //#include <array>
@@ -219,7 +221,7 @@ gold_reduce_by_key( InputIterator1 keys_first,
         values_first++;
     }
 
-    std::cout<<count<<std::endl;
+    //std::cout<<count<<std::endl;
     return std::make_pair(keys_output+1, values_output+1);
 }
 
@@ -1139,11 +1141,10 @@ TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestUDD)
 
 INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(1025, 65535, 2111)); 
 
-//Test Case Not Executing Anything!
 
  TEST(ReduceByKeyBasic, DeviceVectorTest)
 {
-    int length = 10;
+    int length = 1048576; //2^20;
     std::vector< int > keys(length);
     
 
@@ -1193,7 +1194,7 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
 } 
  TEST(ReduceByKeyBasic, CPUDeviceVectorTest)
 {
-    int length = 1<<10;
+    int length = 1048576; //2^20;
     std::vector< int > keys(length);
 
 
@@ -1248,7 +1249,7 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
 }
  TEST(ReduceByKeyBasic, MultiCoreCPUDeviceVectorTest)
 {
-    int length = 1<<10;
+    int length = 1048576; //2^20
     std::vector< int > keys(length);
 
     int segmentLength = 0;
@@ -1379,6 +1380,7 @@ EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
 EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 }
+
 TEST(reduce_by_key__bolt_Std_vect, MulticoreBasic_EPR377067){
 
 int size = 10;
@@ -1424,7 +1426,7 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 
 TEST(reduce_by_key__bolt_Dev_vect, Basic_EPR377067){
 
-int size = 10;
+int size = 1048576; //2^20;
 std::vector<int> KeyIn(size);
 std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
@@ -1462,7 +1464,7 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 TEST(reduce_by_key__bolt_Dev_vect, SerialBasic_EPR377067){
 
-int size = 10;
+int size = 1048576; //2^20;
 std::vector<int> KeyIn(size);
 std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
@@ -1503,7 +1505,7 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 TEST(reduce_by_key__bolt_Dev_vect, MulticoreBasic_EPR377067){
 
-int size = 10;
+int size = 1048576; //2^20;
 std::vector<int> KeyIn(size);
 std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
@@ -1545,7 +1547,7 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 
 TEST(ReduceByKeyBasic, IntegerTest)
 {
-    int length = 1<<24;
+    int length = 1048576; //2^20;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1599,7 +1601,7 @@ TEST(ReduceByKeyBasic, IntegerTest)
 
 TEST(ReduceByKeyBasic, DeviceVectorOffsetTest)
 {
-    int length = 1024;
+    int length = 1048576; //2^20;
     std::vector< int > keys(length);
     
 
@@ -1653,7 +1655,7 @@ TEST(ReduceByKeyBasic, DeviceVectorOffsetTest)
 
 TEST(ReduceByKeyBasic, SerialDeviceVectorOffsetTest)
 {
-    int length = 1024;
+    int length = 1048576; //2^20;
     std::vector< int > keys(length);
     
 
@@ -1710,7 +1712,7 @@ TEST(ReduceByKeyBasic, SerialDeviceVectorOffsetTest)
 
 TEST(ReduceByKeyBasic, MultiCoreDeviceVectorOffsetTest)
 {
-    int length = 1024;
+    int length = 1048576; //2^20;
     std::vector< int > keys(length);
     
 
@@ -1768,7 +1770,7 @@ TEST(ReduceByKeyBasic, MultiCoreDeviceVectorOffsetTest)
 
 TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
 {
-    int length = 1024;
+    int length = 1048576; //2^20
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1819,9 +1821,11 @@ TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
     cmpArrays(vrefOutput, voutput);
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
+
+//#if TEST_LARGE_BUFFERS 
 TEST(ReduceByKeyBasic, CPUIntegerTest)
 {
-    int length = 1<<24;
+    int length = 1048576; //2^20
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1875,9 +1879,11 @@ TEST(ReduceByKeyBasic, CPUIntegerTest)
     cmpArrays(vrefOutput, voutput);
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
+//#endif
+
 TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
 {
-    int length = 1<<10;
+    int length = 1048576; //2^20
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1931,9 +1937,10 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
 
+//#if TEST_LARGE_BUFFERS 
 TEST(ReduceByKeyPairCheck, IntegerTest2)
 {
-    int length = 1<<24;
+    int length = 1048576; //2^20
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2017,7 +2024,7 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
 }
 TEST(ReduceByKeyPairCheck, CPUIntegerTest2)
 {
-    int length = 1<<24;
+    int length = 1048576; //2^20
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2104,9 +2111,11 @@ TEST(ReduceByKeyPairCheck, CPUIntegerTest2)
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
 }
+//#endif
+
 TEST(ReduceByKeyPairCheck, MultiCoreIntegerTest2)
 {
-    int length = 1<<10;
+    int length = 1048576; //2^20
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2429,7 +2438,7 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTestOddSizes)
 #if UDD
 TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
 {
-    int length = 1024;
+    int length = 1048576; //2^20
     std::vector< uddfltint > keys( length);
     uddfltint key;
     key.x = 1.0f;
@@ -2507,7 +2516,7 @@ TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
 }
 TEST(ReduceByKeyPairUDDTest, CPU_UDDFloatIntTest)
 {
-    int length = 1024;
+    int length = 1048576; //2^20
     std::vector< uddfltint > keys( length);
     uddfltint key;
     key.x = 1.0f;
@@ -2590,7 +2599,7 @@ TEST(ReduceByKeyPairUDDTest, CPU_UDDFloatIntTest)
 }
 TEST(ReduceByKeyPairUDDTest, MultiCore_UDDFloatIntTest)
 {
-    int length = 1024;
+    int length = 1048576; //2^20
     std::vector< uddfltint > keys( length);
     uddfltint key;
     key.x = 1.0f;

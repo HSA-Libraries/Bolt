@@ -23,6 +23,7 @@
 
 #define STRUCT 1
 #define FILL_GOOGLE_TEST 1
+#define TEST_LARGE_BUFFERS 0
 
 #define TEST_DOUBLE 1
 #define TEST_CPU_DEVICE 1
@@ -462,15 +463,15 @@ typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 262144 > >,//18    
     std::tuple< cl_long, TypeValue< 524288 > >,//19    
     std::tuple< cl_long, TypeValue< 1048576 > >,//20    
-    std::tuple< cl_long, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 2097152 > >//21 
+	#if TEST_LARGE_BUFFERS
+	,
     std::tuple< cl_long, TypeValue< 4194304 > >,//22    
     std::tuple< cl_long, TypeValue< 8388608 > >,//23
     std::tuple< cl_long, TypeValue< 16777216 > >,//24
     std::tuple< cl_long, TypeValue< 33554432 > >,//25
     std::tuple< cl_long, TypeValue< 67108864 > >//26
-#endif
+    #endif
 > clLongTests;
 
 typedef ::testing::Types< 
@@ -495,15 +496,15 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 262144 > >,//18    
     std::tuple< int, TypeValue< 524288 > >,//19    
     std::tuple< int, TypeValue< 1048576 > >,//20    
-    std::tuple< int, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
+    std::tuple< int, TypeValue< 2097152 > >//21
+	#if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< int, TypeValue< 4194304 > >,//22    
     std::tuple< int, TypeValue< 8388608 > >,//23
     std::tuple< int, TypeValue< 16777216 > >,//24
     std::tuple< int, TypeValue< 33554432 > >,//25
     std::tuple< int, TypeValue< 67108864 > >//26
-#endif
+    #endif
 > IntegerTests;
 
 typedef ::testing::Types< 
@@ -528,15 +529,15 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 262144 > >,//18    
     std::tuple< unsigned int, TypeValue< 524288 > >,//19    
     std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
-    std::tuple< unsigned int, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
+    std::tuple< unsigned int, TypeValue< 2097152 > >//21 
+	#if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
     std::tuple< unsigned int, TypeValue< 8388608 > >,//23
     std::tuple< unsigned int, TypeValue< 16777216 > >,//24
     std::tuple< unsigned int, TypeValue< 33554432 > >,//25
     std::tuple< unsigned int, TypeValue< 67108864 > >//26
-#endif
+    #endif
 
 > UnsignedIntegerTests;
 
@@ -1914,43 +1915,50 @@ TEST_P(DevDblVector, MultiCoreFill_n )
 
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostclLongVector, ::testing::Range(1,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, HostclLongVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevclLongVector,  ::testing::Range(2,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, DevclLongVector,  ::testing::Range(1024,1050000,350003));
+
+//#if (TEST_LARGE_BUFFERS == 1)
+   INSTANTIATE_TEST_CASE_P( FillLarge, HostclLongVector, ::testing::Range(1023,1050000,350001));
+   INSTANTIATE_TEST_CASE_P( FillLarge, DevclLongVector,  ::testing::Range(1024,1050000,350003));
+   INSTANTIATE_TEST_CASE_P( FillLarge, HostIntVector, ::testing::Range(1023,1050000,350001));
+   INSTANTIATE_TEST_CASE_P( FillLarge, DevIntVector,  ::testing::Range(1024,1050000,350003));
+   INSTANTIATE_TEST_CASE_P( FillLarge, HostFloatVector, ::testing::Range(1023,1050000,350001));
+   INSTANTIATE_TEST_CASE_P( FillLarge, DevFloatVector,  ::testing::Range(1024,1050000,350003));
+   INSTANTIATE_TEST_CASE_P( FillLarge, HostUnsignedIntVector, ::testing::Range(1023,1050000,350001));
+   INSTANTIATE_TEST_CASE_P( FillLarge, DevUnsignedIntVector,  ::testing::Range(1024,1050000,350003));
+   INSTANTIATE_TEST_CASE_P( FillLarge, HostShortVector, ::testing::Range(1023,1050000,350001));
+   INSTANTIATE_TEST_CASE_P( FillLarge, DevShortVector,  ::testing::Range(1024,1050000,350003));
+   INSTANTIATE_TEST_CASE_P( FillLarge, HostUDDVector, ::testing::Range(1023,1050000,350001));
+   INSTANTIATE_TEST_CASE_P( FillLarge, DevUDDVector,  ::testing::Range(1024,1050000,350003));
+   INSTANTIATE_TEST_CASE_P( FillLarge, FillStdVectandConstantIterator, ::testing::Range(1023,1050000,350001));
+//#endif
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostIntVector, ::testing::Range(1,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, HostIntVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevIntVector,  ::testing::Range(2,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, DevIntVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostFloatVector, ::testing::Range(1,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, HostFloatVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevFloatVector,  ::testing::Range(2,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, DevFloatVector,  ::testing::Range(1024,1050000,350003));
+
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostUnsignedIntVector, ::testing::Range(1,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, HostUnsignedIntVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevUnsignedIntVector,  ::testing::Range(2,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, DevUnsignedIntVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostShortVector, ::testing::Range(1,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, HostShortVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevShortVector,  ::testing::Range(2,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, DevShortVector,  ::testing::Range(1024,1050000,350003));
+
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostUDDVector, ::testing::Range(1,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, HostUDDVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevUDDVector,  ::testing::Range(2,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, DevUDDVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, FillStdVectandConstantIterator, ::testing::Range(1,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, FillStdVectandConstantIterator, ::testing::Range(1023,1050000,350001));
 
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( FillSmall, HostDblVector, ::testing::Range(3,256,3));
-INSTANTIATE_TEST_CASE_P( FillLarge, HostDblVector, ::testing::Range(1025,1050000, 350007 ) );
 INSTANTIATE_TEST_CASE_P( FillSmall, DevDblVector,  ::testing::Range(4, 256, 3 ) );
+//#if (TEST_LARGE_BUFFERS == 1)
+INSTANTIATE_TEST_CASE_P( FillLarge, HostDblVector, ::testing::Range(1025,1050000, 350007 ) );
 INSTANTIATE_TEST_CASE_P( FillLarge, DevDblVector,  ::testing::Range(1026, 1050000, 350011 ) );
+//#endif
 #endif
 
 BOLT_FUNCTOR(characters,struct characters

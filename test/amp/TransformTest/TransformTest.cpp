@@ -1997,26 +1997,26 @@ TEST(TransformStdVector, CountingIterator)
 
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformIntegerVector, ::testing::Range( 0, 1024, 1 ) );
-INSTANTIATE_TEST_CASE_P( TransformInPlace,  TransformIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformIntegerVector, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^12
+INSTANTIATE_TEST_CASE_P( TransformInPlace,  TransformIntegerDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point
 // loses granularity at large values)
-INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
-INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformFloatDeviceVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16
+INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformFloatDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 
-INSTANTIATE_TEST_CASE_P( InplaceSquareTransform, TransformFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( InplaceSquareTransform, TransformFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16
 INSTANTIATE_TEST_CASE_P( InplaceSquareTransform, TransformFloatDeviceVector, ::testing::Range( 0, 1048576, 4096 ) );
 
-INSTANTIATE_TEST_CASE_P( InplaceCubeTransform, TransformFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
-INSTANTIATE_TEST_CASE_P( InplaceCubeTransform, TransformFloatDeviceVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( InplaceCubeTransform, TransformFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16
+INSTANTIATE_TEST_CASE_P( InplaceCubeTransform, TransformFloatDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 
 #if(TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
-INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformDoubleDeviceVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformDoubleVector, ::testing::Range(  65536, 2097152, 55555 ) ); //2^16 to 2^21
+INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformDoubleDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 
-INSTANTIATE_TEST_CASE_P( InplaceTransform, TransformDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
-INSTANTIATE_TEST_CASE_P( InplaceTransform, TransformDoubleDeviceVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( InplaceTransform, TransformDoubleVector, ::testing::Range(  65536, 2097152, 55555 ) ); //2^16 to 2^21
+INSTANTIATE_TEST_CASE_P( InplaceTransform, TransformDoubleDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 
 #endif
 typedef ::testing::Types< 

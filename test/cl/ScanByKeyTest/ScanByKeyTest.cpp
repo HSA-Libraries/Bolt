@@ -2640,8 +2640,8 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
 
 } 
 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 1, 1024, 47 )); 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 4096, 555)); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^12
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(4096, 65536, 555 ) ); //2^12 to 2^16
 
 
 #if (TEST_DOUBLE == 1)
@@ -4473,7 +4473,7 @@ while(status) {
         if(HostDataBuffer[i] != deviceOutput[i]) { status = 0; break; }
     }
 
-    std::cout << "Verify Result : " << ((status == 1) ? "PASS" : "FAIL") << std::endl;
+    //std::cout << "Verify Result : " << ((status == 1) ? "PASS" : "FAIL") << std::endl;
     if(++count > 20) break;
 }
     

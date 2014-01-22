@@ -3783,7 +3783,7 @@ TEST(ExclusiveScanByKey, Multicore_DeviceVectorExclUdd)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if TEST_LARGE_BUFFERS
+#if 0
 TEST(InclusiveScanByKey, MulticoreInclUdd)
 {
     //setup keys

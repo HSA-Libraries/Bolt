@@ -925,21 +925,21 @@ TEST_P( MinEFloatVector, MultiCore )
 std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
 std::array<int, 6> TestValues1 = {2048,4096,8192,16384,32768, 65535};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( MinERange, MinEIntegerVector, ::testing::Range( 1, 65535, 177 ) );
+INSTANTIATE_TEST_CASE_P( MinERange, MinEIntegerVector, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^22
 INSTANTIATE_TEST_CASE_P( MinEValues, MinEIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
-INSTANTIATE_TEST_CASE_P( MinERange, MinEFloatVector, ::testing::Range( 1, 65535, 133 ) );
+INSTANTIATE_TEST_CASE_P( MinERange, MinEFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16	
 INSTANTIATE_TEST_CASE_P( MinEValues, MinEFloatVector, ::testing::ValuesIn(TestValues.begin(),TestValues.end()));
 INSTANTIATE_TEST_CASE_P( MinERange,MinEIntegerDeviceVector,::testing::Range(0,65535,153));
 INSTANTIATE_TEST_CASE_P( MinEValues,MinEIntegerDeviceVector,::testing::ValuesIn(TestValues.begin(),TestValues.end()));
 INSTANTIATE_TEST_CASE_P( MinERange, MinEFloatDeviceVector, ::testing::Range( 0, 65535, 153 ) );
 INSTANTIATE_TEST_CASE_P( MinEValues, MinEFloatDeviceVector, ::testing::ValuesIn(TestValues.begin(),TestValues.end()));
 
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( MinEValues1, MinEIntegerVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
 INSTANTIATE_TEST_CASE_P( MinEValues1, MinEFloatVector, ::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
 INSTANTIATE_TEST_CASE_P( MinEValues1,MinEIntegerDeviceVector,::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
 INSTANTIATE_TEST_CASE_P( MinEValues1, MinEFloatDeviceVector, ::testing::ValuesIn(TestValues1.begin(),TestValues1.end()));
-#endif
+//#endif
 
 typedef ::testing::Types<
     std::tuple< int, TypeValue< 1 > >,
@@ -951,14 +951,14 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 128 > >,
     std::tuple< int, TypeValue< 129 > >,
     std::tuple< int, TypeValue< 1000 > >,
-    std::tuple< int, TypeValue< 1053 > >
-	#if TEST_LARGE_BUFFERS
-	,
+    std::tuple< int, TypeValue< 1053 > >,
+	/*#if TEST_LARGE_BUFFERS
+	,*/
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 65535 > >,
     std::tuple< int, TypeValue< 65536 > >
-    #endif
+    //#endif
 > IntegerTests;
 
 typedef ::testing::Types<
@@ -971,14 +971,14 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 128 > >,
     std::tuple< float, TypeValue< 129 > >,
     std::tuple< float, TypeValue< 1000 > >,
-    std::tuple< float, TypeValue< 1053 > >
-    #if TEST_LARGE_BUFFERS
-	,
+    std::tuple< float, TypeValue< 1053 > >,
+    /*#if TEST_LARGE_BUFFERS
+	,*/
     std::tuple< float, TypeValue< 4096 > >,
     std::tuple< float, TypeValue< 4097 > >,
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
-    #endif
+    //#endif
 > FloatTests;
 
 //BOLT_FUNCTOR( UDD,

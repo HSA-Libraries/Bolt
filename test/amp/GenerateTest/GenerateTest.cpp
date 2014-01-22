@@ -1756,32 +1756,32 @@ TEST_P( DevDblVector, MultiCoreGenerateN )
 INSTANTIATE_TEST_CASE_P( GenSmall, HostUDDVector, ::testing::Range( 1, 256, 3 ) );
 #if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostUDDVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevUDDVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 #endif
+INSTANTIATE_TEST_CASE_P( GenLarge, DevUDDVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevUDDVector,  ::testing::Range( 2, 256, 3 ) );
 
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostUnsignedIntVector, ::testing::Range( 1, 256, 3 ) );
 #if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostUnsignedIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevUnsignedIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 #endif
+INSTANTIATE_TEST_CASE_P( GenLarge, DevUnsignedIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevUnsignedIntVector,  ::testing::Range( 2, 256, 3 ) );
 
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostIntVector, ::testing::Range( 1, 256, 3 ) );
 #if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 #endif
+INSTANTIATE_TEST_CASE_P( GenLarge, DevIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
 
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostFloatVector, ::testing::Range( 1, 256, 3 ) );
 #if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostFloatVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevFloatVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 #endif
+INSTANTIATE_TEST_CASE_P( GenLarge, DevFloatVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevFloatVector,  ::testing::Range( 2, 256, 3 ) );
 
 
@@ -1789,8 +1789,8 @@ INSTANTIATE_TEST_CASE_P( GenSmall, DevFloatVector,  ::testing::Range( 2, 256, 3 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostDblVector, ::testing::Range( 3, 256, 3 ) );
 #if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostDblVector, ::testing::Range( 1025, 1050000, 350007 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevDblVector,  ::testing::Range( 1026, 1050000, 350011 ) );
 #endif
+INSTANTIATE_TEST_CASE_P( GenLarge, DevDblVector,  ::testing::Range( 1026, 1050000, 350011 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
 
 #endif

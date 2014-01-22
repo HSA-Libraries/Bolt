@@ -34,6 +34,7 @@
 #include <boost/config.hpp>
 
 #define TEST_DOUBLE 1
+#define TEST_LARGE_BUFFERS 0
 
 BOLT_FUNCTOR( is_even,				  
 struct is_even{
@@ -5184,10 +5185,10 @@ TEST(HostMemory_IntStdVector, OffsetScatterIfPredicateMedium)
 
 
 
-INSTANTIATE_TEST_CASE_P(ScatterIntLimit, HostMemory_IntStdVector, ::testing::Range(10, 2400, 23));
-INSTANTIATE_TEST_CASE_P(ScatterIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(10, 2400, 23));
-INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(10, 2400, 23)); 
-INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestIntFloat, ::testing::Range(10, 2400, 23)); 
+INSTANTIATE_TEST_CASE_P(ScatterIntLimit, HostMemory_IntStdVector, ::testing::Range(1, 4096, 54 ) ); //   1 to 2^12
+INSTANTIATE_TEST_CASE_P(ScatterIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(1, 32768, 3276 ) ); // 1 to 2^15
+INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(1, 32768, 3276 ) ); // 1 to 2^15
+INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestIntFloat, ::testing::Range(1, 32768, 3276 ) ); // 1 to 2^15
 
 int main(int argc, char* argv[])
 {

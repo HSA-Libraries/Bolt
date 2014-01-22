@@ -876,13 +876,13 @@ TEST_P( ScanDoubleVector, MulticoreInclusiveInplace )
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
 
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 //  Test a huge range, suitable for floating point as they are less prone to overflow 
 // (but floating point loses granularity at large values)
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 0, 1048576, 104857 /*4096*/ ) );
 #if(TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
-#endif
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 104857 /*4096*/ ) );
+//#endif
 #endif
 
 typedef ::testing::Types< 
@@ -895,14 +895,14 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 128 > >,
     std::tuple< int, TypeValue< 129 > >,
     std::tuple< int, TypeValue< 1000 > >,
-    std::tuple< int, TypeValue< 1053 > >
-	#if TEST_LARGE_BUFFERS
-	,
+    std::tuple< int, TypeValue< 1053 > >,
+	/*#if TEST_LARGE_BUFFERS
+	,*/
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 65535 > >,
     std::tuple< int, TypeValue< 65536 > >
-    #endif
+    //#endif
 > IntegerTests;
 
 typedef ::testing::Types< 
@@ -915,14 +915,14 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 128 > >,
     std::tuple< float, TypeValue< 129 > >,
     std::tuple< float, TypeValue< 1000 > >,
-    std::tuple< float, TypeValue< 1053 > >
-	#if TEST_LARGE_BUFFERS
-	,
+    std::tuple< float, TypeValue< 1053 > >,
+	/*#if TEST_LARGE_BUFFERS
+	,*/
     std::tuple< float, TypeValue< 4096 > >,
     std::tuple< float, TypeValue< 4097 > >,
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
-    #endif
+    //#endif
 > FloatTests;
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );

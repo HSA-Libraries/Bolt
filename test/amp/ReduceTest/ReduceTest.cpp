@@ -1639,64 +1639,64 @@ std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
 std::array<int, 5> TestValues1 = {2048,4096,8192,16384,32768};
 
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerVector, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^22
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerVector, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatVector, ::testing::Range( 0, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16	
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
 
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerVector, ::testing::ValuesIn( TestValues1.begin(),TestValues1.end()));
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
-#endif
+//#endif
 
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleVector, ::testing::Range( 65536, 2097152, 55555 ) ); //2^16 to 2^21
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceDoubleVector, ::testing::ValuesIn( TestValues1.begin(), TestValues1.end()));
+//#endif
 #endif
-#endif
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                     TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerDeviceVector, ::testing::ValuesIn( TestValues1.begin(),
                                                                                     TestValues1.end() ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
-#endif
+//#endif
 
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceDoubleDeviceVector, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
+//#endif
 #endif
-#endif
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
-#endif
+//#endif
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( Reduce, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
-#if TEST_LARGE_BUFFERS
+//#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( Reduce1, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues1.begin(),TestValue1s.end()));
 #endif
-#endif
+//#endif
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
@@ -1708,14 +1708,14 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 128 > >,
     std::tuple< int, TypeValue< 129 > >,
     std::tuple< int, TypeValue< 1000 > >,
-    std::tuple< int, TypeValue< 1053 > >
-	#if TEST_LARGE_BUFFERS
-	,
+    std::tuple< int, TypeValue< 1053 > >,
+	/*#if TEST_LARGE_BUFFERS
+	,*/
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 65535 > >,
     std::tuple< int, TypeValue< 65536 > >
-    #endif
+    //#endif
 > IntegerTests;
 
 typedef ::testing::Types< 
@@ -1728,14 +1728,14 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 128 > >,
     std::tuple< float, TypeValue< 129 > >,
     std::tuple< float, TypeValue< 1000 > >,
-    std::tuple< float, TypeValue< 1053 > >
-	#if TEST_LARGE_BUFFERS
-	,
+    std::tuple< float, TypeValue< 1053 > >,
+	/*#if TEST_LARGE_BUFFERS
+	,*/
     std::tuple< float, TypeValue< 4096 > >,
     std::tuple< float, TypeValue< 4097 > >,
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
-    #endif
+    //#endif
 > FloatTests;
 
 #if (TEST_DOUBLE == 1)
@@ -1749,14 +1749,14 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 128 > >,
     std::tuple< double, TypeValue< 129 > >,
     std::tuple< double, TypeValue< 1000 > >,
-    std::tuple< double, TypeValue< 1053 > >
-	#if TEST_LARGE_BUFFERS
-	,
+    std::tuple< double, TypeValue< 1053 > >,
+	/*#if TEST_LARGE_BUFFERS
+	,*/
     std::tuple< double, TypeValue< 4096 > >,
     std::tuple< double, TypeValue< 4097 > >,
     std::tuple< double, TypeValue< 65535 > >,
     std::tuple< double, TypeValue< 65536 > >
-    #endif
+    //#endif
 > DoubleTests;
 #endif 
 
