@@ -206,7 +206,7 @@ typename std::enable_if< !(std::is_same< typename std::iterator_traits<typename 
     BOLT_TEST_RESET_FAILURES
     for( size_t i = 0; i < ref.size( ); ++i )
     {
-        BOLT_TEST_INCREMENT_FAILURES
+       
         //the two float values are almost equal 
         //By "almost equal", we mean the two values are within 4 ULP's from each other. 
         //http://code.google.com/p/googletest/wiki/AdvancedGuide#Floating-Point_Comparison
@@ -214,6 +214,19 @@ typename std::enable_if< !(std::is_same< typename std::iterator_traits<typename 
     }
 
     return ::testing::AssertionSuccess( );
+}
+
+template< typename T1,typename T2>
+::testing::AssertionResult 
+cmpArrays( const T1& ref, typename bolt::amp::device_vector<T2> &calc )
+{
+		typename bolt::amp::device_vector<T2>::pointer calcptr =  calc.data( );
+        BOLT_TEST_RESET_FAILURES
+        for( size_t i = 0; i < ref.size(); ++i )
+        {
+            EXPECT_EQ( ref[ i ], calcptr[ i ] ) << _T( "Where i = " ) << i ;
+        }
+        return ::testing::AssertionSuccess( );
 }
 
 template< typename T1,typename T2>
