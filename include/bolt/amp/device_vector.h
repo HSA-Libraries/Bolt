@@ -491,9 +491,15 @@ public:
         static_assert( std::is_same< array_type, container_type >::value,
             "This constructor is only valid for concurrency::array types.  concurrency::array_views should use a "
             "constructor that accepts containers" );
-
-        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-        m_devMemory = new container_type( ext, begin, ctl.getAccelerator( ).default_view );
+		if( m_Size > 0 )
+        {
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			m_devMemory = new container_type( ext, begin, ctl.getAccelerator( ).default_view );
+		}
+		else
+        {
+            m_devMemory = NULL;
+        }
     };
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -511,8 +517,15 @@ public:
                 typename std::enable_if< !std::is_integral< InputIterator >::value &&
                                     std::is_same< arrayview_type, container_type >::value>::type* = 0 ) : m_Size( newSize )
     {
-        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-        m_devMemory = new container_type( ext, &begin[ 0 ] );
+		if( m_Size > 0 )
+        {
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			m_devMemory = new container_type( ext, &begin[ 0 ] );
+		}
+		else
+        {
+            m_devMemory = NULL;
+        }
     };
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -527,8 +540,15 @@ public:
         static_assert( std::is_same< arrayview_type, container_type >::value,
             "This constructor is only valid for concurrency::array_view types" );
 
-        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-        m_devMemory = new container_type( ext, cont );
+		if( m_Size > 0 )
+        {
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			m_devMemory = new container_type( ext, cont );
+		}
+		else
+        {
+            m_devMemory = NULL;
+        }
 
         //  TODO:  I can't get this constructor to properly resolve
         //m_devMemory = new container_type( ext, cont, discard );
@@ -550,10 +570,15 @@ public:
             "constructor that accepts containers" );
 
         m_Size =  std::distance( begin, end );
-
-        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-
-        m_devMemory = new container_type( ext, begin, end, ctl.getAccelerator().default_view );
+		if( m_Size > 0 )
+        {
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			m_devMemory = new container_type( ext, begin, end, ctl.getAccelerator().default_view );
+		}
+		else
+		{
+			 m_devMemory = NULL;
+		}
     };
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -569,9 +594,17 @@ public:
     {
         m_Size =  std::distance( begin, end );
 
-        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+		if( m_Size > 0 )
+        {
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			m_devMemory = new container_type( ext, &begin[ 0 ] );
 
-        m_devMemory = new container_type( ext, &begin[ 0 ] );
+		}
+		else
+		{
+			 m_devMemory = NULL;
+		}
+
     };
 
     /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
@@ -987,17 +1020,23 @@ public:
     {
         /// \TODO need to understand what Array_view.data is returning. Who should free the pointer?
         // below av.data(). It should anyway be freed in the UnMapBufferFunctor Functor
+		if(0 == size())
+        {
 
+             return NULL;
+        }
         synchronize( *this );
-
         arrayview_type av( *m_devMemory );
         return av.data( );
     }
 
     const_pointer data( void ) const
     {
-        synchronize( *this );
-
+		if(0 == size())
+        {
+             return NULL;
+        }
+		synchronize( *this );
         arrayview_type av( *m_devMemory );
         return av.data( );
     }
