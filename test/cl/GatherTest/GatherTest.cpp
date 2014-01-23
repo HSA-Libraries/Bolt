@@ -30,6 +30,7 @@
 #include <boost/iterator/permutation_iterator.hpp>
 #include <array>
 #define TEST_DOUBLE 1
+#define TEST_LARGE_BUFFERS 0
 
 BOLT_FUNCTOR( is_even,
 struct is_even{
@@ -3555,6 +3556,7 @@ TEST( HostMemory_int, OffsetGatherPredicateMedium )
     EXPECT_EQ(exp_result, result);
 }
 
+#if TEST_LARGE_BUFFERS
 TEST(sanity_gather_double_ptr, with_double) // EPR#391728
 {
   int size = 100000;
@@ -3597,12 +3599,12 @@ TEST(sanity_gather_double_ptr, with_double) // EPR#391728
 
 }
 
+#endif
 
-
-INSTANTIATE_TEST_CASE_P(GatherIntLimit, HostMemory_IntStdVector, ::testing::Range(10, 2400, 23));
-INSTANTIATE_TEST_CASE_P(GatherIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(10, 2400, 23));
-INSTANTIATE_TEST_CASE_P(GatherUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(10, 2400, 23)); 
-INSTANTIATE_TEST_CASE_P(GatherUDDLimit, HostMemory_UDDTestIntFloat, ::testing::Range(10, 2400, 23)); 
+INSTANTIATE_TEST_CASE_P(GatherIntLimit, HostMemory_IntStdVector, ::testing::Range(10, 2400, 230));
+INSTANTIATE_TEST_CASE_P(GatherIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(10, 2400, 230));
+INSTANTIATE_TEST_CASE_P(GatherUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(10, 2400, 230)); 
+INSTANTIATE_TEST_CASE_P(GatherUDDLimit, HostMemory_UDDTestIntFloat, ::testing::Range(10, 2400, 230)); 
 
 
 int main(int argc, char* argv[])

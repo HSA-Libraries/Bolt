@@ -1009,7 +1009,7 @@ TEST_P( StdVectCountingIterator, withCountingIterator)
 //    EXPECT_EQ(stdCount, boltCount);
 //}
 
-#if TEST_LARGE_BUFFERS
+#if 0
 TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
 {
     bolt::amp::counting_iterator<int> first(0);

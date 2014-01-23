@@ -1667,41 +1667,70 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
 #endif
 #endif
 
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
+std::array<int, 5> TestValues2 = {2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerVector, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^12
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                          TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatVector, ::testing::Range( 0, 1024, 3 ) );
+
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatVector, ::testing::Range(4096, 65536, 555 ) ); //2^12 to 2^16
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatVector, ::testing::ValuesIn( TestValues.begin(), 
                          TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleVector, ::testing::Range( 65536, 2097152, 55555 ) ); //2^16 to 2^21
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
                          TestValues.end() ) );
+//#if LARGE
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformDoubleVector, ::testing::ValuesIn( TestValues2.begin(), 
+                         TestValues2.end() ) );
+//#endif
 #endif
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerDeviceVector, ::testing::Range(1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                          TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                          TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                          TestValues.end() ) );
+//#if LARGE
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformDoubleDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
+                         TestValues2.end() ) );
+//#endif
 #endif
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                          TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatNakedPointer, ::testing::Range(1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                          TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleNakedPointer, ::testing::Range(1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( Transform, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                          TestValues.end() ) );
+//#if LARGE
+INSTANTIATE_TEST_CASE_P( Transform2, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
+                         TestValues2.end() ) );
+//#endif
 #endif
+
+//#if LARGE
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
+                         TestValues2.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
+                         TestValues2.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
+                         TestValues2.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
+                         TestValues2.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
+                         TestValues2.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues2, TransformFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
+                         TestValues2.end() ) );
+//#endif
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
@@ -2300,9 +2329,9 @@ TEST( TransformUDD, UDDTestStdVector)
 {
 
 #if LARGE_SIZE
-  int length = 1<<21;
+  int length = 33554432; //2^25
 #else
-  int length =1024;
+  int length = 32768; //2^15
 #endif
   std::vector<UDD> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorBoltO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
@@ -2326,9 +2355,9 @@ TEST( TransformUDD, UDDTestDeviceVector)
 {
 
 #if LARGE_SIZE
-  int length = 1<<21;
+  int length = 33554432; //2^25
 #else
-  int length = 1024;
+  int length = 32768; //2^15
 #endif
   std::vector<UDD> hVectorA( length ),
                    hVectorB( length ),
@@ -2356,9 +2385,9 @@ TEST( TransformLong, LongTests)
 {
 
 #if LARGE_SIZE
-  int length = 1<<21;
+  int length = 33554432; //2^25
 #else
-  int length = 1024;
+  int length = 32768; //2^15
 #endif
   std::vector<cl_long> hVectorA( length ),
                    hVectorB( length ),
@@ -2385,9 +2414,9 @@ TEST( TransformULong, ULongTests)
 {
 
 #if LARGE_SIZE
-  int length = 1<<21;
+  int length = 33554432; //2^25
 #else
-  int length = 1024;
+  int length = 32768; //2^15
 #endif
   std::vector<cl_ulong> hVectorA( length ),
                    hVectorB( length ),
@@ -2412,7 +2441,11 @@ TEST( TransformULong, ULongTests)
 
 TEST(TransformStd, OffsetTest)
 {
-  int length = 1024;
+  #if LARGE_SIZE
+  int length = 33554432; //2^25
+#else
+  int length = 32768; //2^15
+#endif
   std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorBoltO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
@@ -2432,7 +2465,11 @@ TEST(TransformStd, OffsetTest)
 
 TEST(TransformStd, OffsetTestDeviceVector)
 {
-  int length = 1024;
+  #if LARGE_SIZE
+  int length = 33554432; //2^25
+#else
+  int length = 32768; //2^15
+#endif
   std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
@@ -2455,7 +2492,12 @@ TEST(TransformStd, OffsetTestDeviceVector)
 
 TEST(TransformStd, OffsetTestDeviceVectorSerialCPU)
 {
-  int length = 1024;
+  #if LARGE_SIZE
+    int length = 33554432; //2^25
+  #else
+    int length = 32768; //2^15
+  #endif
+
   std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
@@ -2481,7 +2523,11 @@ TEST(TransformStd, OffsetTestDeviceVectorSerialCPU)
 
 TEST(TransformStd, OffsetTestDeviceVectorMultiCoreCPU)
 {
-  int length = 1024;
+  #if LARGE_SIZE
+    int length = 33554432; //2^25
+  #else
+    int length = 32768; //2^15
+  #endif
   std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
@@ -2508,7 +2554,11 @@ TEST(TransformStd, OffsetTestDeviceVectorMultiCoreCPU)
 
 TEST(TransformStd, OffsetTestMultiCoreCPU)
 {
-  int length = 1024;
+  #if LARGE_SIZE
+    int length = 33554432; //2^25
+  #else
+    int length = 32768; //2^15
+  #endif
   std::vector<cl_long> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorDO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
@@ -2585,9 +2635,9 @@ TEST( DebuggingUShort, ushortbintransfrom)
 {
 
 #if LARGE_SIZE
-  int length = 1<<21;
+  int length = 33554432; //2^25
 #else
-  int length = 1024;
+  int length = 32768; //2^15
 #endif
   std::vector<unsigned short> hVectorA( length ),
                    hVectorB( length ),
@@ -2619,9 +2669,9 @@ TEST( IntegerTests64, cl_ulongintransfrom)
 {
 
 #if LARGE_SIZE
-  int length = 1<<21;
+  int length = 33554432; //2^25
 #else
-  int length = 1024;
+  int length = 32768; //2^15
 #endif
   std::vector<cl_ulong> hVectorA( length ),
                    hVectorB( length ),
