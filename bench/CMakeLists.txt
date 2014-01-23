@@ -45,6 +45,7 @@ if( BUILD_ampBolt AND Boost_FOUND )
 endif( )
 
 if( BUILD_clBolt AND Boost_FOUND )
+    include_directories( ${OPENCL_INCLUDE_DIRS} )
     add_subdirectory( cl )
 endif( )
 
