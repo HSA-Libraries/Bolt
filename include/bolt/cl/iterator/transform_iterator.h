@@ -26,6 +26,8 @@
     \brief Return Incremented Value on dereferencing.
 */
 
+
+
 namespace bolt {
 namespace cl {
 
@@ -34,8 +36,184 @@ namespace cl {
         {   // identifying tag for random-access iterators
         };
 
-    //  This represents the host side definition of the counting_iterator template
-    //BOLT_TEMPLATE_FUNCTOR3( counting_iterator, int, float, double,
+        template< typename UnaryFunction, typename Iterator >
+        class transform_iterator: public std::iterator< transform_iterator_tag, 
+                                                        Iterator, //typename transform_iterator<UnaryFunction, Iterator>::value_type, 
+                                                        int>
+        {
+        public:
+            typedef typename std::iterator< transform_iterator_tag, 
+                                             Iterator,//typename transform_iterator<UnaryFunction, Iterator>::value_type,//typename Iterator::value_type, 
+                                             int>::difference_type  difference_type;
+
+            typedef typename std::iterator< transform_iterator_tag, 
+                                             typename transform_iterator<UnaryFunction, Iterator>::value_type,//typename Iterator::value_type, 
+                                             int>::value_type  value_type;
+
+            //typedef transform_iterator<UnaryFunction, Iterator> const_iterator;
+
+            //  Basic constructor requires a reference to the container and a positional element
+            //TODO - you should be able to get a unary function from the iterator
+            transform_iterator( value_type it, UnaryFunction uf, const control& ctl = control::getDefault( ) ): 
+                m_it( it ), m_uf(uf) {}
+
+            //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+           template< typename OtherFunction, typename OtherType >
+           transform_iterator( const transform_iterator< OtherFunction, OtherType >& rhs ):m_Index( rhs.m_Index ),
+               m_it( rhs.m_it ) {}
+
+            //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+            transform_iterator< UnaryFunction, Iterator >& operator= ( const transform_iterator< UnaryFunction, Iterator >& rhs )
+            {
+                if( this == &rhs )
+                    return *this;
+
+                m_ii = rhs.m_it;
+                //m_Index = rhs.m_Index;
+                return *this;
+            }
+                
+            transform_iterator< UnaryFunction, Iterator >& operator+= ( const  difference_type & n )
+            {
+                advance( n );
+                return *this;
+            }
+                
+            const transform_iterator< UnaryFunction, Iterator > operator+ ( const difference_type & n ) const
+            {
+                transform_iterator< UnaryFunction, Iterator > result( *this );
+                result.advance( n );
+                return result;
+            }
+
+            const transform_iterator< UnaryFunction, Iterator > & getBuffer( const_iterator itr ) const
+            {
+                return *this;
+            }
+            
+            const transform_iterator< UnaryFunction, Iterator > & getContainer( ) const
+            {
+                return *this;
+            }
+
+            difference_type operator- ( const transform_iterator< UnaryFunction, Iterator >& rhs ) const
+            {
+                return m_it - rhs.m_it;
+            }
+
+            //  Public member variables
+            //difference_type m_Index;
+
+            //  Used for templatized copy constructor and the templatized equal operator
+            template < typename, typename > friend class transform_iterator;
+
+            //  For a transform_iterator, do nothing on an advance
+            void advance( difference_type n )
+            {
+                m_it += n;
+            }
+
+            // Pre-increment
+            transform_iterator< UnaryFunction, Iterator > operator++ ( ) const
+            {
+                transform_iterator< UnaryFunction, Iterator > result( *this );
+                result.advance( 1 );
+                return result;
+            }
+
+            // Post-increment
+            transform_iterator< UnaryFunction, Iterator > operator++ ( int ) const
+            {
+                transform_iterator< UnaryFunction, Iterator > result( *this );
+                result.advance( 1 );
+                return result;
+            }
+
+            // Pre-decrement
+            transform_iterator< UnaryFunction, Iterator > operator--( ) const
+            {
+                transform_iterator< UnaryFunction, Iterator > result( *this );
+                result.advance( -1 );
+                return result;
+            }
+
+            // Post-decrement
+            transform_iterator< UnaryFunction, Iterator > operator--( int ) const
+            {
+                transform_iterator< UnaryFunction, Iterator > result( *this );
+                result.advance( -1 );
+                return result;
+            }
+
+            difference_type getIndex() const
+            {
+                return m_Index;
+            }
+
+            template< typename OtherFunction, typename OtherIterator >
+            bool operator== ( const transform_iterator< OtherFunction, OtherIterator >& rhs ) const
+            {
+                bool sameIndex = (rhs.m_it == m_it) && (rhs.m_Index == m_Index);
+                return sameIndex;
+            }
+
+            template< typename OtherFunction, typename OtherIterator >
+            bool operator!= ( const transform_iterator< OtherFunction, OtherIterator >& rhs ) const
+            {
+                bool sameIndex = (rhs.m_it != m_it) ;
+
+                return sameIndex;
+            }
+
+            // Do we need this? Debug error
+            template< typename OtherFunction, typename OtherIterator >
+            bool operator< ( const transform_iterator< OtherFunction, OtherIterator >& rhs ) const
+            {
+                bool sameIndex = (m_Index < rhs.m_Index);
+                return sameIndex;
+            }
+
+            // Dereference operators
+            value_type operator*() const 
+            {
+                value_type xy = m_uf(*m_it);
+                return xy;
+            }
+
+
+            value_type operator[](int x) const 
+            {
+              value_type temp = m_f(m_it);
+              return temp;
+            }
+       private:
+            value_type m_it;
+            UnaryFunction m_uf;
+            //Iterator   m_it;
+        };
+
+
+    template< typename UnaryFunction, typename Iterator >
+    transform_iterator< UnaryFunction, Iterator > make_transform_iterator( Iterator it, UnaryFunction fun )
+    {
+        transform_iterator< UnaryFunction, Iterator > tmp( it, fun );
+        return tmp;
+    }
+
+}// End of cl namespace
+}// End of bolt namespace
+
+
+
+#if 0
+namespace bolt {
+namespace cl {
+
+    struct transform_iterator_tag
+        : public fancy_iterator_tag
+        {   // identifying tag for random-access iterators
+        };
+
         template< typename UnaryFunction,
                   typename Iterator >
         class transform_iterator: public boost::iterator_facade< transform_iterator< UnaryFunction, Iterator >, typename Iterator::value_type,
@@ -58,7 +236,7 @@ namespace cl {
             //  Basic constructor requires a reference to the container and a positional element
             // transform iterators are read only.
             // TODO - a specialization for counting and constant iterator is required.
-            transform_iterator( const Iterator it, UnaryFunction u_f, const control& ctl = control::getDefault( ) ):
+            transform_iterator( Iterator it, UnaryFunction u_f, const control& ctl = control::getDefault( ) ):
                 m_Index( 0 )
             {
                 //static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
@@ -73,7 +251,7 @@ namespace cl {
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
             template< typename OtherIterator >
             transform_iterator( const transform_iterator< UnaryFunction, OtherIterator >& rhs ): m_devMemory( rhs.m_devMemory ),
-                m_Index( rhs.m_Index ), m_initValue( rhs.m_initValue )
+                m_Index( rhs.m_Index )/*, m_initValue( rhs.m_initValue )*/
             {
             }
 
@@ -115,7 +293,7 @@ namespace cl {
 
             Payload gpuPayload( ) const
             {
-                Payload payload = { m_initValue };
+                Payload payload = { 0/*m_initValue */};
                 return payload;
             }
 
@@ -128,7 +306,7 @@ namespace cl {
             difference_type distance_to( const transform_iterator< UnaryFunction, Iterator >& rhs ) const
             {
                 //return static_cast< typename iterator_facade::difference_type >( 1 );
-                return rhs.m_Index - m_Index;
+                return rhs.m_it - m_it;
             }
 
             //  Public member variables
@@ -160,18 +338,17 @@ namespace cl {
             template< typename OtherIterator >
             bool equal( const transform_iterator< UnaryFunction, OtherIterator >& rhs ) const
             {
-                bool sameIndex = (rhs.m_initValue == m_initValue) && (rhs.m_Index == m_Index);
+                bool sameIndex = /*(rhs.m_initValue == m_initValue) &&*/ (rhs.m_Index == m_Index);
                 return sameIndex;
             }
 
             typename boost::iterator_facade< transform_iterator< UnaryFunction, Iterator >, typename Iterator::value_type,
                                              transform_iterator_tag, typename Iterator::value_type, int >::reference  dereference( ) const
             {
-                return m_initValue + m_Index;
+                return /*m_initValue +*/ m_Index;
             }
 
-            //::cl::Buffer m_devMemory;
-            value_type m_initValue;
+            //value_type m_initValue;
             UnaryFunction m_f;
             Iterator &it;
             
@@ -238,5 +415,5 @@ namespace cl {
 //BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::transform_iterator, int, float );
 //BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::transform_iterator, int, double );
 //BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::transform_iterator, int, cl_long );
-
+#endif
 #endif

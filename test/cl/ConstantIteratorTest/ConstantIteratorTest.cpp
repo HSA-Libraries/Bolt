@@ -21,6 +21,7 @@
 
 #include "bolt/cl/iterator/constant_iterator.h"
 #include "bolt/cl/iterator/counting_iterator.h"
+#include "bolt/cl/iterator/transform_iterator.h"
 #include "bolt/cl/transform.h"
 #include "bolt/cl/reduce.h"
 #include "bolt/cl/functional.h"
@@ -299,14 +300,25 @@ TEST( TransformIterator, FirstTest)
     std::vector< int > outVec( 100 );
     std::generate(devVec.begin(), devVec.end(), rand);
     square<int> sq;
-    std::vector< int >::const_iterator it;
-    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_begin( devVec.begin(), devVec.end(), sq );
-    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_end = trf_begin + devVec.size();
-    bolt::cl::transform( trf_begin, trf_end, outVec.begin(), sq );
+    std::vector<int>::const_iterator it(devVec.begin() );
+    std::array<int, 1000>::const_iterator array_it;
 
-    EXPECT_EQ( 42, devVec[ 0 ] );
-    EXPECT_EQ( 43, devVec[ 1 ] );
-    EXPECT_EQ( 44, devVec[ 2 ] );
+    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_begin( devVec.begin(), sq );
+    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_end( devVec.end(), sq );
+    int dist = std::distance(trf_begin, trf_end);
+    std::cout << "distance = " << dist << "\n" ;
+    int dist1 = std::distance( devVec.begin(), devVec.end() );
+    std::cout << "distance = " << dist1 << "\n" ;
+    for(int i =0; i< 100; i++)
+    {
+        *trf_begin;
+        trf_begin++;
+    }
+    //bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_end = trf_begin + devVec.size();
+    //bolt::cl::transform( trf_begin, trf_end, outVec.begin(), sq );
+    //EXPECT_EQ( 42, devVec[ 0 ] );
+    //EXPECT_EQ( 43, devVec[ 1 ] );
+    //EXPECT_EQ( 44, devVec[ 2 ] );
 }
 
 
