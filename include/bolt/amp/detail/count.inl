@@ -30,7 +30,7 @@
 #include "bolt/btbb/count.h"
 #endif
 
-#define _REDUCE_STEP(_LENGTH, _IDX, _W) \
+#define _COUNT_REDUCE_STEP(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
       scratch_count[_IDX] =  scratch_count[_IDX] + scratch_count[_IDX + _W];\
     }\
@@ -117,14 +117,14 @@ namespace bolt {
                       // Parallel reduction within a given workgroup using local data store
                       // to share values between workitems
 
-					  _REDUCE_STEP(tail, tileIndex, 128);
-					  _REDUCE_STEP(tail, tileIndex, 64);
-                      _REDUCE_STEP(tail, tileIndex, 32);
-                      _REDUCE_STEP(tail, tileIndex, 16);
-                      _REDUCE_STEP(tail, tileIndex,  8);
-                      _REDUCE_STEP(tail, tileIndex,  4);
-                      _REDUCE_STEP(tail, tileIndex,  2);
-                      _REDUCE_STEP(tail, tileIndex,  1);
+					  _COUNT_REDUCE_STEP(tail, tileIndex, 128);
+					  _COUNT_REDUCE_STEP(tail, tileIndex, 64);
+                      _COUNT_REDUCE_STEP(tail, tileIndex, 32);
+                      _COUNT_REDUCE_STEP(tail, tileIndex, 16);
+                      _COUNT_REDUCE_STEP(tail, tileIndex,  8);
+                      _COUNT_REDUCE_STEP(tail, tileIndex,  4);
+                      _COUNT_REDUCE_STEP(tail, tileIndex,  2);
+                      _COUNT_REDUCE_STEP(tail, tileIndex,  1);
 
 
                       //  Write only the single reduced value for the entire workgroup

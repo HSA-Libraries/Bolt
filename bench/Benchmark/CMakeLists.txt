@@ -16,15 +16,15 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Benchmark.Source Benchmark.cpp )
-set( clBolt.Bench.Benchmark.Headers data_type.h )
+set( Bolt.Bench.Benchmark.Source Benchmark.cpp )
+set( Bolt.Bench.Benchmark.Headers data_type.h )
 
-set( clBolt.Bench.Benchmark.Files
-  ${clBolt.Bench.Benchmark.Source}
-  ${clBolt.Bench.Benchmark.Headers}
+set( Bolt.Bench.Benchmark.Files
+  ${Bolt.Bench.Benchmark.Source}
+  ${Bolt.Bench.Benchmark.Headers}
   )
 
-add_executable( clBolt.Bench.Benchmark ${clBolt.Bench.Benchmark.Files} )
+add_executable( Bolt.Bench.Benchmark ${Bolt.Bench.Benchmark.Files} )
 
 # Set project specific compile and link options
 if( MSVC )
@@ -33,18 +33,18 @@ set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
 endif()
 
 if(BUILD_TBB)
-    target_link_libraries( clBolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ${TBB_LIBRARIES} )
+    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ampBolt.Runtime ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( clBolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime )
+    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ampBolt.Runtime )
 endif()
 
-set_target_properties( clBolt.Bench.Benchmark PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Bench.Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( Bolt.Bench.Benchmark PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( Bolt.Bench.Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET clBolt.Bench.Benchmark PROPERTY FOLDER "Benchmark/OpenCL")
+set_property( TARGET Bolt.Bench.Benchmark PROPERTY FOLDER "Benchmark/AMP-OpenCL")
 
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Bench.Benchmark
+install( TARGETS Bolt.Bench.Benchmark
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR}
