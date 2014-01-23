@@ -24,13 +24,13 @@ set( Boost_DETAILED_FAILURE_MSG   ON )
 # set( Boost_DEBUG ON )
 
 if( BOOST_ROOT )
-	# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-	find_package( Boost ${Boost.VERSION} COMPONENTS program_options date_time chrono REQUIRED )
-	# This will define Boost_FOUND
-	message( STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}" )
+    # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
+    find_package( Boost ${Boost.VERSION} COMPONENTS program_options date_time chrono REQUIRED )
+    # This will define Boost_FOUND
+    message( STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}" )
 else( )
-	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )	
-	message( SEND_ERROR "The Benchmarking projects for Bolt requires BOOST_ROOT to be defined" )
+    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
+    message( SEND_ERROR "The Benchmarking projects for Bolt requires BOOST_ROOT to be defined" )
 endif( )
 
 include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${Boost_INCLUDE_DIRS} )
@@ -41,25 +41,31 @@ if( BUILD_TBB )
 endif()
 
 if( BUILD_ampBolt AND Boost_FOUND )
-	add_subdirectory( AMP )
+    add_subdirectory( AMP )
 endif( )
 
 if( BUILD_clBolt AND Boost_FOUND )
-	add_subdirectory( cl )
+    include_directories( ${OPENCL_INCLUDE_DIRS} )
+    add_subdirectory( cl )
 endif( )
 
-install( FILES	
-			errorHandler.py
-			measurePerformance.py
-			performanceTesting.py
-			plotPerformance.py
-		DESTINATION
-			${BIN_DIR} )
+if( (BUILD_clBolt OR BUILD_ampBolt) AND Boost_FOUND )
+    add_subdirectory( Benchmark )
+endif( )
 
-install( FILES	
-			errorHandler.py
-			measurePerformance.py
-			performanceTesting.py
-			plotPerformance.py
-		DESTINATION
-			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
+
+install( FILES  
+            errorHandler.py
+            measurePerformance.py
+            performanceTesting.py
+            plotPerformance.py
+        DESTINATION
+            ${BIN_DIR} )
+
+install( FILES  
+            errorHandler.py
+            measurePerformance.py
+            performanceTesting.py
+            plotPerformance.py
+        DESTINATION
+            ${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )

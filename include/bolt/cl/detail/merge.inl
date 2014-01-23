@@ -328,9 +328,16 @@ namespace bolt {
                       typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
                       typename bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
 
+#if defined(_WIN32)
+                       bolt::btbb::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
+                                               &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
+                                               stdext::make_checked_array_iterator(&mergeResBuffer[result.m_Index],(last1 - first1) + (last2 - first2) ),comp);
+#else
                        bolt::btbb::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
                                                &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
                                                &mergeResBuffer[result.m_Index],comp);
+
+#endif
 
                          return result + (last1 - first1) + (last2 - first2);
                     }
@@ -349,9 +356,16 @@ namespace bolt {
                       typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
                       typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
 
+#if defined(_WIN32)
+                      std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
+                                               &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
+                                              stdext::make_checked_array_iterator(&mergeResBuffer[result.m_Index],(last1 - first1) + (last2 - first2) ),comp);
+#else
                       std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
                                                &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
                                               &mergeResBuffer[result.m_Index],comp);
+
+#endif                    
                         return result + (last1 - first1) + (last2 - first2);
                     }
 
@@ -364,10 +378,17 @@ namespace bolt {
                       typename  bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
                       typename  bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
                       typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
+#if defined(_WIN32)
+                      std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
+                                      &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
+                                      stdext::make_checked_array_iterator(&mergeResBuffer[result.m_Index],(last1 - first1) + (last2 - first2) ),comp);
+#else
 
                       std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
                                       &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
                                       &mergeResBuffer[result.m_Index],comp);
+#endif
+
                         return result + (last1 - first1) + (last2 - first2);
 
 

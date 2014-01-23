@@ -534,14 +534,35 @@ public:
     *   this is an output buffer
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     */
+    
+    template< typename T>
+    device_vector( device_vector<T, concurrency::array > & cont ): m_Size( cont.size( ) )
+    {
+        
+		if( m_Size > 0 )
+        {
+          
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			m_devMemory = new container_type( cont.m_devMemory->section(ext) );
+		}
+		else
+        {
+            m_devMemory = NULL;
+        }
+
+        //  TODO:  I can't get this constructor to properly resolve
+        //m_devMemory = new container_type( ext, cont, discard );
+    };
+
     template< typename Container >
     device_vector( Container& cont, bool discard = false, control& ctl = control::getDefault( ) ): m_Size( cont.size( ) )
     {
         static_assert( std::is_same< arrayview_type, container_type >::value,
             "This constructor is only valid for concurrency::array_view types" );
-
+      
 		if( m_Size > 0 )
         {
+            
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			m_devMemory = new container_type( ext, cont );
 		}
@@ -553,6 +574,12 @@ public:
         //  TODO:  I can't get this constructor to properly resolve
         //m_devMemory = new container_type( ext, cont, discard );
     };
+
+
+    
+
+
+  
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.

@@ -22,9 +22,9 @@ message( STATUS "Setting up AMP specific benchmarking projects" )
 include_directories( ${BOLT_INCLUDE_DIR} )
 
 if( BUILD_ampBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( Scan )
-	add_subdirectory( Reduce )
-	add_subdirectory( Transform )
-	add_subdirectory( TransformReduce )
+    # Include standard OpenCL headers
+    #add_subdirectory( Scan )
+    #add_subdirectory( Reduce )
+    #add_subdirectory( Transform )
+    #add_subdirectory( TransformReduce )
 endif( )
