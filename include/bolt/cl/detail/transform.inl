@@ -589,7 +589,6 @@ public:
     // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
     // This is called strictly for iterators that are derived from device_vector< T >::iterator
     template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
-
     void transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator1& first1,
         const DVInputIterator1& last1, const DVInputIterator2& first2, const DVOutputIterator& result,
         const BinaryFunction& f,const std::string& user_code, bolt::cl::device_vector_tag, bolt::cl::device_vector_tag)
