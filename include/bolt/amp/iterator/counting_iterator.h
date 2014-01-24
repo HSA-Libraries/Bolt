@@ -108,35 +108,31 @@ namespace amp {
             }
 
             // Pre-increment
-            counting_iterator< value_type > operator++ ( ) const
+            counting_iterator< value_type > operator++ ( )
             {
-                counting_iterator< value_type > result( *this );
-                result.advance( 1 );
-                return result;
+                advance( 1 );
+                return *this;
             }
 
             // Post-increment
-            counting_iterator< value_type > operator++ ( int ) const
+            counting_iterator< value_type > operator++ ( int )
             {
-                counting_iterator< value_type > result( *this );
-                result.advance( 1 );
-                return result;
+                advance( 1 );
+                return *this;
             }
 
             // Pre-decrement
-            counting_iterator< value_type > operator--( ) const
+            counting_iterator< value_type > operator--( )
             {
-                counting_iterator< value_type > result( *this );
-                result.advance( -1 );
-                return result;
+                advance( -1 );
+                return *this;
             }
 
             // Post-decrement
-            counting_iterator< value_type > operator--( int ) const
+            counting_iterator< value_type > operator--( int )
             {
-                counting_iterator< value_type > result( *this );
-                result.advance( -1 );
-                return result;
+                advance( -1 );
+                return *this;
             }
 
             difference_type getIndex() const
