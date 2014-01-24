@@ -908,6 +908,15 @@ public:
             typename  std::iterator_traits< InputIterator >::iterator_category( ) );
     };
 
+        template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
+        const InputIterator& last1,const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code, bolt::cl::transform_iterator_tag )
+
+    {
+        static_assert( std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt does not support transform iterators" );
+    };
+
 // Wrapper that uses default ::bolt::cl::control class, iterator interface
     template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
     void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
