@@ -20,7 +20,7 @@
 #define CL_BENCH  101
 
 #if !defined(BENCHMARK_CL_AMP)
-#define BENCHMARK_CL_AMP  CL_BENCH
+#define BENCHMARK_CL_AMP  AMP_BENCH
 #endif
 
 #include <iostream>
@@ -1408,6 +1408,13 @@ int main( int argc, char* argv[] )
     else // gpu || automatic
     {
 #if BENCHMARK_CL_AMP == CL_BENCH
+
+        if (runMode == 3) // GPU
+        {
+            ctrl.setForceRunMode( bolt::BENCH_BEND::control::OpenCL );
+            strDeviceName = "GPU";
+        }
+
         // Platform vector contains all available platforms on system
         std::vector< ::BENCH_BEND::Platform > platforms;
         bolt::BENCH_BEND::V_OPENCL( ::BENCH_BEND::Platform::get( &platforms ), "Platform::get() failed" );
@@ -1427,7 +1434,12 @@ int main( int argc, char* argv[] )
         ctrl.setCommandQueue( myQueue );
         strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
         bolt::BENCH_BEND::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
-
+#elif BENCHMARK_CL_AMP == AMP_BENCH
+        if (runMode == 3) // GPU
+        {
+            ctrl.setForceRunMode( bolt::BENCH_BEND::control::Gpu );
+            strDeviceName = "GPU";
+        }
 #endif
     }
 #endif
