@@ -32,10 +32,16 @@ set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
                 set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
 endif()
 
+if( BUILD_ampBolt )
+    set( Bolt_Link_Libs ampBolt.Runtime )
+else()
+    set( Bolt_Link_Libs  "" )
+endif()    
+
 if(BUILD_TBB)
-    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ampBolt.Runtime ${TBB_LIBRARIES} )
+    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime  ${Bolt_Link_Libs} ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ampBolt.Runtime )
+    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ${Bolt_Link_Libs} )
 endif()
 
 set_target_properties( Bolt.Bench.Benchmark PROPERTIES VERSION ${Bolt_VERSION} )
