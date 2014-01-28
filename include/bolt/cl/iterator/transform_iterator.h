@@ -34,14 +34,60 @@ namespace cl
     template <class UnaryFunc, class Iterator>
     class transform_iterator : public boost::transform_iterator <UnaryFunc, Iterator>
     {
-    
+          
     public:
-        typedef transform_iterator_tag iterator_category;
+        typedef typename std::iterator_traits<Iterator>::value_type value_type;
+        typedef typename std::iterator_traits<Iterator>::pointer    pointer;
+        typedef transform_iterator_tag                              iterator_category;
+        typedef typename UnaryFunc                                  unary_func;
         //friend class boost::transform_iterator <UnaryFunc, Iterator>;
-        transform_iterator(Iterator const& x, UnaryFunc f): boost::transform_iterator<UnaryFunc, Iterator>( x,  f)
+        transform_iterator(Iterator const& x, UnaryFunc f): boost::transform_iterator<UnaryFunc, Iterator>( x,  f), m_it( x )
           { }
+        Iterator m_it;  
     };
+
+    //  This string represents the device side definition of the Transform Iterator template
+    static std::string deviceTransformIteratorTemplate = STRINGIFY_CODE(
+        namespace bolt { namespace cl { \n
+        template< typename UnaryFunc, typename T > \n
+        class transform_iterator \n
+        { \n
+            public:    \n
+                typedef int iterator_category;        \n
+                typedef T value_type; \n
+                typedef int difference_type; \n
+                typedef int size_type; \n
+                typedef T* pointer; \n
+                typedef T& reference; \n
+
+                transform_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
+                {}; \n
+
+                void init( global value_type* ptr )\n
+                { \n
+                    m_Ptr = ptr; \n
+                }; \n
+
+                global value_type& operator[]( size_type threadID ) const \n
+                { \n
+                    return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                } \n
+
+                value_type operator*( ) const \n
+                { \n
+                    return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                } \n
+
+                size_type m_StartIndex; \n
+                global value_type* m_Ptr; \n
+                UnaryFunc          m_f; \n
+        }; \n
+    } } \n
+    );
 }
 }
+
+
+
 
 #endif

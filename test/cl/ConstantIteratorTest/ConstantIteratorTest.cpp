@@ -284,14 +284,23 @@ TYPED_TEST_P( CountingIterator, DeviceTransformVector )
     EXPECT_EQ( 43, devVec[ 1 ] );
     EXPECT_EQ( 44, devVec[ 2 ] );
 }
-BOLT_FUNCTOR(square<int>,
-    template< typename T >
+
+BOLT_FUNCTOR(square,
     struct square
     {
-        T operator() (const T& x)  const { return x + 2; }
-        typedef T result_type;
+        int operator() (const int& x)  const { return x + 2; }
+        typedef int result_type;
     };
 );
+
+std::string temp_str = BOLT_CODE_STRING(typedef bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator > trf_sq_itr;);
+BOLT_CREATE_TYPENAME( trf_sq_itr );
+
+//BOLT_CREATE_TYPENAME( (bolt::cl::transform_iterator< square< int >, bolt::cl::device_vector< int >::iterator >)  );
+BOLT_CREATE_CLCODE  ( trf_sq_itr, bolt::cl::deviceTransformIteratorTemplate + temp_str);
+
+//#define BOLT_CREATE_TYPENAME( Type ) \
+//    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
 
 TEST( TransformIterator, FirstTest)
 {
@@ -299,18 +308,19 @@ TEST( TransformIterator, FirstTest)
     std::vector< int > devVec( 100 );
     std::vector< int > outVec( 100 );
     std::generate(devVec.begin(), devVec.end(), rand);
-    square<int> sq;
+    square sq;
     std::vector<int>::const_iterator it(devVec.begin() );
     std::array<int, 1000>::const_iterator array_it;
-    bolt::cl::device_vector<int> dv_input(devVec.begin(), devVec.end());    
-    bolt::cl::device_vector<int> dv_output(outVec.begin(), outVec.end());    
+    bolt::cl::device_vector<int> dv_input(devVec.begin(), devVec.end());
+    bolt::cl::device_vector<int> dv_output(outVec.begin(), outVec.end());
 
-    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_begin( devVec.begin(), sq );
-        bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_begin1(trf_begin);
-    bolt::cl::transform_iterator< square<int>, std::vector< int >::const_iterator> trf_end( devVec.end(), sq );
-    bolt::cl::transform_iterator< square<int>, bolt::cl::device_vector< int >::iterator> dv_trf_begin( dv_input.begin(), sq );
-    bolt::cl::transform_iterator< square<int>, bolt::cl::device_vector< int >::iterator> dv_trf_end( dv_input.end(), sq );
-
+    bolt::cl::transform_iterator< square, std::vector< int >::const_iterator> trf_begin( devVec.begin(), sq );
+    bolt::cl::transform_iterator< square, std::vector< int >::const_iterator> trf_begin1(trf_begin);
+    bolt::cl::transform_iterator< square, std::vector< int >::const_iterator> trf_end( devVec.end(), sq );
+    bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator> dv_trf_begin( dv_input.begin(), sq );
+    bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator> dv_trf_end( dv_input.end(), sq );
+    //std::vector<int>::const_iterator temp = trf_begin.base();
+    
     int dist = std::distance(trf_begin, trf_end);
     std::cout << "distance = " << dist << "\n" ;
     int dist1 = std::distance( dv_trf_begin, dv_trf_end );
