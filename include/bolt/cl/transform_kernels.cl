@@ -84,6 +84,7 @@ void unaryTransformTemplate(
     Z_iter.init( Z_ptr );
 
     iNakedType aa = A_iter[ gx ];
+    printf("aa = %d", aa);
     Z_iter[ gx ] = (*userFunctor)( aa );
 }
 
