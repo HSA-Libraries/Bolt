@@ -19,10 +19,8 @@
 #define BOLT_CL_SORT_BY_KEY_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <string>
-#include <iostream>
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
 /*! \file bolt/cl/sort_by_key.h
     \brief Returns the sorted result of all the elements in input based on equivalent keys.

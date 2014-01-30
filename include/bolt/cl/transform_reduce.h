@@ -19,11 +19,7 @@
 #define BOLT_CL_TRANSFORM_REDUCE_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/device_vector.h>
-
-#include <string>
-#include <iostream>
+#include "bolt/cl/device_vector.h"
 
 /*! \file bolt/cl/transform_reduce.h
     \brief  Fuses transform and reduce operations together.

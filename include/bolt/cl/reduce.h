@@ -19,12 +19,8 @@
 #define BOLT_CL_REDUCE_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
-
-#include <string>
-#include <iostream>
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
 /*! \file bolt/cl/reduce.h
     \brief Returns the result of combining all the elements in the specified range using the specified.

@@ -19,11 +19,8 @@
 #define BOLT_CL_SCATTER_H
 #pragma once
 
-#include "bolt/cl/bolt.h"
 #include "bolt/cl/device_vector.h"
 
-#include <string>
-#include <iostream>
 
 /*! \file bolt/cl/scatter.h
     \brief scatters elements from a source range to a destination array.
@@ -195,7 +192,7 @@ namespace bolt {
          *        }
          *    };
          *  );
-         * 
+         *
          *  ...
          *
          *  int input[10]   = {5, 7, 2, 3, 12, 6, 9, 8, 1, 4};

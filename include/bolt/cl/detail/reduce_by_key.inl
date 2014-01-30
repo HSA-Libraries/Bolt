@@ -26,8 +26,7 @@
 #define LENGTH_TEST 10
 #define ENABLE_PRINTS 0
 
-#include <iostream>
-#include <fstream>
+#include "bolt\cl\scan.h"
 
 #ifdef ENABLE_TBB
 //TBB Includes

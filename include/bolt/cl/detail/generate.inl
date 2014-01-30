@@ -19,11 +19,6 @@
 #define BOLT_CL_GENERATE_INL
 #pragma once
 
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
-
-#include "bolt/cl/bolt.h"
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/generate.h"

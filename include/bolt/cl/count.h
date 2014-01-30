@@ -22,10 +22,7 @@
 #if !defined( BOLT_CL_COUNT_H )
 #define BOLT_CL_COUNT_H
 
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/functional.h"
-#include "bolt/cl/transform_reduce.h"
-#include "bolt/cl/iterator/iterator_traits.h"
+#include "bolt/cl/device_vector.h"
 
 /*! \file bolt/cl/count.h
     \brief Counts the number of elements in the specified range.

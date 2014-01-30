@@ -21,7 +21,6 @@
 #define WAVEFRONT_SIZE 64
 #define TRANSFORM_ENABLE_PROFILING 0
 
-#include <type_traits>
 
 #ifdef ENABLE_TBB
     #include "bolt/btbb/transform.h"

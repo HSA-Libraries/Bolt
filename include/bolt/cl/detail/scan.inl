@@ -45,11 +45,6 @@
 //AsyncProfiler aProfiler("transform_scan");
 #endif
 
-#include <algorithm>
-#include <type_traits>
-#include "bolt/cl/bolt.h"
-#include <exception>
-
 
 #ifdef ENABLE_TBB
 //TBB Includes

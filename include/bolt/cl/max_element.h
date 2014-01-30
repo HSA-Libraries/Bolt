@@ -19,12 +19,7 @@
 #define BOLT_CL_MAX_ELEMENT_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
-
-#include <string>
-#include <iostream>
+#include "bolt/cl/device_vector.h"
 
 /*! \file bolt/cl/max_element.h
     \brief max_element returns the location of the first maximum element in the specified range.

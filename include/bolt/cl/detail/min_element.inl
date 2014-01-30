@@ -20,14 +20,6 @@
 #define BOLT_CL_MINELEMENT_INL
 #pragma once
 
-#include <algorithm>
-
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/functional.h"
-
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/min_element.h"

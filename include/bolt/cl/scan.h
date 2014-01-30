@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 /******************************************************************************
  * OpenCL Scan
@@ -23,9 +23,8 @@
 #define BOLT_CL_SCAN_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
 
 /*! \file bolt/cl/scan.h
@@ -43,12 +42,12 @@ namespace cl
 
 /*! \addtogroup PrefixSums Prefix Sums
  *   \ingroup algorithms
- */ 
+ */
 
 /*! \addtogroup CL-scan
  *   \ingroup PrefixSums
  *   \{
- *  
+ *
  */
 
 /*! \brief \p inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -77,16 +76,16 @@ namespace cl
  * \sa http://www.sgi.com/tech/stl/partial_sum.html
  */
 template< typename InputIterator, typename OutputIterator >
-OutputIterator 
-    inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
+OutputIterator
+    inclusive_scan( control &ctl, InputIterator first, InputIterator last,
     OutputIterator result, const std::string& user_code="" );
 
 template< typename InputIterator, typename OutputIterator >
-OutputIterator 
+OutputIterator
 inclusive_scan(
     InputIterator first,
     InputIterator last,
-    OutputIterator result, 
+    OutputIterator result,
     const std::string& user_code="" );
 
 
@@ -118,11 +117,11 @@ inclusive_scan(
  * \sa http://www.sgi.com/tech/stl/partial_sum.html
  */
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-OutputIterator inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
+OutputIterator inclusive_scan( control &ctl, InputIterator first, InputIterator last,
     OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
 
-template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-OutputIterator 
+template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+OutputIterator
 inclusive_scan(
     InputIterator first,
     InputIterator last,
@@ -156,12 +155,12 @@ inclusive_scan(
  * \sa http://www.sgi.com/tech/stl/partial_sum.html
  */
 template< typename InputIterator, typename OutputIterator >
-OutputIterator 
-    exclusive_scan( control& ctl, InputIterator first, InputIterator last, 
+OutputIterator
+    exclusive_scan( control& ctl, InputIterator first, InputIterator last,
     OutputIterator result, const std::string& user_code="" );
 
 template< typename InputIterator, typename OutputIterator >
-OutputIterator 
+OutputIterator
     exclusive_scan( InputIterator first, InputIterator last, OutputIterator result,
     const std::string& user_code="" );
 
@@ -195,12 +194,12 @@ OutputIterator
  * \sa http://www.sgi.com/tech/stl/partial_sum.html
  */
 template< typename InputIterator, typename OutputIterator, typename T >
-OutputIterator 
+OutputIterator
     exclusive_scan( control& ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
     const std::string& user_code="" );
 
 template< typename InputIterator, typename OutputIterator, typename T >
-OutputIterator 
+OutputIterator
     exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init,
     const std::string& user_code="" );
 
@@ -218,7 +217,7 @@ OutputIterator
  * \tparam InputIterator An iterator signifying the range is used as input.
  * \tparam OutputIterator An iterator signifying the range is used as output.
  * \tparam T is convertible to std::iterator_traits< OutputIterator >::value_type.
- * \tparam BinaryFunction implements a binary function; its result should be  {{** Is ? **}}convertible to 
+ * \tparam BinaryFunction implements a binary function; its result should be  {{** Is ? **}}convertible to
  *   std::iterator_traits< OutputIterator >::value_type.
  * \return An iterator pointing at the end of the result range.
  *
@@ -235,11 +234,11 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator
-    exclusive_scan( control &ctl, InputIterator first, InputIterator last, 
+    exclusive_scan( control &ctl, InputIterator first, InputIterator last,
     OutputIterator result, T init, BinaryFunction binary_op, const std::string& user_code="" );
 
-template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
-OutputIterator 
+template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
+OutputIterator
     exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op,
     const std::string& user_code="" );
 

@@ -28,9 +28,10 @@
 #include <gtest/gtest.h>
 #include "common/stdafx.h"
 #include "common/myocl.h"
+#include "bolt/cl/binary_search.h"
 #include "common/test_common.h"
 #include "bolt/cl/iterator/counting_iterator.h"
-#include "bolt/cl/binary_search.h"
+
 #include "bolt/cl/sort.h"
 
 #include <bolt/cl/sort.h>

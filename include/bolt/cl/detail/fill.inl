@@ -20,12 +20,6 @@
 #define BOLT_CL_FILL_INL
 #define WAVEFRONT_SIZE 64
 
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
-
-#include "bolt/cl/bolt.h"
-
 //TBB Includes
 #ifdef ENABLE_TBB
 #include "bolt/btbb/fill.h"

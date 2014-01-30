@@ -25,15 +25,8 @@ TODO:
 #define BOLT_CL_INNERPRODUCT_INL
 #define USE_KERNEL 0
 #pragma once
-
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
-#include <bolt/cl/detail/reduce.inl>
-#include <bolt/cl/detail/transform.inl>
-
-#include "bolt/cl/bolt.h"
-
+#include "bolt\cl\transform.h"
+#include "bolt\cl\reduce.h"
 //TBB Includes
 #ifdef ENABLE_TBB
 #include "bolt/btbb/inner_product.h"
