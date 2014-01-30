@@ -36,29 +36,41 @@ namespace cl
     {
           
     public:
-        typedef typename std::iterator_traits<Iterator>::value_type value_type;
-        typedef typename std::iterator_traits<Iterator>::pointer    pointer;
-        typedef transform_iterator_tag                              iterator_category;
-        typedef typename UnaryFunc                                  unary_func;
+        typedef typename std::iterator_traits<Iterator>::value_type      value_type;
+        typedef typename std::iterator_traits<Iterator>::difference_type difference_type;
+        typedef typename std::iterator_traits<Iterator>::pointer         pointer;
+        typedef transform_iterator_tag                                   iterator_category;
+        typedef typename UnaryFunc                                       unary_func;
         //friend class boost::transform_iterator <UnaryFunc, Iterator>;
         transform_iterator(Iterator const& x, UnaryFunc f): boost::transform_iterator<UnaryFunc, Iterator>( x,  f), m_it( x )
           { }
         Iterator m_it;  
+        struct Payload
+        {
+            difference_type m_Index;
+            difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
+            UnaryFunc       m_f;
+        };
+        const Payload  gpuPayload( ) const
+        {
+            Payload payload = { m_Index, { 0, 0, 0 }, NULL };
+            return payload;
+        }
     };
 
     //  This string represents the device side definition of the Transform Iterator template
     static std::string deviceTransformIteratorTemplate = STRINGIFY_CODE(
         namespace bolt { namespace cl { \n
-        template< typename UnaryFunc, typename T > \n
+        template< typename UnaryFunc, typename Iterator > \n
         class transform_iterator \n
         { \n
             public:    \n
                 typedef int iterator_category;        \n
-                typedef T value_type; \n
+                typedef typename Iterator::value_type value_type; \n
                 typedef int difference_type; \n
                 typedef int size_type; \n
-                typedef T* pointer; \n
-                typedef T& reference; \n
+                typedef value_type* pointer; \n
+                typedef value_type& reference; \n
 
                 transform_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                 {}; \n
@@ -68,9 +80,9 @@ namespace cl
                     m_Ptr = ptr; \n
                 }; \n
 
-                global value_type& operator[]( size_type threadID ) const \n
+                value_type operator[]( size_type threadID ) const \n
                 { \n
-                    return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                   return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
                 } \n
 
                 value_type operator*( ) const \n

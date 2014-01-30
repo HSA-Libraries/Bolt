@@ -346,10 +346,10 @@ public:
         control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
-    /*  typename DVInputIterator::Payload first_payload = first.gpuPayload( );
+        typename DVInputIterator::Payload first_payload = first.gpuPayload( );
         typename DVOutputIterator::Payload result_payload = result.gpuPayload( );
 
-        kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
+        /*kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
         kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ),&first_payload);
         kernels[boundsCheck].setArg(2, result.getContainer().getBuffer() );
         kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ),&result_payload);
@@ -935,7 +935,8 @@ public:
             // Map the input iterator to a device_vector
             device_vector< iType > dvInput( start_ptr, end_ptr, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             // Map the output iterator to a device_vector
-            device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+            device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
+            printf("dvOutput[30] = %d\n",dvOutput[30]);
             //Create transform iterators
             bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_begin(dvInput.begin(), first.functor());
             bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_end(dvOutput.end(), last.functor() );
