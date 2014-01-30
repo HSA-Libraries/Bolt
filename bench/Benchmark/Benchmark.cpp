@@ -20,7 +20,7 @@
 #define CL_BENCH  101
 
 #if !defined(BENCHMARK_CL_AMP)
-#define BENCHMARK_CL_AMP  AMP_BENCH
+#define BENCHMARK_CL_AMP  CL_BENCH
 #endif
 
 #include <iostream>
@@ -596,7 +596,7 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 typename VectorType::iterator itr = bolt::BENCH_BEND::min_element(ctrl, input1.begin(), input1.end(),
-                                                                                               binaryPredLt);
+                                                                                               binaryPredLt,"");
 #else
                 typename VectorType::iterator itr = thrust::min_element( input1.begin(), input1.end(),
                                                                                         binaryPredLt);
