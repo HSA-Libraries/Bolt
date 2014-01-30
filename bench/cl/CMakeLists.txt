@@ -50,7 +50,7 @@ if( MSVC_IDE )
     # add_subdirectory( Scatter )
 else()
     # Include standard OpenCL headers
-    add_subdirectory( Benchmark )
+    #add_subdirectory( Benchmark )
 endif()
 
 endif( )
