@@ -37,25 +37,45 @@ namespace cl
           
     public:
         typedef typename std::iterator_traits<Iterator>::value_type      value_type;
+        //typedef typename std::iterator_traits<Iterator>::size_type       size_type;
         typedef typename std::iterator_traits<Iterator>::difference_type difference_type;
         typedef typename std::iterator_traits<Iterator>::pointer         pointer;
         typedef transform_iterator_tag                                   iterator_category;
         typedef typename UnaryFunc                                       unary_func;
+
+        //typedef typename Iterator::container                             container;
         //friend class boost::transform_iterator <UnaryFunc, Iterator>;
-        transform_iterator(Iterator const& x, UnaryFunc f): boost::transform_iterator<UnaryFunc, Iterator>( x,  f), m_it( x )
-          { }
-        Iterator m_it;  
+        transform_iterator(Iterator const& x, UnaryFunc f): boost::transform_iterator<UnaryFunc, Iterator>( x,  f), m_it( x )//, m_Index(0)
+          { 
+              //ClCode<bolt::cl::transform_iterator<UnaryFunc, Iterator> >::addDependency(ClCode<UnaryFunc>::get());//BOLT_ADD_DEPENDENCY(UnaryFunc,);
+          }
+
         struct Payload
         {
             difference_type m_Index;
             difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
             UnaryFunc       m_f;
         };
+        
+        template<typename Container >
+        Container getContainer( ) const
+        {
+            return m_it.getContainer( );
+        }
+
         const Payload  gpuPayload( ) const
         {
-            Payload payload = { m_Index, { 0, 0, 0 }, NULL };
+            Payload payload = { 0/*m_Index*/, { 0, 0, 0 } };
             return payload;
         }
+
+        /*TODO - This should throw a compilation error if the Iterator is of type std::vector*/
+        const difference_type gpuPayloadSize( ) const
+        {
+            return m_it.gpuPayloadSize( );
+        }
+        //difference_type m_Index;
+        Iterator m_it;  
     };
 
     //  This string represents the device side definition of the Transform Iterator template

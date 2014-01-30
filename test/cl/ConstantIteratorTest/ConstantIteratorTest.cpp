@@ -293,11 +293,12 @@ BOLT_FUNCTOR(square,
     };
 );
 
+
 std::string temp_str = BOLT_CODE_STRING(typedef bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator > trf_sq_itr;);
 BOLT_CREATE_TYPENAME( trf_sq_itr );
 
 //BOLT_CREATE_TYPENAME( (bolt::cl::transform_iterator< square< int >, bolt::cl::device_vector< int >::iterator >)  );
-BOLT_CREATE_CLCODE  ( trf_sq_itr, bolt::cl::deviceTransformIteratorTemplate + temp_str);
+BOLT_CREATE_CLCODE  ( trf_sq_itr, ClCode<square>::get() + bolt::cl::deviceTransformIteratorTemplate + temp_str);
 
 //#define BOLT_CREATE_TYPENAME( Type ) \
 //    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };

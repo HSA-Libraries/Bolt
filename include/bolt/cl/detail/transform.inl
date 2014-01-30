@@ -349,7 +349,7 @@ public:
         typename DVInputIterator::Payload first_payload = first.gpuPayload( );
         typename DVOutputIterator::Payload result_payload = result.gpuPayload( );
 
-        /*kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg(0, first.getContainer<bolt::cl::device_vector<iType> >().getBuffer() );
         kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ),&first_payload);
         kernels[boundsCheck].setArg(2, result.getContainer().getBuffer() );
         kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ),&result_payload);
@@ -368,7 +368,7 @@ public:
         V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
         ::bolt::cl::wait(ctl, transformEvent);
-   */
+   
 #if TRANSFORM_ENABLE_PROFILING
         if( 0 )
         {
@@ -875,6 +875,7 @@ public:
 
     // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
     // This is called strictly for iterators that are derived from device_vector< T >::iterator
+    //TODO RAVI- need to fix the issue when TBB code is not called. 
     template<typename TrfIterator, typename OutputIterator, typename UnaryFunction>
     void
     transform_unary_pick_iterator( ::bolt::cl::control &ctl, const TrfIterator& first, const TrfIterator& last,
@@ -910,11 +911,12 @@ public:
                 #if defined(BOLT_DEBUG_LOG)
                 dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
                 #endif
-                // TODO - fix the transfrom iterator for TBB codes, here its is not iterating over the transfrom iterator.
+                // TODO RAVI- fix the transfrom iterator for TBB codes, here its is not iterating over the transfrom iterator.
                 //        instead it is iterating over the raw buffer. 
-                auto start_ptr = &(*(first.m_it) );
-                auto end_ptr = &(*(first.m_it) );
-                bolt::btbb::transform(start_ptr, end_ptr, result, f);
+                //auto start_ptr = &(*(first.m_it) );
+                //auto end_ptr = &(*(last.m_it) );
+                //TODO RAVI - Need to enable this.
+                //bolt::btbb::transform(first, last, result, f);
 
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
@@ -931,12 +933,11 @@ public:
 			
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             auto start_ptr = &(*(first.m_it) );
-            auto end_ptr = &(*(first.m_it) );
+            auto end_ptr = &(*(last.m_it) );
             // Map the input iterator to a device_vector
             device_vector< iType > dvInput( start_ptr, end_ptr, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             // Map the output iterator to a device_vector
             device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
-            printf("dvOutput[30] = %d\n",dvOutput[30]);
             //Create transform iterators
             bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_begin(dvInput.begin(), first.functor());
             bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_end(dvOutput.end(), last.functor() );
