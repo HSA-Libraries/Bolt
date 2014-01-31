@@ -21,6 +21,7 @@
 #include "bolt/cl/iterator/iterator_traits.h"
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+//#include <boost/utility/result_of.hpp>
 
 namespace bolt
 {
@@ -37,7 +38,7 @@ namespace cl
           
     public:
         typedef typename std::iterator_traits<Iterator>::value_type      value_type;
-        //typedef typename std::iterator_traits<Iterator>::size_type       size_type;
+        //typedef typename std::iterator_traits<Iterator>::size_type     size_type;
         typedef typename std::iterator_traits<Iterator>::difference_type difference_type;
         typedef typename std::iterator_traits<Iterator>::pointer         pointer;
         typedef transform_iterator_tag                                   iterator_category;
@@ -56,7 +57,9 @@ namespace cl
             difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
             UnaryFunc       m_f;
         };
-        
+
+        /*TODO - RAVI Probably I can acheive this using friend class device_vector. But the problem would be 
+                 multiple defintions of functions like advance()*/        
         template<typename Container >
         Container getContainer( ) const
         {

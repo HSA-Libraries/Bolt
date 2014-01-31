@@ -331,7 +331,7 @@ TEST( TransformIterator, FirstTest)
         std::cout << *trf_begin++ << "   " << *dv_trf_begin++ << "\n";
     }
 
-    bolt::cl::transform(trf_begin1, trf_end, outVec.begin(), sq);
+    //bolt::cl::transform(trf_begin1, trf_end, outVec.begin(), sq);
 
 }
 
