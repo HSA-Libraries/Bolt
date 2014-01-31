@@ -1916,7 +1916,7 @@ struct tbbUDD {
     tbbUDD() restrict (amp,cpu)
         : a(0.f),b(0.0) { } 
     tbbUDD(int _in) restrict (amp,cpu)
-        : a(_in), b(_in +1)  { } 
+        : a((float)_in), b(_in +1.0)  { } 
     bool operator == (const tbbUDD& other) const restrict (amp,cpu) { 
         return ((double)(a+b) == (double)(other.a+other.b));
     }

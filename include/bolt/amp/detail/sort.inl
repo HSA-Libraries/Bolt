@@ -29,6 +29,7 @@
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
 #include "bolt/amp/detail/stablesort.inl"
+#include "bolt/amp/iterator/iterator_traits.h"
 
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
@@ -653,7 +654,7 @@ void sort_pick_iterator( bolt::amp::control &ctl,
     return;
 }
 
-#if 0
+
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 void sort_pick_iterator( control &ctl,
                          const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
@@ -661,7 +662,7 @@ void sort_pick_iterator( control &ctl,
 {
     static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
 }
-#endif
+
 
 //Non Device Vector specialization.
 //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes

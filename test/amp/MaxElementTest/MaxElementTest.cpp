@@ -535,47 +535,47 @@ TEST( MaxEleDevice , MultiCoreDeviceVectoroffset )
 
 }
 
-//TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
-//{
-//    bolt::amp::counting_iterator<int> first(0);
-//    bolt::amp::counting_iterator<int> last = first +  mySize;
-//
-//    std::vector<int> a(mySize);
-//
-//    for (int i=0; i < mySize; i++) {
-//        a[i] = i;
-//    };
-//
-//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
-//    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
-//
-//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
-//    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last);
-//
-//    EXPECT_EQ(*stlReduce, *boltReduce);
-//}
-//
-// TEST_P( MinEStdVectandCountingIterator, CPU_compwithCountingIterator)
-//{
-//    bolt::amp::counting_iterator<int> first(0);
-//    bolt::amp::counting_iterator<int> last = first +  mySize;
-//
-//    std::vector<int> a(mySize);
-//
-//    for (int i=0; i < mySize; i++) {
-//        a[i] = i;
-//    };
-//
-//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
-//    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
-//
-//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
-//    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last,  bolt::amp::less< int >( ));
-//
-//    EXPECT_EQ(*stlReduce, *boltReduce);
-//} 
+TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
 
-#if 0 
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
+    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last);
+
+    EXPECT_EQ(*stlReduce, *boltReduce);
+}
+
+ TEST_P( MinEStdVectandCountingIterator, CPU_compwithCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
+    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last,  bolt::amp::less< int >( ));
+
+    EXPECT_EQ(*stlReduce, *boltReduce);
+} 
+
+
 TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
 {
     bolt::amp::counting_iterator<int> first(0);
@@ -617,7 +617,7 @@ TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
 
     EXPECT_EQ(*stlReduce, *boltReduce);
 } 
-#endif
+
 
 INSTANTIATE_TEST_CASE_P( withInt, MaxEStdVectWithInit, ::testing::Range(1, 100, 1) );
 INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
