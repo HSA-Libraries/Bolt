@@ -18,7 +18,7 @@
 #pragma once
 #if !defined( BOLT_AMP_STABLESORT_INL )
 #define BOLT_AMP_STABLESORT_INL
-#define BUFFER_SIZE 64
+#define BUFFER_SIZE 256
 #include <algorithm>
 #include <type_traits>
 
@@ -34,7 +34,7 @@
 #include "bolt/btbb/stable_sort.h"
 #endif
 
-#define BOLT_AMP_STABLESORT_CPU_THRESHOLD 64
+#define BOLT_AMP_STABLESORT_CPU_THRESHOLD 256
 
 namespace bolt {
 namespace amp {
@@ -200,43 +200,72 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     unsigned int wgSize = localRange;
 
     tile_static iType lds[BUFFER_SIZE]; 
+	tile_static iType lds2[BUFFER_SIZE]; 
 
     //  Abort threads that have passed the end of the input vector
-    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
+    if (gloId < vecSize) {
+		lds[ locId ] = inputBuffer[ gloId ];;
+	}
+	//  Make a copy of the entire input array into fast local memory
+    t_idx.barrier.wait();
+	unsigned int end =  wgSize;
+	if( (groId+1)*(wgSize) >= vecSize )
+		end = vecSize - (groId*wgSize);
 
-    //  Make a copy of the entire input array into fast local memory
-    iType val = inputBuffer[ gloId ];
-    lds[ locId ] = val;
+	unsigned int numMerges = 8;
+	unsigned int pass;
 
-    //  Sorts a workgroup using a naive insertion sort
-    //  The sort uses one thread within a workgroup to sort the entire workgroup
-    if( locId == 0 )
-    {
-        //  The last workgroup may have an irregular size, so we calculate a per-block endIndex
-        //  endIndex is essentially emulating a mod operator with subtraction and multiply
-        unsigned int endIndex = vecSize - ( groId * wgSize );
-        endIndex = min( endIndex, wgSize );
+	for( pass = 1; pass <= numMerges; ++pass )
+	{
+		unsigned int srcLogicalBlockSize = 1 << (pass-1);
+	    if( gloId < vecSize)
+		{
+  		    unsigned int srcBlockNum = (locId) / srcLogicalBlockSize;
+			unsigned int srcBlockIndex = (locId) % srcLogicalBlockSize;
+    
+			unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
+			unsigned int leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
 
-        // printf( "Debug: endIndex[%i]=%i\n", groId, endIndex );
+		    leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
+			leftBlockIndex = min( leftBlockIndex, end );
+			unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
+    
+			unsigned int insertionIndex = 0;
+			if(pass%2 != 0)
+			{
+				if( (srcBlockNum & 0x1) == 0 )
+				{
+					insertionIndex = lowerBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
+				}
+				else
+				{
+					insertionIndex = upperBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
+				}
+			}
+			else
+			{
+				if( (srcBlockNum & 0x1) == 0 )
+				{
+					insertionIndex = lowerBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
+				}
+				else
+				{
+					insertionIndex = upperBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
+				} 
+			}
+			unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
+			unsigned int dstBlockNum = srcBlockNum/2;
+			if(pass%2 != 0)
+			   lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = lds[ locId ];
+			else
+			   lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = lds2[ locId ]; 
+		}
+        t_idx.barrier.wait();
+	}	  
 
-        //  Indices are signed because the while loop will generate a -1 index inside of the max function
-        for( unsigned int currIndex = 1; currIndex < endIndex; ++currIndex )
-        {
-            val = lds[ currIndex ];
-            int scanIndex = currIndex;
-            iType ldsVal = lds[scanIndex - 1];
-            while( scanIndex > 0 && comp( val, ldsVal ) )
-            {
-                lds[ scanIndex ] = ldsVal;
-                scanIndex = scanIndex - 1;
-                ldsVal = lds[ max(0, scanIndex - 1) ];  // scanIndex-1 may be -1
-            }
-            lds[ scanIndex ] = val;
-        }
-    }
-
-    val = lds[ locId ];
-    inputBuffer[ gloId ] = val;
+	if (gloId < vecSize) {
+		inputBuffer[ gloId ] = lds[ locId ];;
+	}
     
     } );
 
@@ -255,7 +284,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
     //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
     //  this is how many merge passes we want
-    size_t log2BlockSize = vecSize >> 6;
+    size_t log2BlockSize = vecSize >> 8;
     for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
     {
         ++numMerges;
@@ -266,10 +295,8 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     numMerges += vecPow2? 1: 0;
 
     //  Allocate a flipflop buffer because the merge passes are out of place
-
-    std::vector<iType> stdtmpBuffer(vecSize);
-    device_vector<iType, concurrency::array_view > tmpBufferVec(stdtmpBuffer.begin(), stdtmpBuffer.end(), true, ctrl );
-    auto&  tmpBuffer   =  tmpBufferVec.begin().getContainer().getBuffer(tmpBufferVec.begin()); 
+	device_vector<iType> tmpBufferVec(static_cast<size_t>(vecSize) );
+    auto&  tmpBuffer   =  tmpBufferVec.begin().getContainer().getBuffer(); 
 
 
     /**********************************************************************************
@@ -277,8 +304,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
      *********************************************************************************/
     
     concurrency::extent< 1 > globalSizeK1( globalRange );
-    concurrency::tiled_extent< localRange > tileK1 = globalSizeK1.tile< localRange >();
-
     for( unsigned int pass = 1; pass <= numMerges; ++pass )
     {
 
@@ -287,7 +312,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
         try
         {
-        concurrency::parallel_for_each( av, tileK1,
+        concurrency::parallel_for_each( av, globalSizeK1,
         [
             inputBuffer,
             tmpBuffer,
@@ -296,13 +321,10 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
             localRange,
             srcLogicalBlockSize,
 			pass
-        ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
+        ] ( concurrency::index<1> idx ) restrict(amp)
    {
 
-    unsigned int gloID = t_idx.global[ 0 ];
-    unsigned int groID = t_idx.tile[ 0 ];
-    unsigned int locID = t_idx.local[ 0 ];
-    unsigned int wgSize = localRange;
+    unsigned int gloID = idx[ 0 ];
 
     //  Abort threads that are passed the end of the input vector
     if( gloID >= vecSize )
@@ -385,8 +407,8 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     //  the results back into the input array
     if( numMerges & 1 )
     {
-       for(unsigned int i=0; i<vecSize; i++)
-           inputBuffer[i] = tmpBuffer[i]; 
+	   concurrency::extent< 1 > modified_ext( vecSize );
+	   tmpBuffer.section( modified_ext ).copy_to( first.getContainer().getBuffer(first, vecSize) );
     }
 
     return;

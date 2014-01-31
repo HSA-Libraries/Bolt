@@ -276,14 +276,10 @@ namespace detail
 			   tile_static valueType val_lds2[BOLT_AMP_STABLESORT_BY_KEY_CPU_THRESHOLD]; 
 
                //  Make a copy of the entire input array into fast local memory
-	           keyType key; 
-	           valueType val; 
 	           if( gloId < vecSize)
 	           {
-	              key = keyBuffer[ gloId ];
-		          val = inputBuffer[ gloId ];
-		          key_lds[ locId ] = key;
-		          val_lds[ locId ] = val;
+		          key_lds[ locId ] = keyBuffer[ gloId ];
+		          val_lds[ locId ] = inputBuffer[ gloId ];
 	           }
                //barrier( CLK_LOCAL_MEM_FENCE );
 	           unsigned int end =  wgSize;
@@ -347,11 +343,8 @@ namespace detail
 	        }	  
 	        if( gloId < vecSize)
 	        {
-		        key = key_lds[ locId ];
-		        val = val_lds[ locId ];
-		        keyBuffer[ gloId ] = key;
-                inputBuffer[ gloId ] = val;
-
+		        keyBuffer[ gloId ] = key_lds[ locId ];
+                inputBuffer[ gloId ] = val_lds[ locId ];
 	        }
     
         } );
@@ -382,13 +375,11 @@ namespace detail
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-	    std::vector<keyType> stdkeytmpBuffer(vecSize);
-        device_vector<keyType, concurrency::array_view > keytmpBufferVec(stdkeytmpBuffer.begin(), stdkeytmpBuffer.end(), true, ctrl );
-        auto&  tmpKeyBuffer   =  keytmpBufferVec.begin().getContainer().getBuffer(keytmpBufferVec.begin()); 
+        device_vector<keyType> keytmpBufferVec(static_cast<size_t>(vecSize));
+        auto&  tmpKeyBuffer   =  keytmpBufferVec.begin().getContainer().getBuffer(); 
 
-		std::vector<valueType > stdvaltmpBuffer(vecSize);
-        device_vector<valueType , concurrency::array_view > keyvalBufferVec(stdvaltmpBuffer.begin(), stdvaltmpBuffer.end(), true, ctrl );
-        auto&  tmpValueBuffer   =  keyvalBufferVec.begin().getContainer().getBuffer(keyvalBufferVec.begin()); 
+        device_vector<valueType> keyvalBufferVec(static_cast<size_t>(vecSize));
+        auto&  tmpValueBuffer   =  keyvalBufferVec.begin().getContainer().getBuffer(); 
 
 
 		/**********************************************************************************
@@ -396,7 +387,6 @@ namespace detail
         *********************************************************************************/
     
         concurrency::extent< 1 > globalSizeK1( globalRange );
-        concurrency::tiled_extent< localRange > tileK1 = globalSizeK1.tile< localRange >();
 
         for( unsigned int pass = 1; pass <= numMerges; ++pass )
         {
@@ -406,7 +396,7 @@ namespace detail
 
              try
              {
-                concurrency::parallel_for_each( av, tileK1,
+                concurrency::parallel_for_each( av, globalSizeK1,
                 [
                   inputBuffer,
 				  keyBuffer,
@@ -417,12 +407,9 @@ namespace detail
                   localRange,
                   srcLogicalBlockSize,
 			      pass
-                ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
+                ] ( concurrency::index< 1 > idx ) restrict(amp)
              {
-                  unsigned int gloID = t_idx.global[ 0 ];
-                  unsigned int groID = t_idx.tile[ 0 ];
-                  unsigned int locID = t_idx.local[ 0 ];
-                  unsigned int wgSize = localRange;
+                  unsigned int gloID = idx[ 0 ];
 
                   //  Abort threads that are passed the end of the input vector
                   if( gloID >= vecSize )
@@ -503,15 +490,12 @@ namespace detail
 
 		 //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
          //  the results back into the input array
-         if( numMerges & 1 )
-         {
-            for(unsigned int i=0; i<vecSize; i++)
-			{
-                inputBuffer[i] = tmpValueBuffer[i]; 
-			    keyBuffer[i] = tmpKeyBuffer[i]; 
-			}
-         }
-
+		if( numMerges & 1 )
+	    {
+		   concurrency::extent< 1 > modified_ext( vecSize );
+		   tmpValueBuffer.section( modified_ext ).copy_to( values_first.getContainer().getBuffer(values_first, vecSize) );
+		   tmpKeyBuffer.section( modified_ext ).copy_to( keys_first.getContainer().getBuffer(keys_first, vecSize) );
+		}
          return;
     }// END of stablesort_by_key_enqueue
 
