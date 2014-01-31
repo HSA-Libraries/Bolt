@@ -23,6 +23,7 @@
 #define BOLT_CL_COUNT_H
 
 #include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
 /*! \file bolt/cl/count.h
     \brief Counts the number of elements in the specified range.

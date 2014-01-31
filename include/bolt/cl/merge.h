@@ -20,6 +20,7 @@
 #pragma once
 
 #include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
 /*! \file bolt/cl/merge.h
     \brief Returns the result of combining all the elements in the specified range using the specified.

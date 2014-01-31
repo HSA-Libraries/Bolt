@@ -25,8 +25,8 @@ TODO:
 #define BOLT_CL_INNERPRODUCT_INL
 #define USE_KERNEL 0
 #pragma once
-#include "bolt\cl\transform.h"
-#include "bolt\cl\reduce.h"
+#include "bolt/cl/transform.h"
+#include "bolt/cl/reduce.h"
 //TBB Includes
 #ifdef ENABLE_TBB
 #include "bolt/btbb/inner_product.h"
