@@ -20,7 +20,7 @@
 #pragma once
 
 #include "bolt/cl/device_vector.h"
-
+#include "bolt/cl/functional.h"
 #include <string>
 
 /*! \file bolt/cl/binary_search.h

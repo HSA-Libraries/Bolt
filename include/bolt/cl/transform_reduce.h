@@ -20,6 +20,7 @@
 #pragma once
 
 #include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
 /*! \file bolt/cl/transform_reduce.h
     \brief  Fuses transform and reduce operations together.

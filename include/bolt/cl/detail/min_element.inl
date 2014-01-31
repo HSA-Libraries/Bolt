@@ -20,6 +20,8 @@
 #define BOLT_CL_MINELEMENT_INL
 #pragma once
 
+#include "bolt/cl/functional.h"
+
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/min_element.h"
