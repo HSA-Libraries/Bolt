@@ -422,7 +422,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
         } 
         //  Computes a scan within a workgroup
         sum = lds[ locId ];
-        unsigned int  offset = 1;
+
         for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
         {
             t_idx.barrier.wait();

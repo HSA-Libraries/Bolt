@@ -180,14 +180,14 @@ namespace amp {
 
             int operator*() const restrict(cpu,amp)
             {
-              int xy = m_constValue;
+              int xy = (int) m_constValue;
               return xy;
             }
 
 
             int operator[](int x) const restrict(cpu,amp)
             {
-              int xy = m_constValue;
+              int xy = (int) m_constValue;
               return xy;
             }
 

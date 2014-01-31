@@ -104,7 +104,7 @@ namespace bolt {
 				int wgSize = 64;
 
 
-				int leng = length1 > length2 ? length1 : length2;
+				unsigned int leng = length1 > length2 ? length1 : length2;
 				leng = leng + wgSize - (leng % wgSize);
 
 				concurrency::extent< 1 > inputExtent(leng);
@@ -114,7 +114,7 @@ namespace bolt {
 				concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
 				{
 					
-					int gx = idx[0];
+					unsigned int gx = idx[0];
 					int pos1, pos2;
 
 					if (gx < length1)

@@ -101,7 +101,7 @@ namespace bolt
                      if( globalId >= arraySize )
                        return;
                    }
-                   resultV[globalId] = f(inputV1[globalId], inputV2[globalId]);
+                   resultV[globalId] = f((oType)inputV1[globalId], (oType)inputV2[globalId]);
                });
 			   }
 

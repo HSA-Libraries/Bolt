@@ -477,97 +477,7 @@ public:
     InnerProductTestMultFloat( ):arraySize( GetParam( ) )
     {}
 };
-//
-//class InnerProductCountingIterator :public ::testing::TestWithParam<int>{
-//protected:
-//    int mySize;
-//public:
-//    InnerProductCountingIterator():mySize(GetParam()){
-//    }
-//};
-//
-//TEST_P( InnerProductCountingIterator, withCountingIterator)
-//{
-//    bolt::cl::counting_iterator<int> first1(0);
-//    bolt::cl::counting_iterator<int> last1 = first1 +  mySize;
-//    bolt::cl::counting_iterator<int> first2(1);
-//    int init = 10;
-//
-//    std::vector<int> input1(mySize);
-//    std::vector<int> input2(mySize);
-//   
-//
-//    for (int i=0; i < mySize; i++) {
-//        input1[i] = i;
-//        input2[i] = i+1;
-//    };
-//    
-//    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(), input2.begin(),init, std::multiplies<int>(),
-//        std::plus<int>());
-//    int boltInnerProduct = bolt::cl::inner_product(  first1,
-//                                                     last1,
-//                                                     first2,
-//                                                     init, bolt::cl::multiplies<int>(),
-//                                                     bolt::cl::plus<int>());
-//
-//    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-//}
-//
-//TEST_P( InnerProductCountingIterator, SerialwithCountingIterator)
-//{
-//    bolt::cl::counting_iterator<int> first1(0);
-//    bolt::cl::counting_iterator<int> last1 = first1 +  mySize;
-//    bolt::cl::counting_iterator<int> first2(1);
-//    int init = 10;
-//
-//    std::vector<int> input1(mySize);
-//    std::vector<int> input2(mySize);
-//   
-//
-//    for (int i=0; i < mySize; i++) {
-//        input1[i] = i;
-//        input2[i] = i+1;
-//    };
-//    
-//    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
-//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-//    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-//
-//    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(),input2.begin(),init, std::multiplies<int>(),
-//        std::plus<int>());
-//    int boltInnerProduct = bolt::cl::inner_product(ctl, first1, last1, first2, init, bolt::cl::multiplies<int>(),
-//        bolt::cl::plus<int>());
-//
-//    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-//}
-//
-//TEST_P( InnerProductCountingIterator, MultiCorewithCountingIterator)
-//{
-//    bolt::cl::counting_iterator<int> first1(0);
-//    bolt::cl::counting_iterator<int> last1 = first1 +  mySize;
-//    bolt::cl::counting_iterator<int> first2(1);
-//    int init = 10;
-//
-//    std::vector<int> input1(mySize);
-//    std::vector<int> input2(mySize);
-//   
-//
-//    for (int i=0; i < mySize; i++) {
-//        input1[i] = i;
-//        input2[i] = i+1;
-//    };
-//    
-//    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
-//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-//    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-//
-//    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(), input2.begin(),init, std::multiplies<int>(),
-//        std::plus<int>());
-//    int boltInnerProduct = bolt::cl::inner_product(ctl, first1, last1, first2, init, bolt::cl::multiplies<int>(),
-//        bolt::cl::plus<int>());
-//
-//    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-//}
+
 
 TEST_P (InnerProductTestMultFloat, multiplyWithFloats)
 {
@@ -763,7 +673,6 @@ TEST_P( InnerProductTestMultFloat, MultiCoreFloatValuesWdControl )
     EXPECT_FLOAT_EQ( stdInnerProductValue, boltInnerProduct );
 }
 
-//INSTANTIATE_TEST_CASE_P(serialValues, InnerProductCountingIterator, ::testing::Range(1, 100, 10));
 INSTANTIATE_TEST_CASE_P(serialValues, InnerProductTestMultFloat, ::testing::Range(1, 100, 10));
 INSTANTIATE_TEST_CASE_P(multiplyWithFloatPredicate, InnerProductTestMultFloat, ::testing::Range(1, 20, 1));
 //end of new 2
@@ -1319,26 +1228,6 @@ void floatInProd1(int aSize)
  
 };
 
-//void ctlInprod(){
-//    int aSize=64;
-//    int numIters = 100;
-//     std::vector<int> A(aSize),B(aSize);
-//
-//    for (int i=0; i < aSize; i++) {
-//        A[i] = i;
-//        B[i] = i;
-//    };
-//
-//    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
-//    bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 )); 
-//    //c.setDebugMode(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
-//
-//    int stlReduce = std::inner_product(A.begin(), A.end(), B.begin(),0);
-//    int boltReduce = 0;
-//    boltReduce = bolt::cl::inner_product(c, A.begin(), A.end(), B.begin(),0);
-//   
-//    checkResult("ctlInProduct", stlReduce, boltReduce);
-//}
 
 void InProdDV()
 {
@@ -1452,6 +1341,7 @@ TEST_P( InnerProductCountingIterator, MultiCorewithCountingIterator)
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
 
+INSTANTIATE_TEST_CASE_P(countingValues, InnerProductCountingIterator, ::testing::Range(1, 100, 10));
 
 int _tmain(int argc, _TCHAR* argv[])
 {
