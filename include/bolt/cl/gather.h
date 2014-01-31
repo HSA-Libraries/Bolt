@@ -19,11 +19,7 @@
 #define BOLT_CL_GATHER_H
 #pragma once
 
-#include "bolt/cl/bolt.h"
 #include "bolt/cl/device_vector.h"
-
-#include <string>
-#include <iostream>
 
 /*! \file bolt/cl/gather.h
     \brief gathers elements from a source array to a destination range.

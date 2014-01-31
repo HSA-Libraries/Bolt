@@ -21,12 +21,7 @@
 
 #define WAVEFRONT_SIZE_REDUCE 256
 
-#include <string>
-#include <iostream>
-#include <numeric>
 
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/functional.h"
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/transform_reduce.h"

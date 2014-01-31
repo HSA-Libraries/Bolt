@@ -21,6 +21,7 @@
 
 //#include "bolt/cl/scan.h"
 #include "bolt/cl/transform_scan.h"
+#include "bolt/cl/functional.h"
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
 

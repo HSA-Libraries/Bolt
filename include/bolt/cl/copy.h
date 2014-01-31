@@ -19,8 +19,7 @@
 #define BOLT_CL_COPY_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/device_vector.h>
+#include "bolt/cl/device_vector.h"
 
 #include <string>
 #include <iostream>

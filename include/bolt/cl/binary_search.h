@@ -19,7 +19,8 @@
 #define BOLT_CL_BINARY_SEARCH_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
+#include "bolt/cl/device_vector.h"
+
 #include <string>
 
 /*! \file bolt/cl/binary_search.h

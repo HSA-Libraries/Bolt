@@ -20,13 +20,7 @@
 #define BOLT_CL_BINARY_SEARCH_INL
 #define BINARY_SEARCH_WAVEFRONT_SIZE 64
 //#define BINARY_SEARCH_THRESHOLD 16
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
 
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/device_vector.h"
-#include "bolt/cl/functional.h"
 //TBB Includes
 #if defined(ENABLE_TBB)
 #include "bolt/btbb/binary_search.h"

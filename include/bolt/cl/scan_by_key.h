@@ -19,9 +19,8 @@
 #define BOLT_CL_SCAN_BY_KEY_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
+#include "bolt/cl/device_vector.h"
+
 
 /*! \file bolt/cl/scan_by_key.h
     \brief Performs, on a sequence, scan of each sub-sequence as defined by equivalent keys inclusive or exclusive.

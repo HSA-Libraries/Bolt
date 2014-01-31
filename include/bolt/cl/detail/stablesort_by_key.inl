@@ -19,19 +19,6 @@
 #if !defined( BOLT_CL_STABLESORT_BY_KEY_INL )
 #define BOLT_CL_STABLESORT_BY_KEY_INL
 
-#include <algorithm>
-#include <type_traits>
-
-#include <boost/bind.hpp>
-#include <boost/thread/once.hpp>
-#include <boost/shared_array.hpp>
-
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/functional.h"
-#include "bolt/cl/sort_by_key.h"
-#include "bolt/cl/pair.h"
-#include "bolt/cl/device_vector.h"
-
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/stable_sort_by_key.h"

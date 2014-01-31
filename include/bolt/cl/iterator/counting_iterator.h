@@ -17,7 +17,8 @@
 #pragma once
 #if !defined( BOLT_CL_COUNTING_ITERATOR_H )
 #define BOLT_CL_COUNTING_ITERATOR_H
-#include "bolt/cl/bolt.h"
+
+#include "bolt/cl/device_vector.h"
 #include "bolt/cl/iterator/iterator_traits.h"
 #include <boost/iterator/iterator_facade.hpp>
 

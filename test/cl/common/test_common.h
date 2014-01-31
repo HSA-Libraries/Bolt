@@ -21,11 +21,11 @@
 
 
 
-
-#include "bolt/unicode.h"
 #include "bolt/cl/device_vector.h"
+#include "bolt/unicode.h"
 #include <array>
 #include <gtest/gtest.h>
+
 #if !defined( BOLT_TEST_MAX_FAILURES )
     #define BOLT_TEST_MAX_FAILURES 8
 #endif

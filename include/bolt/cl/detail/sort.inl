@@ -39,11 +39,6 @@
 #define BOLT_CL_SORT_INL
 #pragma once
 
-#include <algorithm>
-#include <type_traits>
-
-#include "bolt/cl/functional.h"
-#include "bolt/cl/device_vector.h"
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
 #endif

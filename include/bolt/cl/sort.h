@@ -19,8 +19,8 @@
 #define BOLT_CL_SORT_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <string>
+#include "bolt/cl/device_vector.h"
+
 
 
 

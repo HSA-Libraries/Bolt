@@ -23,12 +23,6 @@
 #define BURST_SIZE 4
 #endif
 
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
-
-#include "bolt/cl/bolt.h"
-
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/copy.h"

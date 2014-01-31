@@ -19,11 +19,7 @@
 #define BOLT_CL_GENERATE_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/device_vector.h>
-
-#include <string>
-#include <iostream>
+#include "bolt/cl/device_vector.h"
 
 /*! \file bolt/cl/generate.h
     \brief Generate assigns to each element of a sequence [first,last].

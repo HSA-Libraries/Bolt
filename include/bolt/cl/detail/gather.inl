@@ -20,17 +20,10 @@
 #define BOLT_CL_GATHER_INL
 #define WAVEFRONT_SIZE 64
 
-#include <type_traits>
 
 #ifdef ENABLE_TBB
     #include "bolt/btbb/gather.h"
 #endif
-
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/device_vector.h"
-#include "bolt/cl/iterator/iterator_traits.h"
-#include "bolt/cl/functional.h"
-#include "bolt/cl/clcode.h"
 
 namespace bolt {
 namespace cl {
