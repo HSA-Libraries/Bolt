@@ -42,7 +42,7 @@ namespace cl
         typedef typename std::iterator_traits<Iterator>::difference_type difference_type;
         typedef typename std::iterator_traits<Iterator>::pointer         pointer;
         typedef transform_iterator_tag                                   iterator_category;
-        typedef typename UnaryFunc                                       unary_func;
+        typedef UnaryFunc                                                unary_func;
 
         //typedef typename Iterator::container                             container;
         //friend class boost::transform_iterator <UnaryFunc, Iterator>;
