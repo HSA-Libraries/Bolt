@@ -1685,7 +1685,7 @@ TEST( DVIntVector, OffsetIntTest )
     cmpArrays( stdInput, boltInput);
     
 }
-
+#if TEST_DOUBLE == 1
 TEST( DVIntVector, OffsetDoubleTest )
 {
     int length = 1024;
@@ -1701,7 +1701,7 @@ TEST( DVIntVector, OffsetDoubleTest )
     cmpArrays( stdInput, boltInput);
     
 }
-
+#endif
 //Teststotestthecountingiterator
 TEST(simple1,counting)
 {

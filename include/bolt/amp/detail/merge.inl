@@ -111,7 +111,7 @@ namespace bolt {
 
 				try
 				{
-				concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
+				concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
 				{
 					
 					unsigned int gx = idx[0];

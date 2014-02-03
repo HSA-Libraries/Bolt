@@ -19,7 +19,7 @@
 #define BOLT_AMP_COPY_INL
 #pragma once
 
-#define WAVEFRONT_SIZE 256 
+#define COPY_WAVEFRONT_SIZE 256 
 
 #include <algorithm>
 #include <type_traits>
@@ -55,41 +55,21 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
       auto inputV  = (first.getContainer().getBuffer(first));
       auto outputV = (result.getContainer().getBuffer(result));
 
-      unsigned int wavefrontMultiple = szElements;
-      const unsigned int lowerBits = ( szElements & ( WAVEFRONT_SIZE -1 ) );
 
-	  const unsigned int tileSize = WAVEFRONT_SIZE;
-      unsigned int numTiles = (szElements/tileSize);
-      const unsigned int ceilNumTiles = static_cast< size_t >( std::ceil( static_cast< float >( szElements )
-                                                                                                    / tileSize) );
-      unsigned int ceilNumElements = tileSize * ceilNumTiles;
+      const unsigned int leng =  szElements + COPY_WAVEFRONT_SIZE - (szElements % COPY_WAVEFRONT_SIZE);
 
-      concurrency::extent< 1 > inputExtent( ceilNumElements );
-	  concurrency::tiled_extent<  tileSize  > tileK = inputExtent.tile< tileSize  >();
-
-      int boundsCheck = 0;
-
-      if( lowerBits )
-      {
-        wavefrontMultiple &= ~lowerBits;
-        wavefrontMultiple += WAVEFRONT_SIZE;
-      }
-      else
-        boundsCheck = 1;
+	 concurrency::extent< 1 > inputExtent(leng);
 
       try
       {
 
-         concurrency::parallel_for_each(av, tileK, [=](concurrency::tiled_index< tileSize  > t_idx ) restrict(amp)
+         concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
          {
-             unsigned int globalId = t_idx.global[ 0 ];
+             unsigned int globalId = idx[ 0 ];
 
-             if(boundsCheck == 0)
-             {
-               if( globalId >= szElements)
-                 return;
-             }
-             
+            if( globalId >= szElements)
+                return;
+
              outputV[globalId] = inputV[globalId];
          });
       }

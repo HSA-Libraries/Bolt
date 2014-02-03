@@ -17,7 +17,7 @@
 
 #if !defined( BOLT_AMP_GENERATE_INL )
 #define BOLT_AMP_GENERATE_INL
-#define WAVEFRONT_SIZE 256
+#define GEN_WAVEFRONT_SIZE 256
 
 #pragma once
 
@@ -52,48 +52,29 @@ void generate_enqueue(
 
 	           typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
 
-               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first, last ) );
+               const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
 
-               unsigned int wavefrontMultiple = arraySize;
-               const unsigned int lowerBits = ( arraySize & ( WAVEFRONT_SIZE -1 ) );
+    	    concurrency::array_view<Type,1> outputV (first.getContainer().getBuffer(first));
+            const unsigned int leng =  szElements + GEN_WAVEFRONT_SIZE - (szElements % GEN_WAVEFRONT_SIZE);
 
-			   int boundsCheck = 0;
+            concurrency::extent< 1 > inputExtent(leng);
 
-               if( lowerBits )
-               {
-                   wavefrontMultiple &= ~lowerBits;
-                   wavefrontMultiple += WAVEFRONT_SIZE;
-			   }
-			   else
-				    boundsCheck = 1;
+            try
+            {
 
-			  
-               const unsigned int tileSize = WAVEFRONT_SIZE;
-               unsigned int numTiles = (arraySize/tileSize);
-               const unsigned int ceilNumTiles = static_cast< size_t >
-                                    ( std::ceil( static_cast< float >( arraySize ) / tileSize) );
-               unsigned int ceilNumElements = tileSize * ceilNumTiles;
+                concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+                {
 
-               concurrency::array_view<Type,1> inputV (first.getContainer().getBuffer(first));
+                    unsigned int globalId = idx[ 0 ];
 
-               concurrency::extent< 1 > inputExtent( ceilNumElements );
-	           concurrency::tiled_extent<  tileSize  > tileK = inputExtent.tile< tileSize  >();
+                    if( globalId >= szElements)
+                         return;
 
-			   try
-			   {
-               concurrency::parallel_for_each(av, tileK, [=](concurrency::tiled_index< tileSize  > t_idx) restrict(amp)
-               {
-                   unsigned int globalId = t_idx.global[ 0 ];
+                    outputV[globalId] =(Type) gen();
 
-				   if(boundsCheck == 0)
-				   {
-					 if( globalId >= arraySize )
-                       return;
-				   }
-				   
-                   inputV[globalId] = (Type) gen();
-               });
-			   }
+                });
+            }
+
 
 			   catch(std::exception &e)
                {

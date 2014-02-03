@@ -22,7 +22,7 @@
 #pragma once
 #if !defined( BOLT_AMP_TRANSFORM_INL )
 #define BOLT_AMP_TRANSFORM_INL
-#define WAVEFRNT_SIZE 256
+#define TRANSFORM_WAVEFRNT_SIZE 256
 
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -58,52 +58,37 @@ namespace bolt
                                     const DVOutputIterator& result,
                                     const BinaryFunction& f)
             {
-			   concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+                concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-               typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
-               typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
-               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+                typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
+                typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
+                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first1, last1 ) );
-               unsigned int wavefrontMultiple = arraySize;
-               const unsigned int lowerBits = ( arraySize & ( WAVEFRNT_SIZE -1 ) );
+                const unsigned int szElements =  static_cast< unsigned int >( std::distance( first1, last1 ) );
 
-               int boundsCheck = 0;
 
-               if( lowerBits )
-               {
-                   wavefrontMultiple &= ~lowerBits;
-                   wavefrontMultiple += WAVEFRNT_SIZE;
-               }
-               else
-                    boundsCheck = 1;
+                auto inputV1 = first1.getContainer().getBuffer(first1);
+                auto inputV2 = first2.getContainer().getBuffer(first2);
+                auto resultV = result.getContainer().getBuffer(result);
 
-			   const unsigned int tileSize = WAVEFRNT_SIZE;
-               unsigned int numTiles = (arraySize/tileSize);
-               const unsigned int ceilNumTiles=static_cast<size_t>(std::ceil(static_cast<float>
-                                                                        (arraySize)/tileSize));
-               unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
-               auto inputV1 = first1.getContainer().getBuffer(first1);
-               auto inputV2 = first2.getContainer().getBuffer(first2);
-               auto resultV = result.getContainer().getBuffer(result);
+                const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
 
-               concurrency::extent< 1 > inputExtent( ceilNumElements );
-               concurrency::tiled_extent< tileSize > tiledExtentTransform = inputExtent.tile< tileSize >();
+                concurrency::extent< 1 > inputExtent(leng);
 
-			   try
-			   {
-               concurrency::parallel_for_each(av, tiledExtentTransform, [=](concurrency::tiled_index<tileSize> t_idx) restrict(amp)
-               {
-                   unsigned int globalId = t_idx.global[ 0 ];
-                   if(boundsCheck == 0)
-                   {
-                     if( globalId >= arraySize )
-                       return;
-                   }
-                   resultV[globalId] = f((oType)inputV1[globalId], (oType)inputV2[globalId]);
-               });
-			   }
+                try
+                {
+
+                    concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+                    {
+                        unsigned int globalId = idx[ 0 ];
+
+                        if( globalId >= szElements)
+                        return;
+
+                        resultV[globalId] = f(inputV1[globalId],inputV2[globalId]);
+                    });
+                }
 
 			    catch(std::exception &e)
                 {
@@ -125,34 +110,39 @@ namespace bolt
                typedef std::iterator_traits< DVInputIterator >::value_type iType;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first, last ) );
-               unsigned int wavefrontMultiple = arraySize;
-               const unsigned int lowerBits = ( arraySize & ( WAVEFRNT_SIZE -1 ) );
 
-               int boundsCheck = 0;
+                const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
+                concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-               if( lowerBits )
-               {
-                   wavefrontMultiple &= ~lowerBits;
-                   wavefrontMultiple += WAVEFRNT_SIZE;
-               }
-               else
-                    boundsCheck = 1;
+                auto inputV1 = first.getContainer().getBuffer(first);
+                auto resultV = result.getContainer().getBuffer(result);
 
-               auto inputV = first.getContainer().getBuffer(first);
-               auto resultV = result.getContainer().getBuffer(result);
-               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
-               {
-                   unsigned int globalId = idx[0];
-                   if(boundsCheck == 0)
-                   {
-                     if( globalId >= arraySize )
-                       return;
-                   }
-                   resultV[globalId] = f(inputV[globalId]);
-               });
+                const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
+
+                concurrency::extent< 1 > inputExtent(leng);
+
+                try
+                {
+
+                    concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+                    {
+                        unsigned int globalId = idx[ 0 ];
+
+                        if( globalId >= szElements)
+                        return;
+
+                        resultV[globalId] = f(inputV1[globalId]);
+                    });
+                }
+
+			    catch(std::exception &e)
+                {
+
+                      std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
+
+                      return;
+                }
 
             }
 
