@@ -172,8 +172,8 @@ public:
             "const uint vecSize,\n"
             "local "  + typeNames[scan_iValueType] + "* lds,\n"
             "global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
-            "global " + typeNames[scan_iValueType] + "* scanBuffer,\n"
-            "global " + typeNames[scan_iValueType] + "* scanBuffer1,\n"
+            "global " + typeNames[scan_iValueType] + "* preSumArray,\n"
+			"global " + typeNames[scan_iValueType] + "* preSumArray1,\n"
             "int exclusive\n"
             ");\n\n"
 
@@ -181,7 +181,6 @@ public:
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "kernel void " + name(1) + "(\n"
-            "global " + typeNames[scan_iValueType] + "* postSumArray,\n"
             "global " + typeNames[scan_iValueType] + "* preSumArray,\n"
             ""        + typeNames[scan_initType]+" identity,\n"
             "const uint vecSize,\n"
@@ -198,8 +197,8 @@ public:
             ""        + typeNames[scan_oIterType] + " output_iter,\n"
             "global " + typeNames[scan_iValueType] + "* input,\n"
             ""        + typeNames[scan_iIterType] + " input_iter,\n"
-            "global " + typeNames[scan_iValueType] + "* postSumArray_ptr,\n"
-            "global " + typeNames[scan_iValueType] + "* preSumArray_ptr1,\n"
+            "global " + typeNames[scan_iValueType] + "* preSumArray,\n"
+            "global " + typeNames[scan_iValueType] + "* preSumArray1,\n"
             "local " + typeNames[scan_iValueType] + "* lds,\n"
             "const uint vecSize,\n"
             "global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
@@ -503,8 +502,7 @@ aProfiler.stopTrial();
                 }
 
     control::buffPointer preSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
-  control::buffPointer preSumArray1 = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
-    control::buffPointer postSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
+    control::buffPointer preSumArray1 = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
     //::cl::Buffer userFunctor( ctrl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
     //::cl::Buffer preSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
     //::cl::Buffer postSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
@@ -566,13 +564,12 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
                 cl_uint workPerThread = static_cast< cl_uint >( (sizeScanBuff) / kernel1_WgSize  );
         workPerThread = workPerThread ? workPerThread : 1;
 
-    V_OPENCL( kernels[ 1 ].setArg( 0, *postSumArray ),  "Error setting 0th argument for kernels[ 1 ]" );          // Output buffer
-    V_OPENCL( kernels[ 1 ].setArg( 1, *preSumArray ),   "Error setting 1st argument for kernels[ 1 ]" );            // Input buffer
-    V_OPENCL( kernels[ 1 ].setArg( 2, init_T ),         "Error setting     argument for kernels[ 1 ]" );   // Initial value used for exclusive scan
-    V_OPENCL( kernels[ 1 ].setArg( 3, numWorkGroupsK0 ),"Error setting 2nd argument for kernels[ 1 ]" );            // Size of scratch buffer
-    V_OPENCL( kernels[ 1 ].setArg( 4, ldsSize, NULL ),  "Error setting 3rd argument for kernels[ 1 ]" );  // Scratch buffer
-    V_OPENCL( kernels[ 1 ].setArg( 5, workPerThread ),  "Error setting 4th argument for kernels[ 1 ]" );           // User provided functor class
-    V_OPENCL( kernels[ 1 ].setArg( 6, *userFunctor ),   "Error setting 5th argument for kernels[ 1 ]" );           // User provided functor class
+    V_OPENCL( kernels[ 1 ].setArg( 0, *preSumArray ),   "Error setting 1st argument for kernels[ 1 ]" );            // Input buffer
+    V_OPENCL( kernels[ 1 ].setArg( 1, init_T ),         "Error setting     argument for kernels[ 1 ]" );   // Initial value used for exclusive scan
+    V_OPENCL( kernels[ 1 ].setArg( 2, numWorkGroupsK0 ),"Error setting 2nd argument for kernels[ 1 ]" );            // Size of scratch buffer
+    V_OPENCL( kernels[ 1 ].setArg( 3, ldsSize, NULL ),  "Error setting 3rd argument for kernels[ 1 ]" );  // Scratch buffer
+    V_OPENCL( kernels[ 1 ].setArg( 4, workPerThread ),  "Error setting 4th argument for kernels[ 1 ]" );           // User provided functor class
+    V_OPENCL( kernels[ 1 ].setArg( 5, *userFunctor ),   "Error setting 5th argument for kernels[ 1 ]" );           // User provided functor class
 
 #ifdef BOLT_PROFILER_ENABLED
 aProfiler.nextStep();
@@ -606,7 +603,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
     V_OPENCL( kernels[ 2 ].setArg( 1, result.gpuPayloadSize( ),&result_payload), "Error setting a kernel argument" );
     V_OPENCL( kernels[ 2 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[ 2 ].setArg( 3, first.gpuPayloadSize( ),&first2_payload ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[ 2 ].setArg( 4, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
+    V_OPENCL( kernels[ 2 ].setArg( 4, *preSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
     V_OPENCL( kernels[ 2 ].setArg( 5, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block
     V_OPENCL( kernels[ 2 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[ 2 ].setArg( 7, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer

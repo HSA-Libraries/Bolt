@@ -32,7 +32,7 @@
 namespace po = boost::program_options;
 
 #define TEST_DOUBLE 1
-#define TEST_LARGE_BUFFERS 0
+#define TEST_LARGE_BUFFERS 1
 
 #define SERIAL_TBB_OFFSET 0
 

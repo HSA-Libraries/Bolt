@@ -24,9 +24,9 @@
 #pragma once
 
 
-#define KERNEL02WAVES 4
-#define KERNEL1WAVES 4
-#define WAVESIZE 64
+#define SCAN_KERNELWAVES 4
+#define SCAN_WAVESIZE 128
+#define SCAN_TILE_MAX 65535
 
 #if 0
 #define NUM_PEEK 128
@@ -103,9 +103,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     int exclusive = inclusive ? 0 : 1;
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-    const unsigned int kernel0_WgSize = WAVESIZE*KERNEL02WAVES;
-    const unsigned int kernel1_WgSize = WAVESIZE*KERNEL1WAVES ;
-    const unsigned int kernel2_WgSize = WAVESIZE*KERNEL02WAVES;
+    const unsigned int kernel0_WgSize = SCAN_WAVESIZE*SCAN_KERNELWAVES;
+    const unsigned int kernel1_WgSize = SCAN_WAVESIZE*SCAN_KERNELWAVES ;
+    const unsigned int kernel2_WgSize = SCAN_WAVESIZE*SCAN_KERNELWAVES;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
@@ -127,7 +127,6 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 
     concurrency::array< iType >  preSumArray( sizeScanBuff, av );
     concurrency::array< iType >  preSumArray1( sizeScanBuff, av );
-    concurrency::array< iType > postSumArray( sizeScanBuff, av );
 
     /**********************************************************************************
      *  Kernel 0
@@ -150,66 +149,83 @@ aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
 
-    concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
-    concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
-    //std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
-  concurrency::parallel_for_each( av, tileK0, 
-        [
-            output,
-            input,
-            init,
-            numElements,
-            &preSumArray,
-            &preSumArray1,
-            binary_op,
-            exclusive,
-            kernel0_WgSize
-        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
-  {
-        unsigned int gloId = t_idx.global[ 0 ];
-        unsigned int groId = t_idx.tile[ 0 ];
-        unsigned int locId = t_idx.local[ 0 ];
-        unsigned int wgSize = kernel0_WgSize;
+	const unsigned int tile_limit = SCAN_TILE_MAX;
+	const unsigned int max_ext = (tile_limit*kernel0_WgSize);
+	unsigned int	   tempBuffsize = (sizeInputBuff/2); 
+	unsigned int	   iteration = (tempBuffsize-1)/max_ext; 
 
-        tile_static iType lds[ WAVESIZE*KERNEL02WAVES*2 ];
+    for(unsigned int i=0; i<=iteration; i++)
+	{
+	    unsigned int extent_sz =  tempBuffsize > max_ext ? max_ext : tempBuffsize; 
+		concurrency::extent< 1 > inputExtent( extent_sz );
+		concurrency::tiled_extent< kernel0_WgSize > tileK0 = inputExtent.tile< kernel0_WgSize >();
+		unsigned int index = i*(tile_limit*kernel0_WgSize);
+		unsigned int tile_index = i*tile_limit;
 
-        wgSize *=2;
-        // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-		    if(groId*wgSize+locId < numElements)
-            lds[locId] = input[groId*wgSize+locId];
-        if(groId*wgSize +locId+ (wgSize/2) < numElements)
-            lds[locId+(wgSize/2)] = input[ groId*wgSize +locId+ (wgSize/2)];
+		  concurrency::parallel_for_each( av, tileK0, 
+				[
+					output,
+					input,
+					init,
+					numElements,
+					&preSumArray,
+					&preSumArray1,
+					binary_op,
+					exclusive,
+					index,
+					tile_index,
+					kernel0_WgSize
+				] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
+		  {
+				unsigned int gloId = t_idx.global[ 0 ];
+				unsigned int groId = t_idx.tile[ 0 ];
+				unsigned int locId = t_idx.local[ 0 ];
+				unsigned int wgSize = kernel0_WgSize;
 
-	    	// Exclusive case
-        if(exclusive && gloId == 0)
-	      {
-	        iType start_val = input[0];
-		      lds[locId] = binary_op(init, start_val);
-        }
-        unsigned int  offset = 1;
-        //  Computes a scan within a workgroup with two data per element
+				tile_static iType lds[ SCAN_WAVESIZE*SCAN_KERNELWAVES*2 ];
 
-         for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
-         {
-           t_idx.barrier.wait();
-           if (locId < start)
-           {
-              unsigned int temp1 = offset*(2*locId+1)-1;
-              unsigned int temp2 = offset*(2*locId+2)-1;
-              iType y = lds[temp2];
-              iType y1 =lds[temp1];
+				wgSize *=2;
 
-              lds[temp2] = binary_op(y, y1);
-           }
-           offset *= 2;
-         }
-         t_idx.barrier.wait();
-         if (locId == 0)
-         {
-            preSumArray[ groId ] = lds[wgSize -1];
-            preSumArray1[ groId ] = lds[wgSize/2 -1];
-         }
-  } );
+				unsigned int input_offset = (groId*wgSize)+locId+index;
+				// if exclusive, load gloId=0 w/ identity, and all others shifted-1
+				if(input_offset < numElements)
+					lds[locId] = input[input_offset];
+				if(input_offset+(wgSize/2) < numElements)
+					lds[locId+(wgSize/2)] = input[ input_offset+(wgSize/2)];
+
+	    			// Exclusive case
+				if(exclusive && gloId == 0)
+				{
+					iType start_val = input[0];
+					lds[locId] = binary_op(init, start_val);
+				}
+				unsigned int  offset = 1;
+				//  Computes a scan within a workgroup with two data per element
+
+				 for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
+				 {
+				   t_idx.barrier.wait();
+				   if (locId < start)
+				   {
+					  unsigned int temp1 = offset*(2*locId+1)-1;
+					  unsigned int temp2 = offset*(2*locId+2)-1;
+					  iType y = lds[temp2];
+					  iType y1 =lds[temp1];
+
+					  lds[temp2] = binary_op(y, y1);
+				   }
+				   offset *= 2;
+				 }
+				 t_idx.barrier.wait();
+				 if (locId == 0)
+				 {
+					preSumArray[ groId + tile_index ] = lds[wgSize -1];
+					preSumArray1[ groId + tile_index ] = lds[wgSize/2 -1];
+				 }
+		  } );
+
+		 tempBuffsize = tempBuffsize - max_ext;
+	}
     //std::cout << "Kernel 0 Done" << std::endl;
     PEEK_AT( output )
 
@@ -235,12 +251,11 @@ aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
 
-    concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
+    concurrency::extent< 1 > globalSizeK1( kernel1_WgSize );
     concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
     //std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
   concurrency::parallel_for_each( av, tileK1,
         [
-            &postSumArray,
             &preSumArray,
             numWorkGroupsK0,
             workPerThread,
@@ -249,12 +264,11 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
   {
         unsigned int gloId = t_idx.global[ 0 ];
-        unsigned int groId = t_idx.tile[ 0 ];
         unsigned int locId = t_idx.local[ 0 ];
         unsigned int wgSize = kernel1_WgSize;
         unsigned int mapId  = gloId * workPerThread;
 
-        tile_static iType lds[ WAVESIZE*KERNEL1WAVES ];
+        tile_static iType lds[ SCAN_WAVESIZE*SCAN_KERNELWAVES ];
 
         // do offset of zero manually
         unsigned int offset;
@@ -264,7 +278,6 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
             // accumulate zeroth value manually
             offset = 0;
             workSum = preSumArray[mapId+offset];
-            postSumArray[ mapId + offset ] = workSum;
             //  Serial accumulation
             for( offset = offset+1; offset < workPerThread; offset += 1 )
             {
@@ -272,7 +285,6 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
                 {
                     iType y = preSumArray[mapId+offset];
                     workSum = binary_op( workSum, y );
-                    postSumArray[ mapId + offset ] = workSum;
                 }
             }
         }
@@ -293,23 +305,20 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
                     iType y = lds[ locId - offset ];
                     scanSum = binary_op( scanSum, y );
                 }
-
             }
             t_idx.barrier.wait();
             lds[ locId ] = scanSum;
         } // for offset
         t_idx.barrier.wait();
-
-        // write final scan from pre-scan and lds scan
-        workSum = preSumArray[mapId];
-        if (mapId < numWorkGroupsK0 && locId > 0){
-           iType y = lds[locId-1];
-           workSum = binary_op(workSum, y);
-           postSumArray[ mapId] = workSum;
-        }
-        else if(mapId < numWorkGroupsK0 ){
-           postSumArray[ mapId] = workSum;
-        }
+		workSum = preSumArray[mapId];
+		if(locId > 0){
+			iType y = lds[locId-1];
+			workSum = binary_op(workSum, y);
+			preSumArray[ mapId] = workSum;
+		 }
+		 else{
+		   preSumArray[ mapId] = workSum;
+		}
         // write final scan from pre-scan and lds scan
         for( offset = 1; offset < workPerThread; offset += 1 )
         {
@@ -318,14 +327,14 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
              {
                 iType y  = preSumArray[ mapId + offset ] ;
                 iType y1 = binary_op(y, workSum);
-                postSumArray[ mapId + offset ] = y1;
+                preSumArray[ mapId + offset ] = y1;
                 workSum = y1;
 
              } // thread in bounds
              else if(mapId+offset < numWorkGroupsK0 ){
                iType y  = preSumArray[ mapId + offset ] ;
-               postSumArray[ mapId + offset ] = binary_op(y, workSum);
-               workSum = postSumArray[ mapId + offset ];
+               preSumArray[ mapId + offset ] = binary_op(y, workSum);
+               workSum = preSumArray[ mapId + offset ];
             }
 
         } // for
@@ -348,102 +357,114 @@ aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
 #endif
-    concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
-    concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
-    //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
-    concurrency::parallel_for_each( av, tileK2,
-        [
-            input,
-            output,
-            &postSumArray,
-            &preSumArray1,
-            numElements,
-            binary_op,
-            init,
-            exclusive,
-            kernel2_WgSize
-        ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
-  {
-        unsigned int gloId = t_idx.global[ 0 ];
-        unsigned int groId = t_idx.tile[ 0 ];
-        unsigned int locId = t_idx.local[ 0 ];
-        unsigned int wgSize = kernel2_WgSize;
+	tempBuffsize = (sizeInputBuff); 
+	iteration = (tempBuffsize-1)/max_ext; 
 
-         tile_static iType lds[ WAVESIZE*KERNEL1WAVES ];
-        // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-        iType val;
+    for(unsigned int a=0; a<=iteration ; a++)
+	{
+	    unsigned int extent_sz =  tempBuffsize > max_ext ? max_ext : tempBuffsize; 
+		concurrency::extent< 1 > inputExtent( extent_sz );
+		concurrency::tiled_extent< kernel2_WgSize > tileK2 = inputExtent.tile< kernel2_WgSize >();
+		unsigned int index = a*(tile_limit*kernel2_WgSize);
+		unsigned int tile_index = a*tile_limit;
+
+		concurrency::parallel_for_each( av, tileK2,
+				[
+					input,
+					output,
+					&preSumArray,
+					&preSumArray1,
+					numElements,
+					binary_op,
+					init,
+					exclusive,
+					index,
+					tile_index,
+					kernel2_WgSize
+				] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
+		  {
+				unsigned int gloId = t_idx.global[ 0 ] + index;
+				unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+				unsigned int locId = t_idx.local[ 0 ];
+				unsigned int wgSize = kernel2_WgSize;
+
+				 tile_static iType lds[ SCAN_WAVESIZE*SCAN_KERNELWAVES ];
+				// if exclusive, load gloId=0 w/ identity, and all others shifted-1
+				iType val;
   
-        if (gloId < numElements){
-           if (exclusive)
-           {
-              if (gloId > 0)
-              { // thread>0
-                  val = input[gloId-1];
-                  lds[ locId ] = val;
-              }
-              else
-              { // thread=0
-                  val = init;
-                  lds[ locId ] = val;
-              }
-           }
-           else
-           {
-              val = input[gloId];
-              lds[ locId ] = val;
-           }
-        }
+				if (gloId < numElements){
+				   if (exclusive)
+				   {
+					  if (gloId > 0)
+					  { // thread>0
+						  val = input[gloId-1];
+						  lds[ locId ] = val;
+					  }
+					  else
+					  { // thread=0
+						  val = init;
+						  lds[ locId ] = val;
+					  }
+				   }
+				   else
+				   {
+					  val = input[gloId];
+					  lds[ locId ] = val;
+				   }
+				}
   
-	    	iType scanResult = lds[locId];
-        iType postBlockSum, newResult;
-        // accumulate prefix
-        iType y, y1, sum;
-        if(locId == 0 && gloId < numElements)
-        {
-            if(groId > 0) {
-                if(groId % 2 == 0)
-                   postBlockSum = postSumArray[ groId/2 -1 ];
-                else if(groId == 1)
-                   postBlockSum = preSumArray1[0];
-                else {
-                   y = postSumArray[ groId/2 -1 ];
-                   y1 = preSumArray1[groId/2];
-                   postBlockSum = binary_op(y, y1);
-                }
-			    if (!exclusive)
-                   newResult = binary_op( scanResult, postBlockSum );
-			    else 
-				   newResult =  postBlockSum;
-            }
-            else {
-               newResult = scanResult;
-            }
-		    lds[ locId ] = newResult;
-        } 
-        //  Computes a scan within a workgroup
-        sum = lds[ locId ];
+	    			iType scanResult = lds[locId];
+				iType postBlockSum, newResult;
+				// accumulate prefix
+				iType y, y1, sum;
+				if(locId == 0 && gloId < numElements)
+				{
+					if(groId > 0) {
+						if(groId % 2 == 0)
+						   postBlockSum = preSumArray[ groId/2 -1 ];
+						else if(groId == 1)
+						   postBlockSum = preSumArray1[0];
+						else {
+						   y = preSumArray[ groId/2 -1 ];
+						   y1 = preSumArray1[groId/2];
+						   postBlockSum = binary_op(y, y1);
+						}
+						if (!exclusive)
+						   newResult = binary_op( scanResult, postBlockSum );
+						else 
+						   newResult =  postBlockSum;
+					}
+					else {
+					   newResult = scanResult;
+					}
+					lds[ locId ] = newResult;
+				} 
+				//  Computes a scan within a workgroup
+				sum = lds[ locId ];
 
-        for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
-        {
-            t_idx.barrier.wait();
-            if (locId >= offset)
-            {
-                iType y = lds[ locId - offset ];
-                sum = binary_op( sum, y );
-            }
-            t_idx.barrier.wait();
-            lds[ locId ] = sum;
-        }
-         t_idx.barrier.wait();
-    //  Abort threads that are passed the end of the input vector
-        if (gloId >= numElements) return; 
+				for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+				{
+					t_idx.barrier.wait();
+					if (locId >= offset)
+					{
+						iType y = lds[ locId - offset ];
+						sum = binary_op( sum, y );
+					}
+					t_idx.barrier.wait();
+					lds[ locId ] = sum;
+				}
+				 t_idx.barrier.wait();
+			//  Abort threads that are passed the end of the input vector
+				if (gloId >= numElements) return; 
 
-        output[ gloId ] = sum;
+				output[ gloId ] = sum;
 
-    } );
+			} );
+
+			 tempBuffsize = tempBuffsize - max_ext;
+		}
     //std::cout << "Kernel 2 Done" << std::endl;
     PEEK_AT( output )
-
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Copy Results Back");
