@@ -70,7 +70,8 @@ public:
 
     virtual void SetUp( )
     {
-        std::generate(stdInput.begin(), stdInput.end(), generateRandom<ArrayType>);
+        //std::generate(stdInput.begin(), stdInput.end(), generateRandom<ArrayType>);
+        std::fill(stdInput.begin(), stdInput.end(), ArrayType(100));
         stdOutput = stdInput;
         boltInput = stdInput;
         boltOutput = stdInput;
@@ -1969,7 +1970,7 @@ TEST( ReduceFunctor, NormalLambdaFunctor )
   
     int init(0);
     //  Calling the actual functions under test
-    std::vector<int> stdInput(1024), boltInput(1024);
+    std::vector<int> stdInput(1026+1010), boltInput(1026+1010);
     std::fill( stdInput.begin(), stdInput.end(), 100 );
     std::copy( stdInput.begin(), stdInput.end(), boltInput.begin() );
 
@@ -1990,7 +1991,7 @@ TEST( ReduceFunctor, NormalLambdaFunctor )
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
-    //EXPECT_EQ( stlReduce, boltReduce );
+    EXPECT_EQ( stlReduce, boltReduce );
 }
 
 TEST( ReduceFunctor, SerialLambdaFunctor )
@@ -2090,7 +2091,7 @@ void testTBBDevicevector()
 
 int main(int argc, char* argv[])
 {
-
+    /*
 #if defined( ENABLE_TBB )
     testTBB( );
     #if (TEST_DOUBLE == 1)
@@ -2098,7 +2099,7 @@ int main(int argc, char* argv[])
     #endif
     testUDDTBB();
     testTBBDevicevector();
-#endif
+#endif*/
     
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 

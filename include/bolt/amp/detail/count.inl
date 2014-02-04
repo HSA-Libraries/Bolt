@@ -176,7 +176,8 @@ namespace bolt {
 
 
             template<typename InputIterator, typename Predicate>
-            int count_detect_random_access(bolt::amp::control &ctl,
+            typename bolt::amp::iterator_traits<InputIterator>::difference_type
+                count_detect_random_access(bolt::amp::control &ctl,
                 const InputIterator& first,
                 const InputIterator& last,
                 const Predicate& predicate,

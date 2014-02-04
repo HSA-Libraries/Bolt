@@ -21,13 +21,14 @@
 
 #if !defined( BOLT_AMP_REDUCE_INL )
 #define BOLT_AMP_REDUCE_INL
-#define WAVEFRONT_SIZE 256 //64
-#define _REDUCE_STEP(_LENGTH, _IDX, _W) \
-    if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
+#define REDUCE_WAVEFRONT_SIZE 256 //64
+#define _REDUCE_STEP(_IDX, _W) \
+    if (_IDX < _W)\
+    {\
       iType mine = scratch[_IDX];\
       iType other = scratch[_IDX + _W];\
       scratch[_IDX] = binary_op(mine, other); \
-    }\
+     }\
     t_idx.barrier.wait();
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -68,27 +69,29 @@ namespace bolt
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
-                const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
-                const unsigned int tileSize = WAVEFRONT_SIZE;
-                unsigned int numTiles = (szElements/tileSize);
-                const unsigned int ceilNumTiles = static_cast< size_t >
-                                    ( std::ceil( static_cast< float >( szElements ) / tileSize) );
-                unsigned int ceilNumElements = tileSize * ceilNumTiles;
-
-
-                auto inputV =  first.getContainer().getBuffer(first);
-
                 //Now create a staging array ; May support zero-copy in the future?!
                 concurrency::accelerator cpuAccelerator = concurrency::
                                                         accelerator(concurrency::accelerator::cpu_accelerator);
                 concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
-                concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view,
+
+
+                const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
+                if(szElements >= REDUCE_WAVEFRONT_SIZE)
+                {
+  			    unsigned int  leng = szElements -  (szElements % REDUCE_WAVEFRONT_SIZE);
+
+                unsigned int numTiles = (leng/REDUCE_WAVEFRONT_SIZE);
+
+                auto inputV = first.getContainer().getBuffer(first);
+
+                concurrency::array< iType, 1 > resultArray ( numTiles, ctl.getAccelerator().default_view,
                                                                                         cpuAcceleratorView);
 
                 concurrency::array_view<iType, 1> result ( resultArray );
+
                 result.discard_data();
-                concurrency::extent< 1 > inputExtent( ceilNumElements );
-                concurrency::tiled_extent< tileSize > tiledExtentReduce = inputExtent.tile< tileSize >();
+                concurrency::extent< 1 > inputExtent( leng );
+                concurrency::tiled_extent< REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< REDUCE_WAVEFRONT_SIZE >();
 
                 // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
                 // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
@@ -98,43 +101,29 @@ namespace bolt
                     concurrency::parallel_for_each(ctl.getAccelerator().default_view,
                                                    tiledExtentReduce,
                                                    [ inputV,
-                                                     szElements,
+                                                     leng,
                                                      result,
                                                      binary_op ]
-                                                   ( concurrency::tiled_index<tileSize> t_idx ) restrict(amp)
+                                                   ( concurrency::tiled_index<REDUCE_WAVEFRONT_SIZE> t_idx ) restrict(amp)
                     {
-                      int globalId = t_idx.global[ 0 ];
+                      unsigned int globalId = t_idx.global[ 0 ];
                       int gx = globalId;
                       int tileIndex = t_idx.local[ 0 ];
 
                       //  Initialize local data store
-                      tile_static iType scratch [WAVEFRONT_SIZE] ;
-
-                      //  Abort threads that are passed the end of the input vector
-                      if( t_idx.global[ 0 ] < szElements )
-                      {
-                       //  Initialize the accumulator private variable with data from the input array
-                       //  This essentially unrolls the loop below at least once
-                       iType accumulator = inputV[globalId];
-                       scratch[tileIndex] = accumulator;         
-                      }
+                      tile_static iType scratch [REDUCE_WAVEFRONT_SIZE] ;
+                      scratch[tileIndex] = inputV[globalId];
 
                       t_idx.barrier.wait();
 
-                      //  Tail stops the last workgroup from reading past the end of the input vector
-                      int tail = szElements - (t_idx.tile[ 0 ] * t_idx.tile_dim0);
-                      // Parallel reduction within a given workgroup using local data store
-                      // to share values between workitems
-
-                      _REDUCE_STEP(tail, tileIndex, 128);
-                      _REDUCE_STEP(tail, tileIndex, 64);
-                      _REDUCE_STEP(tail, tileIndex, 32);
-                      _REDUCE_STEP(tail, tileIndex, 16);
-                      _REDUCE_STEP(tail, tileIndex,  8);
-                      _REDUCE_STEP(tail, tileIndex,  4);
-                      _REDUCE_STEP(tail, tileIndex,  2);
-                      _REDUCE_STEP(tail, tileIndex,  1);
-
+                      _REDUCE_STEP( tileIndex, 128);
+                      _REDUCE_STEP( tileIndex, 64);
+                      _REDUCE_STEP( tileIndex, 32);
+                      _REDUCE_STEP( tileIndex, 16);
+                      _REDUCE_STEP( tileIndex,  8);
+                      _REDUCE_STEP( tileIndex,  4);
+                      _REDUCE_STEP( tileIndex,  2);
+                      _REDUCE_STEP( tileIndex,  1);
 
                       //  Write only the single reduced value for the entire workgroup
                       if (tileIndex == 0)
@@ -142,20 +131,24 @@ namespace bolt
                           result[t_idx.tile[ 0 ]] = scratch[0];
                       }
 
-
                     });
+                    
+  
+                    
+               //     concurrency::extent<1> ext( static_cast< int >(szElements-leng));
+               //     concurrency::array_view<iType, 1>  rem = inputV.section( Concurrency::index<1>((int)leng), ext );
 
+                    iType acc = static_cast< iType >( init );
+                    for(int i = leng; i < szElements  ; ++i)
+                    {
+                        acc = binary_op(acc, *(first+i));
+                    }                    
 
                     iType *cpuPointerReduce =  result.data();
-
-                    int numTailReduce = (ceilNumTiles>numTiles)? ceilNumTiles : numTiles;
-                    iType acc = static_cast< iType >( init );
-
-                    for(int i = 0; i < numTailReduce; ++i)
+                    for(unsigned int i = 0; i < numTiles; ++i)
                     {
                         acc = binary_op(acc, cpuPointerReduce[i]);
                     }
-
                     return acc;
                 }
                 catch(std::exception &e)
@@ -165,6 +158,16 @@ namespace bolt
                       throw std::exception();
                 }
 
+                }
+                else
+                {
+                    iType acc = static_cast< iType >( init );
+                    for(int i = 0; i < szElements  ; ++i)
+                    {
+                        acc = binary_op(acc, *(first+i));
+                    }      
+                    return acc;
+                }
             };
 
               // This template is called after we detect random access iterators
