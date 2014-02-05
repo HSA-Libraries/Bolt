@@ -156,7 +156,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 
     for(unsigned int i=0; i<=iteration; i++)
 	{
-	    unsigned int extent_sz =  tempBuffsize > max_ext ? max_ext : tempBuffsize; 
+	    unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
 		concurrency::extent< 1 > inputExtent( extent_sz );
 		concurrency::tiled_extent< kernel0_WgSize > tileK0 = inputExtent.tile< kernel0_WgSize >();
 		unsigned int index = i*(tile_limit*kernel0_WgSize);
@@ -362,7 +362,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 
     for(unsigned int a=0; a<=iteration ; a++)
 	{
-	    unsigned int extent_sz =  tempBuffsize > max_ext ? max_ext : tempBuffsize; 
+	    unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
 		concurrency::extent< 1 > inputExtent( extent_sz );
 		concurrency::tiled_extent< kernel2_WgSize > tileK2 = inputExtent.tile< kernel2_WgSize >();
 		unsigned int index = a*(tile_limit*kernel2_WgSize);

@@ -18,7 +18,8 @@
 #pragma once
 #if !defined( BOLT_AMP_STABLESORT_INL )
 #define BOLT_AMP_STABLESORT_INL
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 512
+#define STABLESORT_TILE_MAX 65535
 #include <algorithm>
 #include <type_traits>
 
@@ -34,7 +35,7 @@
 #include "bolt/btbb/stable_sort.h"
 #endif
 
-#define BOLT_AMP_STABLESORT_CPU_THRESHOLD 256
+#define BOLT_AMP_STABLESORT_CPU_THRESHOLD 512
 
 namespace bolt {
 namespace amp {
@@ -179,112 +180,123 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
      *  Kernel 0
      *********************************************************************************/
 
-    concurrency::extent< 1 > globalSizeK0( globalRange );
-    concurrency::tiled_extent< localRange > tileK0 = globalSizeK0.tile< localRange >();
+	const unsigned int tile_limit = STABLESORT_TILE_MAX;
+	const unsigned int max_ext = (tile_limit*localRange);
 
-    try
-    {
+	unsigned int	   tempBuffsize = globalRange; 
+	unsigned int	   iteration = (globalRange-1)/max_ext; 
 
-    concurrency::parallel_for_each( av, tileK0,
-        [
-            inputBuffer,
-            vecSize,
-            comp,
-            localRange
-        ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
-  {
-
-    unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int groId = t_idx.tile[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
-    unsigned int wgSize = localRange;
-
-    tile_static iType lds[BUFFER_SIZE]; 
-	tile_static iType lds2[BUFFER_SIZE]; 
-
-    //  Abort threads that have passed the end of the input vector
-    if (gloId < vecSize) {
-		lds[ locId ] = inputBuffer[ gloId ];;
-	}
-	//  Make a copy of the entire input array into fast local memory
-    t_idx.barrier.wait();
-	unsigned int end =  wgSize;
-	if( (groId+1)*(wgSize) >= vecSize )
-		end = vecSize - (groId*wgSize);
-
-	unsigned int numMerges = 8;
-	unsigned int pass;
-
-	for( pass = 1; pass <= numMerges; ++pass )
+    for(unsigned int i=0; i<=iteration; i++)
 	{
-		unsigned int srcLogicalBlockSize = 1 << (pass-1);
-	    if( gloId < vecSize)
+	    unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
+		concurrency::extent< 1 > inputExtent( extent_sz );
+		concurrency::tiled_extent< localRange > tileK0 = inputExtent.tile< localRange >();
+		unsigned int index = i*(tile_limit*localRange);
+		unsigned int tile_index = i*tile_limit;
+		try
 		{
-  		    unsigned int srcBlockNum = (locId) / srcLogicalBlockSize;
-			unsigned int srcBlockIndex = (locId) % srcLogicalBlockSize;
-    
-			unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
-			unsigned int leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
 
-		    leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
-			leftBlockIndex = min( leftBlockIndex, end );
-			unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
+			concurrency::parallel_for_each( av, tileK0,
+				[
+					inputBuffer,
+					vecSize,
+					comp,
+					index,
+					tile_index,
+					localRange
+				] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
+		  {
+
+			unsigned int gloId = t_idx.global[ 0 ] + index;
+			unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+			unsigned int locId = t_idx.local[ 0 ];
+			unsigned int wgSize = localRange;
+
+			tile_static iType lds[BUFFER_SIZE]; 
+			tile_static iType lds2[BUFFER_SIZE]; 
+
+			//  Abort threads that have passed the end of the input vector
+			if (gloId < vecSize) {
+				lds[ locId ] = inputBuffer[ gloId ];;
+			}
+			//  Make a copy of the entire input array into fast local memory
+			t_idx.barrier.wait();
+			unsigned int end =  wgSize;
+			if( (groId+1)*(wgSize) >= vecSize )
+				end = vecSize - (groId*wgSize);
+
+			unsigned int numMerges = 9;
+			unsigned int pass;
+			for( pass = 1; pass <= numMerges; ++pass )
+			{
+				unsigned int srcLogicalBlockSize = 1 << (pass-1);
+				if( gloId < vecSize)
+				{
+  					unsigned int srcBlockNum = (locId) / srcLogicalBlockSize;
+					unsigned int srcBlockIndex = (locId) % srcLogicalBlockSize;
     
-			unsigned int insertionIndex = 0;
-			if(pass%2 != 0)
-			{
-				if( (srcBlockNum & 0x1) == 0 )
-				{
-					insertionIndex = lowerBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
+					unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
+					unsigned int leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
+
+					leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
+					leftBlockIndex = min( leftBlockIndex, end );
+					unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
+    
+					unsigned int insertionIndex = 0;
+					if(pass%2 != 0)
+					{
+						if( (srcBlockNum & 0x1) == 0 )
+						{
+							insertionIndex = lowerBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
+						}
+						else
+						{
+							insertionIndex = upperBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
+						}
+					}
+					else
+					{
+						if( (srcBlockNum & 0x1) == 0 )
+						{
+							insertionIndex = lowerBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
+						}
+						else
+						{
+							insertionIndex = upperBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
+						} 
+					}
+					unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
+					unsigned int dstBlockNum = srcBlockNum/2;
+
+					if(pass%2 != 0)
+					   lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = lds[ locId ];
+					else
+					   lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = lds2[ locId ]; 
 				}
-				else
-				{
-					insertionIndex = upperBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
-				}
+				t_idx.barrier.wait();
+			}	  
+
+			if (gloId < vecSize) {
+				inputBuffer[ gloId ] = lds2[ locId ];;
 			}
-			else
-			{
-				if( (srcBlockNum & 0x1) == 0 )
-				{
-					insertionIndex = lowerBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
-				}
-				else
-				{
-					insertionIndex = upperBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
-				} 
-			}
-			unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
-			unsigned int dstBlockNum = srcBlockNum/2;
-			if(pass%2 != 0)
-			   lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = lds[ locId ];
-			else
-			   lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = lds2[ locId ]; 
+    
+			} );
+
 		}
-        t_idx.barrier.wait();
-	}	  
-
-	if (gloId < vecSize) {
-		inputBuffer[ gloId ] = lds[ locId ];;
+		catch(std::exception &e)
+		{
+			std::cout << "Exception while calling bolt::amp::stablesort 1st parallel_for_each " ;
+			std::cout<< e.what() << std::endl;
+			throw std::exception();
+		}	
+		tempBuffsize = tempBuffsize - max_ext;
 	}
-    
-    } );
-
-    }
-
-    catch(std::exception &e)
-    {
-        std::cout << "Exception while calling bolt::amp::stablesort parallel_for_each " ;
-        std::cout<< e.what() << std::endl;
-        throw std::exception();
-    }	
-
-
     //  An odd number of elements requires an extra merge pass to sort
     size_t numMerges = 0;
 
     //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
     //  this is how many merge passes we want
-    size_t log2BlockSize = vecSize >> 8;
+    size_t log2BlockSize = vecSize >> 9;
     for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
     {
         ++numMerges;
@@ -295,8 +307,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     numMerges += vecPow2? 1: 0;
 
     //  Allocate a flipflop buffer because the merge passes are out of place
-	device_vector<iType> tmpBufferVec(static_cast<size_t>(vecSize) );
-    auto&  tmpBuffer   =  tmpBufferVec.begin().getContainer().getBuffer(); 
+	concurrency::array< iType >  tmpBuffer( vecSize, av );
 
 
     /**********************************************************************************
@@ -315,7 +326,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         concurrency::parallel_for_each( av, globalSizeK1,
         [
             inputBuffer,
-            tmpBuffer,
+            &tmpBuffer,
             vecSize,
             comp,
             localRange,
@@ -396,13 +407,13 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
     catch(std::exception &e)
     {
-        std::cout << "Exception while calling bolt::amp::stablesort parallel_for_each " ;
+        std::cout << "Exception while calling bolt::amp::stablesort 2nd parallel_for_each " ;
         std::cout<< e.what() << std::endl;
         throw std::exception();
     }	 
        
     }
-
+	
      //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
     //  the results back into the input array
     if( numMerges & 1 )
@@ -410,7 +421,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 	   concurrency::extent< 1 > modified_ext( vecSize );
 	   tmpBuffer.section( modified_ext ).copy_to( first.getContainer().getBuffer(first, vecSize) );
     }
-
+	av.wait();
     return;
 }// END of stablesort_enqueue
 
