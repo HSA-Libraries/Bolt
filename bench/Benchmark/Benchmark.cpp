@@ -396,6 +396,9 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::merge( ctrl,input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output_merge.begin( ),binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
 #else
                 thrust::merge( inputBackup1.begin( ),inputBackup1.end( ),inputBackup2.begin( ),inputBackup2.end( ),output_merge.begin( ),binaryPredLt);
 #endif
@@ -422,6 +425,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 tmp = bolt::BENCH_BEND::binary_search( ctrl,input1.begin( ),input1.end( ),val,binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 tmp = thrust::binary_search( input1.begin( ),input1.end( ),val,binaryPredLt);
 #endif
@@ -462,6 +469,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::stable_sort(ctrl, inputBackup.begin(), inputBackup.end(),binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::stable_sort( inputBackup.begin(), inputBackup.end(),thrust::less<DATA_TYPE>());
 #endif
@@ -514,6 +525,10 @@ void executeFunctionType(
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::reduce_by_key(ctrl, keys.begin(), keys.end(),input2.begin(),keys1.begin(),
                     output.begin(),binaryPredEq, binaryFunct);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::reduce_by_key( keys.begin(), keys.end(),input2.begin(),keys1.begin(),
                     output.begin(),binaryPredEq, binaryFunct);
@@ -531,6 +546,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::sort(ctrl, inputBackup.begin(), inputBackup.end(),binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::sort( inputBackup.begin(), inputBackup.end(),thrust::less<DATA_TYPE>());
 #endif
@@ -566,6 +585,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 tmp = bolt::BENCH_BEND::reduce(ctrl, input1.begin(), input1.end(),tmp,binaryFunct);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 tmp = thrust::reduce( input1.begin(), input1.end(),tmp,binaryFunct);
 #endif
@@ -582,6 +605,10 @@ void executeFunctionType(
 #if (Bolt_Benchmark == 1)
                 typename VectorType::iterator itr = bolt::BENCH_BEND::max_element(ctrl, input1.begin(), input1.end(),
                                                                                                binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 typename VectorType::iterator itr = thrust::max_element( input1.begin(), input1.end(),
                                                                                         binaryPredLt);
@@ -600,6 +627,9 @@ void executeFunctionType(
                 #if BENCHMARK_CL_AMP == AMP_BENCH
                 typename VectorType::iterator itr = bolt::BENCH_BEND::min_element(ctrl, input1.begin(), input1.end(),
                                                                                                binaryPredLt);
+                ctrl.getAccelerator().default_view.wait();
+
+
                 #elif BENCHMARK_CL_AMP == CL_BENCH
 
                 typename VectorType::iterator itr = bolt::BENCH_BEND::min_element(ctrl, input1.begin(), input1.end(),
@@ -624,6 +654,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::fill(ctrl, input1.begin(), input1.end(),tmp);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::fill( input1.begin(), input1.end(),tmp);
 #endif
@@ -641,6 +675,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::count(ctrl, input1.begin(), input1.end(),tmp);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::count( input1.begin(), input1.end(),tmp);
 #endif
@@ -656,6 +694,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::generate(ctrl, input1.begin(), input1.end(), generator );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::generate( input1.begin(), input1.end(), generator );
 #endif
@@ -671,6 +713,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::copy(ctrl, input1.begin(), input1.end(), output.begin() );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::copy( input1.begin(), input1.end(), output.begin() );
 #endif
@@ -686,6 +732,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::transform(ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::transform( input1.begin(), input1.end(), output.begin(), unaryFunct );
 #endif
@@ -701,6 +751,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::transform(ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::transform( input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
 #endif
@@ -716,6 +770,10 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::inclusive_scan( input1.begin(), input1.end(), output.begin(), binaryFunct );
                 //thrust::inclusive_scan( input1.begin(), input1.end(), output.begin() );
@@ -733,6 +791,10 @@ void executeFunctionType(
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::transform_inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(),
                                                                         unaryFunct, binaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::transform_inclusive_scan( input1.begin(), input1.end(), output.begin(),
                                                                  unaryFunct, binaryFunct );
@@ -768,6 +830,11 @@ void executeFunctionType(
 #if (Bolt_Benchmark == 1)
                 bolt::BENCH_BEND::inclusive_scan_by_key(ctrl, keys.begin(), keys.end(), input2.begin(),
                                                    output.begin(), binaryPredEq, binaryFunct );
+
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::inclusive_scan_by_key( keys.begin(), keys.end(), input2.begin(),
                                             output.begin(), binaryPredEq, binaryFunct );
