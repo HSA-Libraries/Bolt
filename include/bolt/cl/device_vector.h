@@ -200,11 +200,11 @@ namespace cl
             */
             template< typename Container >
             class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
-            typename device_vector::reference, int >
+            typename device_vector::reference, difference_type >
             {
             public:
             typedef typename boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
-            typename device_vector::reference, int >::difference_type difference_type;
+            typename device_vector::reference, difference_type >::difference_type difference_type;
 
 
                 //typedef iterator_facade::difference_type difference_type;
@@ -301,7 +301,7 @@ namespace cl
 
                 }
 
-                difference_type m_Index;
+                size_type m_Index;
                 difference_type distance_to( const iterator_base< Container >& rhs ) const
                 {
                     return static_cast< difference_type >( rhs.m_Index - m_Index );
@@ -1403,8 +1403,8 @@ namespace cl
 
                 --m_Size;
 
-            size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
-                return iterator( *this, static_cast< difference_type >( newIndex ) );
+            size_type newIndex =   (m_Size < index.m_Index) ? m_Size : index.m_Index;
+                return iterator( *this, static_cast< difference_type >( (int)newIndex ) );
             }
 
             /*! \brief Removes a range of elements.
