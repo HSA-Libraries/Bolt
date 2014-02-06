@@ -38,7 +38,7 @@ namespace cl
           
     public:
         typedef typename std::iterator_traits<Iterator>::value_type      value_type;
-        //typedef typename std::iterator_traits<Iterator>::size_type     size_type;
+        //typedef typename std::iterator_traits<Iterator>::size_type       size_type;
         typedef typename std::iterator_traits<Iterator>::difference_type difference_type;
         typedef typename std::iterator_traits<Iterator>::pointer         pointer;
         typedef transform_iterator_tag                                   iterator_category;
