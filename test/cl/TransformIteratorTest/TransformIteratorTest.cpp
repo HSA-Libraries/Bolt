@@ -182,23 +182,14 @@ BOLT_FUNCTOR(gen_input,
     };
 );
 
-//std::string temp_str = BOLT_CODE_STRING(typedef bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator > trf_sq_itr;);
-//BOLT_CREATE_TYPENAME( trf_sq_itr );
-//BOLT_CREATE_CLCODE  ( trf_sq_itr, ClCode<square>::get() + bolt::cl::deviceTransformIteratorTemplate + temp_str);
-
-//#define BOLT_CREATE_TYPENAME( Type ) \
-//    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
-
 TEST( TransformIterator, FirstTest)
 {
     {
-        const int length = 10;
+        const int length = 1024;
         std::vector< int > svInVec( length );
         std::vector< int > svOutVec( length );
         bolt::BCKND::device_vector< int > dvInVec( length );
         bolt::BCKND::device_vector< int > dvOutVec( length );
-        //bolt::BCKND::device_vector< int > dvInVec( svInVec.begin(), svInVec.end() );
-        //bolt::BCKND::device_vector< int > dvOutVec( svOutVec.begin(), svOutVec.end() );
 
         square sq;
         gen_input gen;
@@ -208,10 +199,8 @@ TEST( TransformIterator, FirstTest)
         typedef bolt::BCKND::transform_iterator< square, bolt::BCKND::device_vector< int >::iterator>       dv_trf_itr;
     
         /*Create Iterators*/
-        //sv_itr sv_begin(svInVec.begin()), sv_end(svInVec.end());
-        //dv_itr dv_begin(dvInVec.begin()), dv_end(dvInVec.end()); 
-        sv_trf_itr sv_trf_begin (svInVec.begin(), sq), sv_trf_end (svInVec.begin(), sq);
-        dv_trf_itr dv_trf_begin (dvInVec.begin(), sq), dv_trf_end (dvInVec.begin(), sq);
+        sv_trf_itr sv_trf_begin (svInVec.begin(), sq), sv_trf_end (svInVec.end(), sq);
+        dv_trf_itr dv_trf_begin (dvInVec.begin(), sq), dv_trf_end (dvInVec.end(), sq);
     
         /*Generate inputs*/
         std::generate(svInVec.begin(), svInVec.end(), gen);    
@@ -325,6 +314,45 @@ TEST( TransformIterator, UDDTest)
     }
     
 }
+
+
+std::string temp_str = BOLT_CODE_STRING(typedef bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator > trf_sq_itr;);
+BOLT_CREATE_TYPENAME( trf_sq_itr );
+BOLT_CREATE_CLCODE  ( trf_sq_itr, ClCode<square>::get() + bolt::cl::deviceTransformIteratorTemplate + temp_str);
+
+//#define BOLT_CREATE_TYPENAME( Type ) \
+//    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
+TEST( TransformIterator, TransformRoutine)
+{
+    {
+        const int length = 100;
+        std::vector< int > svInVec( length );
+        std::vector< int > svOutVec( length );
+        bolt::BCKND::device_vector< int > dvInVec( length );
+        bolt::BCKND::device_vector< int > dvOutVec( length );
+
+        square sq;
+        gen_input gen;
+        typedef std::vector< int >::const_iterator                                                          sv_itr;
+        typedef bolt::BCKND::device_vector< int >::iterator                                                 dv_itr;
+        typedef bolt::BCKND::transform_iterator< square, std::vector< int >::const_iterator>                sv_trf_itr;
+        typedef bolt::BCKND::transform_iterator< square, bolt::BCKND::device_vector< int >::iterator>       dv_trf_itr;
+    
+        /*Create Iterators*/
+        sv_trf_itr sv_trf_begin (svInVec.begin(), sq), sv_trf_end (svInVec.end(), sq);
+        dv_trf_itr dv_trf_begin (dvInVec.begin(), sq), dv_trf_end (dvInVec.end(), sq);
+    
+        /*Generate inputs*/
+        std::generate(svInVec.begin(), svInVec.end(), gen);
+        global_id = 0;
+        bolt::BCKND::generate(dvInVec.begin(), dvInVec.end(), gen);
+
+        bolt::cl::transform(sv_trf_begin, sv_trf_end, svOutVec.begin(), sq);
+        //bolt::cl::transform(dv_trf_begin, dv_trf_end, dvOutVec.begin(), sq);
+        global_id = 0; // Reset the global id counter
+    }
+}
+
 /* /brief List of possible tests
  * Two input transform with first input a constant iterator
  * One input transform with a constant iterator
