@@ -61,7 +61,7 @@ namespace cl
         /*TODO - RAVI Probably I can acheive this using friend class device_vector. But the problem would be 
                  multiple defintions of functions like advance()*/        
         template<typename Container >
-        Container getContainer( ) const
+        Container& getContainer( ) const
         {
             return m_it.getContainer( );
         }
@@ -75,7 +75,22 @@ namespace cl
         /*TODO - This should throw a compilation error if the Iterator is of type std::vector*/
         const difference_type gpuPayloadSize( ) const
         {
-            return m_it.gpuPayloadSize( );
+            cl_int l_Error = CL_SUCCESS;
+            //::cl::Device which_device;
+            //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
+
+            cl_uint deviceBits = 32;// = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
+            //  Size of index and pointer
+            cl_uint szUF = sizeof(UnaryFunc);
+            szUF = (szUF+3) &(~3);
+            difference_type payloadSize = sizeof( difference_type ) + ( deviceBits >> 3 ) + szUF;
+
+            //  64bit devices need to add padding for 8 byte aligned pointer
+            if( deviceBits == 64 )
+                payloadSize += 4;
+
+            return payloadSize;
+            //return m_it.gpuPayloadSize( );
         }
         //difference_type m_Index;
         Iterator m_it;  

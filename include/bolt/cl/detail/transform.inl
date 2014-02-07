@@ -932,10 +932,10 @@ public:
             #endif
 			
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
-            auto start_ptr = &(*(first.m_it) );
-            auto end_ptr = &(*(last.m_it) );
+            //auto start_ptr = &(*(first.m_it) );
+            //auto end_ptr = &(*(last.m_it) );
             // Map the input iterator to a device_vector
-            device_vector< iType > dvInput( start_ptr, end_ptr, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+            device_vector< iType > dvInput( first.m_it, last.m_it, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             // Map the output iterator to a device_vector
             device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
             //Create transform iterators

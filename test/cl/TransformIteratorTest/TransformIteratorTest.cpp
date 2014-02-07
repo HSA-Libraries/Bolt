@@ -162,7 +162,15 @@ template< typename S, typename B >
 BOLT_FUNCTOR(square,
     struct square
     {
-        int operator() (const int& x)  const { return x + 2; }
+        int operator() (const int x)  const { return x + 2; }
+        typedef int result_type;
+    };
+);
+
+BOLT_FUNCTOR(square1,
+    struct square1
+    {
+        int operator() (const int x)  const { return x + 2; }
         typedef int result_type;
     };
 );
@@ -328,9 +336,11 @@ TEST( TransformIterator, TransformRoutine)
         const int length = 100;
         std::vector< int > svInVec( length );
         std::vector< int > svOutVec( length );
+        std::vector< int > stlOut( length );
         bolt::BCKND::device_vector< int > dvInVec( length );
         bolt::BCKND::device_vector< int > dvOutVec( length );
 
+        square1 sq1;
         square sq;
         gen_input gen;
         typedef std::vector< int >::const_iterator                                                          sv_itr;
@@ -347,7 +357,13 @@ TEST( TransformIterator, TransformRoutine)
         global_id = 0;
         bolt::BCKND::generate(dvInVec.begin(), dvInVec.end(), gen);
 
-        bolt::cl::transform(sv_trf_begin, sv_trf_end, svOutVec.begin(), sq);
+        bolt::cl::transform(sv_trf_begin, sv_trf_end, svOutVec.begin(), sq1);
+        bolt::cl::transform(dv_trf_begin, dv_trf_end, dvOutVec.begin(), sq1);
+        /*Compute expected results*/
+        std::transform(sv_trf_begin, sv_trf_end, stlOut.begin(), sq1);
+        /*Check the results*/
+        cmpArrays(svOutVec, stlOut, length);
+        //cmpArrays(svOutVec, stlOut, length);
         //bolt::cl::transform(dv_trf_begin, dv_trf_end, dvOutVec.begin(), sq);
         global_id = 0; // Reset the global id counter
     }
