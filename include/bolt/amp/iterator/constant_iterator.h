@@ -178,16 +178,16 @@ namespace amp {
 
 
 
-            int operator*() const restrict(cpu,amp)
+            value_type operator*() const restrict(cpu,amp)
             {
-              int xy = (int) m_constValue;
+              value_type xy =  m_constValue;
               return xy;
             }
 
 
-            int operator[](int x) const restrict(cpu,amp)
+            value_type operator[](int x) const restrict(cpu,amp)
             {
-              int xy = (int) m_constValue;
+              value_type xy =  m_constValue;
               return xy;
             }
 
