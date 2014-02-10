@@ -413,7 +413,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 				   }
 				}
   
-	    			iType scanResult = lds[locId];
+	    		iType scanResult = lds[locId];
 				iType postBlockSum, newResult;
 				// accumulate prefix
 				iType y, y1, sum;
