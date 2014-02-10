@@ -24,6 +24,7 @@
 #include "bolt/cl/functional.h"
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
+#include "test_common.h"
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
@@ -303,13 +304,13 @@ struct MixM3
         uddtM3 _result;
         _result.a = lhs.a^rhs.a;
         _result.b = lhs.b+rhs.b;
-        _result.c = lhs.c*rhs.c;
+        _result.c = lhs.c+rhs.c;
         return _result;
     };
 };
 );
 uddtM3 identityMixM3 = { 0, 0.f, 0.0 };
-uddtM3 initialMixM3  = { 2, 3.f, 1.000001 };
+uddtM3 initialMixM3  = { 1, 1.f, 1.000000 };
 
 BOLT_FUNCTOR(NegateM3,
     struct NegateM3
@@ -386,109 +387,6 @@ Serial_scan(
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-};
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-};
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-/*
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc)
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-
-//  The following cmpArrays verify the correctness of std::vectors's
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-#if TEST_DOUBLE
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-#endif
-*/
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
 
 class scanStdVectorWithIters:public ::testing::TestWithParam<int>
 {
@@ -1611,6 +1509,8 @@ TEST(NegateScanUserDefined, CLExclOffsetTest)
     //cmpArrays(refOutput, output);
 
 	bolt::cl::transform_exclusive_scan( input.begin()+(length/2), input.end()-(length/4), input.begin()+(length/2), nM3, identityMixM3, mM3 );
+
+	
     std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
     Serial_scan<uddtM3, MixM3, uddtM3>(&refInput[(length/2)], &refInput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
     // compare results

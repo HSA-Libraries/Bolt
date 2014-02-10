@@ -127,8 +127,8 @@ public:
             "local "  + typeNames[transformScan_oValueType] + "* lds,\n"
             "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
             "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp,\n"
-            "global " + typeNames[transformScan_oValueType] + "* scanBuffer,\n"
-            "global " + typeNames[transformScan_oValueType] + "* scanBuffer1,\n"
+            "global " + typeNames[transformScan_oValueType] + "* preSumArray,\n"
+            "global " + typeNames[transformScan_oValueType] + "* preSumArray1,\n"
             "int exclusive\n"
             ");\n\n"
 
@@ -136,7 +136,6 @@ public:
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(1) + "(\n"
-            "global " + typeNames[transformScan_oValueType] + "* postSumArray,\n"
             "global " + typeNames[transformScan_oValueType] + "* preSumArray,\n"
             "const uint vecSize,\n"
             "local "  + typeNames[transformScan_oValueType] + "* lds,\n"
@@ -152,8 +151,8 @@ public:
             ""        + typeNames[transformScan_oIterType] + " output_iter,\n"
             "global " + typeNames[transformScan_iValueType] + "* input_ptr,\n"
             ""        + typeNames[transformScan_iIterType] + " input_iter,\n"
-            "global " + typeNames[transformScan_oValueType] + "* postSumArray,\n"
-            "global " + typeNames[transformScan_oValueType] + "* postSumArray1,\n"
+            "global " + typeNames[transformScan_oValueType] + "* preSumArray,\n"
+            "global " + typeNames[transformScan_oValueType] + "* preSumArray1,\n"
             "local "  + typeNames[transformScan_oValueType] + "* lds,\n"
             "const uint vecSize,\n"
             "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
@@ -289,7 +288,6 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
     control::buffPointer preSumArray1 = ctl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
     cl_uint ldsSize;
 
 
@@ -362,12 +360,11 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     workPerThread = workPerThread ? workPerThread : 1;
 
 
-    V_OPENCL( kernels[1].setArg( 0, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
-    V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
-    V_OPENCL( kernels[1].setArg( 2, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[1].setArg( 3, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 4, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 5, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 0, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
+    V_OPENCL( kernels[1].setArg( 1, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[1].setArg( 2, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 3, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 4, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
@@ -405,7 +402,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ),&result_payload),"Error setting a kernel argument");
     V_OPENCL( kernels[2].setArg( 2, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 3, first.gpuPayloadSize( ),&first_payload  ),"Error setting a kernel argument");
-    V_OPENCL( kernels[2].setArg( 4, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 4, *preSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 5, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[2].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[2].setArg( 7, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
