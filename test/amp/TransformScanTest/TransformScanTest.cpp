@@ -677,7 +677,7 @@ TEST_P (TransformScanMultiCore, ExclTransformScanTestUDD)
     
 } 
 
-INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScan, ::testing::Range(1025, 65535, 5111)); 
+INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScan, ::testing::Range(1025, 262144, 5111)); 
 INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScanMultiCore, ::testing::Range(1025, 65535, 5111));
 
 /******************************************************************************
@@ -1298,6 +1298,7 @@ TEST(NegateScanUserDefined, AMPInclOffsetTest)
     // compare results
     cmpArrays(refInput, input);
 }
+
 
 //These Test cases have been commenetd as they are causing C++ EXCEPTION:
 //concurrency::parallel_for_each uses features <full double precision> unsupported by the sleected accelerator!

@@ -555,7 +555,7 @@ public:
     };
 
     template< typename Container >
-    device_vector( Container& cont, bool discard = false, control& ctl = control::getDefault( ) ): m_Size( cont.size( ) )
+    device_vector( Container& cont, control& ctl = control::getDefault( ) ): m_Size( cont.size( ) )
     {
         static_assert( std::is_same< arrayview_type, container_type >::value,
             "This constructor is only valid for concurrency::array_view types" );
