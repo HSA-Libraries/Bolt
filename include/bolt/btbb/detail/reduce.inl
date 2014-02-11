@@ -19,6 +19,8 @@
 #define BOLT_BTBB_REDUCE_INL
 #pragma once
 
+#include <thread>
+#include "tbb/partitioner.h"
 
 namespace bolt{
     namespace btbb {

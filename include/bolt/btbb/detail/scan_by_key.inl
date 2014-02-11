@@ -19,6 +19,9 @@
 #define BOLT_BTBB_SCAN_BY_KEY_INL
 #pragma once
 
+#include <thread>
+#include "tbb/partitioner.h"
+
 namespace bolt
 {
 	namespace btbb
@@ -58,7 +61,7 @@ namespace bolt
               unsigned int i;
 			  strt_indx = r.begin();
               end_indx = r.end();
-			  int rend = r.end();
+			  unsigned int rend = r.end();
 			  for( i=r.begin(); i<rend; ++i ) {
 				 if( Tag::is_final_scan() ) {
 					 if(!inclusive){
