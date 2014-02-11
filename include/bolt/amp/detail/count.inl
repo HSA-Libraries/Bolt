@@ -36,7 +36,7 @@
     }\
     t_idx.barrier.wait();
 
-#define WAVEFRONT_SIZE 256
+#define COUNT_WAVEFRONT_SIZE 256
 
 namespace bolt {
     namespace amp {
@@ -46,74 +46,89 @@ namespace bolt {
             // This is the base implementation of reduction that is called by all of the convenience wrappers below.
             // first and last must be iterators from a DeviceVector
             template<typename DVInputIterator, typename Predicate>
-            int count_enqueue(bolt::amp::control &ctl,
+            unsigned int count_enqueue(bolt::amp::control &ctl,
                 const DVInputIterator& first,
                 const DVInputIterator& last,
                 const Predicate& predicate)
             {
-                typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
-				concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+				typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
-                const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
-                const unsigned int tileSize = WAVEFRONT_SIZE;
-                unsigned int numTiles = (szElements/tileSize);
-
-                const unsigned int ceilNumTiles=static_cast<size_t>(std::ceil(static_cast<float>
-                                                                        (szElements)/tileSize));
-
-                unsigned int ceilNumElements = tileSize * ceilNumTiles;
+				//Now create a staging array ; May support zero-copy in the future?!
+				concurrency::accelerator cpuAccelerator = concurrency::
+					accelerator(concurrency::accelerator::cpu_accelerator);
+				concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
 
 
-                auto inputV = (first.getContainer().getBuffer(first));
+				const unsigned int szElements = static_cast< unsigned int >(std::distance(first, last));
 
-                //Now create a staging array ; May support zero-copy in the future?!
 
-                concurrency::accelerator cpuAccelerator = concurrency::
-                                                            accelerator(concurrency::accelerator::cpu_accelerator);
-                concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
-                concurrency::array< int, 1 > resultArray ( szElements, ctl.getAccelerator().default_view,
-                                                                                    cpuAcceleratorView);
+				unsigned int length = (COUNT_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				unsigned int numTiles = (length / COUNT_WAVEFRONT_SIZE);
 
-                concurrency::array_view<int, 1> result ( resultArray );
-                result.discard_data();
-                concurrency::extent< 1 > inputExtent( ceilNumElements );
-                concurrency::tiled_extent< tileSize > tiledExtentReduce = inputExtent.tile< tileSize >();
+				auto inputV = first.getContainer().getBuffer(first);
+
+				concurrency::array< unsigned int, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
+					cpuAcceleratorView);
+
+				concurrency::array_view<unsigned int, 1> result(resultArray);
+
+				concurrency::extent< 1 > inputExtent(length);
+				concurrency::tiled_extent< COUNT_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< COUNT_WAVEFRONT_SIZE >();
+
+				// Algorithm is different from cl::reduce. We launch worksize = number of elements here.
+				// AMP doesn't have APIs to get CU capacity. Launchable size is great though.
+
 
                 // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
                 // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
 
                 try
                 {
-                    concurrency::parallel_for_each(av,
+					concurrency::parallel_for_each(ctl.getAccelerator().default_view,
                                                    tiledExtentReduce,
                                                    [ inputV,
                                                      szElements,
+													 length,
                                                      result,
                                                      predicate ]
-                                                   ( concurrency::tiled_index<tileSize> t_idx ) restrict(amp)
+					(concurrency::tiled_index<COUNT_WAVEFRONT_SIZE> t_idx) restrict(amp)
                     {
-                      int globalId = t_idx.global[ 0 ];
-                      int tileIndex = t_idx.local[ 0 ];
+						unsigned int gx = t_idx.global[0];
+						unsigned int gloId = gx;
+						unsigned int tileIndex = t_idx.local[0];
                       //  Initialize local data store
                       bool stat;
-                      int count = 0;
+					  unsigned int count = 0;
 
-                      tile_static int scratch_count [WAVEFRONT_SIZE] ;
+					  tile_static unsigned int scratch_count[COUNT_WAVEFRONT_SIZE];
 
                       //  Abort threads that are passed the end of the input vector
-                      if( t_idx.global[ 0 ] < szElements )
+					  if (gloId < szElements)
                       {
                        //  Initialize the accumulator private variable with data from the input array
                        //  This essentially unrolls the loop below at least once
-                       iType accumulator = inputV[globalId];
+						  iType accumulator = inputV[gloId];
                        stat =  predicate(accumulator);
-                       count=  stat?++count:count;
-                       scratch_count[tileIndex] = count;
+					   scratch_count[tileIndex]  = stat ? ++count : count;
+					   gx += length;
                       }
                       t_idx.barrier.wait();
 
+
+					  // Loop sequentially over chunks of input vector, reducing an arbitrary size input
+					  // length into a length related to the number of workgroups
+					  while (gx < szElements)
+					  {
+						  iType element = inputV[gx];
+						  stat = predicate(element);
+						  scratch_count[tileIndex] = stat ? ++scratch_count[tileIndex] : scratch_count[tileIndex];
+						  gx += length;
+					  }
+
+					  t_idx.barrier.wait();
+
                       //  Tail stops the last workgroup from reading past the end of the input vector
-                      int tail = szElements - (t_idx.tile[ 0 ] * t_idx.tile_dim0);
+					  unsigned int tail = szElements - (t_idx.tile[0] * t_idx.tile_dim0);
                       // Parallel reduction within a given workgroup using local data store
                       // to share values between workitems
 
@@ -127,6 +142,10 @@ namespace bolt {
                       _COUNT_REDUCE_STEP(tail, tileIndex,  1);
 
 
+					  //  Abort threads that are passed the end of the input vector
+					  if (gloId >= szElements)
+						  return;
+
                       //  Write only the single reduced value for the entire workgroup
                       if (tileIndex == 0)
                       {
@@ -137,12 +156,9 @@ namespace bolt {
                     });
 
 
-                    int *cpuPointerReduce =  result.data();
-
-                    int numTailReduce = (ceilNumTiles>numTiles)? ceilNumTiles : numTiles;
-
-                    int count =  cpuPointerReduce[0] ;
-                    for(int i = 1; i < numTailReduce; ++i)
+					unsigned int *cpuPointerReduce = result.data();
+					unsigned int count = cpuPointerReduce[0];
+					for (unsigned int i = 1; i < numTiles; ++i)
                     {
 
                        count +=  cpuPointerReduce[i];
