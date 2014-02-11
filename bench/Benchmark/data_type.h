@@ -3,7 +3,7 @@ using namespace std;
  *  User Defined Data Types - vec2,4,8
  *****************************************************************************/
 
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
    BOLT_FUNCTOR(vec2,
    struct vec2
@@ -181,17 +181,34 @@ using namespace std;
             return l_equal;
         }
 
-
       friend ostream& operator<<(ostream& os, const vec2& dt);
     };
     struct vec4
-    {
+    {       
         DATA_TYPE a, b, c, d;
-        vec4  operator =(const DATA_TYPE inp)  restrict(cpu,amp)
+        vec4  operator =(const DATA_TYPE inp) restrict(cpu,amp)
         {
         vec4 tmp;
         tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=inp;
         return tmp;
+        }
+        vec4 operator =(const vec4 inp) restrict(cpu,amp)
+        {
+            vec4 tmp;
+            tmp.a = a = inp.a;
+            tmp.b = b = inp.b;
+            tmp.c = c = inp.c;
+            tmp.d = d = inp.d;
+            return tmp;
+        }
+        vec4 operator +(const DATA_TYPE inp) restrict(cpu,amp)
+        {  
+            vec4 tmp;         
+            tmp.a = a = a+inp;
+            tmp.b = b = b+inp;
+            tmp.c = c = c+inp;
+            tmp.d = d = d+inp;
+            return tmp;
         }
         bool operator==(const vec4& rhs) const restrict(cpu,amp)
         {
@@ -204,16 +221,43 @@ using namespace std;
         }
         friend ostream& operator<<(ostream& os, const vec4& dt);
     };
+
     struct vec8
     {
         DATA_TYPE a, b, c, d, e, f, g, h;
-        vec8  operator =(const DATA_TYPE inp)  restrict(cpu,amp)
+        vec8  operator =(const DATA_TYPE inp) restrict(cpu,amp)
         {
         a = b = c=d=e=f=g=h=inp;
         vec8 tmp;
         tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=e=f=g=h=inp;
         tmp.e = tmp.f = tmp.g = tmp.h = inp;
         return tmp;
+        }
+        vec8 operator =(const vec8 inp) restrict(cpu,amp)
+        {
+            vec8 tmp;
+            tmp.a = a = inp.a;
+            tmp.b = b = inp.b;
+            tmp.c = c = inp.c;
+            tmp.d = d = inp.d;
+            tmp.e = e = inp.e;
+            tmp.f = f = inp.f;
+            tmp.g = g = inp.g;
+            tmp.h = h = inp.h;
+            return tmp;
+        }        
+        vec8 operator +(const DATA_TYPE inp) restrict(cpu,amp)
+        {  
+            vec8 tmp;         
+            tmp.a = a = a+inp;
+            tmp.b = b = b+inp;
+            tmp.c = c = c+inp;
+            tmp.d = d = d+inp;
+            tmp.e = e = e+inp;
+            tmp.f = f = f+inp;
+            tmp.g = g = g+inp;
+            tmp.h = h = h+inp;
+            return tmp;
         }
         bool operator==(const vec8& rhs) const restrict(cpu,amp)
         {
@@ -382,7 +426,7 @@ using namespace std;
 /******************************************************************************
  *  User Defined Binary Functions - DATA_TYPE plus Only for thrust usage
  *****************************************************************************/
-#if (Bolt_Benchmark == 0)
+#if (BOLT_BENCHMARK == 0)
     struct vec1plus
         {
                     __host__ __device__
@@ -397,7 +441,7 @@ using namespace std;
 /******************************************************************************
  *  User Defined Binary Functions - vec2,4,8plus
  *****************************************************************************/
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 
 #if BENCHMARK_CL_AMP == CL_BENCH
     BOLT_FUNCTOR(vec2plus,
@@ -536,7 +580,7 @@ using namespace std;
 /******************************************************************************
  *  User Defined Unary Functions-  DATA_TYPE square for thrust usage
  *****************************************************************************/
-#if (Bolt_Benchmark == 0)
+#if (BOLT_BENCHMARK == 0)
     struct vec1square
     {
             __host__ __device__
@@ -551,7 +595,7 @@ using namespace std;
 /******************************************************************************
  *  User Defined Unary Functions-  vec2,4,8square
  *****************************************************************************/
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
     BOLT_FUNCTOR(vec2square,
     struct vec2square
@@ -684,7 +728,7 @@ using namespace std;
         };
     }; 
 #endif
-#if (Bolt_Benchmark == 0)
+#if (BOLT_BENCHMARK == 0)
 /******************************************************************************
  *  User Defined Binary Predicates-  DATA_TYPE equal for thrust usage
  *****************************************************************************/
@@ -700,7 +744,7 @@ using namespace std;
 /******************************************************************************
  *  User Defined Binary Predicates- vec2,4,8equal   
  *****************************************************************************/
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
     BOLT_FUNCTOR(vec2equal,
     struct vec2equal
@@ -784,7 +828,7 @@ using namespace std;
         };
     }; 
 #endif
-#if (Bolt_Benchmark == 0)
+#if (BOLT_BENCHMARK == 0)
 /******************************************************************************
  *  User Defined Binary Predicates DATA_TYPE less than for thrust usage
  *****************************************************************************/
@@ -800,7 +844,7 @@ using namespace std;
 /******************************************************************************
  *  User Defined Binary Predicates- vec2,4,8 less than  
  *****************************************************************************/
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
     BOLT_FUNCTOR(vec2less,
     struct vec2less
@@ -926,7 +970,7 @@ using namespace std;
 /******************************************************************************
  *  User Defined generator-  DATATYPE and vec2,4,8
  *****************************************************************************/
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
     BOLT_FUNCTOR(intgen,
     struct intgen
@@ -1078,3 +1122,24 @@ using namespace std;
        /* Not a key word */
     return -1;
 }
+    template< typename keytype>
+    void keysGeneration(keytype &keys, int len)
+    {	
+        int segmentLength = 0;
+        int segmentIndex = 0;
+        std::vector<DATA_TYPE> key(1);
+        key[0] = v1iden;
+
+        for (int i = 0; i < len; i++)
+        {
+            // start over, i.e., begin assigning new key
+            if (segmentIndex == segmentLength)
+            {
+                segmentLength++;
+                segmentIndex = 0;
+                key[0] = key[0]+1 ; // key[0]++  is not working in the device_vector
+            }
+            keys[i] = key[0];
+            segmentIndex++;
+        }
+    }
