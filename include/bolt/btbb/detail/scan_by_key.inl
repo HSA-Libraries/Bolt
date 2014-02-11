@@ -58,7 +58,8 @@ namespace bolt
               unsigned int i;
 			  strt_indx = r.begin();
               end_indx = r.end();
-			  for( i=r.begin(); i<r.end(); ++i ) {
+			  int rend = r.end();
+			  for( i=r.begin(); i<rend; ++i ) {
 				 if( Tag::is_final_scan() ) {
 					 if(!inclusive){
 						  if( i==0){
@@ -155,10 +156,17 @@ inclusive_scan_by_key(
 		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
 		typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
 
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+		//tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+		//Gets the number of concurrent threads supported by the underlying platform
+        unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+	    //Explicitly setting the number of threads to spawn
+        tbb::task_scheduler_init((int) concurentThreadsSupported);
+
 		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,vType> tbbkey_scan((InputIterator1 &)first1,
 			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, true, vType());
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
+		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 )), 6250), tbbkey_scan, tbb::simple_partitioner());
+
 		return result + numElements;
 
 	}
@@ -219,10 +227,16 @@ exclusive_scan_by_key(
 	{
 		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
 
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+		//tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+		//Gets the number of concurrent threads supported by the underlying platform
+        unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+	    //Explicitly setting the number of threads to spawn
+        tbb::task_scheduler_init((int) concurentThreadsSupported);
+
 		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,T> tbbkey_scan((InputIterator1 &)first1,
 			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, false, init);
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
+		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 )), 6250), tbbkey_scan, tbb::simple_partitioner());
 		return result + numElements;
 
 	}
