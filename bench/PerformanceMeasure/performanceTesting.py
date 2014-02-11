@@ -24,7 +24,7 @@ from datetime import datetime
 
 # Common data and functions for the performance suite
 
-tableHeader = 'lengthx,device,precision,label,gflops'
+tableHeader = 'lengthx,device,precision,label,MKeys/s'
 
 class TestCombination:
     def __init__(self,

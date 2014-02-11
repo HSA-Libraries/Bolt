@@ -151,37 +151,20 @@ using namespace std;
 #elif BENCHMARK_CL_AMP == AMP_BENCH
    struct vec2
     {
-        
         DATA_TYPE a, b;
-        vec2  operator =(const DATA_TYPE inp) restrict(cpu,amp)
+        vec2  operator =(const DATA_TYPE inp)  restrict(cpu,amp)
         {
-            vec2 tmp;
-            a = b = tmp.a = tmp.b = inp;
-            return tmp;
-        }
-        vec2 operator =(const vec2 inp) restrict(cpu,amp)
-        {
-            vec2 tmp;
-            tmp.a = a = inp.a;
-            tmp.b = b = inp.b;
-            return tmp;
-        }
-        vec2 operator +(const DATA_TYPE inp) restrict(cpu,amp)
-        {  
-            vec2 tmp;         
-            tmp.a = a = a+inp;
-            tmp.b = b = b+inp;
-            return tmp;
+        vec2 tmp;
+        a = b = tmp.a = tmp.b = inp;
+        return tmp;
         }
         bool operator==(const vec2& rhs) const restrict(cpu,amp)
         {
-            bool l_equal = true;
-            l_equal = ( a == rhs.a ) ? l_equal : false;
-            l_equal = ( b == rhs.b ) ? l_equal : false;
-            return l_equal;
+        bool l_equal = true;
+        l_equal = ( a == rhs.a ) ? l_equal : false;
+        l_equal = ( b == rhs.b ) ? l_equal : false;
+        return l_equal;
         }
-
-
       friend ostream& operator<<(ostream& os, const vec2& dt);
     };
     struct vec4
@@ -283,7 +266,6 @@ using namespace std;
             l_equal = ( b == rhs.b ) ? l_equal : false;
             return l_equal;
             }
-
         };
     struct vec4
         {
@@ -327,53 +309,53 @@ using namespace std;
         {
             DATA_TYPE a, b, c, d, e, f, g, h;
             __host__ __device__
-        vec8  operator =(const DATA_TYPE inp)
-        {
-        a = b = c=d=e=f=g=h=inp;
-        vec8 tmp;
-        tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=e=f=g=h=inp;
-        tmp.e = tmp.f = tmp.g = tmp.h = inp;
-        return tmp;
-        }
-        vec8 operator =(const vec8 inp)
-        {
+            vec8  operator =(const DATA_TYPE inp)
+            {
+            a = b = c=d=e=f=g=h=inp;
             vec8 tmp;
-            tmp.a = a = inp.a;
-            tmp.b = b = inp.b;
-            tmp.c = c = inp.c;
-            tmp.d = d = inp.d;
-            tmp.e = e = inp.e;
-            tmp.f = f = inp.f;
-            tmp.g = g = inp.g;
-            tmp.h = h = inp.h;
+            tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=e=f=g=h=inp;
+            tmp.e = tmp.f = tmp.g = tmp.h = inp;
             return tmp;
-        }        
-        vec8 operator +(const DATA_TYPE inp)
-        {  
-            vec8 tmp;         
-            tmp.a = a = a+inp;
-            tmp.b = b = b+inp;
-            tmp.c = c = c+inp;
-            tmp.d = d = d+inp;
-            tmp.e = e = e+inp;
-            tmp.f = f = f+inp;
-            tmp.g = g = g+inp;
-            tmp.h = h = h+inp;
-            return tmp;
-        }
-        bool operator==(const vec8& rhs) const
-        {
-        bool l_equal = true;
-        l_equal = ( a == rhs.a ) ? l_equal : false;
-        l_equal = ( b == rhs.b ) ? l_equal : false;
-        l_equal = ( c == rhs.c ) ? l_equal : false;
-        l_equal = ( d == rhs.d ) ? l_equal : false;
-        l_equal = ( e == rhs.e ) ? l_equal : false;
-        l_equal = ( f == rhs.f ) ? l_equal : false;
-        l_equal = ( g == rhs.g ) ? l_equal : false;
-        l_equal = ( h == rhs.h ) ? l_equal : false;
-        return l_equal;
-        }
+            }
+            vec8 operator =(const vec8 inp)
+            {
+                vec8 tmp;
+                tmp.a = a = inp.a;
+                tmp.b = b = inp.b;
+                tmp.c = c = inp.c;
+                tmp.d = d = inp.d;
+                tmp.e = e = inp.e;
+                tmp.f = f = inp.f;
+                tmp.g = g = inp.g;
+                tmp.h = h = inp.h;
+                return tmp;
+            }
+            vec8 operator +(const DATA_TYPE inp)
+            {  
+                vec8 tmp;         
+                tmp.a = a = a+inp;
+                tmp.b = b = b+inp;
+                tmp.c = c = c+inp;
+                tmp.d = d = d+inp;
+                tmp.e = e = e+inp;
+                tmp.f = f = f+inp;
+                tmp.g = g = g+inp;
+                tmp.h = h = h+inp;
+                return tmp;
+            }
+            bool operator==(const vec8& rhs) const
+            {
+            bool l_equal = true;
+            l_equal = ( a == rhs.a ) ? l_equal : false;
+            l_equal = ( b == rhs.b ) ? l_equal : false;
+            l_equal = ( c == rhs.c ) ? l_equal : false;
+            l_equal = ( d == rhs.d ) ? l_equal : false;
+            l_equal = ( e == rhs.e ) ? l_equal : false;
+            l_equal = ( f == rhs.f ) ? l_equal : false;
+            l_equal = ( g == rhs.g ) ? l_equal : false;
+            l_equal = ( h == rhs.h ) ? l_equal : false;
+            return l_equal;
+            }
         };
 #endif
 

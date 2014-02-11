@@ -114,7 +114,7 @@ namespace detail {
 
                 cl_int l_Error = CL_SUCCESS;
 
-				// Bumped up wgSize to achieve higher ALU usage and occupancy
+                // Bumped up wgSize to achieve higher ALU usage and occupancy
                 const size_t wgSize  = 256 ;//kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
                     //ctl.getDevice( ), &l_Error );
 
@@ -172,11 +172,11 @@ namespace detail {
                 }
 
 
-				::cl::Event unmapEvent;
+                ::cl::Event unmapEvent;
 
-				V_OPENCL( ctl.getCommandQueue().enqueueUnmapMemObject(*result,  h_result, NULL, &unmapEvent ),
-					"shared_ptr failed to unmap host memory back to device memory" );
-				V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+                V_OPENCL( ctl.getCommandQueue().enqueueUnmapMemObject(*result,  h_result, NULL, &unmapEvent ),
+                    "shared_ptr failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 return acc;
             };

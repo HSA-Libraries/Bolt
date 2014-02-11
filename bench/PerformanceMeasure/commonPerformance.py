@@ -36,7 +36,7 @@ LOG_FILE_LOC = {
                 'Bolt':'perflog'
                }
 
-TIMOUT_VAL = 900  #In seconds
+TIMOUT_VAL = 28800  #In seconds(4 hours)
 
 def log(filename, txt):
     with open(filename, 'a') as f:
@@ -45,9 +45,32 @@ def log(filename, txt):
 IAM = 'Bolt'
 
 precisionvalues = ['single', 'double']
-libraryvalues = ['STL','BOLT','TBB', 'null']
+libraryvalues = ['STL','BOLT','TBB','THRUST','AMP','null']
 memoryvalues = ['device','host', 'null']
-routinevalues = ['copy','scan','sort', 'stablesort', 'inclusivescan', 'transform', 'reduce','null']
+routinevalues = ['binarytransform',
+'binarysearch',
+'copy',
+'count',
+'fill',
+'generate',
+'innerproduct',
+'maxelement',
+'minelement',
+'merge',
+'reduce',
+'reducebykey',
+'scan',
+'scanbykey',
+'sort',
+'sortbykey',
+'stablesort',
+'stablesortbykey',
+'transformreduce',
+'transformscan',
+'unarytransform',
+'gather',
+'scatter','null']
+
 backEndValues = ['cl','amp']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
@@ -55,14 +78,13 @@ parser.add_argument('--device',
     dest='device', default='default',
     help='device(s) to run on; may be a comma-delimited list. choices are index values as reported by the library. (default: AMP default)')
 parser.add_argument('-l', '--lengthx',
-    dest='lengthx', default='1',
+    dest='lengthx', default='4096',
     help='length(s) of x to test; must be factors of 1, 2, 3, or 5 with clAmdFft; may be a range or a comma-delimited list. e.g., 16-128 or 1200 or 16,2048-32768 (default 1)')
 
 parser.add_argument('-r', '--precision',
     dest='precision', default='single',
     help='may enter multiple in a comma-delimited list. choices are ' + str(precisionvalues) + '. (default single)')
 parser.add_argument('--library',
-
     dest='library', default='null', choices=libraryvalues,
     help='indicates the library to use for testing on this run')
 parser.add_argument('--routine',
@@ -74,7 +96,6 @@ parser.add_argument('--memory',
 parser.add_argument('--label',
     dest='label', default=None,
     help='a label to be associated with all transforms performed in this run. if LABEL includes any spaces, it must be in \"double quotes\". note that the label is not saved to an .ini file. e.g., --label cayman may indicate that a test was performed on a cayman card or --label \"Windows 32\" may indicate that the test was performed on Windows 32')
-
 parser.add_argument('--createini',
     dest='createIniFilename', default=None,
     help='create an .ini file with the given name that saves the other parameters given at the command line, then quit. e.g., \'clAmdFft.performance.py -x 2048 --createini my_favorite_setup.ini\' will create an .ini file that will save the configuration for a 2048-datapoint 1D FFT.')
@@ -90,6 +111,7 @@ parser.add_argument('--test',
 parser.add_argument('--backend',
     dest='backend', default='cl', choices=backEndValues,
     help='Which Bolt backend to use')
+parser.add_argument("-i","--iteration", help="number of iteration per routine");
 
 args = parser.parse_args()
 
@@ -127,7 +149,7 @@ def checkTimeOutPut(args):
         except:
             printLog("ERROR: UNKNOWN Exception - +checkWinTimeOutPut()::executeCommand()")
 
-    currCommandProcess = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    currCommandProcess = subprocess.Popen(args,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     thread = Thread(target=executeCommand)
     thread.start()
     thread.join(TIMOUT_VAL) #wait for the thread to complete 
@@ -206,8 +228,8 @@ for n in args.precision:
         printLog('ERROR: invalid value for precision')
         quit()
 
-if not os.path.isfile('clBolt.Bench.Benchmark.exe'):
-    printLog("ERROR: Could not find client named {0}".format('clBolt.Bench.Benchmark.exe'))
+if not os.path.isfile('Bolt.Bench.Benchmark.exe'):
+    printLog("ERROR: Could not find client named {0}".format('Bolt.Bench.Benchmark.exe'))
     quit()
    
 #expand ranges
@@ -320,40 +342,46 @@ for params in test_combinations:
 
     #set up arguments here
     if params.device == 'default':
-        arguments = ['clBolt.Bench.Benchmark.exe',
-                     '-l', lengthx,
-                     '-i', '50',
-                     '-f', args.routine]
+	if os.name =='nt':	
+	    arguments = ['Bolt.Bench.Benchmark.exe',
+					'-l', lengthx,
+					'-f', args.routine]
+	else:	
+	    arguments = ['./Bolt.Bench.Benchmark.exe',
+					'-l', lengthx,
+					'-f', args.routine]
+	
     else:
-        arguments = ['clBolt.Bench.Benchmark.exe',
+        arguments = ['Bolt.Bench.Benchmark.exe',
                      '-a', # Enumerate all devices in system, so that we can benchmark any device on command line
                      '-d', device,
                      '-l', lengthx,
-                     '-i', '50'
                      '-f', args.routine]
-    if args.library == 'TBB':
-        arguments.append( '-m' )
-        arguments.append( '2' )        
-    elif args.library == 'BOLT':
-        arguments.append( '-m' )
-        arguments.append( '3' )    
-    elif args.library == 'STL':
-        arguments.append( '-m' )
-        arguments.append( '1' )                
-    else:
-    	arguments.append( '-m' )
-        arguments.append( '0' )     
-        
+	
     if args.memory == 'device':
-        arguments.append( '-D' )
-    
+	    arguments.append( '-D' )
+    if args.iteration:
+	    arguments.append( '-i' );arguments.append( args.iteration )
+    if args.library == 'BOLT':
+	    arguments.append('-m');arguments.append('3')
+    elif args.library == 'TBB':
+		arguments.append('-m');arguments.append('2')
+    elif args.library == 'STL':
+		arguments.append('-m');arguments.append('1')
+    elif args.library == 'THRUST'or 'AMP':
+		print''
+    else:
+		arguments.append('-m');arguments.append('0')
+		
+		
     writeline = True
     try:
         printLog('Executing Command: '+ str(arguments))
         output = checkTimeOutPut(arguments)
         output = output.split(os.linesep);
-        printLog('Execution Successfull---------------\n')
-
+	printLog('Execution Successfull---------------\n')
+		
+		
     except errorHandler.ApplicationException as ae:
         writeline = False
         printLog('ERROR: Command is taking too much of time '+ae.message+'\n'+'Command: \n'+str(arguments))
@@ -384,7 +412,9 @@ for params in test_combinations:
     #    speedStr = 'MKeys/s'
     #if args.routine == 'sort':
     #    speedStr = 'MKeys/s'
-    speedStr = 'GB/s'
+	
+    #speedStr = 'GB/s'
+	speedStr = 'MKeys/s'
     if writeline:
         try:
             output = itertools.ifilter( lambda x: x.count( speedStr ), output)

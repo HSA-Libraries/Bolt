@@ -1138,7 +1138,7 @@ TEST( HostMemory_Long, MulticoreGatherIfPredicate_Fancy_stencil )
 #if(TEST_DOUBLE == 1)
 TEST( HostMemory_Double, GatherIfPredicate )
 {
-    double n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
     double n_input[10]   =  {9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5,0.5};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
@@ -1152,7 +1152,7 @@ TEST( HostMemory_Double, GatherIfPredicate )
     }
     std::vector<double> result ( 10, -1.5 );
     std::vector<double> input ( n_input, n_input + 10 );
-    std::vector<double> map ( n_map, n_map + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
     std::vector<int> stencil ( n_stencil, n_stencil + 10 );    
     is_even iepred;
     bolt::cl::gather_if( map.begin(), map.end(), stencil.begin(), input.begin(), result.begin(), iepred );
@@ -1162,7 +1162,7 @@ TEST( HostMemory_Double, GatherIfPredicate )
 }
 TEST( HostMemory_Double, SerialGatherIfPredicate )
 {
-    double n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
     double n_input[10]   =  {9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5,0.5};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
@@ -1176,7 +1176,7 @@ TEST( HostMemory_Double, SerialGatherIfPredicate )
     }
     std::vector<double> result ( 10, -1.5 );
     std::vector<double> input ( n_input, n_input + 10 );
-    std::vector<double> map ( n_map, n_map + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
     std::vector<int> stencil ( n_stencil, n_stencil + 10 );    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1189,7 +1189,7 @@ TEST( HostMemory_Double, SerialGatherIfPredicate )
 }
 TEST( HostMemory_Double, MulticoreGatherIfPredicate )
 { 
-    double n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
     double n_input[10]   =  {9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5,0.5};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
@@ -1203,7 +1203,7 @@ TEST( HostMemory_Double, MulticoreGatherIfPredicate )
     }
     std::vector<double> result ( 10, -1.5 );
     std::vector<double> input ( n_input, n_input + 10 );
-    std::vector<double> map ( n_map, n_map + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
     std::vector<int> stencil ( n_stencil, n_stencil + 10 );    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);

@@ -28,7 +28,12 @@
 * 
 *  Besides this following publications were referred: 
 *  1. "Parallel Scan For Stream Architectures"  
-*     Technical Report CS2009-14Department of Computer Science, University of Virginia. *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf*  2. "Revisiting Sorting for GPGPU Stream Architectures" *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
+*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
 *  3. The SHOC Benchmark Suite 
 *     https://github.com/vetter/shoc
 *
