@@ -36,7 +36,7 @@ LOG_FILE_LOC = {
                 'Bolt':'perflog'
                }
 
-TIMOUT_VAL = 28800  #In seconds(4 hours)
+TIMOUT_VAL = 28800  #In seconds(8 hours)
 
 def log(filename, txt):
     with open(filename, 'a') as f:
