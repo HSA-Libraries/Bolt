@@ -28,12 +28,12 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#define Bolt_Benchmark 1
 #include "bolt/statisticalTimer.h"
+#include "bolt/unicode.h"	
 
-#if (Bolt_Benchmark == 1)
-    #include "bolt/unicode.h"	
-    #include <random>
+#define BOLT_BENCHMARK 1
+#if (BOLT_BENCHMARK == 1)
+    #include <random>   
     #if (BENCHMARK_CL_AMP ==  CL_BENCH)
         #define BENCH_BEND cl
         #include "bolt/cl/functional.h"
@@ -112,49 +112,41 @@
 #include <iomanip>
 #endif
 
-
-#if defined(_WIN32)
-//AsyncProfiler aProfiler("default");
-#endif
 const std::streamsize colWidth = 26;
 
-//BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,float);
 #ifndef DATA_TYPE 
     #define DATA_TYPE unsigned int
-//BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,DATA_TYPE); // this is required
 #endif
 
 #include "data_type.h"
 
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
     #if BENCHMARK_CL_AMP == CL_BENCH
-        BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,unsigned int);
+        BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,DATA_TYPE);
     #endif
 #endif
 
 
-
-
-
 //user defined data types and functions and predicates are dedined
 // function generator:
-
+#if (BOLT_BENCHMARK == 1)
     std::default_random_engine gen;
-    std::uniform_int_distribution<DATA_TYPE> distr(10,1<<30);
+    std::uniform_real_distribution<DATA_TYPE> distr(10,1<<30);
     DATA_TYPE RandomNumber() 
     {    
         DATA_TYPE dice_roll = distr(gen); // generates number in the range 10..1<<31
         return (dice_roll); 
     }
-    //thrust::default_random_engine gen;
-    //thrust::uniform_int_distribution<DATA_TYPE> distr(10,1<<30);
-    //DATA_TYPE RandomNumber() 
-    //{    
-    //    DATA_TYPE dice_roll = distr(gen); // generates number in the range 10..1<<31
-    //    //std::cout<<dice_roll<<"\n";
-    //    return (dice_roll); 
-    //}
-
+#else
+    thrust::default_random_engine gen;
+    thrust::uniform_real_distribution<DATA_TYPE> distr(10,1<<30);
+    DATA_TYPE RandomNumber() 
+    {    
+        DATA_TYPE dice_roll = distr(gen); // generates number in the range 10..1<<31
+        //std::cout<<dice_roll<<"\n";
+        return (dice_roll); 
+    }
+#endif
 /******************************************************************************
  *  Functions Enumerated
  *****************************************************************************/
@@ -337,8 +329,9 @@ template<
     typename BinaryFunction,
     typename BinaryPredEq,
     typename BinaryPredLt,
-    typename datatype>
-#if (Bolt_Benchmark == 1)
+    typename datatype,
+    typename maptype>
+#if (BOLT_BENCHMARK == 1)
 void executeFunctionType(
     bolt::BENCH_BEND::control& ctrl,
     VectorType &input1,
@@ -354,7 +347,8 @@ void executeFunctionType(
     size_t function,
     size_t iterations,
     size_t siz,
-    datatype keys
+    datatype keys,
+    maptype &Map
     )
 #else
 void executeFunctionType(
@@ -371,7 +365,8 @@ void executeFunctionType(
     size_t function,
     size_t iterations,
     size_t siz,
-    datatype keys
+    datatype keys,
+    maptype &Map
     )
 #endif
 {
@@ -384,18 +379,21 @@ void executeFunctionType(
     case f_merge:
         {
             std::cout <<  functionNames[f_merge] << std::endl;
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
             bolt::BENCH_BEND::sort( ctrl, input2.begin( ), input2.end( ), binaryPredLt);
 #else
-            thrust::sort( input1.begin( ), input1.end( ), thrust::less<DATA_TYPE>());
-            thrust::sort( input2.begin( ), input2.end( ), thrust::less<DATA_TYPE>());
+            thrust::sort( input1.begin( ), input1.end( ), thrust::less<DATA_TYPE>() /* binaryPredLt*/);
+            thrust::sort( input2.begin( ), input2.end( ), thrust::less<DATA_TYPE>() /*binaryPredLt*/);
 #endif
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::merge( ctrl,input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output_merge.begin( ),binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
 #else
                 thrust::merge( input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output_merge.begin( ),binaryPredLt);
 #endif
@@ -408,10 +406,10 @@ void executeFunctionType(
             bool tmp;
             typename VectorType::value_type val;
             std::cout <<  functionNames[f_binarysearch] << std::endl;
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
 #else
-            thrust::sort( input1.begin( ), input1.end( ), thrust::less<DATA_TYPE>());
+            thrust::sort( input1.begin( ), input1.end( ), thrust::less<DATA_TYPE>()/* binaryPredLt*/);
 #endif
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
@@ -420,8 +418,12 @@ void executeFunctionType(
                     index = rand()%iter;
                 val = input1[index];
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 tmp = bolt::BENCH_BEND::binary_search( ctrl,input1.begin( ),input1.end( ),val,binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 tmp = thrust::binary_search( input1.begin( ),input1.end( ),val,binaryPredLt);
 #endif
@@ -439,7 +441,7 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 tmp = bolt::BENCH_BEND::transform_reduce( ctrl,input1.begin( ), input1.end( ),
                     unaryFunct, tmp,
                     binaryFunct);
@@ -460,10 +462,14 @@ void executeFunctionType(
             {
                 VectorType inputBackup = input1;
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::stable_sort(ctrl, inputBackup.begin(), inputBackup.end(),binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
-                thrust::stable_sort( inputBackup.begin(), inputBackup.end(),thrust::less<DATA_TYPE>());
+                thrust::stable_sort( inputBackup.begin(), inputBackup.end(),thrust::less<DATA_TYPE>()/* binaryPredLt*/);
 #endif
                 myTimer.Stop( testId );
             }
@@ -477,10 +483,10 @@ void executeFunctionType(
             {
                 VectorType inputBackup = input1;
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::stable_sort_by_key(ctrl, inputBackup.begin(), inputBackup.end(),input2.begin(),binaryPredLt); 
 #else
-                thrust::stable_sort_by_key( inputBackup.begin(), inputBackup.end(),input2.begin(),thrust::less<DATA_TYPE>()); 
+                thrust::stable_sort_by_key( inputBackup.begin(), inputBackup.end(),input2.begin(),thrust::less<DATA_TYPE>()/* binaryPredLt*/); 
 #endif
                 myTimer.Stop( testId );
             }
@@ -494,9 +500,13 @@ void executeFunctionType(
             {
                 VectorType keys1(input1.size());
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::reduce_by_key(ctrl, keys.begin(), keys.end(),input2.begin(),keys1.begin(),
                     output.begin(),binaryPredEq, binaryFunct);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::reduce_by_key( keys.begin(), keys.end(),input2.begin(),keys1.begin(),
                     output.begin(),binaryPredEq, binaryFunct);
@@ -512,10 +522,14 @@ void executeFunctionType(
             {
                 VectorType inputBackup = input1;
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::sort(ctrl, inputBackup.begin(), inputBackup.end(),binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
-                thrust::sort( inputBackup.begin(), inputBackup.end(),thrust::less<DATA_TYPE>());
+                thrust::sort( inputBackup.begin(), inputBackup.end(),thrust::less<DATA_TYPE>()/* binaryPredLt*/);
 #endif
                 myTimer.Stop( testId );
             }
@@ -529,10 +543,10 @@ void executeFunctionType(
             {
                 VectorType inputBackup = input1;
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::sort_by_key(ctrl, inputBackup.begin(), inputBackup.end(), input2.begin( ),binaryPredLt );
 #else
-                thrust::sort_by_key( inputBackup.begin(), inputBackup.end(), input2.begin( ),thrust::less<DATA_TYPE>() );
+                thrust::sort_by_key( inputBackup.begin(), inputBackup.end(), input2.begin( ),thrust::less<DATA_TYPE>()/* binaryPredLt*/);
 #endif
                 myTimer.Stop( testId );
             }
@@ -548,8 +562,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 tmp = bolt::BENCH_BEND::reduce(ctrl, input1.begin(), input1.end(),tmp,binaryFunct);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 tmp = thrust::reduce( input1.begin(), input1.end(),tmp,binaryFunct);
 #endif
@@ -563,9 +581,13 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 typename VectorType::iterator itr = bolt::BENCH_BEND::max_element(ctrl, input1.begin(), input1.end(),
                                                                                                binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 typename VectorType::iterator itr = thrust::max_element( input1.begin(), input1.end(),
                                                                                         binaryPredLt);
@@ -580,9 +602,18 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
+                #if BENCHMARK_CL_AMP == AMP_BENCH
+                typename VectorType::iterator itr = bolt::BENCH_BEND::min_element(ctrl, input1.begin(), input1.end(),
+                                                                                               binaryPredLt);
+                ctrl.getAccelerator().default_view.wait();
+
+
+                #elif BENCHMARK_CL_AMP == CL_BENCH
+
                 typename VectorType::iterator itr = bolt::BENCH_BEND::min_element(ctrl, input1.begin(), input1.end(),
                                                                                                binaryPredLt,"");
+                #endif
 #else
                 typename VectorType::iterator itr = thrust::min_element( input1.begin(), input1.end(),
                                                                                         binaryPredLt);
@@ -599,8 +630,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::fill(ctrl, input1.begin(), input1.end(),tmp);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::fill( input1.begin(), input1.end(),tmp);
 #endif
@@ -616,8 +651,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::count(ctrl, input1.begin(), input1.end(),tmp);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::count( input1.begin(), input1.end(),tmp);
 #endif
@@ -631,8 +670,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::generate(ctrl, input1.begin(), input1.end(), generator );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::generate( input1.begin(), input1.end(), generator );
 #endif
@@ -646,8 +689,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::copy(ctrl, input1.begin(), input1.end(), output.begin() );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::copy( input1.begin(), input1.end(), output.begin() );
 #endif
@@ -661,8 +708,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::transform(ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::transform( input1.begin(), input1.end(), output.begin(), unaryFunct );
 #endif
@@ -676,8 +727,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::transform(ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::transform( input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
 #endif
@@ -691,8 +746,12 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::inclusive_scan( input1.begin(), input1.end(), output.begin(), binaryFunct );
                 //thrust::inclusive_scan( input1.begin(), input1.end(), output.begin() );
@@ -707,9 +766,13 @@ void executeFunctionType(
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::transform_inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(),
                                                                         unaryFunct, binaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::transform_inclusive_scan( input1.begin(), input1.end(), output.begin(),
                                                                  unaryFunct, binaryFunct );
@@ -720,13 +783,18 @@ void executeFunctionType(
         break;
     case f_scanbykey:
         {
-            std::cout <<  functionNames[f_scanbykey] << std::endl;          
+            std::cout <<  functionNames[f_scanbykey] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::inclusive_scan_by_key(ctrl, keys.begin(), keys.end(), input2.begin(),
                                                    output.begin(), binaryPredEq, binaryFunct );
+
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                ctrl.getAccelerator().default_view.wait();
+#endif
+
 #else
                 thrust::inclusive_scan_by_key( keys.begin(), keys.end(), input2.begin(),
                                             output.begin(), binaryPredEq, binaryFunct );
@@ -740,22 +808,13 @@ void executeFunctionType(
         //TODO - What about host memory MAP
         {
             std::cout <<  functionNames[f_gather] << std::endl;
-#if (Bolt_Benchmark == 1)
-            bolt::BENCH_BEND::device_vector<unsigned int> Map(input1.size());
-#else
-            thrust::device_vector<unsigned int> Map(input1.size());
-#endif
-            for( int i=0; i < input1.size() ; i++ )
-            {
-                    Map[i] = i;
-            }
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::gather( ctrl, Map.begin( ), Map.end( ),input1.begin( ),output.begin());
 #else
-                //thrust::gather( Map.begin( ), Map.end( ),input1.begin( ),output.begin());
+                thrust::gather( Map.begin( ), Map.end( ),input1.begin( ),output.begin());
 #endif
                 myTimer.Stop( testId );
              }
@@ -765,23 +824,13 @@ void executeFunctionType(
     case f_scatter:
         {
             std::cout <<  functionNames[f_scatter] << std::endl;
-
-#if (Bolt_Benchmark == 1)
-            bolt::BENCH_BEND::device_vector<unsigned int> Map(input1.size());
-#else
-            thrust::device_vector<unsigned int> Map(input1.size());
-#endif
-            for( int i=0; i < input1.size() ; i++ )
-            {
-                Map[i] = i;
-            }
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::scatter( ctrl, input1.begin( ),input1.end( ), Map.begin(), output.begin());
 #else
-                //thrust::scatter(  input1.begin( ),input1.end( ), Map.begin(), output.begin());
+                thrust::scatter(  input1.begin( ),input1.end( ), Map.begin(), output.begin());
 #endif
                 myTimer.Stop( testId );
             }
@@ -815,7 +864,7 @@ void executeFunctionType(
  *  Determine types
  *
  *****************************************************************************/
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 void executeFunction(
     bolt::BENCH_BEND::control& ctrl,
     size_t vecType,
@@ -835,7 +884,7 @@ void executeFunction(
     size_t siz;
     if (vecType == t_int)
     {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
         intgen                        generator;
         bolt::BENCH_BEND::square<DATA_TYPE>   unaryFunct;
         bolt::BENCH_BEND::plus<DATA_TYPE>     binaryFunct;
@@ -850,6 +899,7 @@ void executeFunction(
 #endif
 
         siz = sizeof(DATA_TYPE);
+        std::vector<DATA_TYPE> Map(length);
         std::vector<DATA_TYPE> input1(length);
         std::vector<DATA_TYPE> input2(length);
         std::vector<DATA_TYPE> input3(length);
@@ -860,60 +910,49 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(), RandomNumber);
         std::generate(output.begin(), output.end(), RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
-
-        std::vector<DATA_TYPE> keys(length,v1iden );  /* Keys: 12 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 ..... */
-            
-        int segmentLength = 0;
-        int segmentIndex = 0;
-        std::vector<DATA_TYPE> key(1);
-        key[0] = v1iden;
-
-        for (int i = 0; i < input1.size(); i++)
+        for( int i=0; i < input1.size() ; i++ )
         {
-            // start over, i.e., begin assigning new key
-            if (segmentIndex == segmentLength)
-            {
-                segmentLength++;
-                segmentIndex = 0;
-                key[0] = key[0]+1 ; // key[0]++  is not working in the device_vector
-            }
-            keys[i] = key[0];
-            segmentIndex++;
+             Map[i] = (DATA_TYPE)i;
         }
+        std::vector<DATA_TYPE> keys(length,v1iden );  /* Keys: 1 2 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 ..... */
+        int len = (int)input1.size();
+        keysGeneration(keys,len);
 
-        
         if (hostMemory) {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge, 
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #else
             
             executeFunctionType( input1, input2, input3, output, output_merge, 
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #endif
         }
         else
         {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::device_vector<DATA_TYPE> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
             bolt::BENCH_BEND::device_vector<DATA_TYPE> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
             bolt::BENCH_BEND::device_vector<DATA_TYPE> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
             bolt::BENCH_BEND::device_vector<DATA_TYPE> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl); 
-            bolt::BENCH_BEND::device_vector<DATA_TYPE> boutput_merge(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl); 
+            bolt::BENCH_BEND::device_vector<DATA_TYPE> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl); 
             bolt::BENCH_BEND::device_vector<DATA_TYPE> bkeys(keys.begin(),keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #else
             thrust::device_vector<DATA_TYPE> binput1(input1.begin(), input1.end());
             thrust::device_vector<DATA_TYPE> binput2(input2.begin(), input2.end());
             thrust::device_vector<DATA_TYPE> binput3(input3.begin(), input3.end());
             thrust::device_vector<DATA_TYPE> boutput(output.begin(), output.end());
-            thrust::device_vector<DATA_TYPE> boutput_merge(output.begin(), output.end());
+            thrust::device_vector<DATA_TYPE> boutput_merge(output_merge.begin(), output_merge.end());
+            thrust::device_vector<DATA_TYPE> bkeys(keys.begin(),keys.end());
+            thrust::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end());
 
             executeFunctionType( binput1, binput2, binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #endif
         }
     }
@@ -927,9 +966,10 @@ void executeFunction(
         vec2less    binaryPredLt;
         siz = sizeof(vec2);
 
-#if (Bolt_Benchmark == 1)
+#if ((BOLT_BENCHMARK == 1)&&(BENCHMARK_CL_AMP ==  CL_BENCH))
         BOLT_ADD_DEPENDENCY(vec2, Bolt_DATA_TYPE);
 #endif
+        std::vector<DATA_TYPE> Map(length);
         std::vector<vec2> input1(length);
         std::vector<vec2> input2(length);
         std::vector<vec2> input3(length);
@@ -941,57 +981,47 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
-                
-        /* Keys: 1 2 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 .....
-               Work for int, unsigned int, float, double only*/
-        std::vector<vec2> keys(length,v2iden );
-            
-        int segmentLength = 0;
-        int segmentIndex = 0;
-        std::vector<vec2> key(1);
-        key[0] = v2iden;
-
-        for (int i = 0; i < input1.size(); i++)
+        for( int i=0; i < input1.size() ; i++ )
         {
-            // start over, i.e., begin assigning new key
-            if (segmentIndex == segmentLength)
-            {
-                segmentLength++;
-                segmentIndex = 0;
-                key[0] = key[0]+1 ; // key[0]++  is not working in the device_vector
-            }
-            keys[i] = key[0];
-            segmentIndex++;
+             Map[i] = (DATA_TYPE)i;
         }
+        std::vector<vec2> keys(length,v2iden ); /* Keys: 1 2 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 ..... */
+        int len = (int)input1.size();
+        keysGeneration(keys,len);
+
         if (hostMemory) {
-#if (Bolt_Benchmark == 1)
-            executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys);
+#if (BOLT_BENCHMARK == 1)
+            executeFunctionType( ctrl, input1, input2, input3, output, output_merge, 
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #else
             executeFunctionType( input1, input2, input3, output, output_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #endif
         }
         else
         {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::device_vector<vec2> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec2> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec2> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec2> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec2> boutput_merge(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl); 
+            bolt::BENCH_BEND::device_vector<vec2> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl); 
             bolt::BENCH_BEND::device_vector<vec2> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2,binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #else
             thrust::device_vector<vec2> binput1(input1.begin(), input1.end() );
             thrust::device_vector<vec2> binput2(input2.begin(), input2.end() );
             thrust::device_vector<vec2> binput3(input3.begin(), input3.end() );
             thrust::device_vector<vec2> boutput(output.begin(), output.end() );
-            thrust::device_vector<vec2> boutput_merge(output.begin(), output.end() );
+            thrust::device_vector<vec2> boutput_merge(output_merge.begin(), output_merge.end() );
+            thrust::device_vector<vec2> bkeys(keys.begin(), keys.end());
+            thrust::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end());
+
             executeFunctionType( binput1, binput2,binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #endif
         }
     }
@@ -1004,10 +1034,10 @@ void executeFunction(
         vec4plus    binaryFunct;
         vec4equal   binaryPredEq;
         vec4less    binaryPredLt;
-#if (Bolt_Benchmark == 1)
+#if ((BOLT_BENCHMARK == 1)&&(BENCHMARK_CL_AMP ==  CL_BENCH))
         BOLT_ADD_DEPENDENCY(vec4, Bolt_DATA_TYPE);
 #endif
-        
+        std::vector<DATA_TYPE> Map(length);        
         std::vector<vec4> input1(length, v4init);
         std::vector<vec4> input2(length, v4init);
         std::vector<vec4> input3(length, v4init);
@@ -1018,61 +1048,52 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
-
-        /* Keys: 1 2 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 .....
-               Work for int, unsigned int, float, double only*/
-        std::vector<vec4> keys(length,v4iden );
-            
-        int segmentLength = 0;
-        int segmentIndex = 0;
-        std::vector<vec4> key(1);
-        key[0] = v4iden;
-
-        for (int i = 0; i < input1.size(); i++)
+        for( int i=0; i < input1.size() ; i++ )
         {
-            // start over, i.e., begin assigning new key
-            if (segmentIndex == segmentLength)
-            {
-                segmentLength++;
-                segmentIndex = 0;
-                key[0] = key[0]+1 ; // key[0]++  is not working in the device_vector
-            }
-            keys[i] = key[0];
-            segmentIndex++;
+             Map[i] = (DATA_TYPE)i;
         }
+        
+        std::vector<vec4> keys(length,v4iden ); /* Keys: 1 2 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 ..... */
+        int len = (int)input1.size();
+        keysGeneration(keys,len);
 
         if (hostMemory) {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #else
             executeFunctionType( input1, input2, input3, output, output_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #endif
         }
         else
         {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::device_vector<vec4> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec4> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec4> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec4> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec4> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);					
             bolt::BENCH_BEND::device_vector<vec4> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #else
             thrust::device_vector<vec4> binput1(input1.begin(), input1.end() );
             thrust::device_vector<vec4> binput2(input2.begin(), input2.end() );
             thrust::device_vector<vec4> binput3(input3.begin(), input3.end() );
             thrust::device_vector<vec4> boutput(output.begin(), output.end() );
             thrust::device_vector<vec4> boutput_merge(output_merge.begin(), output_merge.end() );
+            thrust::device_vector<vec4> bkeys(keys.begin(), keys.end());
+            thrust::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end());
+
             executeFunctionType(  binput1, binput2, binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #endif
         }
     }
+    
     else if (vecType == t_vec8)
     {
         vec8gen     generator;
@@ -1081,12 +1102,13 @@ void executeFunction(
         vec8equal   binaryPredEq;
         vec8less    binaryPredLt;
         siz = sizeof(vec8);
+        std::vector<DATA_TYPE> Map(length);  
         std::vector<vec8> input1(length, v8init);
         std::vector<vec8> input2(length, v8init);
         std::vector<vec8> input3(length, v8init);
         std::vector<vec8> output(length, v8iden);
         std::vector<vec8> output_merge(length*2, v8iden);
-#if (Bolt_Benchmark == 1)
+#if ((BOLT_BENCHMARK == 1)&&(BENCHMARK_CL_AMP ==  CL_BENCH))
         BOLT_ADD_DEPENDENCY(vec8, Bolt_DATA_TYPE);
 #endif
         std::generate(input1.begin(), input1.end(),RandomNumber);
@@ -1094,58 +1116,47 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(),RandomNumber);
-
-        /* Keys: 1 2 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 .....
-               Work for int, unsigned int, float, double only*/
-        std::vector<vec8> keys(length,v8iden );
-            
-        int segmentLength = 0;
-        int segmentIndex = 0;
-        std::vector<vec8> key(1);
-        key[0] = v8iden;
-
-        for (int i = 0; i < input1.size(); i++)
+        for( int i=0; i < input1.size() ; i++ )
         {
-            // start over, i.e., begin assigning new key
-            if (segmentIndex == segmentLength)
-            {
-                segmentLength++;
-                segmentIndex = 0;
-                key[0] = key[0]+1 ; // key[0]++  is not working in the device_vector
-            }
-            keys[i] = key[0];
-            segmentIndex++;
+             Map[i] = (DATA_TYPE)i;
         }
+        std::vector<vec8> keys(length,v8iden ); /* Keys: 1 2 2 3 3 3 4 4 4 4 5 5  5 5 5 6 6 ..... */
+        int len = (int)input1.size();
+        keysGeneration(keys,len);
 
         if (hostMemory) {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #else
             executeFunctionType( input1, input2, input3, output, output_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,keys,Map);
 #endif
         }
         else
         {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::device_vector<vec8> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec8> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec8> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec8> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
             bolt::BENCH_BEND::device_vector<vec8> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);					
             bolt::BENCH_BEND::device_vector<vec8> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #else
             thrust::device_vector<vec8> binput1(input1.begin(), input1.end() );
             thrust::device_vector<vec8> binput2(input2.begin(), input2.end() );
             thrust::device_vector<vec8> binput3(input3.begin(), input3.end() );
             thrust::device_vector<vec8> boutput(output.begin(), output.end() );
             thrust::device_vector<vec8> boutput_merge(output_merge.begin(), output_merge.end() );
+            thrust::device_vector<vec8> bkeys(keys.begin(), keys.end());
+            thrust::device_vector<DATA_TYPE> bMap(Map.begin(),Map.end());
+
             executeFunctionType( binput1, binput2, binput3, boutput, boutput_merge,
-                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,vecType);
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz,bkeys,bMap);
 #endif
         }
     }
@@ -1161,7 +1172,7 @@ void PrintHelp()
 {
     cout<<"OpenCL command line options: \n";
     cout<<"-h [ --help ]"<<"\n\t\t\t\tproduces this help message\n";
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 cout<<"-v [ --version ]"<<"\n\t\t\t\tPrint queryable version information from the Bolt CL library\n";
     cout<<"-q [ --queryOpenCL ]"<<"\n\t\t\t\tPrint queryable platform and device info and return\n";
     cout<<"-g [ --gpu ]"<<"\n\t\t\t\tReport only OpenCL GPU devices\n";
@@ -1188,7 +1199,7 @@ cout<<"-v [ --version ]"<<"\n\t\t\t\tPrint queryable version information from th
  *****************************************************************************/
 int main( int argc, char* argv[] )
 {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
     cl_int err = CL_SUCCESS;
     cl_uint userPlatform    = 0;
@@ -1224,7 +1235,7 @@ int main( int argc, char* argv[] )
                 //std::cout<<argv[loop]<<"\n";
                 switch(ValidateBenchmarkKey(argv[loop],benchmark_options,BENCHMARK_OPTIONS_SIZE))
                 {
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
                    case bm_version:
                    case bm_VERSION:
                        {
@@ -1455,7 +1466,7 @@ int main( int argc, char* argv[] )
 #if defined(_WIN32)
     //aProfiler.throwAway( numThrowAway );
 #endif
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
     bolt::BENCH_BEND::control ctrl = bolt::BENCH_BEND::control::getDefault();
 
     std::string strDeviceName;
@@ -1511,7 +1522,7 @@ int main( int argc, char* argv[] )
     /******************************************************************************
      * Select then Execute Function
      ******************************************************************************/
-#if (Bolt_Benchmark == 1)
+#if (BOLT_BENCHMARK == 1)
         executeFunction(
         ctrl,
         vecType,
