@@ -17,7 +17,7 @@
 #if !defined( BOLT_AMP_MINELEMENT_INL )
 #define BOLT_AMP_MINELEMENT_INL
 
-#define WAVEFRONT_SIZE 256 
+#define MIN_MAX_WAVEFRONT_SIZE 256 
 #define _REDUCE_STEP_MIN(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
       iType mine = scratch[_IDX];\
@@ -69,28 +69,27 @@ namespace bolt {
                 const char * min_max )
             {
 
-                typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+				typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
-                const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
-                const unsigned int tileSize = WAVEFRONT_SIZE;
-                unsigned int numTiles = (szElements/tileSize);
-                const unsigned int ceilNumTiles = static_cast< size_t >
-                                    ( std::ceil( static_cast< float >( szElements ) / tileSize) );
-                unsigned int ceilNumElements = tileSize * ceilNumTiles;
+				//Now create a staging array ; May support zero-copy in the future?!
+				concurrency::accelerator cpuAccelerator = concurrency::
+					accelerator(concurrency::accelerator::cpu_accelerator);
+				concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
 
-                auto inputV = first.getContainer().getBuffer(first);
+				const unsigned int szElements = static_cast< unsigned int >(std::distance(first, last));
 
-                //Now create a staging array ; May support zero-copy in the future?!
-                concurrency::accelerator cpuAccelerator = concurrency::
-                                                        accelerator(concurrency::accelerator::cpu_accelerator);
-                concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
 
-                concurrency::array< int, 1 > resultArray ( szElements, ctl.getAccelerator().default_view,
+				unsigned int length = (MIN_MAX_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				unsigned int numTiles = (length / MIN_MAX_WAVEFRONT_SIZE);
+
+				auto inputV = first.getContainer().getBuffer(first);
+
+				concurrency::array< unsigned int, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
                                                                                         cpuAcceleratorView);
-                concurrency::array_view<int, 1> result ( resultArray );
-                result.discard_data();
-                concurrency::extent< 1 > inputExtent( ceilNumElements );
-                concurrency::tiled_extent< tileSize > tiledExtentReduce = inputExtent.tile< tileSize >();
+                concurrency::array_view<unsigned int, 1> result ( resultArray );
+
+				concurrency::extent< 1 > inputExtent(length);
+				concurrency::tiled_extent< MIN_MAX_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< MIN_MAX_WAVEFRONT_SIZE >();
                 
                 const char * str = "MAX_KERNEL";
 
@@ -103,32 +102,46 @@ namespace bolt {
                                                    tiledExtentReduce,
                                                    [ inputV,
                                                      szElements,
+													 length,
                                                      result,
                                                      binary_op ]
-                                                   ( concurrency::tiled_index<tileSize> t_idx ) restrict(amp)
+					(concurrency::tiled_index<MIN_MAX_WAVEFRONT_SIZE> t_idx) restrict(amp)
                     {
-                      int globalId = t_idx.global[ 0 ];
-                      int gx = globalId;
-                      int tileIndex = t_idx.local[ 0 ];
+                      unsigned int globalId = t_idx.global[ 0 ];
+					  unsigned int gx = globalId;
+					  unsigned int tileIndex = t_idx.local[0];
 
                       //  Initialize local data store
-                      tile_static iType scratch [WAVEFRONT_SIZE]; 
-                      tile_static int scratch_index [WAVEFRONT_SIZE]; 
+					  tile_static iType scratch[MIN_MAX_WAVEFRONT_SIZE];
+					  tile_static unsigned int scratch_index[MIN_MAX_WAVEFRONT_SIZE];
 
                       //  Abort threads that are passed the end of the input vector
-                      if( t_idx.global[ 0 ] < szElements )
+					  if (globalId < szElements)
                       {
                        //  Initialize the accumulator private variable with data from the input array
                        //  This essentially unrolls the loop below at least once
-                       iType accumulator = inputV[globalId];
-                       scratch[tileIndex] = accumulator;   
+					   scratch[tileIndex] = inputV[globalId];
                        scratch_index[tileIndex] = gx;
+					   gx += length;
                       }
 
                       t_idx.barrier.wait();
 
+					  // Loop sequentially over chunks of input vector, reducing an arbitrary size input
+					  // length into a length related to the number of workgroups
+					  while (gx < szElements)
+					  {
+						  iType element = inputV[gx];						  
+						  bool stat = binary_op(scratch[tileIndex], element);
+						  scratch[tileIndex] = stat ? scratch[tileIndex] : element;						
+						  scratch_index[tileIndex] = stat ? scratch_index[tileIndex] : gx;
+						  gx += length;
+					  }
+
+					  t_idx.barrier.wait();
+
                       //  Tail stops the last workgroup from reading past the end of the input vector
-                      int tail = szElements - (t_idx.tile[ 0 ] * t_idx.tile_dim0);
+                      unsigned int tail = szElements - (t_idx.tile[ 0 ] * t_idx.tile_dim0);
                       // Parallel reduction within a given workgroup using local data store
                       // to share values between workitems
 
@@ -142,6 +155,11 @@ namespace bolt {
                       _REDUCE_STEP_MIN(tail, tileIndex,  1);
 
 
+
+					  //  Abort threads that are passed the end of the input vector
+					  if (globalId >= szElements)
+						  return;
+
                       //  Write only the single reduced value for the entire workgroup
                       if (tileIndex == 0)
                       {
@@ -152,14 +170,11 @@ namespace bolt {
                     });
 
                     
-                    int *cpuPointerReduce =  result.data();
-
+                    unsigned int *cpuPointerReduce =  result.data();
                     iType minele =  inputV[cpuPointerReduce[0]];
-                    int minele_indx = cpuPointerReduce[0];;
+                    unsigned int minele_indx = cpuPointerReduce[0];;
 
-                    int numTailReduce = (ceilNumTiles>numTiles)? ceilNumTiles : numTiles;
-
-                    for(int i = 0; i < numTailReduce; ++i)
+					for (unsigned int i = 0; i < numTiles; ++i)
                     {
                         bool stat = binary_op( minele, inputV[cpuPointerReduce[i]]);
                         minele = stat ? minele : inputV[cpuPointerReduce[i]];
@@ -186,67 +201,85 @@ namespace bolt {
 
                 try
                 {
-                    concurrency::parallel_for_each(ctl.getAccelerator().default_view,
-                                                   tiledExtentReduce,
-                                                   [ inputV,
-                                                     szElements,
-                                                     result,
-                                                     binary_op ]
-                                                   ( concurrency::tiled_index<tileSize> t_idx ) restrict(amp)
-                    {
-                      int globalId = t_idx.global[ 0 ];
-                      int gx = globalId;
-                      int tileIndex = t_idx.local[ 0 ];
+					concurrency::parallel_for_each(ctl.getAccelerator().default_view,
+						tiledExtentReduce,
+						[inputV,
+						szElements,
+						length,
+						result,
+						binary_op]
+					(concurrency::tiled_index<MIN_MAX_WAVEFRONT_SIZE> t_idx) restrict(amp)
+					{
+						unsigned int globalId = t_idx.global[0];
+						unsigned int gx = globalId;
+						unsigned int tileIndex = t_idx.local[0];
 
-                      //  Initialize local data store
-                      tile_static iType scratch [WAVEFRONT_SIZE]; 
-                      tile_static int scratch_index [WAVEFRONT_SIZE]; 
+						//  Initialize local data store
+						tile_static iType scratch[MIN_MAX_WAVEFRONT_SIZE];
+						tile_static unsigned int scratch_index[MIN_MAX_WAVEFRONT_SIZE];
 
-                      //  Abort threads that are passed the end of the input vector
-                      if( t_idx.global[ 0 ] < szElements )
-                      {
-                       //  Initialize the accumulator private variable with data from the input array
-                       //  This essentially unrolls the loop below at least once
-                       iType accumulator = inputV[globalId];
-                       scratch[tileIndex] = accumulator;     
-                       scratch_index[tileIndex] = gx;   
-                      }
+						//  Abort threads that are passed the end of the input vector
+						if (globalId < szElements)
+						{
+							//  Initialize the accumulator private variable with data from the input array
+							//  This essentially unrolls the loop below at least once
+							scratch[tileIndex] = inputV[globalId];
+							scratch_index[tileIndex] = gx;
+							gx += length;
+						}
 
-                      t_idx.barrier.wait();
+						t_idx.barrier.wait();
 
-                      //  Tail stops the last workgroup from reading past the end of the input vector
-                      int tail = szElements - (t_idx.tile[ 0 ] * t_idx.tile_dim0);
-                      // Parallel reduction within a given workgroup using local data store
-                      // to share values between workitems
+						// Loop sequentially over chunks of input vector, reducing an arbitrary size input
+						// length into a length related to the number of workgroups
+						while (gx < szElements)
+						{
+							iType element = inputV[gx];
+							bool stat = binary_op(scratch[tileIndex], element);
+							scratch[tileIndex] = stat ? scratch[tileIndex] : element;
+							scratch_index[tileIndex] = stat ? scratch_index[tileIndex] : gx;
+							gx += length;
+						}
 
-                      _REDUCE_STEP_MAX(tail, tileIndex, 128);
-                      _REDUCE_STEP_MAX(tail, tileIndex, 64);
-                      _REDUCE_STEP_MAX(tail, tileIndex, 32);
-                      _REDUCE_STEP_MAX(tail, tileIndex, 16);
-                      _REDUCE_STEP_MAX(tail, tileIndex,  8);
-                      _REDUCE_STEP_MAX(tail, tileIndex,  4);
-                      _REDUCE_STEP_MAX(tail, tileIndex,  2);
-                      _REDUCE_STEP_MAX(tail, tileIndex,  1);
+						t_idx.barrier.wait();
+
+						//  Tail stops the last workgroup from reading past the end of the input vector
+						unsigned int tail = szElements - (t_idx.tile[0] * t_idx.tile_dim0);
+						// Parallel reduction within a given workgroup using local data store
+						// to share values between workitems
+
+						_REDUCE_STEP_MAX(tail, tileIndex, 128);
+						_REDUCE_STEP_MAX(tail, tileIndex, 64);
+						_REDUCE_STEP_MAX(tail, tileIndex, 32);
+						_REDUCE_STEP_MAX(tail, tileIndex, 16);
+						_REDUCE_STEP_MAX(tail, tileIndex, 8);
+						_REDUCE_STEP_MAX(tail, tileIndex, 4);
+						_REDUCE_STEP_MAX(tail, tileIndex, 2);
+						_REDUCE_STEP_MAX(tail, tileIndex, 1);
 
 
-                      //  Write only the single reduced value for the entire workgroup
-                      if (tileIndex == 0)
-                      {
-                          result[t_idx.tile[ 0 ]] = scratch_index[0];
-                      }
 
-                    });
+						//  Abort threads that are passed the end of the input vector
+						if (globalId >= szElements)
+							return;
 
+						//  Write only the single reduced value for the entire workgroup
+						if (tileIndex == 0)
+						{
+							result[t_idx.tile[0]] = scratch_index[0];
+						}
+
+
+					});
 
                     
-                    int *cpuPointerReduce =  result.data();
+                    unsigned int *cpuPointerReduce =  result.data();
 
                     iType minele =  inputV[cpuPointerReduce[0]];
-                    int minele_indx = cpuPointerReduce[0] ;
+					unsigned int minele_indx = cpuPointerReduce[0];
 
-                    int numTailReduce = (ceilNumTiles>numTiles)? ceilNumTiles : numTiles;
-
-                    for(int i = 0; i < numTailReduce; ++i)
+                
+					for (unsigned int i = 0; i < numTiles; ++i)
                     {
                         bool stat = binary_op(inputV[cpuPointerReduce[i]], minele);
                         minele = stat ? minele : inputV[cpuPointerReduce[i]];

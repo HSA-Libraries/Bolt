@@ -22,13 +22,12 @@
 #if !defined( BOLT_AMP_REDUCE_INL )
 #define BOLT_AMP_REDUCE_INL
 #define REDUCE_WAVEFRONT_SIZE 256 //64
-#define _REDUCE_STEP(_IDX, _W) \
-    if (_IDX < _W)\
-    {\
-      iType mine = scratch[_IDX];\
-      iType other = scratch[_IDX + _W];\
-      scratch[_IDX] = binary_op(mine, other); \
-     }\
+#define _REDUCE_STEP(_LENGTH, _IDX, _W) \
+if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
+	iType mine = scratch[_IDX]; \
+	iType other = scratch[_IDX + _W]; \
+	scratch[_IDX] = binary_op(mine, other); \
+}\
     t_idx.barrier.wait();
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -75,22 +74,20 @@ namespace bolt
                 concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
 
 
-                const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
-                if(szElements >= REDUCE_WAVEFRONT_SIZE)
-                {
-  			    unsigned int  leng = szElements -  (szElements % REDUCE_WAVEFRONT_SIZE);
+                const unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
 
-                unsigned int numTiles = (leng/REDUCE_WAVEFRONT_SIZE);
+
+				unsigned int length = (REDUCE_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				unsigned int numTiles = (length / REDUCE_WAVEFRONT_SIZE);
 
                 auto inputV = first.getContainer().getBuffer(first);
 
-                concurrency::array< iType, 1 > resultArray ( numTiles, ctl.getAccelerator().default_view,
+				concurrency::array< iType, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
                                                                                         cpuAcceleratorView);
 
                 concurrency::array_view<iType, 1> result ( resultArray );
 
-                result.discard_data();
-                concurrency::extent< 1 > inputExtent( leng );
+				concurrency::extent< 1 > inputExtent(length);
                 concurrency::tiled_extent< REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< REDUCE_WAVEFRONT_SIZE >();
 
                 // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
@@ -101,29 +98,54 @@ namespace bolt
                     concurrency::parallel_for_each(ctl.getAccelerator().default_view,
                                                    tiledExtentReduce,
                                                    [ inputV,
-                                                     leng,
+												   szElements,
+												   length,
                                                      result,
                                                      binary_op ]
                                                    ( concurrency::tiled_index<REDUCE_WAVEFRONT_SIZE> t_idx ) restrict(amp)
                     {
-                      unsigned int globalId = t_idx.global[ 0 ];
-                      int gx = globalId;
-                      int tileIndex = t_idx.local[ 0 ];
+						unsigned int gx = t_idx.global[0];
+						unsigned int gloId = gx;
+						tile_static iType scratch[REDUCE_WAVEFRONT_SIZE];
+						//  Initialize local data store
+						unsigned int tileIndex = t_idx.local[0];
 
-                      //  Initialize local data store
-                      tile_static iType scratch [REDUCE_WAVEFRONT_SIZE] ;
-                      scratch[tileIndex] = inputV[globalId];
+						iType accumulator;
+						if (gloId < szElements)
+						{
+							accumulator = inputV[gx];
+							gx += length;
+						}
+						
 
-                      t_idx.barrier.wait();
+						// Loop sequentially over chunks of input vector, reducing an arbitrary size input
+						// length into a length related to the number of workgroups
+						while (gx < szElements)
+						{
+							iType element = inputV[gx];
+							accumulator = binary_op(accumulator, element);
+							gx += length;
+						}
 
-                      _REDUCE_STEP( tileIndex, 128);
-                      _REDUCE_STEP( tileIndex, 64);
-                      _REDUCE_STEP( tileIndex, 32);
-                      _REDUCE_STEP( tileIndex, 16);
-                      _REDUCE_STEP( tileIndex,  8);
-                      _REDUCE_STEP( tileIndex,  4);
-                      _REDUCE_STEP( tileIndex,  2);
-                      _REDUCE_STEP( tileIndex,  1);
+
+						scratch[tileIndex] = accumulator;
+						t_idx.barrier.wait();
+
+						unsigned int tail = szElements - (t_idx.tile[0] * REDUCE_WAVEFRONT_SIZE);
+
+						_REDUCE_STEP(tail, tileIndex, 128);
+						_REDUCE_STEP(tail, tileIndex, 64);
+						_REDUCE_STEP(tail, tileIndex, 32);
+						_REDUCE_STEP(tail, tileIndex, 16);
+						_REDUCE_STEP(tail, tileIndex, 8);
+						_REDUCE_STEP(tail, tileIndex, 4);
+						_REDUCE_STEP(tail, tileIndex, 2);
+						_REDUCE_STEP(tail, tileIndex, 1);
+
+
+						//  Abort threads that are passed the end of the input vector
+						if (gloId >= szElements)
+							return;
 
                       //  Write only the single reduced value for the entire workgroup
                       if (tileIndex == 0)
@@ -133,23 +155,13 @@ namespace bolt
 
                     });
                     
-  
-                    
-               //     concurrency::extent<1> ext( static_cast< int >(szElements-leng));
-               //     concurrency::array_view<iType, 1>  rem = inputV.section( Concurrency::index<1>((int)leng), ext );
-
-                    iType acc = static_cast< iType >( init );
-                    for(int i = leng; i < szElements  ; ++i)
-                    {
-                        acc = binary_op(acc, *(first+i));
-                    }                    
-
-                    iType *cpuPointerReduce =  result.data();
-                    for(unsigned int i = 0; i < numTiles; ++i)
-                    {
-                        acc = binary_op(acc, cpuPointerReduce[i]);
-                    }
-                    return acc;
+					iType acc = static_cast<iType>(init);
+					iType *cpuPointerReduce =  result.data();
+					for(unsigned int i = 0; i < numTiles; ++i)
+					{
+						acc = binary_op(acc, cpuPointerReduce[i]);
+					}
+					return acc;
                 }
                 catch(std::exception &e)
                 {
@@ -158,16 +170,6 @@ namespace bolt
                       throw std::exception();
                 }
 
-                }
-                else
-                {
-                    iType acc = static_cast< iType >( init );
-                    for(int i = 0; i < szElements  ; ++i)
-                    {
-                        acc = binary_op(acc, *(first+i));
-                    }      
-                    return acc;
-                }
             };
 
               // This template is called after we detect random access iterators
