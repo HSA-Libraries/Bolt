@@ -307,8 +307,8 @@ TEST( TransformIterator, UDDTest)
         std::generate(svInVec.begin(), svInVec.end(), genUDD);
         bolt::BCKND::generate(dvInVec.begin(), dvInVec.end(), genUDD);
 
-        int dist1 = std::distance(sv_trf_begin, sv_trf_end);
-        int dist2 = std::distance( dv_trf_begin, dv_trf_end );
+        int dist1 = static_cast< int >(std::distance(sv_trf_begin, sv_trf_end));
+        int dist2 = static_cast< int >(std::distance( dv_trf_begin, dv_trf_end ));
 
         EXPECT_EQ( dist1, dist2 );
         //std::cout << "distance = " << dist1 << "\n" ;

@@ -37,6 +37,7 @@ include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${Boost_I
 
 if( BUILD_TBB )
     include_directories( ${TBB_INCLUDE_DIRS} )
+    add_definitions( "-DENABLE_TBB" )
     set( TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC} )
 endif()
 

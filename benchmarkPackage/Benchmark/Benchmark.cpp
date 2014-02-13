@@ -112,10 +112,6 @@
 #include <iomanip>
 #endif
 
-
-#if defined(_WIN32)
-//AsyncProfiler aProfiler("default");
-#endif
 const std::streamsize colWidth = 26;
 
 #ifndef DATA_TYPE 
