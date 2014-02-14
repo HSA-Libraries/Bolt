@@ -31,7 +31,7 @@
 #include "bolt/amp/iterator/counting_iterator.h"
 
 #define SERIAL_TBB_OFFSET 1
-#define TEST_LARGE_BUFFERS 0
+#define TEST_LARGE_BUFFERS 1
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
@@ -2355,14 +2355,14 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
 
 } 
 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyAMPtypeTest, ::testing::Range( 1, 1024, 47 )); 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 4096, 555)); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyAMPtypeTest, ::testing::Range( 1, 1048576, 5987 )); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 65535, 555)); 
 
 
 TEST(InclusiveScanByKey, IncMixedM3increment)
 {
     //setup keys
-    int length = (1<<23);
+    int length = (1<<25);
     std::vector< uddtM2 > keys( length, identityMixM2);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -3878,7 +3878,7 @@ TEST(InclusiveScanByKey, InclFloat)
 TEST(InclusiveScanByKey,SerialInclFloat)
 {
     //setup keys
-    int length = 1<<24;
+    int length = 1<<26;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -4074,7 +4074,7 @@ TEST(ExclusiveScanByKey, ExclFloat)
 TEST(ExclusiveScanByKey, SerialExclFloat)
 {
     //setup keys
-    int length = 1<<24;
+    int length = 1<<26;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -4581,6 +4581,7 @@ TEST(ExclusiveScanByKey, MulticoreCLscanbykeyExclUDD)
     // compare results
     cmpArrays(refInput, input);
 }
+
 
 // paste from above
 

@@ -189,7 +189,6 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__kernel void " + name(1) + "(\n"
             "global " + typeNames[scanByKey_kType] + "* keySumArray,\n"
             "global " + typeNames[scanByKey_oType] + "* preSumArray,\n"
-            "global " + typeNames[scanByKey_oType] + "* postSumArray,\n"
             "const uint vecSize,\n"
             "local "  + typeNames[scanByKey_kType] + "* ldsKeys,\n"
             "local "  + typeNames[scanByKey_oType] + "* ldsVals,\n"
@@ -203,7 +202,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
-            "global " + typeNames[scanByKey_oType] + "* postSumArray,\n"
+            "global " + typeNames[scanByKey_oType] + "* preSumArray,\n"
             "global " + typeNames[scanByKey_oType] + "* preSumArray1,\n"
             "global " + typeNames[scanByKey_kType] + "* keys,\n"
             ""        + typeNames[scanByKey_kIterType] + " keys_iter,\n"
@@ -360,7 +359,6 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
     control::buffPointer preSumArray1  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
     cl_uint ldsKeySize, ldsValueSize;
 
 
@@ -435,13 +433,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
     V_OPENCL( kernels[1].setArg( 0, *keySumArray ),         "Error setArg kernels[ 1 ]" ); // Input keys
     V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
-    V_OPENCL( kernels[1].setArg( 2, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
-    V_OPENCL( kernels[1].setArg( 3, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[1].setArg( 4, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 5, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 6, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 7, *binaryPredicateBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 2, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[1].setArg( 3, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 4, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 5, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 6, *binaryPredicateBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 7, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
@@ -484,7 +481,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     typename DVOutputIterator::Payload result1_payload = result.gpuPayload( );
 
 
-    V_OPENCL( kernels[2].setArg( 0, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 0, *preSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 1, *preSumArray1 ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 2, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 2 ]" ); // Input keys
     V_OPENCL( kernels[2].setArg( 3, firstKey.gpuPayloadSize( ),&firstKey1_payload ), "Error setting a kernel argument" );
