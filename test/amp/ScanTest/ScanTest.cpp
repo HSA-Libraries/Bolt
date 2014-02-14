@@ -879,9 +879,9 @@ INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024
 //#if TEST_LARGE_BUFFERS
 //  Test a huge range, suitable for floating point as they are less prone to overflow 
 // (but floating point loses granularity at large values)
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 0, 1048576, 104857 /*4096*/ ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 0, 1048576, 74857  ) );
 #if(TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 104857 /*4096*/ ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 74857  ) );
 //#endif
 #endif
 
@@ -1921,6 +1921,21 @@ TEST(ExclusiveScan, MulticoreDeviceVectorExcluddtM3)
     ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
     
     cmpArrays(refInput, input);  
+} 
+
+
+TEST(AMPTileLimitTest, AMPTileLimitTest)
+{
+    //setup containers
+    for(int i=24 ; i<28; i++)
+	{
+		size_t size = 1<<i;
+		bolt::amp::device_vector< int > input( size, 2 );
+		std::vector< int > refInput( size, 2 );  refInput[0] = 2;
+		bolt::amp::exclusive_scan( input.begin(),    input.end(),    input.begin(), 2, bolt::amp::plus<int>() );
+		::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), bolt::amp::plus<int>());
+		cmpArrays(refInput, input);  
+	}
 } 
 
 

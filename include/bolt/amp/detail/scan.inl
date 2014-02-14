@@ -177,8 +177,8 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 					kernel0_WgSize
 				] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
 		  {
-				unsigned int gloId = t_idx.global[ 0 ];
-				unsigned int groId = t_idx.tile[ 0 ];
+				unsigned int gloId = t_idx.global[ 0 ] + index;
+				unsigned int groId = t_idx.tile[ 0 ] + tile_index;
 				unsigned int locId = t_idx.local[ 0 ];
 				unsigned int wgSize = kernel0_WgSize;
 
@@ -186,7 +186,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 
 				wgSize *=2;
 
-				unsigned int input_offset = (groId*wgSize)+locId+index;
+				unsigned int input_offset = (groId*wgSize)+locId;
 				// if exclusive, load gloId=0 w/ identity, and all others shifted-1
 				if(input_offset < numElements)
 					lds[locId] = input[input_offset];
@@ -219,8 +219,8 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 				 t_idx.barrier.wait();
 				 if (locId == 0)
 				 {
-					preSumArray[ groId + tile_index ] = lds[wgSize -1];
-					preSumArray1[ groId + tile_index ] = lds[wgSize/2 -1];
+					preSumArray[ groId  ] = lds[wgSize -1];
+					preSumArray1[ groId  ] = lds[wgSize/2 -1];
 				 }
 		  } );
 
@@ -316,9 +316,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 			workSum = binary_op(workSum, y);
 			preSumArray[ mapId] = workSum;
 		 }
-		 else{
-		   preSumArray[ mapId] = workSum;
-		}
+		 
         // write final scan from pre-scan and lds scan
         for( offset = 1; offset < workPerThread; offset += 1 )
         {
