@@ -46,36 +46,24 @@ namespace bolt {
             {
 				concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-                // No. of I/P elements
-                int numElementsProcessedperWI = 16; //For now choose 16
-                int numOfWGs;
-                unsigned int globalThreads;
-                unsigned int localThreads;
-                unsigned int residueGlobalThreads;
-                unsigned int residueLocalThreads;
-                int szElements = static_cast< unsigned int>( std::distance( first, last ) );
 
-                if(szElements < (BINARY_SEARCH_WAVEFRONT_SIZE*numElementsProcessedperWI) )
-                {
-                    numOfWGs = 1;
-                    residueGlobalThreads = (szElements/numElementsProcessedperWI);
-                    residueGlobalThreads = residueGlobalThreads + ( (szElements & (numElementsProcessedperWI-1) )? 1: 0 );
-                    residueLocalThreads = residueGlobalThreads; //Because only 1 WG will be spawned
-                    globalThreads = 0;
-                    localThreads = 0;
-                }
-                else
-                {
-                    //Here you will definitely spawn more than BINARY_SEARCH_WAVEFRONT_SIZE work items.
-                    globalThreads = (szElements/numElementsProcessedperWI);
-                    globalThreads = globalThreads + ( (szElements & (numElementsProcessedperWI-1) )? 1: 0 ); //Create One extra thread if some buffer residue is left.
-                    localThreads = BINARY_SEARCH_WAVEFRONT_SIZE;
-                    residueGlobalThreads = globalThreads % localThreads;
-                    residueLocalThreads = residueGlobalThreads;
-                    globalThreads = globalThreads - residueGlobalThreads; // This makes globalThreads multiple of BINARY_SEARCH_WAVEFRONT_SIZE
-                }
+                unsigned int szElements = static_cast< unsigned int>( std::distance( first, last ) );
+                unsigned int szElements_b = szElements;
+                
+                unsigned int residual = szElements % BINARY_SEARCH_WAVEFRONT_SIZE;
 
-				unsigned int totalThreads = globalThreads+residueGlobalThreads;
+                szElements = szElements - residual; // New size Remaining taken care above.
+
+                unsigned int numElementsProcessedperWI = 16; //For now choose 16
+
+                unsigned int nmofthreads  = szElements  / numElementsProcessedperWI;
+
+				unsigned int residual_threads =  ( residual / numElementsProcessedperWI );
+                
+                if(residual % numElementsProcessedperWI)
+                    residual_threads++;
+
+                unsigned int  totalThreads = residual_threads + nmofthreads;
 
                 /**********************************************************************************
                  * Type Names - used in KernelTemplateSpecializer
@@ -83,8 +71,8 @@ namespace bolt {
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
 
 				//concurrency::array< int > result( szElements, av );
-				std::vector<int> stdResBuffer(szElements);
-                device_vector<int, concurrency::array_view > stdResVec(stdResBuffer.begin(), stdResBuffer.end(), true, ctl );
+				std::vector<int> stdResBuffer(totalThreads);
+                device_vector<int, concurrency::array_view > stdResVec(stdResBuffer.begin(), stdResBuffer.end(), false, ctl );
                 auto&  result   =  stdResVec.begin().getContainer().getBuffer(stdResVec.begin()); 
 
 
@@ -92,12 +80,12 @@ namespace bolt {
 
 
                 // Input buffer
-                unsigned int startIndex = 0;
-                unsigned int endIndex = static_cast< unsigned int >( numElementsProcessedperWI*globalThreads );
+               // unsigned int startIndex = 0;
+               // unsigned int endIndex = static_cast< unsigned int >( numElementsProcessedperWI * nmofthreads );
                    
-                if(globalThreads != 0 )
+                if(nmofthreads != 0 )
                 {
-					     concurrency::extent< 1 > inputExtent( globalThreads);
+					     concurrency::extent< 1 > inputExtent( nmofthreads);
 
 	                     try
 	                     {
@@ -107,43 +95,31 @@ namespace bolt {
                                  val,
                                  numElementsProcessedperWI,
                                  comp,	
-                                 result,
-								 startIndex,
-								 endIndex
-                              ] ( concurrency::index<1> idx ) restrict(amp)
+                                 result
+	                          ] ( concurrency::index<1> idx ) restrict(amp)
                            {
 
-                                 unsigned int gloId = idx[0];
-                                
+                                 unsigned int gloId = idx[0];                                
 								 unsigned int mid;
-                                 unsigned int low = startIndex + gloId * numElementsProcessedperWI;
+                                 unsigned int low = gloId * numElementsProcessedperWI;
                                  unsigned int high = low + numElementsProcessedperWI;
-                                 unsigned int resultIndex = startIndex/numElementsProcessedperWI;
-
-                                 if(high > endIndex)
-                                 high = endIndex;
-
-                                 int found = 0;
-    
+                                          
                                  while(low < high)
                                  {	
                                      mid = (low + high) / 2;
-        
                                      iType midVal = inputBuffer[mid];
-                                     iType firstVal = inputBuffer[low];
    
                                      if( !(comp(midVal, val)) && !(comp(val, midVal)) )
                                      {
-                                       found = 1;
-                                       break;
+                                        result[gloId] = true;
+                                        return;
                                      }
                                      else if ( comp(midVal, val) ) /*if true, midVal comes before val hence adjust low*/
                                        low = mid + 1;
                                      else	/*else val comes before midVal, hence adjust high*/
                                        high = mid;
                                 }
-    
-                                result[resultIndex+gloId] = found;
+                            
 						 });
 						}
 
@@ -155,11 +131,10 @@ namespace bolt {
                          }	
 				    }
 
-                    startIndex = globalThreads*numElementsProcessedperWI;
-                    endIndex = szElements;
-                    if(residueGlobalThreads !=0)
+                    unsigned int startIndex = nmofthreads*numElementsProcessedperWI;
+                    if(residual !=0)
                     {
-                            concurrency::extent< 1 > inputExtent( residueGlobalThreads);
+                            concurrency::extent< 1 > inputExtent( residual_threads);
 
 	                        try
 	                        {
@@ -171,7 +146,8 @@ namespace bolt {
                                  comp,	
                                  result,
 								 startIndex,
-								 endIndex
+								 szElements_b,
+                                 nmofthreads
                               ] ( concurrency::index<1> idx ) restrict(amp)
                              {
 
@@ -180,32 +156,28 @@ namespace bolt {
 								 unsigned int mid;
                                  unsigned int low = startIndex + gloId * numElementsProcessedperWI;
                                  unsigned int high = low + numElementsProcessedperWI;
-                                 unsigned int resultIndex = startIndex/numElementsProcessedperWI;
+                                 unsigned int resultIndex = nmofthreads + gloId;
 
-                                 if(high > endIndex)
-                                 high = endIndex;
-
-                                 int found = 0;
+                                 if(high > szElements_b)
+                                 high = szElements_b;
     
                                  while(low < high)
                                  {	
                                      mid = (low + high) / 2;
         
                                      iType midVal = inputBuffer[mid];
-                                     iType firstVal = inputBuffer[low];
    
                                      if( !(comp(midVal, val)) && !(comp(val, midVal)) )
                                      {
-                                       found = 1;
-                                       break;
+                                      result[resultIndex] = true;
+                                       return;
                                      }
                                      else if ( comp(midVal, val) ) /*if true, midVal comes before val hence adjust low*/
                                        low = mid + 1;
                                      else	/*else val comes before midVal, hence adjust high*/
                                        high = mid;
                                 }
-    
-                                result[resultIndex+gloId] = found;
+   
 						   });
 							}
 						   catch(std::exception &e)
@@ -216,19 +188,17 @@ namespace bolt {
                            }	
                     }
                
-
-               
-                  bool r = false;
+                    
+                  //result.synchronize();
                   for(unsigned int i=0; i<totalThreads; i++)
                   {
                     if(result[i] == 1)
                     {
-                        r = true;
-                        break;
+                        return true;
                     }
                   }
 
-                  return r;
+                  return false;
 
             }; // end binary_search_enqueue
 

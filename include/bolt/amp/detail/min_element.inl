@@ -80,6 +80,9 @@ namespace bolt {
 
 
 				unsigned int length = (MIN_MAX_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				length = szElements < length ? szElements : length;
+				unsigned int residual = length % MIN_MAX_WAVEFRONT_SIZE;
+				length = residual ? (length + MIN_MAX_WAVEFRONT_SIZE - residual): length ;
 				unsigned int numTiles = (length / MIN_MAX_WAVEFRONT_SIZE);
 
 				auto inputV = first.getContainer().getBuffer(first);
