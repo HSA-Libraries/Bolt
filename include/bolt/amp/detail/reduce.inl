@@ -78,6 +78,9 @@ namespace bolt
 
 
 				unsigned int length = (REDUCE_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				length = szElements < length ? szElements : length;
+				unsigned int residual = length % REDUCE_WAVEFRONT_SIZE;
+				length = residual ? (length + REDUCE_WAVEFRONT_SIZE - residual): length ;
 				unsigned int numTiles = (length / REDUCE_WAVEFRONT_SIZE);
 
                 auto inputV = first.getContainer().getBuffer(first);
@@ -126,8 +129,7 @@ namespace bolt
 							accumulator = binary_op(accumulator, element);
 							gx += length;
 						}
-
-
+                        
 						scratch[tileIndex] = accumulator;
 						t_idx.barrier.wait();
 

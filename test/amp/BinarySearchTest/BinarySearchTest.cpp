@@ -19,7 +19,7 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 #define TEST_MULTICORE_TBB_SEARCH 1
-#define TEST_LARGE_BUFFERS 0
+#define TEST_LARGE_BUFFERS 1
 #define GOOGLE_TEST 1
 #define BKND amp 
 #define SEARCH_FUNC binary_search
@@ -110,7 +110,7 @@ uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 TEST(BSearchUDD_large_power, AddDouble4)
 {
     //setup containers
-    int length = 2097152; //2^21
+    int length = 256; //2^21
     bolt::amp::device_vector< uddtD4 > input(  length, initialAddD4, true  );
     std::vector< uddtD4 > refInput( length, initialAddD4 );
 
@@ -2083,6 +2083,27 @@ TEST (rawArrayTest, floatarray){
 
 }
 #endif
+
+TEST( Kalyantest, SerialNormal1 )
+{
+    const int length = 100000;
+    std::vector<int> stdInput(length),boltInput(length);
+
+    for(int i= 0 ;i < length; i++)
+        boltInput[i]=stdInput[i] = i;
+
+
+    bool stdresult, boltresult;
+    int  val = 6000;
+
+    //  Calling the actual functions under test
+    stdresult  = std::SEARCH_FUNC( stdInput.begin( ), stdInput.end( ), val, std::less< int >() );
+    boltresult = bolt::BKND::SEARCH_FUNC(boltInput.begin( ), boltInput.end( ), val, bolt::amp::less< int >( ) );
+
+    EXPECT_EQ(stdresult, boltresult);
+
+}
+
 
 int main(int argc, char* argv[])
 {
