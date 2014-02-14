@@ -17,9 +17,10 @@
 #if !defined( BOLT_AMP_SCAN_BY_KEY_INL )
 #define BOLT_AMP_SCAN_BY_KEY_INL
 
-#define KERNEL02WAVES 4
-#define KERNEL1WAVES 4
-#define WAVESIZE 64
+#define SCANBYKEY_KERNELWAVES 4
+#define SCANBYKEY_WAVESIZE 128
+#define SCANBYKEY_TILE_MAX 65535
+
 
 #ifdef ENABLE_TBB
 //TBB Includes
@@ -193,9 +194,9 @@ scan_by_key_enqueue(
     int exclusive = inclusive ? 0 : 1;
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
-    const unsigned int kernel0_WgSize = WAVESIZE*KERNEL02WAVES;
-    const unsigned int kernel1_WgSize = WAVESIZE*KERNEL1WAVES ;
-    const unsigned int kernel2_WgSize = WAVESIZE*KERNEL02WAVES;
+    const unsigned int kernel0_WgSize = SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES;
+    const unsigned int kernel1_WgSize = SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES;
+    const unsigned int kernel2_WgSize = SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
@@ -218,7 +219,6 @@ scan_by_key_enqueue(
   	concurrency::array< kType >  keySumArray( sizeScanBuff, av );
     concurrency::array< vType >  preSumArray( sizeScanBuff, av );
     concurrency::array< vType >  preSumArray1( sizeScanBuff, av );
-    concurrency::array< vType >  postSumArray( sizeScanBuff, av );
 
 
     /**********************************************************************************
@@ -228,121 +228,138 @@ scan_by_key_enqueue(
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-	  auto&  keyBuffer   =  firstKey.getContainer().getBuffer(firstKey); 
+	auto&  keyBuffer   =  firstKey.getContainer().getBuffer(firstKey); 
     auto&  inputBuffer =  firstValue.getContainer().getBuffer(firstValue); 
     auto&  outputBuffer=  result.getContainer().getBuffer(result); 
   //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
   //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 
-	  concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
-    concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
-	  concurrency::parallel_for_each( av, tileK0,
-        [
-            keyBuffer,
-            inputBuffer,
-            init,
-            numElements,
-			      &keySumArray,
-            &preSumArray,
-            &preSumArray1,
+	const unsigned int tile_limit = SCANBYKEY_TILE_MAX;
+	const unsigned int max_ext = (tile_limit*kernel0_WgSize);
+	unsigned int	   tempBuffsize = (sizeInputBuff/2); 
+	unsigned int	   iteration = (tempBuffsize-1)/max_ext; 
+
+    for(unsigned int i=0; i<=iteration; i++)
+	{
+	    unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
+		concurrency::extent< 1 > inputExtent( extent_sz );
+		concurrency::tiled_extent< kernel0_WgSize > tileK0 = inputExtent.tile< kernel0_WgSize >();
+		unsigned int index = i*(tile_limit*kernel0_WgSize);
+		unsigned int tile_index = i*tile_limit;
+
+			concurrency::parallel_for_each( av, tileK0,
+			[
+				keyBuffer,
+				inputBuffer,
+				init,
+				numElements,
+				&keySumArray,
+				&preSumArray,
+				&preSumArray1,
 		      	binary_pred,
-            exclusive,
+				exclusive,
+				index,
+				tile_index,
 		      	binary_funct,
-            kernel0_WgSize
-        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
-  {
+				kernel0_WgSize
+			] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
+			  {
 
-    unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int groId = t_idx.tile[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
-    unsigned int wgSize = kernel0_WgSize;
+				unsigned int gloId = t_idx.global[ 0 ] + index;
+				unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+				unsigned int locId = t_idx.local[ 0 ];
+				unsigned int wgSize = kernel0_WgSize;
 
-    tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES*2 ];
-	  tile_static kType ldsKeys[ WAVESIZE*KERNEL02WAVES*2 ];
-   	wgSize *=2;
+				tile_static vType ldsVals[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES*2 ];
+				tile_static kType ldsKeys[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES*2 ];
+   				wgSize *=2;
 
-  	unsigned int  offset = 1;
-    // load input into shared memory
-    if (exclusive)
-    {
-       if (gloId > 0 && groId*wgSize+locId < numElements)
-	   {
-          kType key1 = keyBuffer[ groId*wgSize+locId];
-          kType key2 = keyBuffer[ groId*wgSize+locId-1];
-          if( binary_pred( key1, key2 )  )
-		  {
-             ldsVals[locId] = inputBuffer[groId*wgSize+locId];
-		  }
-          else 
-		  {
-		     vType start_val = inputBuffer[groId*wgSize+locId]; 
-             ldsVals[locId] = binary_funct(init, start_val);
-          }
-          ldsKeys[locId] = keyBuffer[groId*wgSize+locId];
-       }
-       else{ 
-	      vType start_val = inputBuffer[0];
-          ldsVals[locId] = binary_funct(init, start_val);
-          ldsKeys[locId] = keyBuffer[0];
-       }
-       if(groId*wgSize +locId+ (wgSize/2) < numElements)
-	   {
-          kType key1 = keyBuffer[ groId*wgSize +locId+ (wgSize/2)];
-          kType key2 = keyBuffer[groId*wgSize +locId+ (wgSize/2) -1];
-          if( binary_pred( key1, key2 )  )
-		  {
-             ldsVals[locId+(wgSize/2)] = inputBuffer[groId*wgSize +locId+ (wgSize/2)];
-		  }
-          else 
-		  {
-		     vType start_val = inputBuffer[groId*wgSize +locId+ (wgSize/2)]; 
-             ldsVals[locId+(wgSize/2)] = binary_funct(init, start_val);
-          } 
-          ldsKeys[locId+(wgSize/2)] = keyBuffer[groId*wgSize +locId+ (wgSize/2)];
-       }
-    }
-    else
-    {
-       if(groId*wgSize+locId < numElements)
-	   {
-           ldsVals[locId] = inputBuffer[groId*wgSize+locId];
-           ldsKeys[locId] = keyBuffer[groId*wgSize+locId];
-       }
-       if(groId*wgSize +locId+ (wgSize/2) < numElements)
-	   {
-           ldsVals[locId+(wgSize/2)] = inputBuffer[ groId*wgSize +locId+ (wgSize/2)];
-           ldsKeys[locId+(wgSize/2)] = keyBuffer[ groId*wgSize +locId+ (wgSize/2)];
-       }
-    }
-    for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
-    {
-       t_idx.barrier.wait();
-       if (locId < start)
-       {
-          unsigned int temp1 = offset*(2*locId+1)-1;
-          unsigned int temp2 = offset*(2*locId+2)-1;
+  				unsigned int  offset = 1;
+				// load input into shared memory
+				unsigned int input_offset = (groId*wgSize)+locId;
+
+				if (exclusive)
+				{
+				   if (gloId > 0 && input_offset < numElements)
+				   {
+					  kType key1 = keyBuffer[ input_offset ];
+					  kType key2 = keyBuffer[ input_offset-1 ];
+					  if( binary_pred( key1, key2 )  )
+					  {
+						 ldsVals[locId] = inputBuffer[ input_offset ];
+					  }
+					  else 
+					  {
+						 vType start_val = inputBuffer[ input_offset ]; 
+						 ldsVals[locId] = binary_funct(init, start_val);
+					  }
+					  ldsKeys[locId] = keyBuffer[ input_offset ];
+				   }
+				   else{ 
+					  vType start_val = inputBuffer[0];
+					  ldsVals[locId] = binary_funct(init, start_val);
+					  ldsKeys[locId] = keyBuffer[0];
+				   }
+				   if(input_offset + (wgSize/2) < numElements)
+				   {
+					  kType key1 = keyBuffer[ input_offset + (wgSize/2)];
+					  kType key2 = keyBuffer[ input_offset + (wgSize/2) -1];
+					  if( binary_pred( key1, key2 )  )
+					  {
+						 ldsVals[locId+(wgSize/2)] = inputBuffer[ input_offset + (wgSize/2)];
+					  }
+					  else 
+					  {
+						 vType start_val = inputBuffer[ input_offset + (wgSize/2)]; 
+						 ldsVals[locId+(wgSize/2)] = binary_funct(init, start_val);
+					  } 
+					  ldsKeys[locId+(wgSize/2)] = keyBuffer[ input_offset + (wgSize/2)];
+				   }
+				}
+				else
+				{
+				   if(input_offset < numElements)
+				   {
+					   ldsVals[locId] = inputBuffer[input_offset];
+					   ldsKeys[locId] = keyBuffer[input_offset];
+				   }
+				   if(input_offset + (wgSize/2) < numElements)
+				   {
+					   ldsVals[locId+(wgSize/2)] = inputBuffer[ input_offset + (wgSize/2)];
+					   ldsKeys[locId+(wgSize/2)] = keyBuffer[ input_offset + (wgSize/2)];
+				   }
+				}
+				for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
+				{
+				   t_idx.barrier.wait();
+				   if (locId < start)
+				   {
+					  unsigned int temp1 = offset*(2*locId+1)-1;
+					  unsigned int temp2 = offset*(2*locId+2)-1;
        
-          kType key = ldsKeys[temp2]; 
-          kType key1 = ldsKeys[temp1];
-          if(binary_pred( key, key1 )) 
-		  {
-             oType y = ldsVals[temp2];
-             oType y1 =ldsVals[temp1];
-             ldsVals[temp2] = binary_funct(y, y1);
-          }
-       }
-       offset *= 2;
-    }
-    t_idx.barrier.wait();
-    if (locId == 0)
-    {
-        keySumArray[ groId ] = ldsKeys[ wgSize-1 ];
-        preSumArray[ groId ] = ldsVals[wgSize -1];
-        preSumArray1[ groId ] = ldsVals[wgSize/2 -1];
-    }
-	
+					  kType key = ldsKeys[temp2]; 
+					  kType key1 = ldsKeys[temp1];
+					  if(binary_pred( key, key1 )) 
+					  {
+						 oType y = ldsVals[temp2];
+						 oType y1 =ldsVals[temp1];
+						 ldsVals[temp2] = binary_funct(y, y1);
+					  }
 
-  } );
+				   }
+				   offset *= 2;
+				}
+				t_idx.barrier.wait();
+				if (locId == 0)
+				{
+					keySumArray[ groId ] = ldsKeys[ wgSize-1 ];
+					preSumArray[ groId ] = ldsVals[wgSize -1];
+					preSumArray1[ groId ] = ldsVals[wgSize/2 -1];
+				}
+
+		 } );
+	     tempBuffsize = tempBuffsize - max_ext;
+	}
 
 	PEEK_AT( output )
 
@@ -352,37 +369,37 @@ scan_by_key_enqueue(
     unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;
 
-	  concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
+	concurrency::extent< 1 > globalSizeK1( kernel1_WgSize );
     concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
+
     //std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
     concurrency::parallel_for_each( av, tileK1,
         [
-		      	&keySumArray, 
-            &postSumArray,
+	      	&keySumArray, 
             &preSumArray,
             numWorkGroupsK0,
             workPerThread,
-			      binary_pred,
-			      numElements,
+	        binary_pred,
+		    numElements,
             binary_funct,
-		        kernel1_WgSize
+		    kernel1_WgSize
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
   {
 
-	  unsigned int gloId = t_idx.global[ 0 ];
+	unsigned int gloId = t_idx.global[ 0 ];
     unsigned int groId = t_idx.tile[ 0 ];
     unsigned int locId = t_idx.local[ 0 ];
     unsigned int wgSize = kernel1_WgSize;
     unsigned int mapId  = gloId * workPerThread;
 
-    tile_static kType ldsKeys[ WAVESIZE*KERNEL1WAVES ];
-	  tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
+    tile_static kType ldsKeys[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES];
+	tile_static vType ldsVals[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES ];
 
 	// do offset of zero manually
     unsigned int offset;
     kType key;
     vType workSum;
-    if (mapId < numElements)
+    if (mapId < numWorkGroupsK0)
     {
         kType prevKey;
 
@@ -390,14 +407,12 @@ scan_by_key_enqueue(
         offset = 0;
         key = keySumArray[ mapId+offset ];
         workSum = preSumArray[ mapId+offset ];
-        postSumArray[ mapId+offset ] = workSum;
-
         //  Serial accumulation
         for( offset = offset+1; offset < workPerThread; offset += 1 )
         {
             prevKey = key;
             key = keySumArray[ mapId+offset ];
-            if (mapId+offset<numElements )
+            if (mapId+offset<numWorkGroupsK0 )
             {
                 vType y = preSumArray[ mapId+offset ];
                 if ( binary_pred(key, prevKey ) )
@@ -408,7 +423,7 @@ scan_by_key_enqueue(
                 {
                     workSum = y;
                 }
-                postSumArray[ mapId+offset ] = workSum;
+                preSumArray[ mapId+offset ] = workSum;
             }
         }
     }
@@ -419,11 +434,11 @@ scan_by_key_enqueue(
     ldsVals[ locId ] = workSum;
     ldsKeys[ locId ] = key;
     // scan in lds
-	
+
     for( offset = offset*1; offset < wgSize; offset *= 2 )
     {
         t_idx.barrier.wait();
-        if (mapId < numElements)
+        if (mapId < numWorkGroupsK0)
         {
             if (locId >= offset  )
             {
@@ -443,15 +458,15 @@ scan_by_key_enqueue(
         ldsVals[ locId ] = scanSum;
     } // for offset
     t_idx.barrier.wait();
-    
+
     // write final scan from pre-scan and lds scan
     for( offset = 0; offset < workPerThread; offset += 1 )
     {
-       t_idx.barrier.wait();
+        t_idx.barrier.wait_with_global_memory_fence();
 
-        if (mapId < numElements && locId > 0)
+        if (mapId+offset < numWorkGroupsK0 && locId > 0)
         {
-            vType y = postSumArray[ mapId+offset ];
+            vType y = preSumArray[ mapId+offset ];
             kType key1 = keySumArray[ mapId+offset ]; // change me
             kType key2 = ldsKeys[ locId-1 ];
             if ( binary_pred( key1, key2 ) )
@@ -459,11 +474,9 @@ scan_by_key_enqueue(
                 vType y2 = ldsVals[locId-1];
                 y = binary_funct( y, y2 );
             }
-            postSumArray[ mapId+offset ] = y;
+            preSumArray[ mapId+offset ] = y;
         } // thread in bounds
     } // for 
-	
-	
 
   });
 
@@ -472,162 +485,175 @@ scan_by_key_enqueue(
  /**********************************************************************************
      *  Kernel 2
  *********************************************************************************/
+ 	tempBuffsize = (sizeInputBuff); 
+	iteration = (tempBuffsize-1)/max_ext; 
 
-    concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
-    concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
-    //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
-    concurrency::parallel_for_each( av, tileK2,
-        [
-		      	keyBuffer,
-            inputBuffer,
-            outputBuffer,
-            &postSumArray,
-            &preSumArray1,
-            binary_pred,
-			      exclusive,
-			      numElements,
-            init,
-			      binary_funct,
-            kernel2_WgSize
-        ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
-  {
+    for(unsigned int a=0; a<=iteration ; a++)
+	{
+	    unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
+		concurrency::extent< 1 > inputExtent( extent_sz );
+		concurrency::tiled_extent< kernel2_WgSize > tileK2 = inputExtent.tile< kernel2_WgSize >();
+		unsigned int index = a*(tile_limit*kernel2_WgSize);
+		unsigned int tile_index = a*tile_limit;
 
-	  unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int groId = t_idx.tile[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
-    unsigned int wgSize = kernel2_WgSize;
+			concurrency::parallel_for_each( av, tileK2,
+				[
+	      			keyBuffer,
+					inputBuffer,
+					outputBuffer,
+					&preSumArray,
+					&preSumArray1,
+					binary_pred,
+					exclusive,
+					index,
+					tile_index,
+					numElements,
+					init,
+					binary_funct,
+					kernel2_WgSize
+				] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
+		  {
 
-    tile_static kType ldsKeys[ WAVESIZE*KERNEL1WAVES ];
-	  tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
-	
-		 // if exclusive, load gloId=0 w/ init, and all others shifted-1
-    kType key;
-    oType val;
-    if (gloId < numElements){
-       if (exclusive)
-       {
-          if (gloId > 0)
-          { // thread>0
-              key = keyBuffer[ gloId];
-              kType key1 = keyBuffer[ gloId];
-              kType key2 = keyBuffer[ gloId-1];
-              if( binary_pred( key1, key2 )  )
-                  val = inputBuffer[ gloId-1 ];
-              else 
-                  val = init;
-              ldsKeys[ locId ] = key;
-              ldsVals[ locId ] = val;
-          }
-          else
-          { // thread=0
-              val = init;
-              ldsVals[ locId ] = val;
-              ldsKeys[ locId ] = keyBuffer[gloId];
-            // key stays null, this thread should never try to compare it's key
-            // nor should any thread compare it's key to ldsKey[ 0 ]
-            // I could put another key into lds just for whatevs
-            // for now ignore this
-          }
-       }
-       else
-       {
-          key = keyBuffer[ gloId ];
-          val = inputBuffer[ gloId ];
-          ldsKeys[ locId ] = key;
-          ldsVals[ locId ] = val;
-       }
-     }
-	
-	 // Each work item writes out its calculated scan result, relative to the beginning
-    // of each work group
-    vType scanResult = ldsVals[ locId ];
-    vType postBlockSum, newResult;
-    vType y, y1, sum;
-    kType key1, key2, key3, key4;
-	
-    if(locId == 0 && gloId < numElements)
-    {
-        if(groId > 0)
-		{
-           key1 = keyBuffer[gloId];
-           key2 = keyBuffer[groId*wgSize -1 ];
+			unsigned int gloId = t_idx.global[ 0 ] + index;
+			unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+			unsigned int locId = t_idx.local[ 0 ];
+			unsigned int wgSize = kernel2_WgSize;
 
-           if(groId % 2 == 0)
-		   {
-              postBlockSum = postSumArray[ groId/2 -1 ];
-		   }
-           else if(groId == 1)
-		   {
-              postBlockSum = preSumArray1[0];
-		   }
-           else
-		   {
-              key3 = keyBuffer[groId*wgSize -1];
-              key4 = keyBuffer[(groId-1)*wgSize -1];
-              if(binary_pred(key3 ,key4))
-			  {
-                 y = postSumArray[ groId/2 -1 ];
-                 y1 = preSumArray1[groId/2];
-                 postBlockSum = binary_funct(y, y1);
-              }
-              else
-			  {
-                 postBlockSum = preSumArray1[groId/2];
-			  }
-           }
-           if (!exclusive)
-		   {
-	          if(binary_pred( key1, key2))
-			  {
-                 newResult = binary_funct( scanResult, postBlockSum );
-			  }
-              else
-			  {
-		         newResult = scanResult;
-			  }
-		   }
-	       else
-		   {
-	          if(binary_pred( key1, key2)) 
-		         newResult = postBlockSum;
-              else
-		         newResult = init;  
-		   }
-        }
-        else
-		{
-             newResult = scanResult;
-        }
-	    ldsVals[ locId ] = newResult;
-    }
+			tile_static kType ldsKeys[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES ];
+			tile_static vType ldsVals[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES ];
 	
-    // Computes a scan within a workgroup
-    // updates vals in lds but not keys
-    sum = ldsVals[ locId ];
-    for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
-    {
-        t_idx.barrier.wait();
-        if (locId >= offset )
-        {
-            kType key2 = ldsKeys[ locId - offset];
-            if( binary_pred( key, key2 )  )
-            {
-                oType y = ldsVals[ locId - offset];
-                sum = binary_funct( sum, y );
-            }
-        }
-        t_idx.barrier.wait();
-        ldsVals[ locId ] = sum;
-    }
-     t_idx.barrier.wait(); // needed for large data types
-    //  Abort threads that are passed the end of the input vector
-    if (gloId >= numElements) return; 
-    outputBuffer[ gloId ] = sum;
+				 // if exclusive, load gloId=0 w/ init, and all others shifted-1
+			kType key;
+			oType val;
+			if (gloId < numElements){
+			   if (exclusive)
+			   {
+				  if (gloId > 0)
+				  { // thread>0
+					  key = keyBuffer[ gloId];
+					  kType key1 = keyBuffer[ gloId];
+					  kType key2 = keyBuffer[ gloId-1];
+					  if( binary_pred( key1, key2 )  )
+						  val = inputBuffer[ gloId-1 ];
+					  else 
+						  val = init;
+					  ldsKeys[ locId ] = key;
+					  ldsVals[ locId ] = val;
+				  }
+				  else
+				  { // thread=0
+					  val = init;
+					  ldsVals[ locId ] = val;
+					  ldsKeys[ locId ] = keyBuffer[gloId];
+					// key stays null, this thread should never try to compare it's key
+					// nor should any thread compare it's key to ldsKey[ 0 ]
+					// I could put another key into lds just for whatevs
+					// for now ignore this
+				  }
+			   }
+			   else
+			   {
+				  key = keyBuffer[ gloId ];
+				  val = inputBuffer[ gloId ];
+				  ldsKeys[ locId ] = key;
+				  ldsVals[ locId ] = val;
+			   }
+			 }
 	
+			 // Each work item writes out its calculated scan result, relative to the beginning
+			// of each work group
+			vType scanResult = ldsVals[ locId ];
+			vType postBlockSum, newResult;
+			vType y, y1, sum;
+			kType key1, key2, key3, key4;
 	
-  } );
+			if(locId == 0 && gloId < numElements)
+			{
+				if(groId > 0)
+				{
+				   key1 = keyBuffer[gloId];
+				   key2 = keyBuffer[groId*wgSize -1 ];
 
-  PEEK_AT( output )
+				   if(groId % 2 == 0)
+				   {
+					  postBlockSum = preSumArray[ groId/2 -1 ];
+				   }
+				   else if(groId == 1)
+				   {
+					  postBlockSum = preSumArray1[0];
+				   }
+				   else
+				   {
+					  key3 = keyBuffer[groId*wgSize -1 ];
+					  key4 = keyBuffer[(groId-1)*wgSize -1];
+					  if(binary_pred(key3 ,key4))
+					  {
+						 y = preSumArray[ groId/2 -1 ];
+						 y1 = preSumArray1[groId/2];
+						 postBlockSum = binary_funct(y, y1);
+					  }
+					  else
+					  {
+						 postBlockSum = preSumArray1[groId/2];
+					  }
+				   }
+				   if (!exclusive)
+				   {
+					  if(binary_pred( key1, key2))
+					  {
+						 newResult = binary_funct( scanResult, postBlockSum );
+					  }
+					  else
+					  {
+						 newResult = scanResult;
+					  }
+				   }
+				   else
+				   {
+					  if(binary_pred( key1, key2)) 
+						 newResult = postBlockSum;
+					  else
+						 newResult = init;  
+				   }
+				}
+				else
+				{
+					 newResult = scanResult;
+				}
+				ldsVals[ locId ] = newResult;
+			}
+			
+			// Computes a scan within a workgroup
+			// updates vals in lds but not keys
+			sum = ldsVals[ locId ];
+			for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+			{
+				t_idx.barrier.wait();
+				if (locId >= offset )
+				{
+					kType key2 = ldsKeys[ locId - offset];
+					if( binary_pred( key, key2 )  )
+					{
+						oType y = ldsVals[ locId - offset];
+						sum = binary_funct( sum, y );
+					}
+					else
+						sum = ldsVals[ locId];
+					
+				}
+				t_idx.barrier.wait();
+				ldsVals[ locId ] = sum;
+			}
+			 t_idx.barrier.wait(); // needed for large data types
+			//  Abort threads that are passed the end of the input vector
+			if (gloId >= numElements) return; 
+			outputBuffer[ gloId ] = sum;
+	
+	
+		  } );
+		   tempBuffsize = tempBuffsize - max_ext;
+	}
+    PEEK_AT( output )
 
 }   //end of scan_by_key_enqueue( )
 

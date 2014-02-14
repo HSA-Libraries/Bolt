@@ -150,7 +150,6 @@ template<
 __kernel void intraBlockInclusiveScanByKey(
     global kType *keySumArray,
     global oType *preSumArray,
-    global oType *postSumArray,
     const uint vecSize,
     local kType *ldsKeys,
     local oType *ldsVals,
@@ -176,7 +175,6 @@ __kernel void intraBlockInclusiveScanByKey(
         offset = 0;
         key = keySumArray[ mapId+offset ];
         workSum = preSumArray[ mapId+offset ];
-        postSumArray[ mapId+offset ] = workSum;
 
         //  Serial accumulation
         for( offset = offset+1; offset < workPerThread; offset += 1 )
@@ -194,7 +192,7 @@ __kernel void intraBlockInclusiveScanByKey(
                 {
                     workSum = y;
                 }
-                postSumArray[ mapId+offset ] = workSum;
+                preSumArray[ mapId+offset ] = workSum;
             }
         }
     }
@@ -236,7 +234,7 @@ __kernel void intraBlockInclusiveScanByKey(
 
         if (mapId < vecSize && locId > 0)
         {
-            oType y = postSumArray[ mapId+offset ];
+            oType y = preSumArray[ mapId+offset ];
             kType key1 = keySumArray[ mapId+offset ]; // change me
             kType key2 = ldsKeys[ locId-1 ];
             if ( (*binaryPred)( key1, key2 ) )
@@ -244,7 +242,7 @@ __kernel void intraBlockInclusiveScanByKey(
                 oType y2 = ldsVals[locId-1];
                 y = (*binaryFunct)( y, y2 );
             }
-            postSumArray[ mapId+offset ] = y;
+            preSumArray[ mapId+offset ] = y;
         } // thread in bounds
     } // for 
 } // end kernel
@@ -264,7 +262,7 @@ template<
     typename BinaryPredicate,
     typename BinaryFunction >
 __kernel void perBlockAdditionByKey(
-    global oType *postSumArray,
+    global oType *preSumArray,
     global oType *preSumArray1,
     global kType *keys,
     kIterType    keys_iter, 
@@ -340,14 +338,14 @@ __kernel void perBlockAdditionByKey(
            key1 = keys_iter[gloId];
            key2 = keys_iter[groId*wgSize -1 ];
            if(groId % 2 == 0)
-              postBlockSum = postSumArray[ groId/2 -1 ];
+              postBlockSum = preSumArray[ groId/2 -1 ];
            else if(groId == 1)
               postBlockSum = preSumArray1[0];
            else {
               key3 = keys_iter[groId*wgSize -1];
               key4 = keys_iter[(groId-1)*wgSize -1];
               if((*binaryPred)(key3 ,key4)){
-                 y = postSumArray[ groId/2 -1 ];
+                 y = preSumArray[ groId/2 -1 ];
                  y1 = preSumArray1[groId/2];
                  postBlockSum = (*binaryFunct)(y, y1);
               }
