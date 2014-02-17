@@ -328,7 +328,7 @@ public:
 
         std::generate(stdInput, stdInput + size, generateRandom<int>);
         std::generate(stdInput2, stdInput2 + size, generateRandom<int>);
-        for (int i = 0; i<size; i++)
+		for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
@@ -366,7 +366,7 @@ public:
 
         std::generate(stdInput, stdInput + size, generateRandom<float>);
         std::generate(stdInput2, stdInput2 + size, generateRandom<float>);
-        for (int i = 0; i<size; i++)
+		for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
@@ -399,7 +399,7 @@ TEST( InnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput (mySize);
     std::vector<int> boltInput2 (mySize);
 
-    for (int i = 0; i < mySize; ++i){
+	for (size_t i = 0; i < mySize; ++i){
         stdInput[i] = i;
         stdInput2[i] = i+1;
         boltInput[i] = stdInput[i];
@@ -426,7 +426,7 @@ TEST( CPUInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput (mySize);
     std::vector<int> boltInput2 (mySize);
 
-    for (int i = 0; i < mySize; ++i){
+	for (size_t i = 0; i < mySize; ++i){
         stdInput[i] = i;
         stdInput2[i] = i+1;
         boltInput[i] = stdInput[i];
@@ -456,7 +456,7 @@ TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput (mySize);
     std::vector<int> boltInput2 (mySize);
 
-    for (int i = 0; i < mySize; ++i){
+	for (size_t i = 0; i < mySize; ++i){
         stdInput[i] = i;
         stdInput2[i] = i+1;
         boltInput[i] = stdInput[i];

@@ -1403,7 +1403,7 @@ namespace cl
 
                 --m_Size;
 
-            size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
+				size_t newIndex = (m_Size < (size_t)index.m_Index) ? m_Size : index.m_Index;
                 return iterator( *this, static_cast< difference_type >( (int)newIndex ) );
             }
 
@@ -1417,7 +1417,7 @@ namespace cl
                 if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( last.m_Index > m_Size )
+            if( (size_t)last.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 if( (first == begin( )) && (last == end( )) )
@@ -1444,7 +1444,7 @@ namespace cl
 
                 m_Size -= sizeErase;
 
-            size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
+				size_type newIndex = (m_Size < (size_t)last.m_Index) ? m_Size : last.m_Index;
                 return iterator( *this, static_cast< typename iterator::difference_type >( newIndex ) );
             }
 
@@ -1460,7 +1460,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_Index > m_Size )
+				if ((size_t)index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
             if( index.m_Index == m_Size )
@@ -1512,7 +1512,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_Index > m_Size )
+				if ((size_t)index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
@@ -1553,7 +1553,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_Index > m_Size )
+				if ((size_t)index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.

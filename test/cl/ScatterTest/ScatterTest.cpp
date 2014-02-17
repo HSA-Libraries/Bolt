@@ -4516,7 +4516,7 @@ TEST( UDDTestInt2, SerialScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4547,7 +4547,7 @@ TEST( UDDTestInt2, MulticoreScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4579,7 +4579,7 @@ TEST( UDDTestIntFloat, SerialScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4610,7 +4610,7 @@ TEST( UDDTestIntFloat, MulticoreScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4643,7 +4643,7 @@ TEST(UDDTestIntFloatDouble, SerialScatter_IfPredicate )
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4676,7 +4676,7 @@ TEST(UDDTestIntFloatDouble, MulticoreScatter_ifPredicate )
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4808,7 +4808,7 @@ TEST(UDDTestInt2, Scatter )
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4834,7 +4834,7 @@ TEST(UDDTestInt2, SerialScatter )
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4862,7 +4862,7 @@ TEST(UDDTestInt2, MulticoreScatter )
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4891,7 +4891,7 @@ TEST(UDDTestIntFloat, Scatter )
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4916,7 +4916,7 @@ TEST(UDDTestIntFloat, SerialScatter )
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4944,7 +4944,7 @@ TEST(UDDTestIntFloat, MulticoreScatter )
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4974,7 +4974,7 @@ TEST(UDDTestIntFloatDouble, Scatter )
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -5000,7 +5000,7 @@ TEST(UDDTestIntFloatDouble, SerialScatter )
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -5029,7 +5029,7 @@ TEST(UDDTestIntFloatDouble, MulticoreScatter )
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;

@@ -3490,7 +3490,7 @@ TEST( HostMemory_int, OffsetGatherIfPredicateMedium )
     std::vector<int> result ( myStdVectSize, 0 );
     std::vector<int> map (myStdVectSize,0);
     std::vector<int> stencil (myStdVectSize,0);
-    for( int i=0; i < distance ; i++ )
+	for (size_t i = 0; i < distance; i++)
     {
         map[i] = s_offset + i;
         input[i] =  i + 2 * i;
@@ -3540,7 +3540,7 @@ TEST( HostMemory_int, OffsetGatherPredicateMedium )
     std::vector<int> exp_result(myStdVectSize,0);    
     std::vector<int> result ( myStdVectSize, 0 );
     std::vector<int> map (myStdVectSize,0);	
-    for( int i=0; i < distance ; i++ )
+	for (size_t i = 0; i < distance; i++)
     {
         map[i] = s_offset + i;
         input[i] =  i + 2 * i;

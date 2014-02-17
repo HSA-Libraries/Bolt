@@ -44,7 +44,7 @@ void gold_scatter_enqueue (InputIterator1 first1,
     {
        size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
 
-       for(int iter = 0; iter<numElements; iter++)
+	   for (size_t iter = 0; iter<numElements; iter++)
                 *(result+*(map + iter)) = *(first1 + iter);
     }
 
@@ -79,7 +79,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
                               Predicate pred)
    {
        size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-       for(int iter = 0; iter<numElements; iter++)
+	   for (size_t iter = 0; iter<numElements; iter++)
         {
              if(pred(stencil[iter]) != 0)
                   result[*(map+(iter))] = first1[iter];

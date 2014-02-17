@@ -339,7 +339,7 @@ TEST(sanity_merge_bolt_vect, wo_control_ints)
 	std::vector<int> B(aSize);
 	std::vector<int>   stdmerge(Size);
 
-	for (int i = 0; i < aSize; i++) {
+	for (size_t i = 0; i < aSize; i++) {
 		B[i] = A[i] = i;
 	}
 
