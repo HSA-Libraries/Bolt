@@ -18,7 +18,7 @@
 #define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
-#define TEST_LARGE_BUFFERS 0
+#define TEST_LARGE_BUFFERS 1
 #define GOOGLE_TEST 1
 #define BKND amp
 #define STABLE_SORT_FUNC stable_sort_by_key
@@ -918,6 +918,36 @@ TEST( StableSortbyUDDKeyVectorTest, Normal )
         cmpArraysSortByKey( stdOffsetValues, stdOffsetKeys, boltOffsetKeys, boltOffsetValues,  length );
     }
 }
+
+TEST( StableSortbykeyFloatVectorTest, Normal )
+{
+	int length = (1<<25);
+
+    std::vector< float  > stdKeys( length, 2.f);
+	std::vector< float  > stdValues( length, 1.f);
+	std::vector< float  > boltKeys( stdKeys.begin(), stdKeys.end());
+	std::vector< float  > boltValues( stdValues.begin(), stdValues.end());
+
+    //  Calling the actual functions under test
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
+    bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
+	
+    std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
+                                                                                                 stdValues.end() );
+    std::vector< int >::iterator::difference_type boltValueElements = std::distance( boltValues.begin( ),
+                                                                                     boltValues.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdValueElements, boltValueElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArraysSortByKey( stdValues, stdKeys, boltKeys, boltValues,  length);
+   
+}
+
+
+
+
 
 TEST( StableSortbyUDDKeyVectorTest2, Normal )
 {
