@@ -20,7 +20,7 @@
 #define CL_BENCH  101
 
 #if !defined(BENCHMARK_CL_AMP)
-#define BENCHMARK_CL_AMP  AMP_BENCH
+#define BENCHMARK_CL_AMP  CL_BENCH
 #endif
 
 #include <iostream>

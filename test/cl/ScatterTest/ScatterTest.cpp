@@ -13,7 +13,7 @@
 *   See the License for the specific language governing permissions and
 *   limitations under the License.
 ***************************************************************************/
-
+#pragma warning(disable: 4996)
 #include "common/stdafx.h"
 #include "common/myocl.h"
 #include "common/test_common.h"

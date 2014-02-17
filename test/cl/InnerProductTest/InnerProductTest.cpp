@@ -19,7 +19,7 @@
 //
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 #define TEST_DOUBLE 1
-
+#pragma warning(disable: 4996)
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
 #include <numeric>
