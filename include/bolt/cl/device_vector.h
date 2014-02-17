@@ -1635,9 +1635,19 @@ namespace cl
                   fill_mapEvent.wait( );
 
                   // Use serial fill_n to fill the device_vector with value
+
+#if( _WIN32 )
+
+                  std::fill_n(  stdext::checked_array_iterator< naked_pointer >(  host_buffer,newSize),
+                               newSize,
+                               value );
+
+#else
                   std::fill_n(  host_buffer ,
                                newSize,
                                value );
+#endif
+
 
                   // Unmap the buffer
                   l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory,

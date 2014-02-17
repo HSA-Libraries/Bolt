@@ -24,7 +24,9 @@ TODO:
 #if !defined( BOLT_AMP_INNERPRODUCT_INL )
 #define BOLT_AMP_INNERPRODUCT_INL
 
+
 #pragma once
+
 
 #include <type_traits>
 #include <bolt/amp/detail/reduce.inl>
@@ -196,6 +198,7 @@ namespace detail {
                 
                 if( runMode == bolt::amp::control::SerialCpu)
                 {
+
                     return std::inner_product(first1, last1, first2, init, f1, f2);
                 }
                 else if(runMode == bolt::amp::control::MultiCoreCpu)
@@ -295,5 +298,7 @@ namespace detail {
 
     }//end of amp namespace
 };//end of bolt namespace
+
+
 
 #endif
