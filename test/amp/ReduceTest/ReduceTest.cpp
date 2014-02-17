@@ -2069,8 +2069,8 @@ void testTBBDevicevector()
     bolt::amp::device_vector<int> tbbInput(aSize);
 
 	for (size_t i = 0; i<aSize; i++) {
-        stdInput[i] = i;
-        tbbInput[i] = i;
+        stdInput[i] = (int)i;
+        tbbInput[i] = (int)i;
     };
 
     int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);

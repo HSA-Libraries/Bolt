@@ -414,8 +414,8 @@ TEST( InnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput2 (mySize);
 
 	for (size_t i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
+        stdInput[i] = (int)i;
+        stdInput2[i] = (int)(i+1);
         boltInput[i] = stdInput[i];
         boltInput2[i] = stdInput2[i];
     }
@@ -441,8 +441,8 @@ TEST( CPUInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput2 (mySize);
 
 	for (size_t i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
+        stdInput[i] = (int)i;
+        stdInput2[i] = (int)(i+1);
         boltInput[i] = stdInput[i];
         boltInput2[i] = stdInput2[i];
     }
@@ -472,8 +472,8 @@ TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput2 (mySize);
 
 	for (size_t i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
+        stdInput[i] = (int)i;
+        stdInput2[i] = (int)(i+1);
         boltInput[i] = stdInput[i];
         boltInput2[i] = stdInput2[i];
     }

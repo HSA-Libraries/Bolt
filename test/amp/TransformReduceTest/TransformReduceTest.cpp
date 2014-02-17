@@ -2470,11 +2470,11 @@ TEST(TransformReduce, MulticoreDoubleUDD)
 
 TEST(TransformReduce, DeviceVectorInt)
 {
-     size_t length = 1<<16;
+     int length = 1<<16;
      std::vector<  int > refInput( length);
      std::vector< int > refIntermediate( length );
      bolt::amp::device_vector< int > input(length,0);
-	 for (size_t i = 0; i<length; i++) {
+	 for (int i = 0; i<length; i++) {
         input[i] = i;
         refInput[i] = i;
      //   printf("%d \n", input[i]);
@@ -2493,11 +2493,11 @@ TEST(TransformReduce, DeviceVectorInt)
 } 
 TEST(TransformReduce, SerialDeviceVectorInt)
 {
-     size_t length = 1<<16;
+     int length = 1<<16;
      std::vector<  int > refInput( length);
      std::vector< int > refIntermediate( length );
      bolt::amp::device_vector< int > input(length,0);
-	 for (size_t i = 0; i<length; i++) {
+	 for (int i = 0; i<length; i++) {
         input[i] = i;
         refInput[i] = i;
      //   printf("%d \n", input[i]);
@@ -2520,11 +2520,11 @@ TEST(TransformReduce, SerialDeviceVectorInt)
 } 
 TEST(TransformReduce, MulticoreDeviceVectorInt)
 {
-     size_t length = 1<<16;
+     int length = 1<<16;
      std::vector<  int > refInput( length);
      std::vector< int > refIntermediate( length );
      bolt::amp::device_vector< int > input(length,0);
-	 for (size_t i = 0; i<length; i++) {
+	 for (int i = 0; i<length; i++) {
         input[i] = i;
         refInput[i] = i;
      //   printf("%d \n", input[i]);
