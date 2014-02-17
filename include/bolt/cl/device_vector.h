@@ -1404,7 +1404,7 @@ namespace cl
                 --m_Size;
 
             size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
-                return iterator( *this, static_cast< difference_type >( newIndex ) );
+                return iterator( *this, static_cast< difference_type >( (int)newIndex ) );
             }
 
             /*! \brief Removes a range of elements.

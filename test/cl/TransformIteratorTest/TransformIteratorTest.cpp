@@ -262,7 +262,7 @@ BOLT_FUNCTOR(squareUDD,
         { 
             return ((float)x.i + x.f);
         }
-        typedef int result_type;
+        typedef float result_type;
     };
 );
 
