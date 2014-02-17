@@ -85,7 +85,7 @@ TEST (testCountIf, OffsetintBtwRange)
 
   int offset =  1+ rand()%(aSize-1);
 
-    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount =
+   std::iterator_traits<std::vector<int>::iterator>::difference_type stdInRangeCount =
                                                                 std::count( A.begin()+offset, A.end(), intVal ) ;
     bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount =
                                                         bolt::cl::count( dA.begin()+offset, dA.end(), intVal ) ;
@@ -109,7 +109,7 @@ TEST (testCountIf, SerialOffsetintBtwRange)
 
     int offset = 1+rand()%(aSize-1);
 
-    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount =
+    std::iterator_traits<std::vector<int>::iterator>::difference_type stdInRangeCount =
                                                                 std::count( A.begin()+offset, A.end(), intVal ) ;
     bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount =
                                                         bolt::cl::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
@@ -133,7 +133,7 @@ TEST (testCountIf, MultiCoreOffsetintBtwRange)
 
     int offset = 1+rand()%(aSize-1);
 
-    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount =
+   std::iterator_traits<std::vector<int>::iterator>::difference_type stdInRangeCount =
                                                                 std::count( A.begin()+offset, A.end(), intVal ) ;
     bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount =
                                                         bolt::cl::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
