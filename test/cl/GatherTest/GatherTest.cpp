@@ -3490,11 +3490,11 @@ TEST( HostMemory_int, OffsetGatherIfPredicateMedium )
     std::vector<int> result ( myStdVectSize, 0 );
     std::vector<int> map (myStdVectSize,0);
     std::vector<int> stencil (myStdVectSize,0);
-    for( int i=0; i < distance ; i++ )
+	for (size_t i = 0; i < distance; i++)
     {
-        map[i] = s_offset + i;
-        input[i] =  i + 2 * i;
-        stencil[i] =  i + 5 * i;
+        map[i] =(int) (s_offset + i);
+        input[i] =  (int)(i + 2 * i);
+        stencil[i] =  (int)(i + 5 * i);
     }
     std::random_shuffle( map.begin(), map.end() );   
     is_even iepred;
@@ -3540,10 +3540,10 @@ TEST( HostMemory_int, OffsetGatherPredicateMedium )
     std::vector<int> exp_result(myStdVectSize,0);    
     std::vector<int> result ( myStdVectSize, 0 );
     std::vector<int> map (myStdVectSize,0);	
-    for( int i=0; i < distance ; i++ )
+	for (size_t i = 0; i < distance; i++)
     {
-        map[i] = s_offset + i;
-        input[i] =  i + 2 * i;
+        map[i] = (int)(s_offset + i);
+        input[i] = (int)( i + 2 * i);
     }
     std::random_shuffle( map.begin(), map.end() ); 
 

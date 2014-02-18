@@ -4516,11 +4516,11 @@ TEST( UDDTestInt2, SerialScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
-        std_map[i] = i;
-        std_input[i].a = i + 2 * i;
-        std_input[i].b = i + 3 * i;
+        std_map[i] = (int)i;
+        std_input[i].a = (int)(i + 2 * i);
+        std_input[i].b = (int)(i + 3 * i);
         std_stencil[i] = ((i%2)==0)?1:0;
     }
     std::random_shuffle( std_map.begin(), std_map.end() );
@@ -4547,11 +4547,11 @@ TEST( UDDTestInt2, MulticoreScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (size_t i = 0; i < sz; i++)
     {
-        std_map[i] = i;
-        std_input[i].a = i + 2 * i;
-        std_input[i].b = i + 3 * i;
+        std_map[i] = (int)i;
+        std_input[i].a = (int)(i + 2 * i);
+        std_input[i].b = (int)(i + 3 * i);
         std_stencil[i] = ((i%2)==0)?1:0;
     }
     std::random_shuffle( std_map.begin(), std_map.end() );
@@ -4574,12 +4574,12 @@ TEST( UDDTestInt2, MulticoreScatter_IfPredicate)
 
 TEST( UDDTestIntFloat, SerialScatter_IfPredicate)
 {
-    size_t sz = 63;    
+    int sz = 63;    
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4605,12 +4605,12 @@ TEST( UDDTestIntFloat, SerialScatter_IfPredicate)
 }
 TEST( UDDTestIntFloat, MulticoreScatter_IfPredicate)
 {
-    size_t sz = 63;    
+    int sz = 63;    
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4638,12 +4638,12 @@ TEST( UDDTestIntFloat, MulticoreScatter_IfPredicate)
 #if(TEST_DOUBLE == 1)
 TEST(UDDTestIntFloatDouble, SerialScatter_IfPredicate )
 {
-    size_t sz = 63;    
+    int sz = 63;    
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4671,12 +4671,12 @@ TEST(UDDTestIntFloatDouble, SerialScatter_IfPredicate )
 
 TEST(UDDTestIntFloatDouble, MulticoreScatter_ifPredicate )
 {
-    size_t sz = 63;    
+    int sz = 63;    
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4803,12 +4803,12 @@ TEST_P(HostMemory_UDDTestIntFloat, MulticoreScatter_IfPredicate)
 
 TEST(UDDTestInt2, Scatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<Int2> exp_result( sz );
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4829,12 +4829,12 @@ TEST(UDDTestInt2, Scatter )
 }
 TEST(UDDTestInt2, SerialScatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<Int2> exp_result( sz );
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4857,12 +4857,12 @@ TEST(UDDTestInt2, SerialScatter )
 }
 TEST(UDDTestInt2, MulticoreScatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<Int2> exp_result( sz );
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4886,12 +4886,12 @@ TEST(UDDTestInt2, MulticoreScatter )
 
 TEST(UDDTestIntFloat, Scatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<IntFloat> exp_result( sz );
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4911,12 +4911,12 @@ TEST(UDDTestIntFloat, Scatter )
 }
 TEST(UDDTestIntFloat, SerialScatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<IntFloat> exp_result( sz );
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4939,12 +4939,12 @@ TEST(UDDTestIntFloat, SerialScatter )
 }
 TEST(UDDTestIntFloat, MulticoreScatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<IntFloat> exp_result( sz );
     std::vector<IntFloat> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4969,12 +4969,12 @@ TEST(UDDTestIntFloat, MulticoreScatter )
 #if(TEST_DOUBLE == 1)
 TEST(UDDTestIntFloatDouble, Scatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<IntFloatDouble> exp_result( sz );
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -4995,12 +4995,12 @@ TEST(UDDTestIntFloatDouble, Scatter )
 }
 TEST(UDDTestIntFloatDouble, SerialScatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<IntFloatDouble> exp_result( sz );
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;
@@ -5024,12 +5024,12 @@ TEST(UDDTestIntFloatDouble, SerialScatter )
 }
 TEST(UDDTestIntFloatDouble, MulticoreScatter )
 {
-    size_t sz = 63;
+    int sz = 63;
     std::vector<IntFloatDouble> exp_result( sz );
     std::vector<IntFloatDouble> std_input ( sz );
     std::vector<int> std_map ( sz );
 
-    for( int i=0; i < sz ; i++ )
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = i;
         std_input[i].a = i + 2 * i;

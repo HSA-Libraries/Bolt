@@ -108,7 +108,7 @@ int teststruct( int length )
     if ( errCnt == 0 ) {
         printf(" PASSED %20s Correct for all %6i elements.\n", fName.c_str(), length);
     } else {
-        printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", fName.c_str(), length);
+        printf("*FAILED %20s Mismatch for %6i elements.\n", fName.c_str(), length);
     };
     fflush(stdout);
     return errCnt;
@@ -153,7 +153,7 @@ int teststruct_n( int length )
     if ( errCnt == 0 ) {
         printf(" PASSED %20s Correct for all %6i elements.\n", fName.c_str(), length);
     } else {
-        printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", fName.c_str(), length);
+        printf("*FAILED %20s Mismatch for %6i elements.\n", fName.c_str(), length);
     };
     fflush(stdout);
 

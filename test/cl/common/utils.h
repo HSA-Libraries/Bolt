@@ -23,7 +23,7 @@ int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , 
 	int errCnt = 0;
 	static const int maxErrCnt = 20;
 	size_t sz = end1-first1 ;
-	for (int i=0; i<sz ; i++) {
+	for (size_t i = 0; i<sz; i++) {
 		if (first1 [i] != *(first2 + i) ) {
 			errCnt++;
 			if (errCnt < maxErrCnt) {

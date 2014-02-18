@@ -975,7 +975,7 @@ public:
 
         std::generate(stdInput, stdInput + size, rand);
 
-        for( int i=0; i < size; i++ )
+		for (size_t i = 0; i < size; i++)
         {
             boltInput[ i ] = stdInput[ i ];
             boltOutput[i] = stdInput[i];

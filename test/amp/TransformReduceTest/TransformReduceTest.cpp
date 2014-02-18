@@ -611,7 +611,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<int>);
-        for (int i = 0; i<size; i++)
+		for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -649,7 +649,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<float>);
-        for (int i = 0; i<size; i++)
+		for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -2163,7 +2163,7 @@ TEST(TransformReduce, Float)
      std::vector< float > input( length );
      std::vector< float > refInput( length);
      std::vector< float > refIntermediate( length );
-     for(int i=0; i<length; i++) {
+	 for (size_t i = 0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -2186,7 +2186,7 @@ TEST(TransformReduce, SerialFloat)
      std::vector< float > input( length );
      std::vector< float > refInput( length);
      std::vector< float > refIntermediate( length );
-     for(int i=0; i<length; i++) {
+	 for (size_t i = 0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -2213,7 +2213,7 @@ TEST(TransformReduce, MulticoreFloat)
      std::vector< float > input( length );
      std::vector< float > refInput( length);
      std::vector< float > refIntermediate( length );
-     for(int i=0; i<length; i++) {
+	 for (size_t i = 0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -2315,7 +2315,7 @@ TEST(TransformReduce, DefaultUDD)
     std::vector< UDD > input( length, initial );
     std::vector< UDD > refInput( length, initial );
     std::vector< UDD > refIntermediate( length);
-     for(int i=0; i<length; i++) {
+	for (size_t i = 0; i<length; i++) {
         input[i].a = 2;
         refInput[i].a = 2;
         input[i].b = 2;
@@ -2340,7 +2340,7 @@ TEST(TransformReduce, SerialUDD)
     std::vector< UDD > input( length, initial );
     std::vector< UDD > refInput( length, initial );
     std::vector< UDD > refIntermediate( length);
-     for(int i=0; i<length; i++) {
+	for (size_t i = 0; i<length; i++) {
         input[i].a = 2;
         refInput[i].a = 2;
         input[i].b = 2;
@@ -2367,7 +2367,7 @@ TEST(TransformReduce, MulticoreUDD)
     std::vector< UDD > input( length, initial );
     std::vector< UDD > refInput( length, initial );
     std::vector< UDD > refIntermediate( length);
-     for(int i=0; i<length; i++) {
+	for (size_t i = 0; i<length; i++) {
         input[i].a = 2;
         refInput[i].a = 2;
         input[i].b = 2;
@@ -2470,11 +2470,11 @@ TEST(TransformReduce, MulticoreDoubleUDD)
 
 TEST(TransformReduce, DeviceVectorInt)
 {
-     size_t length = 1<<16;
+     int length = 1<<16;
      std::vector<  int > refInput( length);
      std::vector< int > refIntermediate( length );
      bolt::amp::device_vector< int > input(length,0);
-     for(int i=0; i<length; i++) {
+	 for (int i = 0; i<length; i++) {
         input[i] = i;
         refInput[i] = i;
      //   printf("%d \n", input[i]);
@@ -2493,11 +2493,11 @@ TEST(TransformReduce, DeviceVectorInt)
 } 
 TEST(TransformReduce, SerialDeviceVectorInt)
 {
-     size_t length = 1<<16;
+     int length = 1<<16;
      std::vector<  int > refInput( length);
      std::vector< int > refIntermediate( length );
      bolt::amp::device_vector< int > input(length,0);
-     for(int i=0; i<length; i++) {
+	 for (int i = 0; i<length; i++) {
         input[i] = i;
         refInput[i] = i;
      //   printf("%d \n", input[i]);
@@ -2520,11 +2520,11 @@ TEST(TransformReduce, SerialDeviceVectorInt)
 } 
 TEST(TransformReduce, MulticoreDeviceVectorInt)
 {
-     size_t length = 1<<16;
+     int length = 1<<16;
      std::vector<  int > refInput( length);
      std::vector< int > refIntermediate( length );
      bolt::amp::device_vector< int > input(length,0);
-     for(int i=0; i<length; i++) {
+	 for (int i = 0; i<length; i++) {
         input[i] = i;
         refInput[i] = i;
      //   printf("%d \n", input[i]);
@@ -2555,7 +2555,7 @@ TEST(TransformReduce, DeviceVectorFloat)
      std::vector< float > refIntermediate( length );
      bolt::amp::device_vector< float > input(length,0);
 
-    for(int i=0; i<length; i++) {
+	 for (size_t i = 0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
      //   printf("%d \n", input[i]);
@@ -2582,7 +2582,7 @@ TEST(TransformReduce, SerialDeviceVectorFloat)
      std::vector< float > refIntermediate( length );
      bolt::amp::device_vector< float > input(length,0);
 
-    for(int i=0; i<length; i++) {
+	 for (size_t i = 0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
      //   printf("%d \n", input[i]);
@@ -2611,7 +2611,7 @@ TEST(TransformReduce, MulticoreDeviceVectorFloat)
      std::vector< float > refIntermediate( length );
      bolt::amp::device_vector< float > input(length,0);
 
-    for(int i=0; i<length; i++) {
+	 for (size_t i = 0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
      //   printf("%d \n", input[i]);
