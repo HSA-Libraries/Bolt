@@ -2748,13 +2748,13 @@ class point{
   int xPoint;
   int yPoint;
 
-  point()
+  point()  restrict(cpu,amp)
   {
     xPoint =0;
     yPoint =0;
   }
 
-  point(int x, int y)
+  point(int x, int y)  restrict(cpu,amp)
   {
     xPoint = x;
     yPoint = y;
@@ -2767,7 +2767,7 @@ class point{
     tmp.yPoint = tmp.yPoint + rhs.yPoint;
     return tmp;
   }
-  point operator - (const point &rhs) const
+  point operator - (const point &rhs) const restrict(cpu,amp)
   {
     point tmp = *this;
     tmp.xPoint = tmp.xPoint - rhs.xPoint;
@@ -2775,7 +2775,7 @@ class point{
     return tmp;
   }
 
-  point operator - () const
+  point operator - () const restrict(cpu,amp)
   {
     point tmp = *this;
     tmp.xPoint = -1 * (tmp.xPoint);

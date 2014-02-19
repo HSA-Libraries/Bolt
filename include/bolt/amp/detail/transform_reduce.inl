@@ -29,13 +29,13 @@
 #endif
 
 
-#define WAVEFRONT_SIZE 256 
+#define _T_REDUCE_WAVEFRONT_SIZE 256 
 
-#define _REDUCE_STEP(_LENGTH, _IDX, _W) \
+#define _T_REDUCE_STEP(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
       iType mine = scratch[_IDX];\
       iType other = scratch[_IDX + _W];\
-      scratch[_IDX] = reduce_op(mine, other); \
+      scratch[_IDX] = binary_op(mine, other); \
     }\
     t_idx.barrier.wait();
 
@@ -51,110 +51,114 @@ namespace bolt {
                                         const DVInputIterator& last,
                                         const UnaryFunction& transform_op,
                                         const oType& init,
-                                        const BinaryFunction& reduce_op )
+                                        const BinaryFunction& binary_op )
         {
-            typedef typename std::iterator_traits< DVInputIterator  >::value_type iType;
+                typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
-            const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
-            const unsigned int tileSize = WAVEFRONT_SIZE;
-            unsigned int numTiles = (szElements/tileSize);
-            const unsigned int ceilNumTiles = static_cast< size_t >( std::ceil( static_cast< float >( szElements )
-                                                                                                    / tileSize) );
-            unsigned int ceilNumElements = tileSize * ceilNumTiles;
-
-            concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer(first));
-
-            //Now create a staging array ; May support zero-copy in the future?!
-           concurrency::accelerator cpuAccelerator=concurrency::accelerator(concurrency::accelerator::cpu_accelerator);
-            concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
-            concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view,
-                                                                                    cpuAcceleratorView);
-
-            concurrency::array_view<iType, 1> result ( resultArray );
-            result.discard_data();
-
-            concurrency::extent< 1 > inputExtent( ceilNumElements );
-            concurrency::tiled_extent< tileSize > tiledExtentTransformReduce = inputExtent.tile< tileSize >();
-
-            // Algorithm is different from cl::transform_reduce. We launch worksize = number of elements here.
-            // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
-
-            try
-            {
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view,
-                                              tiledExtentTransformReduce, [=]
-
-                                              //todo: Capturing data by value is giving an unexpected compile error
-                                              // Using [=] as default capture mode
-
-                                              //[ inputV,
-                                              //  szElements,
-                                              //  result,
-                                              //  transform_op,
-                                              //  reduce_op ]
-                                              ( concurrency::tiled_index<tileSize> t_idx ) restrict(amp)
-               {
-                 int globalId = t_idx.global[ 0 ];
-                 int tileIndex = t_idx.local[ 0 ];
-                 //  Initialize local data store
-                 tile_static iType scratch [WAVEFRONT_SIZE] ;
+                //Now create a staging array ; May support zero-copy in the future?!
+                concurrency::accelerator cpuAccelerator = concurrency::
+                                                        accelerator(concurrency::accelerator::cpu_accelerator);
+                concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
 
 
-                 //  Abort threads that are passed the end of the input vector
-                 if( t_idx.global[ 0 ] < szElements )
-                 {
-
-                  //  Initialize the accumulator private variable with data from the input array
-                  //  This essentially unrolls the loop below at least once
-                  iType accumulator = transform_op ( inputV[globalId] );
-                  scratch[tileIndex] = accumulator;
-
-                 }
-                 t_idx.barrier.wait();
-
-                 //  Tail stops the last workgroup from reading past the end of the input vector
-                 int tail = szElements - (t_idx.tile[ 0 ] * t_idx.tile_dim0);
-                 // Parallel reduction within a given workgroup using local data store
-                 // to share values between workitems
-
-				 _REDUCE_STEP(tail, tileIndex, 128);
-                 _REDUCE_STEP(tail, tileIndex, 64);
-                 _REDUCE_STEP(tail, tileIndex, 32);
-                 _REDUCE_STEP(tail, tileIndex, 16);
-                 _REDUCE_STEP(tail, tileIndex,  8);
-                 _REDUCE_STEP(tail, tileIndex,  4);
-                 _REDUCE_STEP(tail, tileIndex,  2);
-                 _REDUCE_STEP(tail, tileIndex,  1);
+                const unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
 
 
-                 //  Write only the single reduced value for the entire workgroup
-                 if (tileIndex == 0)
-                 {
-                     result[t_idx.tile[ 0 ]] = scratch[0];
-                 }
+				unsigned int length = (_T_REDUCE_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				length = szElements < length ? szElements : length;
+				unsigned int residual = length % _T_REDUCE_WAVEFRONT_SIZE;
+				length = residual ? (length + _T_REDUCE_WAVEFRONT_SIZE - residual): length ;
+				unsigned int numTiles = (length / _T_REDUCE_WAVEFRONT_SIZE);
+
+                auto inputV = first.getContainer().getBuffer(first);
+
+				concurrency::array< iType, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
+                                                                                        cpuAcceleratorView);
+
+                concurrency::array_view<iType, 1> result ( resultArray );
+
+				concurrency::extent< 1 > inputExtent(length);
+                concurrency::tiled_extent< _T_REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< _T_REDUCE_WAVEFRONT_SIZE >();
+
+                // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
+                // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
+
+                try
+                {
+                    concurrency::parallel_for_each(ctl.getAccelerator().default_view,
+                                                   tiledExtentReduce,
+                                                    [ inputV,
+                                                    szElements,
+                                                    length,
+                                                    transform_op,
+                                                    result,
+                                                    binary_op ]
+                                                   ( concurrency::tiled_index<_T_REDUCE_WAVEFRONT_SIZE> t_idx ) restrict(amp)
+                    {
+						unsigned int gx = t_idx.global[0];
+						unsigned int gloId = gx;
+						tile_static iType scratch[_T_REDUCE_WAVEFRONT_SIZE];
+						//  Initialize local data store
+						unsigned int tileIndex = t_idx.local[0];
+
+						iType accumulator;
+						if (gloId < szElements)
+						{
+							accumulator = transform_op(inputV[gx]);
+							gx += length;
+						}
+						
+
+						// Loop sequentially over chunks of input vector, reducing an arbitrary size input
+						// length into a length related to the number of workgroups
+						while (gx < szElements)
+						{
+							iType element = transform_op(inputV[gx]);
+							accumulator = binary_op(accumulator, element);
+							gx += length;
+						}
+                        
+						scratch[tileIndex] = accumulator;
+						t_idx.barrier.wait();
+
+						unsigned int tail = szElements - (t_idx.tile[0] * _T_REDUCE_WAVEFRONT_SIZE);
+
+						_T_REDUCE_STEP(tail, tileIndex, 128);
+						_T_REDUCE_STEP(tail, tileIndex, 64);
+						_T_REDUCE_STEP(tail, tileIndex, 32);
+						_T_REDUCE_STEP(tail, tileIndex, 16);
+						_T_REDUCE_STEP(tail, tileIndex, 8);
+						_T_REDUCE_STEP(tail, tileIndex, 4);
+						_T_REDUCE_STEP(tail, tileIndex, 2);
+						_T_REDUCE_STEP(tail, tileIndex, 1);
 
 
-               });
+						//  Abort threads that are passed the end of the input vector
+						if (gloId >= szElements)
+							return;
 
-               oType *cpuPointerReduce =  result.data();
+                      //  Write only the single reduced value for the entire workgroup
+                      if (tileIndex == 0)
+                      {
+                          result[t_idx.tile[ 0 ]] = scratch[0];
+                      }
 
-               int numTailReduce = ceilNumTiles;
-               oType acc = static_cast< oType >( init );
-               for(int i = 0; i < numTailReduce; ++i)
-               {
-                   acc = reduce_op( acc, result[ i ] );
-               }
-
-               return acc ;
-
-
-            }
-            catch(std::exception &e)
-            {
-              std::cout<<"Exception while calling bolt::amp::transform_reduce parallel_for_each!\n"
-                       <<std::endl<<e.what();
-              throw std::exception();
-            }
+                    });
+                    
+					iType acc = static_cast<iType>(init);
+					iType *cpuPointerReduce =  result.data();
+					for(unsigned int i = 0; i < numTiles; ++i)
+					{
+						acc = binary_op(acc, cpuPointerReduce[i]);
+					}
+					return acc;
+                }
+                catch(std::exception &e)
+                {
+                      std::cout << "Exception while calling bolt::amp::reduce parallel_for_each " ;
+                      std::cout<< e.what() << std::endl;
+                      throw std::exception();
+                }
 
         };
 
