@@ -1272,16 +1272,16 @@ TEST_P( InnerProductCountingIterator, withCountingIterator)
     bolt::amp::counting_iterator<int> first2(mySize);
     int init = 10;
 
-    std::vector<int> input1(mySize);
+  /*  std::vector<int> input1(mySize);
     std::vector<int> input2(mySize);
-   
+   */
 
-    for (int i=0; i < mySize; i++) {
+   /* for (int i=0; i < mySize; i++) {
         input1[i] = i;
         input2[i] = i+1;
-    };
+    };*/
     
-    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(), input2.begin(),init, std::multiplies<int>(),
+    int stlInnerProduct = std::inner_product(first1 , last1 ,first2,init, std::multiplies<int>(),
         std::plus<int>());
     int boltInnerProduct = bolt::amp::inner_product( first1,
                                                      last1,
