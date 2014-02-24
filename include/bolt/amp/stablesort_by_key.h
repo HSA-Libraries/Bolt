@@ -157,7 +157,7 @@ namespace amp {
     * int   i[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * float f[ 10 ] = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
     * 
-    * bolt::amp::stable_sort_by_key( control::getDefault( ), i, i + 10, f );
+    * bolt::amp::stable_sort_by_key( bolt::amp::control::getDefault( ), i, i + 10, f );
     * 
     * \\ results i[] = { 0, 2, 3, 3, 5, 6, 7, 8, 9, 9 }
     * \\ results f[] = { 9.0f, 0.0f, 2.0f, 6.0f, 4.0f, 5.0f, 3.0f, 7.0f, 1.0f, 8.0f }
@@ -202,7 +202,7 @@ namespace amp {
     * int   i[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * float f[ 10 ] = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
     * 
-    * bolt::amp::stable_sort_by_key( control::getDefault( ), i, i + 10, f, bolt::amp::greater< int >( ) );
+    * bolt::amp::stable_sort_by_key( bolt::amp::control::getDefault( ), i, i + 10, f, bolt::amp::greater< int >( ) );
     * 
     * \\ results a[] = { 9, 9, 8, 7, 6, 5, 3, 3, 2, 0 }
     * \\ results f[] = { 1.0f, 8.0f, 7.0f, 3.0f, 5.0f, 4.0f, 2.0f, 6.0f, 0.0f, 9.0f }
