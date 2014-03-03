@@ -684,7 +684,7 @@ namespace cl
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
-                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
+                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin.base() ) ) );
                 }
                 else
                 {

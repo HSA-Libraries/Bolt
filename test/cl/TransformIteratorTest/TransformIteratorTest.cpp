@@ -26,6 +26,7 @@
 #include "bolt/cl/generate.h"
 #include "bolt/cl/reduce.h"
 #include "bolt/cl/functional.h"
+#include "bolt/cl/distance.h"
 #include "bolt/miniDump.h"
 #include "bolt/unicode.h"
 
@@ -230,8 +231,8 @@ TEST( TransformIterator, FirstTest)
         std::generate(svInVec.begin(), svInVec.end(), gen);    
         bolt::BCKND::generate(dvInVec.begin(), dvInVec.end(), gen);
 
-        size_t dist1 = std::distance(sv_trf_begin, sv_trf_end);
-        size_t dist2 = std::distance( dv_trf_begin, dv_trf_end );
+        sv_trf_itr::difference_type dist1 = bolt::cl::distance(sv_trf_begin, sv_trf_end);
+        sv_trf_itr::difference_type dist2 = bolt::cl::distance(dv_trf_begin, dv_trf_end );
 
         EXPECT_EQ( dist1, dist2 );
         //std::cout << "distance = " << dist1 << "\n" ;
@@ -431,7 +432,7 @@ TEST( TransformIterator, BinaryTransformRoutine)
         //bolt::cl::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec.begin(), plus);
         //bolt::cl::transform(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, dvOutVec.begin(), plus);
         /*Compute expected results*/
-        //std::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, stlOut.begin(), plus);
+        std::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, stlOut.begin(), plus);
         /*Check the results*/
         //cmpArrays(svOutVec, stlOut, length);
         //cmpArrays(svOutVec, stlOut, length);
