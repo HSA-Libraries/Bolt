@@ -36,7 +36,9 @@
 #include "bolt/btbb/stable_sort_by_key.h"
 #endif
 
-#define BOLT_AMP_STABLESORT_BY_KEY_CPU_THRESHOLD 256
+#define STABLESORT_BY_KEY_BUFFER_SIZE 256
+#define STABLESORTBYKEY_TILE_MAX 65535
+
 
 namespace bolt {
 namespace amp {
@@ -137,7 +139,7 @@ namespace detail
 
 
 	template< typename sType, typename Container, typename StrictWeakOrdering >
-    unsigned int lowerBoundBinary( Container& data, int left, int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
+    unsigned int sort_by_key_lowerBoundBinary( Container& data, int left, int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
     {
         //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
         int firstIndex = left;
@@ -164,7 +166,7 @@ namespace detail
                  //printf( "lowerBound: firstIndex[ %i ]=%i\n", get_local_id( 0 ), firstIndex );
             }
         }
-        //printf("lowerBoundBinary: left=%d, right=%d, firstIndex=%d\n", left, right, firstIndex);
+        //printf("sort_by_key_lowerBoundBinary: left=%d, right=%d, firstIndex=%d\n", left, right, firstIndex);
         return firstIndex;
     }
     
@@ -174,11 +176,11 @@ namespace detail
     //  This function returns an index that is the first index whos value would be greater than the searched value
     //  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
     template< typename sType, typename Container, typename StrictWeakOrdering >
-    unsigned int  upperBoundBinary( Container& data, unsigned int left, unsigned int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
+    unsigned int  sort_by_key_upperBoundBinary( Container& data, unsigned int left, unsigned int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
     {
-        unsigned int upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
+        unsigned int upperBound = sort_by_key_lowerBoundBinary( data, left, right, searchVal, lessOp );
         
-         //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
+         //printf( "start of sort_by_key_upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
         //  upperBound is always between left and right or equal to right
         //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
         if( upperBound != right )
@@ -202,10 +204,10 @@ namespace detail
                     upperBound++;
                 }
                 upperValue = data[ upperBound ];
-                //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+                //printf( "sort_by_key_upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
             }
         }
-        //printf( "end of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+        //printf( "end of sort_by_key_upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
         return upperBound;
     }
 
@@ -231,7 +233,7 @@ namespace detail
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
 
        
-        const unsigned int localRange= BOLT_AMP_STABLESORT_BY_KEY_CPU_THRESHOLD;
+        const unsigned int localRange= STABLESORT_BY_KEY_BUFFER_SIZE;
 		
         //  Make sure that globalRange is a multiple of localRange
         unsigned int globalRange = vecSize;
@@ -249,115 +251,129 @@ namespace detail
           Kernel 0
         *********************************************************************************/
 
-        concurrency::extent< 1 > globalSizeK0( globalRange );
-        concurrency::tiled_extent< localRange > tileK0 = globalSizeK0.tile< localRange >();
+		const unsigned int tile_limit = STABLESORTBYKEY_TILE_MAX;
+		const unsigned int max_ext = (tile_limit*localRange);
 
-        try
-        {
+		unsigned int	   tempBuffsize = globalRange; 
+		unsigned int	   iteration = (globalRange-1)/max_ext; 
 
-          concurrency::parallel_for_each( av, tileK0,
-          [
-            inputBuffer,
-			keyBuffer,
-            vecSize,
-            comp,
-            localRange
-          ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
-          {
+		for(unsigned int i=0; i<=iteration; i++)
+		{
+			unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
+			concurrency::extent< 1 > inputExtent( extent_sz );
+			concurrency::tiled_extent< localRange > tileK0 = inputExtent.tile< localRange >();
+			unsigned int index = i*(tile_limit*localRange);
+			unsigned int tile_index = i*tile_limit;
 
-               unsigned int gloId = t_idx.global[ 0 ];
-               unsigned int groId = t_idx.tile[ 0 ];
-               unsigned int locId = t_idx.local[ 0 ];
-               unsigned int wgSize = localRange;
+				try
+				{
 
-               tile_static keyType key_lds[BOLT_AMP_STABLESORT_BY_KEY_CPU_THRESHOLD]; 
-			   tile_static keyType key_lds2[BOLT_AMP_STABLESORT_BY_KEY_CPU_THRESHOLD]; 
-			   tile_static valueType val_lds[BOLT_AMP_STABLESORT_BY_KEY_CPU_THRESHOLD]; 
-			   tile_static valueType val_lds2[BOLT_AMP_STABLESORT_BY_KEY_CPU_THRESHOLD]; 
+				  concurrency::parallel_for_each( av, tileK0,
+				  [
+					inputBuffer,
+					keyBuffer,
+					vecSize,
+					comp,
+					index,
+					tile_index,
+					localRange
+				  ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
+				  {
 
-               //  Make a copy of the entire input array into fast local memory
-	           if( gloId < vecSize)
-	           {
-		          key_lds[ locId ] = keyBuffer[ gloId ];
-		          val_lds[ locId ] = inputBuffer[ gloId ];
-	           }
-               //barrier( CLK_LOCAL_MEM_FENCE );
-	           unsigned int end =  wgSize;
-	           if( (groId+1)*(wgSize) >= vecSize )
-		              end = vecSize - (groId*wgSize);
+					   unsigned int gloId = t_idx.global[ 0 ] + index;
+					   unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+					   unsigned int locId = t_idx.local[ 0 ];
+					   unsigned int wgSize = localRange;
 
-	           unsigned int numMerges = 8;
-	           unsigned int pass;
+					   tile_static keyType key_lds[STABLESORT_BY_KEY_BUFFER_SIZE]; 
+					   tile_static keyType key_lds2[STABLESORT_BY_KEY_BUFFER_SIZE]; 
+					   tile_static valueType val_lds[STABLESORT_BY_KEY_BUFFER_SIZE]; 
+					   tile_static valueType val_lds2[STABLESORT_BY_KEY_BUFFER_SIZE]; 
 
-               for( pass = 1; pass <= numMerges; ++pass )
-	           {
-		         unsigned int srcLogicalBlockSize = 1 << (pass-1);
-	             if( gloId < vecSize)
-		         {
-  		              unsigned int srcBlockNum = (locId) / srcLogicalBlockSize;
-			          unsigned int srcBlockIndex = (locId) % srcLogicalBlockSize;
+					   //  Make a copy of the entire input array into fast local memory
+					   if( gloId < vecSize)
+					   {
+						  key_lds[ locId ] = keyBuffer[ gloId ];
+						  val_lds[ locId ] = inputBuffer[ gloId ];
+					   }
+					   //barrier( CLK_LOCAL_MEM_FENCE );
+					   unsigned int end =  wgSize;
+					   if( (groId+1)*(wgSize) >= vecSize )
+							  end = vecSize - (groId*wgSize);
+
+					   unsigned int numMerges = 8;
+					   unsigned int pass;
+
+					   for( pass = 1; pass <= numMerges; ++pass )
+					   {
+						 unsigned int srcLogicalBlockSize = 1 << (pass-1);
+						 if( gloId < vecSize)
+						 {
+  							  unsigned int srcBlockNum = (locId) / srcLogicalBlockSize;
+							  unsigned int srcBlockIndex = (locId) % srcLogicalBlockSize;
     
-			          unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
-			          unsigned int leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
+							  unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
+							  unsigned int leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
 
-		              leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
-			          leftBlockIndex = min( leftBlockIndex, end );
-			          unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
-  			          unsigned int insertionIndex = 0;
-			          if(pass%2 != 0)
-			          {
-				         if( (srcBlockNum & 0x1) == 0 )
-				         {
-				          	insertionIndex = lowerBoundBinary( key_lds, leftBlockIndex, rightBlockIndex, key_lds[ locId ], comp ) - leftBlockIndex;
-				         }
-				         else
-				         {
-					        insertionIndex = upperBoundBinary( key_lds, leftBlockIndex, rightBlockIndex, key_lds[ locId ], comp ) - leftBlockIndex;
-				         }
-			         }
-			         else
-			         {
-			          	if( (srcBlockNum & 0x1) == 0 )
-				        {
-					       insertionIndex = lowerBoundBinary( key_lds2, leftBlockIndex, rightBlockIndex, key_lds2[ locId ], comp ) - leftBlockIndex;
-				        }
-				        else
-				        {
-					       insertionIndex = upperBoundBinary( key_lds2, leftBlockIndex, rightBlockIndex, key_lds2[ locId ], comp ) - leftBlockIndex;
-				        } 
-			        }
-			        unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
-			        unsigned int dstBlockNum = srcBlockNum/2;
-			        if(pass%2 != 0)
-			        {
-			              key_lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = key_lds[ locId ];
-			              val_lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds[ locId ];
-			        }
-			        else
-			        {
-			              key_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = key_lds2[ locId ]; 
-			              val_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds2[ locId ];
-			        }
-		      }
-              //barrier( CLK_LOCAL_MEM_FENCE );
-	        }	  
-	        if( gloId < vecSize)
-	        {
-		        keyBuffer[ gloId ] = key_lds[ locId ];
-                inputBuffer[ gloId ] = val_lds[ locId ];
-	        }
+							  leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
+							  leftBlockIndex = min( leftBlockIndex, end );
+							  unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
+  							  unsigned int insertionIndex = 0;
+							  if(pass%2 != 0)
+							  {
+								 if( (srcBlockNum & 0x1) == 0 )
+								 {
+				          			insertionIndex = sort_by_key_lowerBoundBinary( key_lds, leftBlockIndex, rightBlockIndex, key_lds[ locId ], comp ) - leftBlockIndex;
+								 }
+								 else
+								 {
+									insertionIndex = sort_by_key_upperBoundBinary( key_lds, leftBlockIndex, rightBlockIndex, key_lds[ locId ], comp ) - leftBlockIndex;
+								 }
+							 }
+							 else
+							 {
+			          			if( (srcBlockNum & 0x1) == 0 )
+								{
+								   insertionIndex = sort_by_key_lowerBoundBinary( key_lds2, leftBlockIndex, rightBlockIndex, key_lds2[ locId ], comp ) - leftBlockIndex;
+								}
+								else
+								{
+								   insertionIndex = sort_by_key_upperBoundBinary( key_lds2, leftBlockIndex, rightBlockIndex, key_lds2[ locId ], comp ) - leftBlockIndex;
+								} 
+							}
+							unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
+							unsigned int dstBlockNum = srcBlockNum/2;
+							if(pass%2 != 0)
+							{
+								  key_lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = key_lds[ locId ];
+								  val_lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds[ locId ];
+							}
+							else
+							{
+								  key_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = key_lds2[ locId ]; 
+								  val_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds2[ locId ];
+							}
+					  }
+					  //barrier( CLK_LOCAL_MEM_FENCE );
+					}	  
+					if( gloId < vecSize)
+					{
+						keyBuffer[ gloId ] = key_lds[ locId ];
+						inputBuffer[ gloId ] = val_lds[ locId ];
+					}
     
-        } );
+				} );
 
-        }
+				}
  
-        catch(std::exception &e)
-        {
-              std::cout << "Exception while calling bolt::amp::stablesort_by_key parallel_for_each " ;
-              std::cout<< e.what() << std::endl;
-              throw std::exception();
-        }	
-
+				catch(std::exception &e)
+				{
+					  std::cout << "Exception while calling bolt::amp::stablesort_by_key parallel_for_each " ;
+					  std::cout<< e.what() << std::endl;
+					  throw std::exception();
+				}	
+				tempBuffsize = tempBuffsize - max_ext;
+		}
 
         //  An odd number of elements requires an extra merge pass to sort
         size_t numMerges = 0;
@@ -439,11 +455,11 @@ namespace detail
 	              {
                     if( (srcBlockNum & 0x1) == 0 )
                     {
-					  insertionIndex = lowerBoundBinary( keyBuffer, leftBlockIndex, rightBlockIndex, keyBuffer[ gloID ], comp ) - leftBlockIndex;
+					  insertionIndex = sort_by_key_lowerBoundBinary( keyBuffer, leftBlockIndex, rightBlockIndex, keyBuffer[ gloID ], comp ) - leftBlockIndex;
                     }
                     else
                     {
-                      insertionIndex = upperBoundBinary( keyBuffer, leftBlockIndex, rightBlockIndex, keyBuffer[ gloID ], comp ) - leftBlockIndex;
+                      insertionIndex = sort_by_key_upperBoundBinary( keyBuffer, leftBlockIndex, rightBlockIndex, keyBuffer[ gloID ], comp ) - leftBlockIndex;
                     }
                   
                     //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -460,11 +476,11 @@ namespace detail
                   
 	                if( (srcBlockNum & 0x1) == 0 )
                     {
-                      insertionIndex = lowerBoundBinary( tmpKeyBuffer, leftBlockIndex, rightBlockIndex, tmpKeyBuffer[ gloID ], comp ) - leftBlockIndex;
+                      insertionIndex = sort_by_key_lowerBoundBinary( tmpKeyBuffer, leftBlockIndex, rightBlockIndex, tmpKeyBuffer[ gloID ], comp ) - leftBlockIndex;
                     }
                     else
                     {
-                      insertionIndex = upperBoundBinary( tmpKeyBuffer, leftBlockIndex, rightBlockIndex, tmpKeyBuffer[ gloID ], comp ) - leftBlockIndex;
+                      insertionIndex = sort_by_key_upperBoundBinary( tmpKeyBuffer, leftBlockIndex, rightBlockIndex, tmpKeyBuffer[ gloID ], comp ) - leftBlockIndex;
                     }
                   
                     //  The index of an element in the result sequence is the summation of it's indixes in the two input 

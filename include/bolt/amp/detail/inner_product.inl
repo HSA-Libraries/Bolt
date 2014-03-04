@@ -24,7 +24,9 @@ TODO:
 #if !defined( BOLT_AMP_INNERPRODUCT_INL )
 #define BOLT_AMP_INNERPRODUCT_INL
 
+
 #pragma once
+
 
 #include <type_traits>
 #include <bolt/amp/detail/reduce.inl>
@@ -53,9 +55,9 @@ namespace detail {
                 const int distVec = static_cast< unsigned int >( std::distance( first1, last1 ) );
 
                 if( distVec == 0 )
-                    return -1;
+                    return init;
 
-                device_vector< iType> tempDV( distVec, 0, true, ctl);
+                device_vector< iType> tempDV( distVec, iType(), false, ctl);
 
                 detail::transform_enqueue( ctl, first1, last1, first2, tempDV.begin() ,f2);
                 return detail::reduce_enqueue( ctl, tempDV.begin(), tempDV.end(), init, f1);
@@ -196,6 +198,7 @@ namespace detail {
                 
                 if( runMode == bolt::amp::control::SerialCpu)
                 {
+
                     return std::inner_product(first1, last1, first2, init, f1, f2);
                 }
                 else if(runMode == bolt::amp::control::MultiCoreCpu)
@@ -295,5 +298,7 @@ namespace detail {
 
     }//end of amp namespace
 };//end of bolt namespace
+
+
 
 #endif

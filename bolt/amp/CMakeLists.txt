@@ -47,7 +47,8 @@ set( ampBolt.Runtime.Headers
         ${ampBolt.Include.Dir}/scan.h 
 		${ampBolt.Include.Dir}/scan_by_key.h 
         ${ampBolt.Include.Dir}/sort.h    
-        ${ampBolt.Include.Dir}/stablesort.h 		
+        ${ampBolt.Include.Dir}/stablesort.h 
+		${ampBolt.Include.Dir}/stablesort_by_key.h
         ${ampBolt.Include.Dir}/synchronized_view.h 
         ${ampBolt.Include.Dir}/transform.h 
         ${ampBolt.Include.Dir}/transform_reduce.h 
@@ -61,25 +62,26 @@ set( ampBolt.Runtime.Headers.Iterator
    )
     
 set( ampBolt.Runtime.Headers.Detail
-        ${ampBolt.Include.Dir}/detail/count.inl
+		${ampBolt.Include.Dir}/detail/copy.inl
+		${ampBolt.Include.Dir}/detail/count.inl
 		${ampBolt.Include.Dir}/detail/binary_search.inl
-        ${ampBolt.Include.Dir}/detail/reduce.inl 
-        ${ampBolt.Include.Dir}/detail/merge.inl 
-        ${ampBolt.Include.Dir}/detail/min_element.inl
-        ${ampBolt.Include.Dir}/detail/copy.inl
-        ${ampBolt.Include.Dir}/detail/fill.inl	
+		${ampBolt.Include.Dir}/detail/fill.inl
+		${ampBolt.Include.Dir}/detail/generate.inl
+		${ampBolt.Include.Dir}/detail/inner_product.inl
+		${ampBolt.Include.Dir}/detail/merge.inl
+		${ampBolt.Include.Dir}/detail/min_element.inl
 		${ampBolt.Include.Dir}/detail/pair.inl
-        ${ampBolt.Include.Dir}/detail/generate.inl
-        ${ampBolt.Include.Dir}/detail/inner_product.inl				
-        ${ampBolt.Include.Dir}/detail/scan.inl
-        ${ampBolt.Include.Dir}/detail/scan_by_key.inl
-        ${ampBolt.Include.Dir}/detail/sort.inl  
-		${ampBolt.Include.Dir}/detail/stablesort.inl 	
-        ${ampBolt.Include.Dir}/detail/reduce_by_key.inl		
-        ${ampBolt.Include.Dir}/detail/transform.inl
-        ${ampBolt.Include.Dir}/detail/transform_reduce.inl
-        ${ampBolt.Include.Dir}/detail/transform_scan.inl
-    )
+		${ampBolt.Include.Dir}/detail/reduce.inl
+		${ampBolt.Include.Dir}/detail/reduce_by_key.inl
+		${ampBolt.Include.Dir}/detail/scan.inl
+		${ampBolt.Include.Dir}/detail/scan_by_key.inl
+		${ampBolt.Include.Dir}/detail/sort.inl
+		${ampBolt.Include.Dir}/detail/stablesort.inl
+		${ampBolt.Include.Dir}/detail/stablesort_by_key.inl
+		${ampBolt.Include.Dir}/detail/transform.inl
+		${ampBolt.Include.Dir}/detail/transform_reduce.inl
+		${ampBolt.Include.Dir}/detail/transform_scan.inl
+	)
 
 
 # The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising

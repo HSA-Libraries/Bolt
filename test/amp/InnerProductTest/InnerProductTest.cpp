@@ -18,10 +18,13 @@
 // InnerProductTest.cpp : Defines the entry point for the console application.
 //
 //#define OCL_CONTEXT_BUG_WORKAROUND 1
+#pragma warning(disable: 4996)
+
 #define TEST_DOUBLE 1
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
+
 #include <numeric>
 #include <type_traits>
 #include <gtest/gtest.h>
@@ -35,6 +38,8 @@
 #include "bolt/amp/iterator/counting_iterator.h"
 #include "bolt/miniDump.h"
 #include "common/test_common.h"
+
+
 
 
 void testDeviceVector()
@@ -323,7 +328,7 @@ public:
 
         std::generate(stdInput, stdInput + size, generateRandom<int>);
         std::generate(stdInput2, stdInput2 + size, generateRandom<int>);
-        for (int i = 0; i<size; i++)
+		for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
@@ -361,7 +366,7 @@ public:
 
         std::generate(stdInput, stdInput + size, generateRandom<float>);
         std::generate(stdInput2, stdInput2 + size, generateRandom<float>);
-        for (int i = 0; i<size; i++)
+		for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
@@ -394,9 +399,9 @@ TEST( InnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput (mySize);
     std::vector<int> boltInput2 (mySize);
 
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
+	for (size_t i = 0; i < mySize; ++i){
+        stdInput[i] = (int)i;
+        stdInput2[i] = (int)i+1;
         boltInput[i] = stdInput[i];
         boltInput2[i] = stdInput2[i];
     }
@@ -421,9 +426,9 @@ TEST( CPUInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput (mySize);
     std::vector<int> boltInput2 (mySize);
 
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
+	for (size_t i = 0; i < mySize; ++i){
+        stdInput[i] = (int)i;
+        stdInput2[i] = (int)i+1;
         boltInput[i] = stdInput[i];
         boltInput2[i] = stdInput2[i];
     }
@@ -451,9 +456,9 @@ TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     std::vector<int> boltInput (mySize);
     std::vector<int> boltInput2 (mySize);
 
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
+	for (size_t i = 0; i < mySize; ++i){
+        stdInput[i] = (int)i;
+        stdInput2[i] = (int)i+1;
         boltInput[i] = stdInput[i];
         boltInput2[i] = stdInput2[i];
     }
@@ -478,7 +483,7 @@ public:
     {}
 };
 
-
+#if !defined ( _WIN32 )
 TEST_P (InnerProductTestMultFloat, multiplyWithFloats)
 {
     float* myArray = new float[ arraySize ];
@@ -614,7 +619,7 @@ TEST_P( InnerProductTestMultFloat, serialFloatValuesWdControl )
     //compare these results with each other
     EXPECT_FLOAT_EQ( stdInnerProductValue, boltInnerProduct );
 }
-
+#endif
 TEST_P( InnerProductTestMultFloat, CPUFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
@@ -685,7 +690,7 @@ public:
     }
 };
 #if(TEST_DOUBLE == 1)
-
+#if !defined ( _WIN32 )
 TEST_P (InnerProductTestMultDouble, multiplyWithDouble)
 {
     double* myArray = new double[ arraySize ];
@@ -775,7 +780,7 @@ TEST_P (InnerProductTestMultDouble, MultiCoremultiplyWithDouble)
     delete [] myArray2;
     delete [] myBoltArray;
 }
-
+#endif
 #endif
 
 #if (TEST_DOUBLE == 1)
@@ -1264,19 +1269,19 @@ TEST_P( InnerProductCountingIterator, withCountingIterator)
 {
     bolt::amp::counting_iterator<int> first1(0);
     bolt::amp::counting_iterator<int> last1 = first1 +  mySize;
-    bolt::amp::counting_iterator<int> first2(1);
+    bolt::amp::counting_iterator<int> first2(mySize);
     int init = 10;
 
-    std::vector<int> input1(mySize);
+  /*  std::vector<int> input1(mySize);
     std::vector<int> input2(mySize);
-   
+   */
 
-    for (int i=0; i < mySize; i++) {
+   /* for (int i=0; i < mySize; i++) {
         input1[i] = i;
         input2[i] = i+1;
-    };
+    };*/
     
-    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(), input2.begin(),init, std::multiplies<int>(),
+    int stlInnerProduct = std::inner_product(first1 , last1 ,first2,init, std::multiplies<int>(),
         std::plus<int>());
     int boltInnerProduct = bolt::amp::inner_product( first1,
                                                      last1,

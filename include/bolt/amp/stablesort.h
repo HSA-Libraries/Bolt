@@ -131,7 +131,7 @@ namespace amp {
     * 
     * int   a[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * 
-    * bolt::amp::stable_sort( a, a + 10, bolt::amp::greater< int >( ) );
+    * bolt::amp::stable_sort( bolt::amp::control::getDefault( ), a, a + 10 );
     * 
     * \\ results a[] = { 9, 9, 8, 7, 6, 5, 3, 3, 2, 0 }
     * \endcode
@@ -169,7 +169,7 @@ namespace amp {
     * 
     * int   a[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * 
-    * bolt::amp::stable_sort( a, a + 10, bolt::amp::greater< int >( ) );
+    * bolt::amp::stable_sort( bolt::amp::control::getDefault( ), a, a + 10, bolt::amp::greater< int >( ) );
     * 
     * \\ results a[] = { 9, 9, 8, 7, 6, 5, 3, 3, 2, 0 }
     * \endcode

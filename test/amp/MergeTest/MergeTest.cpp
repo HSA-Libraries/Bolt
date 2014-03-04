@@ -28,6 +28,7 @@
 #include <array>
 
 
+
 struct UDD
 {
 	int a;
@@ -75,7 +76,7 @@ struct UDDless
 };
 
 
-
+#if defined ( _WIN32 )
 // .........sanity test cases without controls.....//
 
 TEST(sanity_merge_amp_doc_arrays_, wo_ctrl_ints){
@@ -91,7 +92,7 @@ TEST(sanity_merge_amp_doc_arrays_, wo_ctrl_ints){
 	bolt::amp::sort(A, A + 10);
 	bolt::amp::sort(B, B + 10);
 	std::merge(A, A + 10, B, B + 10, stdmerge);
-	bolt::amp::merge(A, A + 10, B, B + 10, boltmerge);
+	bolt::amp::merge(A, A + 10, B, B + 10, stdext::make_checked_array_iterator(boltmerge,20));
 
 
 	for(int i = 0; i < 20; i++) {
@@ -100,7 +101,7 @@ TEST(sanity_merge_amp_doc_arrays_, wo_ctrl_ints){
 
 	cmpArrays(stdmerge,boltmerge,20);
 }
-
+#endif
 
 
 
@@ -168,7 +169,7 @@ TEST(MergeTest, MergeAuto)
 	}
 }
 
-
+#if defined ( _WIN32 )
 TEST(sanity_merge_amp_doc_std_arrays_, wo_ctrl_ints){
 	int A[10] = { 8, 10, 42, 55, 60, 60, 75, 77, 99, 37 };
 	int B[10] = { 2, 6, 23, 34, 40, 43, 55, 55, 42, 80 };
@@ -186,7 +187,7 @@ TEST(sanity_merge_amp_doc_std_arrays_, wo_ctrl_ints){
 
 	bolt::amp::sort(A, A + 10);
 	bolt::amp::sort(B, B + 10);
-	bolt::amp::merge(A, A + 10, B, B + 10, boltmerge);
+	bolt::amp::merge(A, A + 10, B, B + 10, stdext::make_checked_array_iterator(boltmerge,20));
 
 	
 
@@ -222,11 +223,11 @@ TEST(sanity_merge_amp_ArrWithDiffTypes, WithInt){
 
 	std::sort(InArr1, InArr1 + arraySize);
 	std::sort(InArr2, InArr2 + arraySize);
-	std::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize, outArr1);
+	std::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize));
 
 	bolt::amp::sort(InArr1, InArr1 + arraySize);
 	bolt::amp::sort(InArr2, InArr2 + arraySize);
-	bolt::amp::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize, outArr2);
+	bolt::amp::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize,  stdext::make_checked_array_iterator(outArr2,arraySize1));
 
 
 
@@ -266,11 +267,11 @@ TEST(sanity_merge_amp_ArrWithDiffTypes1, WithFloats){
 	//copying float array as a whole to all there types of arrays :) 
 	std::sort(InFloatArr1, InFloatArr1 + arraySize);
 	std::sort(InFloatArr2, InFloatArr2 + arraySize);
-	std::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize, outArr1);
+	std::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize));
 
 	bolt::amp::sort(InFloatArr1, InFloatArr1 + arraySize);
 	bolt::amp::sort(InFloatArr2, InFloatArr2 + arraySize);
-	bolt::amp::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize, outArr2);
+	bolt::amp::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize,  stdext::make_checked_array_iterator(outArr2,arraySize1) );
 
 
 	for (int i = 0; i < arraySize1; i++) {
@@ -307,11 +308,11 @@ TEST(sanity_merge_amp_ArrWithDiffTypes2, WithDouble){
 	//copying double array as a whole to all there types of arrays :) 
 	std::sort(InDoubleArr1, InDoubleArr1 + arraySize);
 	std::sort(InDoubleArr2, InDoubleArr2 + arraySize);
-	std::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, outArr1);
+	std::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize));
 
 	std::sort(InDoubleArr1, InDoubleArr1 + arraySize);
 	std::sort(InDoubleArr2, InDoubleArr2 + arraySize);
-	bolt::amp::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, outArr2);
+	bolt::amp::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, stdext::make_checked_array_iterator(outArr2,arraySize1));
 
 	//for(int i = 0; i < arraySize1; i++ ) {
 	//	std::cout << "Val After merge is " << outArr1[i] << " " << outArr2[i] << "\n" ;
@@ -327,7 +328,7 @@ TEST(sanity_merge_amp_ArrWithDiffTypes2, WithDouble){
 	free(outArr2);
 }
 
-
+#endif
 
 TEST(sanity_merge_bolt_vect, wo_control_ints)
 {
@@ -338,8 +339,8 @@ TEST(sanity_merge_bolt_vect, wo_control_ints)
 	std::vector<int> B(aSize);
 	std::vector<int>   stdmerge(Size);
 
-	for (int i = 0; i < aSize; i++) {
-		B[i] = A[i] = i;
+	for (size_t i = 0; i < aSize; i++) {
+		B[i] = A[i] = (int)i;
 	}
 
 	std::sort(A.begin(), A.end());

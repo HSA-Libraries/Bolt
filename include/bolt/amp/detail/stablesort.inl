@@ -18,7 +18,7 @@
 #pragma once
 #if !defined( BOLT_AMP_STABLESORT_INL )
 #define BOLT_AMP_STABLESORT_INL
-#define BUFFER_SIZE 512
+#define STABLESORT_BUFFER_SIZE 512
 #define STABLESORT_TILE_MAX 65535
 #include <algorithm>
 #include <type_traits>
@@ -34,8 +34,6 @@
 //TBB Includes
 #include "bolt/btbb/stable_sort.h"
 #endif
-
-#define BOLT_AMP_STABLESORT_CPU_THRESHOLD 512
 
 namespace bolt {
 namespace amp {
@@ -73,7 +71,7 @@ stablesort_enqueue(control &ctl,
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
 template< typename sType, typename Container, typename StrictWeakOrdering >
-unsigned int lowerBoundBinary( Container& data, int left, int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
+unsigned int sort_lowerBoundBinary( Container& data, int left, int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
 {
     //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
     int firstIndex = left;
@@ -110,11 +108,11 @@ unsigned int lowerBoundBinary( Container& data, int left, int right, sType searc
 //  This function returns an index that is the first index whos value would be greater than the searched value
 //  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
 template< typename sType, typename Container, typename StrictWeakOrdering >
-unsigned int  upperBoundBinary( Container& data, unsigned int left, unsigned int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
+unsigned int  sort_upperBoundBinary( Container& data, unsigned int left, unsigned int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
 {
-    unsigned int upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
+    unsigned int upperBound = sort_lowerBoundBinary( data, left, right, searchVal, lessOp );
     
-     //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
+     //printf( "start of sort_upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
     //  upperBound is always between left and right or equal to right
     //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
     if( upperBound != right )
@@ -138,10 +136,10 @@ unsigned int  upperBoundBinary( Container& data, unsigned int left, unsigned int
                 upperBound++;
             }
             upperValue = data[ upperBound ];
-            //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+            //printf( "sort_upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
         }
     }
-    //printf( "end of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+    //printf( "end of sort_upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
     return upperBound;
 }
 
@@ -163,7 +161,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
      *********************************************************************************/
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type iType;
 
-    const unsigned int localRange=BUFFER_SIZE;
+    const unsigned int localRange=STABLESORT_BUFFER_SIZE;
 
     //  Make sure that globalRange is a multiple of localRange
     unsigned int globalRange = vecSize/**localRange*/;
@@ -212,8 +210,8 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 			unsigned int locId = t_idx.local[ 0 ];
 			unsigned int wgSize = localRange;
 
-			tile_static iType lds[BUFFER_SIZE]; 
-			tile_static iType lds2[BUFFER_SIZE]; 
+			tile_static iType lds[STABLESORT_BUFFER_SIZE]; 
+			tile_static iType lds2[STABLESORT_BUFFER_SIZE]; 
 
 			//  Abort threads that have passed the end of the input vector
 			if (gloId < vecSize) {
@@ -247,22 +245,22 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 					{
 						if( (srcBlockNum & 0x1) == 0 )
 						{
-							insertionIndex = lowerBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
+							insertionIndex = sort_lowerBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
 						}
 						else
 						{
-							insertionIndex = upperBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
+							insertionIndex = sort_upperBoundBinary( lds, leftBlockIndex, rightBlockIndex, lds[ locId ], comp ) - leftBlockIndex;
 						}
 					}
 					else
 					{
 						if( (srcBlockNum & 0x1) == 0 )
 						{
-							insertionIndex = lowerBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
+							insertionIndex = sort_lowerBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
 						}
 						else
 						{
-							insertionIndex = upperBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
+							insertionIndex = sort_upperBoundBinary( lds2, leftBlockIndex, rightBlockIndex, lds2[ locId ], comp ) - leftBlockIndex;
 						} 
 					}
 					unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
@@ -365,11 +363,11 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 	{
       if( (srcBlockNum & 0x1) == 0 )
       {
-        insertionIndex = lowerBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
+        insertionIndex = sort_lowerBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
       }
       else
       {
-        insertionIndex = upperBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
+        insertionIndex = sort_upperBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
       }
     
       //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -385,11 +383,11 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     
 	  if( (srcBlockNum & 0x1) == 0 )
       {
-        insertionIndex = lowerBoundBinary( tmpBuffer, leftBlockIndex, rightBlockIndex, tmpBuffer[ gloID ], comp ) - leftBlockIndex;
+        insertionIndex = sort_lowerBoundBinary( tmpBuffer, leftBlockIndex, rightBlockIndex, tmpBuffer[ gloID ], comp ) - leftBlockIndex;
       }
       else
       {
-        insertionIndex = upperBoundBinary( tmpBuffer, leftBlockIndex, rightBlockIndex, tmpBuffer[ gloID ], comp ) - leftBlockIndex;
+        insertionIndex = sort_upperBoundBinary( tmpBuffer, leftBlockIndex, rightBlockIndex, tmpBuffer[ gloID ], comp ) - leftBlockIndex;
       }
     
       //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -450,7 +448,7 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
         runMode = ctl.getDefaultPathToRun();
     }
    
-    if( (runMode == bolt::amp::control::SerialCpu) || (vecSize < BOLT_AMP_STABLESORT_CPU_THRESHOLD) )
+    if( (runMode == bolt::amp::control::SerialCpu) || (vecSize < STABLESORT_BUFFER_SIZE) )
     {
         
         std::stable_sort( first, last, comp );
@@ -500,7 +498,7 @@ void stablesort_pick_iterator( control &ctl,
         runMode = ctl.getDefaultPathToRun();
     }
    
-    if( runMode == bolt::amp::control::SerialCpu || (vecSize < BOLT_AMP_STABLESORT_CPU_THRESHOLD) )
+    if( runMode == bolt::amp::control::SerialCpu || (vecSize < STABLESORT_BUFFER_SIZE) )
     {
         typename bolt::amp::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
         std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );

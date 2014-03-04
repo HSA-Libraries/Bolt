@@ -20,7 +20,7 @@
 #define CL_BENCH  101
 
 #if !defined(BENCHMARK_CL_AMP)
-#define BENCHMARK_CL_AMP  AMP_BENCH
+#define BENCHMARK_CL_AMP  CL_BENCH
 #endif
 
 #include <iostream>
@@ -135,10 +135,10 @@ const std::streamsize colWidth = 26;
 // function generator:
 #if (BOLT_BENCHMARK == 1)
     std::default_random_engine gen;
-    std::uniform_real_distribution<DATA_TYPE> distr(10,1<<30);
+    std::uniform_real_distribution<double> distr(10,1<<30);
     DATA_TYPE RandomNumber() 
     {    
-        DATA_TYPE dice_roll = distr(gen); // generates number in the range 10..1<<31
+		DATA_TYPE dice_roll = (DATA_TYPE)distr(gen); // generates number in the range 10..1<<31
         return (dice_roll); 
     }
 #else
@@ -914,7 +914,7 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(), RandomNumber);
         std::generate(output.begin(), output.end(), RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
-        for( int i=0; i < input1.size() ; i++ )
+		for (size_t i = 0; i < input1.size(); i++)
         {
              Map[i] = (DATA_TYPE)i;
         }
@@ -985,7 +985,7 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
-        for( int i=0; i < input1.size() ; i++ )
+		for (size_t i = 0; i < input1.size(); i++)
         {
              Map[i] = (DATA_TYPE)i;
         }
@@ -1052,7 +1052,7 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
-        for( int i=0; i < input1.size() ; i++ )
+		for (size_t i = 0; i < input1.size(); i++)
         {
              Map[i] = (DATA_TYPE)i;
         }
@@ -1120,7 +1120,7 @@ void executeFunction(
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
         std::generate(output_merge.begin(), output_merge.end(),RandomNumber);
-        for( int i=0; i < input1.size() ; i++ )
+		for (size_t i = 0; i < input1.size(); i++)
         {
              Map[i] = (DATA_TYPE)i;
         }

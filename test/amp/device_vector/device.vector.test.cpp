@@ -806,7 +806,7 @@ TEST( Vector, wdSpecifyingSize )
     bolt::BCKND::device_vector<int> myIntDevVect;
     int myIntArray[10] = {2, 3, 5, 6, 76, 5, 8, -10, 30, 34};
 
-    for (int i = 0; i < mySize; ++i){
+	for (size_t i = 0; i < mySize; ++i){
         myIntDevVect.push_back(myIntArray[i]);
     }
 
