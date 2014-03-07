@@ -419,7 +419,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 	   concurrency::extent< 1 > modified_ext( vecSize );
 	   tmpBuffer.section( modified_ext ).copy_to( first.getContainer().getBuffer(first, vecSize) );
     }
-	av.wait();
     return;
 }// END of stablesort_enqueue
 

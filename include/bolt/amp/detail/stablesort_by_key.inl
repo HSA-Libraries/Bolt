@@ -232,7 +232,6 @@ namespace detail
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
 
-       
         const unsigned int localRange= STABLESORT_BY_KEY_BUFFER_SIZE;
 		
         //  Make sure that globalRange is a multiple of localRange
@@ -354,7 +353,7 @@ namespace detail
 								  val_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds2[ locId ];
 							}
 					  }
-					  //barrier( CLK_LOCAL_MEM_FENCE );
+					  t_idx.barrier.wait();
 					}	  
 					if( gloId < vecSize)
 					{
@@ -391,11 +390,8 @@ namespace detail
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-        device_vector<keyType> keytmpBufferVec(static_cast<size_t>(vecSize));
-        auto&  tmpKeyBuffer   =  keytmpBufferVec.begin().getContainer().getBuffer(); 
-
-        device_vector<valueType> keyvalBufferVec(static_cast<size_t>(vecSize));
-        auto&  tmpValueBuffer   =  keyvalBufferVec.begin().getContainer().getBuffer(); 
+		concurrency::array< keyType >  tmpKeyBuffer( vecSize, av );
+		concurrency::array< valueType >  tmpValueBuffer( vecSize, av );
 
 
 		/**********************************************************************************
@@ -416,8 +412,8 @@ namespace detail
                 [
                   inputBuffer,
 				  keyBuffer,
-                  tmpKeyBuffer,
-				  tmpValueBuffer,
+                  &tmpKeyBuffer,
+				  &tmpValueBuffer,
                   vecSize,
                   comp,
                   localRange,
