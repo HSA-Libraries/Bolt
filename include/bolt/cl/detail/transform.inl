@@ -1004,6 +1004,131 @@ public:
     // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
     // This is called strictly for iterators that are derived from device_vector< T >::iterator
     //TODO RAVI- need to fix the issue when TBB code is not called. 
+
+
+namespace btbb{
+
+    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       bolt::cl::device_vector_tag
+                                     >::value
+                       >::type
+    transform( const Iterator& first, const Iterator& last,
+    const OutputIterator& result, const UnaryFunction& f)
+    {
+        std::cout << "Inside TBB  bolt::cl::device_vector_tag \n";
+        return;
+    }
+    
+    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value
+                           >::type
+    transform( const Iterator& first, const Iterator& last,
+    const OutputIterator& result, const UnaryFunction& f )
+    {
+        std::cout << "Inside TBB std::random_access_iterator_tag \n";
+        bolt::btbb::transform(first, last, result, f);
+        return;
+    }
+    
+}
+
+namespace cl{
+
+    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       bolt::cl::device_vector_tag
+                                     >::value
+                       >::type
+    transform( ::bolt::cl::control &ctl, const Iterator& first, const Iterator& last,
+    const OutputIterator& result, const UnaryFunction& f, const std::string& user_code)
+    {
+        std::cout << "Inside CL  bolt::cl::device_vector_tag \n";
+        return;
+    }
+    
+    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value
+                           >::type
+    transform( ::bolt::cl::control &ctl, const Iterator& first, const Iterator& last,
+    const OutputIterator& result, const UnaryFunction& f, const std::string& user_code )
+    {
+        std::cout << "Inside CL std::random_access_iterator_tag \n";
+        typedef typename std::iterator_traits<TrfIterator>::value_type iType;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        device_vector< iType > dvInput( first/*.base()*/, last/*.base()*/, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+        // Map the output iterator to a device_vector
+        device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
+
+        //Create transform iterators
+        //TODO - Ideally I do not want to create a transform_iterator here. It should automatically take care of that. 
+        bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_begin(dvInput.begin( ), first.functor( ));
+        bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_end(dvOutput.end( ), last.functor( ) );
+
+        transform_unary_trf_itr_enqueue( ctl, trf_begin, trf_end, dvOutput.begin( ), f, user_code );
+
+        // This should immediately map/unmap the buffer
+        dvOutput.data( );
+        return;
+    }
+    
+}
+
+
+namespace serial{
+    template <typename Iterator>
+    typename std::enable_if< std::is_same< typename std::iterator_traits< Iterator >::iterator_category ,
+                                       bolt::cl::transform_iterator_tag
+                                     >::value, 
+                             bolt::cl::transform_iterator<Iterator::unary_func, Iterator::pointer>
+                       >::type
+    make_fancy_iterator(Iterator::pointer ptr)
+    {
+        //Iterator::pointer temp = itr.base( ).getContainer( ).data( );
+        return bolt::cl::make_transform_iterator(ptr, itr.functor());
+    }
+    
+    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       bolt::cl::device_vector_tag
+                                     >::value
+                       >::type
+    transform( const Iterator& first, const Iterator& last,
+    const OutputIterator& result, const UnaryFunction& f)
+    {
+            std::cout << "Inside Serial bolt::cl::device_vector_tag \n";
+            size_t sz = (last - first);
+            if (sz == 0)
+                return;
+            typedef typename std::iterator_traits<Iterator>::value_type iType;
+            typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+            typedef typename Iterator::pointer raw_ptr;
+            typename bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
+            Iterator::pointer pFirst = first.base( ).getContainer( ).data( );
+            
+            std::transform( make_fancy_iterator(pFirst), make_fancy_iterator(pFirst + sz), resPtr.get(), f );
+            return;        
+    }
+    
+    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value
+                           >::type
+    transform( const Iterator& first, const Iterator& last,
+    const OutputIterator& result, const UnaryFunction& f )
+    {
+        std::cout << "Inside Serial std::random_access_iterator_tag \n";
+        std::transform( first, last, result, f );
+        return;
+    }
+    
+}
+
     template<typename TrfIterator, typename OutputIterator, typename UnaryFunction>
     void
     transform_unary_trf_itr_pick_iterator( ::bolt::cl::control &ctl, const TrfIterator& first, const TrfIterator& last,
@@ -1029,7 +1154,7 @@ public:
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
             #endif
-            std::transform( first, last, result, f );
+            serial::transform( first, last, result, f );
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -1044,7 +1169,7 @@ public:
                 //auto start_ptr = &(*(first.m_it) );
                 //auto end_ptr = &(*(last.m_it) );
                 //TODO RAVI - Need to enable this.
-                //bolt::btbb::transform(first, last, result, f);
+                btbb::transform(first, last, result, f);
 
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
@@ -1063,6 +1188,7 @@ public:
             //auto start_ptr = &(*(first.m_it) );
             //auto end_ptr = &(*(last.m_it) );
             // Map the input iterator to a device_vector
+#if 0
             device_vector< iType > dvInput( first/*.base()*/, last/*.base()*/, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             // Map the output iterator to a device_vector
             device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
@@ -1076,6 +1202,8 @@ public:
 
             // This should immediately map/unmap the buffer
             dvOutput.data( );
+#endif
+            cl::transform( ctl, trf_begin, trf_end, dvOutput.begin( ), f, user_code );
         }
     }
 
@@ -1117,6 +1245,7 @@ public:
 #else
             std::transform( firstPtr, firstPtr, resPtr.get(), f );
 #endif
+            serial::transform( first, last, result, f );
             return;
 
         }
