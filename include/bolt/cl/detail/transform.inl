@@ -1037,38 +1037,41 @@ namespace btbb{
 
 namespace cl{
 
-    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
     typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        bolt::cl::device_vector_tag
                                      >::value
                        >::type
-    transform( ::bolt::cl::control &ctl, const Iterator& first, const Iterator& last,
+    transform( ::bolt::cl::control &ctl, const InputIterator& first, const InputIterator& last,
     const OutputIterator& result, const UnaryFunction& f, const std::string& user_code)
     {
         std::cout << "Inside CL  bolt::cl::device_vector_tag \n";
         return;
     }
     
-    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
     typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        std::random_access_iterator_tag
                                      >::value
                            >::type
-    transform( ::bolt::cl::control &ctl, const Iterator& first, const Iterator& last,
+    transform( ::bolt::cl::control &ctl, const InputIterator& first, const InputIterator& last,
     const OutputIterator& result, const UnaryFunction& f, const std::string& user_code )
     {
         std::cout << "Inside CL std::random_access_iterator_tag \n";
-        typedef typename std::iterator_traits<TrfIterator>::value_type iType;
+        size_t sz = (last - first);
+        if (sz == 0)
+            return;
+        typedef typename std::iterator_traits<InputIterator>::value_type  iType;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        device_vector< iType > dvInput( first/*.base()*/, last/*.base()*/, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+        device_vector< iType > dvInput( first.base(), last.base(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         // Map the output iterator to a device_vector
         device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
-
+        
         //Create transform iterators
         //TODO - Ideally I do not want to create a transform_iterator here. It should automatically take care of that. 
-        bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_begin(dvInput.begin( ), first.functor( ));
-        bolt::cl::transform_iterator< TrfIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_end(dvOutput.end( ), last.functor( ) );
-
+        bolt::cl::transform_iterator< InputIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_begin(dvInput.begin( ), first.functor( ));
+        bolt::cl::transform_iterator< InputIterator::unary_func, bolt::cl::device_vector< iType >::iterator> trf_end(dvOutput.end( ), last.functor( ) );
+        
         transform_unary_trf_itr_enqueue( ctl, trf_begin, trf_end, dvOutput.begin( ), f, user_code );
 
         // This should immediately map/unmap the buffer
@@ -1080,38 +1083,29 @@ namespace cl{
 
 
 namespace serial{
-    template <typename Iterator>
-    typename std::enable_if< std::is_same< typename std::iterator_traits< Iterator >::iterator_category ,
-                                       bolt::cl::transform_iterator_tag
-                                     >::value, 
-                             bolt::cl::transform_iterator<Iterator::unary_func, Iterator::pointer>
-                       >::type
-    make_fancy_iterator(Iterator::pointer ptr)
-    {
-        //Iterator::pointer temp = itr.base( ).getContainer( ).data( );
-        return bolt::cl::make_transform_iterator(ptr, itr.functor());
-    }
-    
-    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+
+
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
     typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        bolt::cl::device_vector_tag
                                      >::value
                        >::type
-    transform( const Iterator& first, const Iterator& last,
-    const OutputIterator& result, const UnaryFunction& f)
+    transform( const InputIterator& first, const InputIterator& last,
+               const OutputIterator& result, const UnaryFunction& f)
     {
             std::cout << "Inside Serial bolt::cl::device_vector_tag \n";
             size_t sz = (last - first);
             if (sz == 0)
                 return;
-            typedef typename std::iterator_traits<Iterator>::value_type iType;
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
             typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-            typedef typename Iterator::pointer raw_ptr;
-            typename bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
-            Iterator::pointer pFirst = first.base( ).getContainer( ).data( );
-            
-            std::transform( make_fancy_iterator(pFirst), make_fancy_iterator(pFirst + sz), resPtr.get(), f );
-            return;        
+            //typedef typename Iterator::pointer raw_ptr;
+            typename bolt::cl::device_vector< iType >::pointer firstPtr = first.base().getContainer( ).data( );
+            typename bolt::cl::device_vector< oType >::pointer resPtr   = result.getContainer( ).data( );
+           
+            std::transform( first.mapped_itr ( firstPtr.get() ), 
+                            first.mapped_itr ( firstPtr.get() + sz), resPtr.get(), f );
+            return;
     }
     
     template<typename Iterator, typename OutputIterator, typename UnaryFunction>
@@ -1174,7 +1168,6 @@ namespace serial{
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
              throw std::runtime_error( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
-
 #endif
             return;
         }
@@ -1203,7 +1196,7 @@ namespace serial{
             // This should immediately map/unmap the buffer
             dvOutput.data( );
 #endif
-            cl::transform( ctl, trf_begin, trf_end, dvOutput.begin( ), f, user_code );
+            cl::transform( ctl, first, last, result, f, user_code );
         }
     }
 
@@ -1232,7 +1225,7 @@ namespace serial{
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
             #endif
-            typename bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer<bolt::cl::device_vector< iType > >( ).data( );
+/*            typename bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer<bolt::cl::device_vector< iType > >( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
             typedef typename bolt::cl::transform_iterator<TrfIterator::unary_func, iType * > raw_trf_itr;
             
@@ -1245,6 +1238,7 @@ namespace serial{
 #else
             std::transform( firstPtr, firstPtr, resPtr.get(), f );
 #endif
+*/
             serial::transform( first, last, result, f );
             return;
 
@@ -1258,10 +1252,10 @@ namespace serial{
                 #endif
                 // TODO fix the transfrom iterator for TBB codes, here its is not iterating over the transfrom iterator.
                 //        instead it is iterating over the raw buffer. 
-                auto start_ptr = &(*(first.base()) );
-                auto end_ptr = &(*(last.base()) );
+                //auto start_ptr = &(*(first.base()) );
+                //auto end_ptr = &(*(last.base()) );
                 //TODO  Need to enable this.
-                //bolt::btbb::transform(first, last, result, f);
+                btbb::transform(first, last, result, f);
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
              throw std::runtime_error( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
@@ -1273,7 +1267,8 @@ namespace serial{
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
             #endif
-            transform_unary_trf_itr_enqueue( ctl, first, last, result, f, user_code );
+            //transform_unary_trf_itr_enqueue( ctl, first, last, result, f, user_code );
+            cl::transform(ctl, first, last, result, f, user_code);
         }
     }
 
@@ -1346,7 +1341,6 @@ namespace serial{
 
 // two-input transform, std:: iterator
 template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
-
 void transform( bolt::cl::control& ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 first2,
                 OutputIterator result, BinaryFunction f, const std::string& user_code )
 {

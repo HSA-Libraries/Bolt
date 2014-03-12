@@ -124,6 +124,16 @@ namespace cl
       : super_t(t.base()), m_f(t.functor())
    { }
 
+    
+    transform_iterator<UnaryFunc, value_type*> 
+    mapped_itr(value_type* ptr) const
+    {
+        return transform_iterator<UnaryFunc, value_type*>(ptr);
+    }
+   // transform_iterator( value_type * ptr, UnaryFunc f )
+   //   : super_t(ptr), m_f(t.functor())
+   //{ }
+
     UnaryFunc functor() const
       { return m_f; }
 
