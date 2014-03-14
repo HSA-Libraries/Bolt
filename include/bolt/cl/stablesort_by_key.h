@@ -22,6 +22,7 @@
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/sort_by_key.h"
+#include "bolt/cl/copy.h"
 
 namespace bolt {
 namespace cl {

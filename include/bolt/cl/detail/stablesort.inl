@@ -196,7 +196,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
     cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
 	//  Allocate a flipflop buffer because the merge passes are out of place
-    control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
 
     typename DVRandomAccessIterator::Payload first_payload = first.gpuPayload();
 	typename DVRandomAccessIterator::Payload first_payload2 = first.gpuPayload( );
@@ -237,6 +236,8 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     //  Check to see if the input vector size is a power of 2, if not we will need last merge pass
     size_t vecPow2 = (vecSize & (vecSize-1));
     numMerges += vecPow2? 1: 0;
+
+	device_vector< iType >       tmpBuffer( globalRange);
 	ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
      // Size of scratch buffer
     V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
@@ -245,12 +246,13 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
      // User provided functor
     V_OPENCL( kernels[ 1 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
 
+
     ::cl::Event kernelEvent;
     for( size_t pass = 1; pass <= numMerges; ++pass )
     {
         //  For each pass, flip the input-output buffers
        typename DVRandomAccessIterator::Payload first1 = first.gpuPayload( );
-       typename DVRandomAccessIterator::Payload first2 = first.gpuPayload( );
+	   typename DVRandomAccessIterator::Payload first2 = tmpBuffer.begin().gpuPayload( );
        if( pass & 0x1 )
         {
              // Input buffer
@@ -258,15 +260,15 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
             V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ),&first1 ),
                                           "Error setting a kernel argument" );
              // Input buffer
-            V_OPENCL( kernels[ 1 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" );
-            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ),&first2 ),
+            V_OPENCL( kernels[ 1 ].setArg( 2, tmpBuffer.begin().getContainer().getBuffer()),    "Error setting argument for kernels[ 0 ]" );
+            V_OPENCL( kernels[ 1 ].setArg( 3, tmpBuffer.begin().gpuPayloadSize( ),&first2 ),
                                            "Error setting a kernel argument" );
         }
         else
         {
              // Input buffer
-            V_OPENCL( kernels[ 1 ].setArg( 0, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" );
-            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first1 ),
+            V_OPENCL( kernels[ 1 ].setArg( 0, tmpBuffer.begin().getContainer().getBuffer()),    "Error setting argument for kernels[ 0 ]" );
+            V_OPENCL( kernels[ 1 ].setArg( 1, tmpBuffer.begin().gpuPayloadSize( ), &first2 ),
                                            "Error setting a kernel argument" );
              // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]");
@@ -288,7 +290,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         else
         {
             l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
-                    ::cl::NDRange( localRange ), NULL, NULL );
+                    ::cl::NDRange( localRange ), NULL, &kernelEvent );
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
         }
 
@@ -298,12 +300,15 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     //  the results back into the input array
     if( numMerges & 1 )
     {
-        ::cl::Event copyEvent;
+
+		detail::copy_enqueue(ctrl, tmpBuffer.begin(), vecSize, first);
+
+       /* ::cl::Event copyEvent;
         wait( ctrl, kernelEvent );
-        l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getContainer().getBuffer(), 0, first.m_Index * sizeof( iType ),
+        l_Error = myCQ.enqueueCopyBuffer( tmpBuffer.begin().getContainer().getBuffer(), first.getContainer().getBuffer(), 0, first.m_Index * sizeof( iType ),
             vecSize * sizeof( iType ), NULL, &copyEvent );
         V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
-        wait( ctrl, copyEvent );
+        wait( ctrl, copyEvent );*/
     }
     else
     {
