@@ -139,13 +139,13 @@ uint lowerBoundLinear( global sType* data, uint left, uint right, sType searchVa
 //  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
 //  passed as a functor parameter lessOp
 //  This function returns an index that is the first index whos value would be equal to the searched value
-template< typename sType, typename StrictWeakOrdering >
-uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+template< typename dIterType, typename dPtrType, typename sType, typename StrictWeakOrdering >
+uint lowerBoundBinary( dIterType source_iter, dPtrType *source_ptr, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
 {
     //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
     uint firstIndex = left;
     uint lastIndex = right;
-    
+    source_iter.init(source_ptr);
     //  This loops through [firstIndex, lastIndex)
     //  Since firstIndex and lastIndex will be different for every thread depending on the nested branch,
     //  this while loop will be divergent within a wavefront
@@ -153,7 +153,7 @@ uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVa
     {
         //  midIndex is the average of first and last, rounded down
         uint midIndex = ( firstIndex + lastIndex ) / 2;
-        sType midValue = data[ midIndex ];
+        sType midValue = source_iter[ midIndex ];
         
         //  This branch will create divergent wavefronts
         if( (*lessOp)( midValue, searchVal ) )
@@ -176,11 +176,12 @@ uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVa
 //  passed as a functor parameter lessOp
 //  This function returns an index that is the first index whos value would be greater than the searched value
 //  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
-template< typename sType, typename StrictWeakOrdering >
-uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+template< typename dIterType, typename dPtrType, typename sType, typename StrictWeakOrdering >
+uint upperBoundBinary( dIterType source_iter, dPtrType *source_ptr, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
 {
-    uint upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
+    uint upperBound = lowerBoundBinary( source_iter, source_ptr, left, right, searchVal, lessOp );
     
+	source_iter.init(source_ptr);
      //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
     //  upperBound is always between left and right or equal to right
     //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
@@ -188,13 +189,13 @@ uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVa
     {
         //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
         uint mid = 0;
-        sType upperValue = data[ upperBound ];
+        sType upperValue = source_iter[ upperBound ];
         //This loop is a kind of a specialized binary search. 
         //This will find the first index location which is not equal to searchVal.
         while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) && (upperBound < right))
         {
             mid = (upperBound + right)/2;
-            sType midValue = data[mid];
+            sType midValue = source_iter[mid];
             if( !(*lessOp)( midValue, searchVal ) && !(*lessOp)( searchVal, midValue) )
             {
                 upperBound = mid + 1;
@@ -204,7 +205,7 @@ uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVa
                 right = mid;
                 upperBound++;
             }
-            upperValue = data[ upperBound ];
+            upperValue = source_iter[ upperBound ];
             //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
         }
     }
@@ -234,6 +235,9 @@ kernel void mergeTemplate(
     size_t localID      = get_local_id( 0 );
     size_t wgSize       = get_local_size( 0 );
 
+	source_iter.init(source_ptr);
+	result_iter.init(result_ptr);
+
 
     //  Abort threads that are passed the end of the input vector
     if( globalID >= srcVecSize )
@@ -255,17 +259,18 @@ kernel void mergeTemplate(
     leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
     leftBlockIndex = min( leftBlockIndex, srcVecSize );
     uint rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, srcVecSize );
-    
+   
     //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
-    // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+    // uint insertionIndex = lowerBoundLinear( source_iter, source_ptr, leftBlockIndex, rightBlockIndex, search_val, lessOp ) - leftBlockIndex;
     uint insertionIndex = 0;
+	sPtrType search_val = source_iter[ globalID ];
     if( (srcBlockNum & 0x1) == 0 )
     {
-        insertionIndex = lowerBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        insertionIndex = lowerBoundBinary( source_iter, source_ptr, leftBlockIndex, rightBlockIndex, search_val, lessOp ) - leftBlockIndex;
     }
     else
     {
-        insertionIndex = upperBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        insertionIndex = upperBoundBinary( source_iter, source_ptr, leftBlockIndex, rightBlockIndex, search_val, lessOp ) - leftBlockIndex;
     }
     
     //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -273,9 +278,9 @@ kernel void mergeTemplate(
     uint dstBlockIndex = srcBlockIndex + insertionIndex;
     uint dstBlockNum = srcBlockNum/2;
     
-    result_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = source_ptr[ globalID ];
+    result_iter[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = source_iter[ globalID ];
 
-	//sPtrType val = source_ptr[ globalID ];
+	//sPtrType val = source_iter[ globalID ];
 //	if(val <= 0.0f)
 	//	printf("%d %d %f\n", globalID, groupID, val);
 
