@@ -97,12 +97,13 @@ namespace cl
 
   public:
     typedef typename transform_iterator_tag                          iterator_category;
+    typedef typename super_t                                         iterator_base_class;
     //
     typedef typename UnaryFunc                                       unary_func;
     typedef typename std::iterator_traits<Iterator>::value_type      value_type;
     typedef std::ptrdiff_t                                           difference_type;
     typedef typename std::iterator_traits<Iterator>::pointer         pointer;
-
+    typedef transform_iterator<unary_func, typename bolt::cl::device_vector<value_type>::iterator>  device_transform_iterator;
     transform_iterator() { }
 
     transform_iterator(Iterator const& x, UnaryFunc f)
@@ -130,10 +131,25 @@ namespace cl
     {
         return transform_iterator<UnaryFunc, value_type*>(ptr);
     }
+
+    transform_iterator<UnaryFunc, typename device_vector<value_type>::iterator> 
+    create_device_itr(typename device_vector<value_type>::iterator itr) const
+    {
+        return transform_iterator<UnaryFunc, device_vector<value_type>::iterator> (itr);
+    }
+
    // transform_iterator( value_type * ptr, UnaryFunc f )
    //   : super_t(ptr), m_f(t.functor())
    //{ }
 
+    operator pointer() { 
+        return &(*base_reference()); 
+    } 
+
+    operator const pointer() const { 
+        return &(*base_reference()); 
+    } 
+    
     UnaryFunc functor() const
       { return m_f; }
 

@@ -683,8 +683,14 @@ namespace cl
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
-                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin.base() ) ) );
+                    //if(std::iterator_traits<InputIterator>::iterator_category() == bolt::cl::fancy_iterator_tag())
+                    //    m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
+                    //        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin.base() ) ) );
+                    //else
+                        //value_type temp = *begin;
+                        m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
+                            reinterpret_cast< value_type* >( const_cast< value_type* >( std::addressof(*(begin) ) /*&*begin*/ ) ) );
+
                 }
                 else
                 {
@@ -703,7 +709,9 @@ namespace cl
                     l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, pointer, 0, 0 );
                     V_OPENCL( l_Error, "enqueueUnmapMemObject failed in device_vector constructor" );
                 }
-            };
+            }
+            
+
 
             /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
             *   \param rhs A pre-existing ::cl::Buffer supplied by the user.
