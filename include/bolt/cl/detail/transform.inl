@@ -30,6 +30,7 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/iterator/iterator_traits.h"
+#include "bolt/cl/iterator/addressof.h"
 
 namespace bolt {
 namespace cl {
@@ -1204,7 +1205,7 @@ namespace cl{
         typedef bolt::cl::iterator_adaptor<InputIterator, InputIterator::base_type>  ia;
         typedef InputIterator::pointer pointer;
         
-        const pointer first_pointer = first;
+        pointer first_pointer = bolt::cl::addressof(first) ;
 
         //std::cout << std::is_convertible<InputIterator,ia >::value << " *******\n";
 
