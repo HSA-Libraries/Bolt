@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <amp.h>
+#include <amp_short_vectors.h>
 #include "bolt/amp/pair.h"
 #include "bolt/amp/device_vector.h"
 #include "bolt/amp/iterator/iterator_traits.h"
@@ -56,8 +57,30 @@
 #include "bolt/btbb/sort_by_key.h"
 #endif
 
-#define BITONIC_SORT_WGSIZE 64
-#define DEBUG 1
+#define WG_SIZE                 256
+#define RADICES                 16
+#define ELEMENTS_PER_WORK_ITEM  4
+#define BITS_PER_PASS			4
+#define NUM_BUCKET				(1<<BITS_PER_PASS)
+
+//#define AtomInc(x) concurrency::atomic_fetch_inc(&(x))
+//#define AtomAdd(x, value) concurrency::atomic_fetch_add(&(x), value)
+#define USE_2LEVEL_REDUCE 
+#define uint_4 Concurrency::graphics::uint_4
+
+#define make_uint4 (uint_4)
+inline uint_4 SELECT_UINT4(uint_4 &b,uint_4 &a,uint_4  &condition )  restrict(amp)
+{
+	uint_4 res;
+	res.x = (condition.x )? b.x : a.x;
+	res.y = (condition.y )? b.y : a.y;
+	res.z = (condition.z )? b.z : a.z;
+	res.w = (condition.w )? b.w : a.w;
+	return res;
+
+}
+#define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]
+
 namespace bolt {
 namespace amp {
 
@@ -119,6 +142,102 @@ namespace detail {
             *(values_first + i) = KeyValuePairVector[i].value;
         }
     }
+	unsigned int scanLocalMemAndTotal(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	{
+		// Set first half of local memory to zero to make room for scanning
+		int l_id = t_idx.local[ 0 ];
+		int l_size = WG_SIZE;
+		lmem[l_id] = 0;
+    
+		l_id += l_size;
+		lmem[l_id] = val;
+		t_idx.barrier.wait();
+    
+		unsigned int t;
+		for (int i = 1; i < l_size; i *= 2)
+		{
+			t = lmem[l_id -  i]; 
+			t_idx.barrier.wait();
+			lmem[l_id] += t;     
+			t_idx.barrier.wait();
+		}
+		*totalSum = lmem[l_size*2 - 1];
+		return lmem[l_id-exclusive];
+	}
+	unsigned int prefixScanVectorEx( uint_4* data ) restrict(amp)
+	{
+		unsigned int sum = 0;
+		unsigned int tmp = data[0].x;
+		data[0].x = sum;
+		sum += tmp;
+		tmp = data[0].y;
+		data[0].y = sum;
+		sum += tmp;
+		tmp = data[0].z;
+		data[0].z = sum;
+		sum += tmp;
+		tmp = data[0].w;
+		data[0].w = sum;
+		sum += tmp;
+		return sum;
+	}
+	uint_4 localPrefixSum256V( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
+	{
+		unsigned int s4 = prefixScanVectorEx( &pData );
+		unsigned int rank = scanLocalMemAndTotal( s4, sorterSharedMemory, totalSum,  1, t_idx);
+		return pData + make_uint4( rank, rank, rank, rank );
+	}
+	template<typename Values>
+	void sort4BitsKeyValueAscending(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	{
+		for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
+		{
+			unsigned int mask = (1<<bitIdx);
+			uint_4 prefixSum;
+			uint_4 cmpResult = (uint_4)( (sortData[0]>>startBit) & mask, (sortData[1]>>startBit) & mask, (sortData[2]>>startBit) & mask, (sortData[3]>>startBit) & mask );
+			if(!Asc_sort)
+				prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), make_uint4(cmpResult != make_uint4(mask,mask,mask,mask)));
+			else
+				prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), make_uint4 (cmpResult != make_uint4(0,0,0,0)));
+
+			unsigned int total;
+			prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData , t_idx);
+			{
+				uint_4 localAddr = make_uint4(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
+				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
+				if(!Asc_sort)
+					dstAddr = SELECT_UINT4( prefixSum, dstAddr, make_uint4(cmpResult != make_uint4( mask,mask,mask,mask )) );
+				else
+					dstAddr = SELECT_UINT4( prefixSum, dstAddr,make_uint4( cmpResult != make_uint4(0,0,0,0) ));
+
+				t_idx.barrier.wait();
+        
+				ldsSortData[dstAddr.x] = sortData[0];
+				ldsSortData[dstAddr.y] = sortData[1];
+				ldsSortData[dstAddr.z] = sortData[2];
+				ldsSortData[dstAddr.w] = sortData[3];
+
+				ldsSortVal[dstAddr.x] = sortVal[0];
+				ldsSortVal[dstAddr.y] = sortVal[1];
+				ldsSortVal[dstAddr.z] = sortVal[2];
+				ldsSortVal[dstAddr.w] = sortVal[3];
+
+				t_idx.barrier.wait();
+
+				sortData[0] = ldsSortData[localAddr.x];
+				sortData[1] = ldsSortData[localAddr.y];
+				sortData[2] = ldsSortData[localAddr.z];
+				sortData[3] = ldsSortData[localAddr.w];
+
+				sortVal[0] = ldsSortVal[localAddr.x];
+				sortVal[1] = ldsSortVal[localAddr.y];
+				sortVal[2] = ldsSortVal[localAddr.z];
+				sortVal[3] = ldsSortVal[localAddr.w];
+
+				t_idx.barrier.wait();
+			}
+		}
+	}
 
 
     template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
@@ -146,10 +265,433 @@ namespace detail {
                          DVValues values_first,
                          StrictWeakOrdering comp)
 {
-	
+	typedef typename std::iterator_traits< DVKeys >::value_type Keys;
+    typedef typename std::iterator_traits< DVValues >::value_type Values;
+    const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
+                         //local array of 16 elements in the histogram kernel.
+    size_t orig_szElements = static_cast<size_t>(std::distance(keys_first, keys_last));
+	const unsigned int localSize  = WG_SIZE;
+
+	unsigned int szElements = (unsigned int)orig_szElements;
+    /*size_t modWgSize = (szElements & ((localSize)-1));
+    if( modWgSize )
+    {
+        szElements &= ~modWgSize;
+        szElements += (localSize);
+    }*/
+	unsigned int numGroups = 32*8;//szElements/localSize;
+	printf("Calling Radix Sort................%d\n", numGroups);
+	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
 
+	device_vector< Keys, concurrency::array > dvSwapInputKeys(static_cast<size_t>(szElements), 0);
+    device_vector< Values, concurrency::array > dvSwapInputValues(static_cast<size_t>(szElements), 0);
+    device_vector< unsigned int, concurrency::array > dvHistogramBins(static_cast<size_t>(localSize * RADICES), 0 );
+/*
+	concurrency::array< Keys >  clSwapKeys( szElements, av );
+    concurrency::array< Values >  clSwapValues( szElements, av );
+	concurrency::array< unsigned int >  clHistData( (localSize * RADICES), av );
+*/
+    auto&  clInputKeys   = keys_first.getContainer( ).getBuffer(keys_first);
+    auto&  clInputValues = values_first.getContainer( ).getBuffer(values_first);
+	auto&  clSwapKeys    = dvSwapInputKeys.begin( ).getContainer().getBuffer(dvSwapInputKeys.begin( ));
+    auto&  clSwapValues  = dvSwapInputValues.begin( ).getContainer().getBuffer(dvSwapInputValues.begin( ));
+    auto&  clHistData    = dvHistogramBins.begin( ).getContainer().getBuffer(dvHistogramBins.begin( ));
+
+	bool Asc_sort = 0;
+	if(comp(2,3))
+       Asc_sort = 1;
+
+	int swap = 0;
+    unsigned int blockSize = (int)(ELEMENTS_PER_WORK_ITEM*localSize);//set at 1024
+    unsigned int nBlocks = (int)(szElements + blockSize-1)/(blockSize);
+    struct b3ConstData
+    {
+       int m_n;
+       int m_nWGs;
+       int m_startBit;
+       int m_nBlocksPerWG;
+    };
+
+    b3ConstData cdata;
+	cdata.m_n = (int)szElements;
+	cdata.m_nWGs = (int)numGroups;
+	cdata.m_nBlocksPerWG = (int)(nBlocks + numGroups - 1)/numGroups;
+    if(nBlocks < numGroups)
+    {
+		cdata.m_nBlocksPerWG = 1;
+		numGroups = nBlocks;
+        cdata.m_nWGs = numGroups;
+	}
+     
+	concurrency::extent< 1 > inputExtent( numGroups*localSize );
+	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
+
+	for(int bits = 0; bits < (sizeof(Keys) * 8)/*Bits per Byte*/; bits += RADIX)
+    {
+          //Launch Kernel
+          cdata.m_startBit = bits;
+		  concurrency::parallel_for_each( av, tileK0, 
+				[
+					clInputKeys,
+					clSwapKeys,
+					clHistData,
+					cdata,
+					swap,
+					Asc_sort,
+					tileK0
+				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
+		  {
+			tile_static unsigned int lmem[WG_SIZE*RADICES];
+			unsigned int gIdx = t_idx.global[ 0 ];
+			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int wgIdx = t_idx.tile[ 0 ];
+			unsigned int localSize = tileK0.tile_dim0;
+			unsigned int numGroups = tileK0[0]/tileK0.tile_dim0;
+
+			const int shift = cdata.m_startBit;
+			const int dataAlignment = 1024;
+			const int n = cdata.m_n;
+			const int w_n = n + dataAlignment-(n%dataAlignment);
+			const int nWGs = cdata.m_nWGs;
+			const int nBlocksPerWG = cdata.m_nBlocksPerWG;
+
+			for(int i=0; i<RADICES; i++)
+			{
+				lmem[i*localSize+ lIdx] = 0;
+			}
+			t_idx.barrier.wait();;
+			const int blockSize = ELEMENTS_PER_WORK_ITEM*localSize;
+			int nBlocks = (w_n)/blockSize - nBlocksPerWG*wgIdx;
+			int addr = blockSize*nBlocksPerWG*wgIdx + lIdx;
+			unsigned int local_key;
+			for(int iblock=0; iblock<min(nBlocksPerWG, nBlocks); iblock++)
+			{
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++, addr+=localSize )
+				{
+					if( (addr) < n)
+					{
+						if(swap == 0)
+							local_key = (clInputKeys[addr] >> shift) & 0xFU;
+						else
+							local_key = (clSwapKeys[addr] >> shift) & 0xFU;
+						if(!Asc_sort)
+							lmem[(RADICES - local_key -1)*localSize+ lIdx]++;   
+						else
+							lmem[local_key*localSize+ lIdx]++;
+					}
+				}
+			}
+			t_idx.barrier.wait();
+			if( lIdx < RADICES )
+			{
+				unsigned int sum = 0;
+				for(unsigned int i=0; i<localSize; i++)
+				{
+					sum += lmem[lIdx*localSize+ i];
+				}
+				clHistData[lIdx * numGroups + wgIdx] = sum;
+			}
+		});
+  
+        concurrency::extent< 1 > scaninputExtent( localSize );
+		concurrency::tiled_extent< localSize > tileK1 = scaninputExtent.tile< localSize >();
+		concurrency::parallel_for_each( av, tileK1, 
+				[
+					clHistData,
+					numGroups,
+					tileK1
+				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
+		  {
+
+			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int wgSize = tileK1.tile_dim0;
+
+			tile_static unsigned int lmem[WG_SIZE*8];
+			tile_static int s_seed; 
+			s_seed = 0;
+			t_idx.barrier.wait();
     
+			bool last_thread = (lIdx < numGroups && (lIdx+1) == numGroups) ? 1 : 0;
+			//printf("top_scan n = %d\n", n);
+			for (int d = 0; d < 16; d++)
+			{
+				unsigned int val = 0;
+				if (lIdx < numGroups)
+				{
+					val = clHistData[(numGroups * d) + lIdx];
+				}
+				// Exclusive scan the counts in local memory
+				lmem[lIdx] = 0;
+				lIdx += wgSize;
+				lmem[lIdx] = val;
+				t_idx.barrier.wait();
+				// Now, perform Kogge-Stone scan
+				unsigned int t;
+				for (unsigned int i = 1; i < wgSize; i *= 2)
+				{
+					t = lmem[lIdx -  i]; 
+					t_idx.barrier.wait();
+					lmem[lIdx] += t;     
+					t_idx.barrier.wait();
+				}
+				unsigned int res =  lmem[lIdx-1];
+				// Write scanned value out to global
+				if (lIdx < numGroups)
+				{
+					clHistData[(numGroups * d) + lIdx] = res + s_seed;
+				}
+				if (last_thread) 
+				{
+					s_seed += res + val;
+				}
+				t_idx.barrier.wait();
+			}
+
+		});
+
+		concurrency::parallel_for_each( av, tileK0, 
+				[
+					clInputKeys,
+					clInputValues,
+					clSwapKeys,
+					clSwapValues,
+					clHistData,
+					cdata,
+					swap,
+					Asc_sort,
+					tileK0
+				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
+		  {
+
+			tile_static unsigned int ldsSortData[WG_SIZE*ELEMENTS_PER_WORK_ITEM+16];
+			tile_static Values ldsSortVal[WG_SIZE*ELEMENTS_PER_WORK_ITEM+16];
+			tile_static unsigned int localHistogramToCarry[NUM_BUCKET];
+			tile_static unsigned int localHistogram[NUM_BUCKET*2];
+
+			unsigned int gIdx = t_idx.global[ 0 ];
+			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int wgIdx = t_idx.tile[ 0 ];
+			unsigned int localSize = tileK0.tile_dim0;
+
+			const int dataAlignment = 1024;
+			const int n = cdata.m_n;
+			const int w_n = n + dataAlignment-(n%dataAlignment);
+
+			const int nWGs = cdata.m_nWGs;
+			const int startBit = cdata.m_startBit;
+			const int nBlocksPerWG = cdata.m_nBlocksPerWG;
+
+			if( lIdx < (NUM_BUCKET) )
+			{
+				if(!Asc_sort)
+					localHistogramToCarry[lIdx] = clHistData[(NUM_BUCKET - lIdx -1)*nWGs + wgIdx]; 
+				else
+					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+			}
+			t_idx.barrier.wait();
+			const int blockSize = ELEMENTS_PER_WORK_ITEM*WG_SIZE;
+			int nBlocks = w_n/blockSize - nBlocksPerWG*wgIdx;
+			int addr = blockSize*nBlocksPerWG*wgIdx + ELEMENTS_PER_WORK_ITEM*lIdx;
+			for(int iblock=0; iblock<min(nBlocksPerWG, nBlocks); iblock++, addr+=blockSize)
+			{
+				unsigned int myHistogram = 0;
+				unsigned int sortData[ELEMENTS_PER_WORK_ITEM];
+				Values sortVal[ELEMENTS_PER_WORK_ITEM];
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+				{
+					if(!Asc_sort)
+					{
+						if(swap == 0)
+						{
+							sortData[i] = ( addr+i < n )? clInputKeys[ addr+i ] : 0x0;
+							sortVal[i]  = ( addr+i < n )? clInputValues[ addr+i ] : 0x0;
+						}
+						else
+						{
+							sortData[i] = ( addr+i < n )? clSwapKeys[ addr+i ] : 0x0;
+							sortVal[i]  = ( addr+i < n )? clSwapValues[ addr+i ] : 0x0;
+						}
+					}
+					else
+					{
+						if(swap == 0)
+						{
+							sortData[i] = ( addr+i < n )? clInputKeys[ addr+i ] : 0xffffffff;
+							sortVal[i]  = ( addr+i < n )? clInputValues[ addr+i ] : 0xffffffff;
+						}
+						else
+						{
+							sortData[i] = ( addr+i < n )? clSwapKeys[ addr+i ] : 0xffffffff;
+							sortVal[i]  = ( addr+i < n )? clSwapValues[ addr+i ] : 0xffffffff;
+						}
+					}
+				}
+				
+				//printf("Before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
+				//sort4Bits1KeyValue(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal);
+				sort4BitsKeyValueAscending(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
+
+				//printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
+				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+					keys[i] = (sortData[i]>>startBit) & 0xf;
+				
+				{	
+					unsigned int setIdx = lIdx/16;
+					if( lIdx < NUM_BUCKET )
+					{
+						localHistogram[lIdx] = 0;
+					}
+					ldsSortData[lIdx] = 0;
+					t_idx.barrier.wait();
+					
+					for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+					{
+						//if( addr+i < n )
+						{
+							for(unsigned int j=0; j<localSize; j++)
+							{
+								if(j == lIdx)
+									if( addr+i < n )
+										if(!Asc_sort)
+											++ldsSortData[(setIdx)*NUM_BUCKET+(NUM_BUCKET - keys[i] - 1)];
+										else
+											++ldsSortData[(setIdx)*NUM_BUCKET+ keys[i]];
+								t_idx.barrier.wait();
+							}
+							//#define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]*/
+							/*if(!Asc_sort)
+								AtomInc( SET_HISTOGRAM( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
+							else
+								AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );*/
+								
+						}
+					}
+					t_idx.barrier.wait();
+					unsigned int hIdx = NUM_BUCKET+lIdx;
+					if( lIdx < NUM_BUCKET )
+					{
+						unsigned int sum = 0;
+						for(int i=0; i<WG_SIZE/16; i++)
+						{
+							sum += SET_HISTOGRAM( i, lIdx );
+						}
+						myHistogram = sum;
+						localHistogram[hIdx] = sum;
+					}
+					t_idx.barrier.wait();
+
+		#if defined (USE_2LEVEL_REDUCE)
+					if( lIdx < NUM_BUCKET )
+					{
+						localHistogram[hIdx] = localHistogram[hIdx-1];
+					}
+					t_idx.barrier.wait();
+					unsigned int u0, u1, u2;
+					if( lIdx < NUM_BUCKET )
+					{
+						u0 = localHistogram[hIdx-3];
+						u1 = localHistogram[hIdx-2];
+						u2 = localHistogram[hIdx-1];
+					}
+						//AtomAdd( localHistogram[hIdx], u0 + u1 + u2 );
+						t_idx.barrier.wait();
+						for(unsigned int j=0; j<localSize; j++)
+						{
+							if(j == lIdx)
+								if( lIdx < NUM_BUCKET )
+									localHistogram[hIdx] += u0 + u1 + u2;
+							t_idx.barrier.wait();
+						}
+					//}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+					{
+						u0 = localHistogram[hIdx-12];
+						u1 = localHistogram[hIdx-8];
+						u2 = localHistogram[hIdx-4];
+					}
+						//AtomAdd( localHistogram[hIdx], u0 + u1 + u2 );
+						t_idx.barrier.wait();
+						for(unsigned int j=0; j<localSize; j++)
+						{
+							if(j == lIdx)
+								if( lIdx < NUM_BUCKET )
+									localHistogram[hIdx] += u0 + u1 + u2;
+							t_idx.barrier.wait();
+						}
+					//}
+					t_idx.barrier.wait();
+		#else
+					if( lIdx < NUM_BUCKET )
+					{
+						localHistogram[hIdx] = localHistogram[hIdx-1];
+						t_idx.barrier.wait();;
+						localHistogram[hIdx] += localHistogram[hIdx-1];
+						t_idx.barrier.wait();;
+						localHistogram[hIdx] += localHistogram[hIdx-2];
+						t_idx.barrier.wait();;
+						localHistogram[hIdx] += localHistogram[hIdx-4];
+						t_idx.barrier.wait();;
+						localHistogram[hIdx] += localHistogram[hIdx-8];
+						t_idx.barrier.wait();;
+					}
+		#endif
+					
+					t_idx.barrier.wait();
+				}
+				
+				{
+					for(int ie=0; ie<ELEMENTS_PER_WORK_ITEM; ie++)
+					{
+						int dataIdx = ELEMENTS_PER_WORK_ITEM*lIdx+ie;
+						int binIdx;
+						int groupOffset;
+						if(!Asc_sort)
+						{
+							binIdx = NUM_BUCKET - keys[ie] - 1;
+							groupOffset = localHistogramToCarry[NUM_BUCKET - binIdx -1];
+						}
+						else
+						{
+							binIdx = keys[ie];
+							groupOffset = localHistogramToCarry[binIdx];
+						}
+						int myIdx = dataIdx - localHistogram[NUM_BUCKET+binIdx];
+						if( addr+ie < n )
+						{
+							if ((groupOffset + myIdx)<n)
+							{
+								if(swap == 0)
+								{
+									clSwapKeys[ groupOffset + myIdx ] = sortData[ie];
+									clSwapValues[ groupOffset + myIdx ] = sortVal[ie];
+								}
+								else
+								{
+									clInputKeys[ groupOffset + myIdx ] = sortData[ie];
+									clInputValues[ groupOffset + myIdx ] = sortVal[ie];
+								}
+							}
+						}
+					}
+				}
+				t_idx.barrier.wait();
+				if( lIdx < NUM_BUCKET )
+				{
+					if(!Asc_sort)
+						localHistogramToCarry[NUM_BUCKET - lIdx -1] += myHistogram;
+					else
+						localHistogramToCarry[lIdx] += myHistogram;
+				}
+				t_idx.barrier.wait();
+				
+			}
+		 });
+
+		 swap = swap? 0: 1;
+	}
     return;
 }
 
@@ -165,7 +707,7 @@ namespace detail {
                          StrictWeakOrdering comp)
 {
     
-	printf("****************************\n");
+	printf("Not Implemented yet\n");
   
     return;
 }
@@ -270,7 +812,7 @@ namespace detail {
 		else 
 		{
             
-
+			printf("Enqueue for STD vector................%d\n", szElements);
 			device_vector< T_keys, concurrency::array_view > dvInputKeys(   keys_first, keys_last, true, ctl );
 			device_vector<  T_values, concurrency::array_view > dvInputValues(  values_first, szElements, true, ctl );
 
