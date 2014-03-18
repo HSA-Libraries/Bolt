@@ -245,16 +245,16 @@ namespace cl
                     return *this;
                 }
 
-                iterator_base< Container > & base() const
+                iterator_base< Container > & base() 
                 {
-                    return this;
+                    return *this;
                 }
 
-                iterator_base< Container > & create_device_itr(iterator_base< Container >) const 
+                const iterator_base< Container > & base() const
                 {
-                    return this;
+                    return *this;
                 }
-    
+                
                 iterator_base< Container > & operator+= ( const difference_type & n )
                 {
                     advance( n );
@@ -715,7 +715,7 @@ namespace cl
                     std::copy( begin, end,  stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
 #else
                     std::copy( begin, end, pointer );
-#endif
+#endif             
                     l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, pointer, 0, 0 );
                     V_OPENCL( l_Error, "enqueueUnmapMemObject failed in device_vector constructor" );
                 }

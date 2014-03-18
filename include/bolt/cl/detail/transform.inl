@@ -1055,12 +1055,10 @@ namespace cl{
             return;
         typedef typename std::iterator_traits<InputIterator>::value_type  iType;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+
         /*Here I am getting the device _vector iterator*/
-        //device_vector< iType > dvInput( first, last/*.base()*/, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         device_vector< iType >::iterator itr_device_first = first.base();
-        //device_vector< iType >::iterator itr_device_last  = last.base();
-        // Map the output iterator to a device_vector
-        //device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
+
         
         //transform_unary_trf_itr_enqueue( ctl, trf_begin, trf_end, dvOutput.begin( ), f, user_code );
         //auto itr_first = first.create_device_itr(itr_device_first);
@@ -1214,8 +1212,8 @@ namespace cl{
 
         device_vector< iType > dvInput( first_pointer, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
         device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
-        auto device_iterator_first = first.create_device_itr(dvInput.begin());
-        auto device_iterator_last = last.create_device_itr(dvInput.end());
+        auto device_iterator_first = bolt::cl::create_device_itr(dvInput.begin());
+        auto device_iterator_last  = bolt::cl::create_device_itr(dvInput.end());
         cl::transform(ctl, device_iterator_first, device_iterator_last, dvOutput.begin(), f, user_code);
 
         return;
@@ -1477,6 +1475,89 @@ namespace serial{
     };
 
 
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+    void transform(std::random_access_iterator_tag, ::bolt::cl::control& ctl, const InputIterator& first1,
+        const InputIterator& last1, const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code)
+    {
+       
+    }
+
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+    void transform(bolt::cl::device_vector_tag, ::bolt::cl::control& ctl, const InputIterator& first,
+        const InputIterator& last, const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code)
+    {
+        typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+
+        size_t sz = std::distance( first, last );
+        if( sz == 0 )
+            return;
+
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+             runMode = ctl.getDefaultPathToRun();
+        }
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
+        //  TBB does not have an equivalent for two input iterator std::transform
+        if( (runMode == bolt::cl::control::SerialCpu) )
+        {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
+            serial::transform( first, last, result, f );			
+            return;
+        }
+        else if( (runMode == bolt::cl::control::MultiCoreCpu) )
+        {
+
+#if defined( ENABLE_TBB )
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+            #endif
+            btbb::transform(first, last, result, f );
+#else
+             //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+             throw std::runtime_error("The MultiCoreCpu version of transform is not enabled to be built! \n" );
+
+#endif
+            return;
+        }
+        else
+        {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
+            cl::transform( ctl, first, last, result, f, user_code );
+            return;
+        }
+        return;       
+    }
+
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+    void transform(std::input_iterator_tag, ::bolt::cl::control& ctl, const InputIterator& first1,
+        const InputIterator& last1, const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code)
+    {
+        //TODO - Shouldn't we support transform for input_iterator_tag also. 
+        static_assert( std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+    }
+
+
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+    void transform(::bolt::cl::control& ctl, const InputIterator& first,
+        const InputIterator& last, const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code)
+    {
+        transform(typename  std::iterator_traits< OutputIterator >::iterator_category( ),
+                  ctl, first, last, result, f, user_code);
+    }
+
 
 } //End of detail namespace
 
@@ -1505,8 +1586,8 @@ template<typename InputIterator, typename OutputIterator, typename UnaryFunction
 void transform( ::bolt::cl::control& ctl, InputIterator first1, InputIterator last1, OutputIterator result,
                 UnaryFunction f, const std::string& user_code )
 {
-    detail::transform_unary_detect_random_access( ctl, first1, last1, result, f, user_code,
-       typename  std::iterator_traits< InputIterator >::iterator_category( ) );
+    using bolt::cl::detail::transform;
+    transform( ctl, first1, last1, result, f, user_code );
 }
 
 // default control, one-input transform, std:: iterator
@@ -1514,8 +1595,8 @@ template<typename InputIterator, typename OutputIterator, typename UnaryFunction
 void transform( InputIterator first1, InputIterator last1, OutputIterator result,
                 UnaryFunction f, const std::string& user_code )
 {
-    detail::transform_unary_detect_random_access( control::getDefault(), first1, last1, result, f, user_code,
-        typename  std::iterator_traits< InputIterator >::iterator_category( ) );
+    using bolt::cl::transform;
+    transform( control::getDefault(), first1, last1, result, f, user_code );
 }
 
 } //End of cl namespace

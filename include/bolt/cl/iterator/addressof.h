@@ -34,10 +34,9 @@ namespace cl{
 
     template <typename UnaryFunction, typename Iterator>
     typename bolt::cl::transform_iterator<typename UnaryFunction, typename Iterator>
-        create_device_itr(typename bolt::cl::device_vector<ValueType>::iterator itr)
+        create_device_itr(typename bolt::cl::device_vector<typename Iterator::value_type>::iterator itr)
     {
-
-        return transform_iterator<UnaryFunc, device_vector<value_type>::iterator> (itr);
+        return transform_iterator<typename UnaryFunction, device_vector<typename Iterator::value_type>::iterator> (itr);
     }
     
 }} //namespace bolt::cl
