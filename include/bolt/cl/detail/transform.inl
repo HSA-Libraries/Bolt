@@ -891,7 +891,7 @@ public:
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
             #endif
-            std::transform( first, last, result, f );
+            serial::transform( first, last, result, f );
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -919,15 +919,16 @@ public:
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
             // Map the input iterator to a device_vector
-            device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+            //device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             // Map the output iterator to a device_vector
-            device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+            //device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
 
-            transform_unary_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), f, user_code );
-
+            //transform_unary_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), f, user_code );
+            cl::transform(ctl, first, last, result, f, user_code);
             // This should immediately map/unmap the buffer
-            dvOutput.data( );
+            //dvOutput.data( );
         }
+        return;
     }
 
     // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
@@ -968,7 +969,7 @@ public:
             std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
                 stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
+            serial::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
 #endif
             return;
         }
@@ -983,7 +984,7 @@ public:
             typename bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
-            bolt::btbb::transform(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
+            btbb::transform(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
 
 
 #else
@@ -998,7 +999,9 @@ public:
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
             #endif
-            transform_unary_enqueue( ctl, first, last, result, f, user_code );
+            cl::transform( ctl, first, last, result, f, user_code );
+            //transform_unary_enqueue( ctl, first, last, result, f, user_code );
+            return;
         }
     }
 
@@ -1202,7 +1205,7 @@ namespace cl{
         
         //std::cout << typeid(base_Type).name() << std::endl;
         /*Here I am getting the device_vector iterator*/
-        typedef bolt::cl::iterator_adaptor<InputIterator, InputIterator::base_type>  ia;
+        //typedef bolt::cl::iterator_adaptor<InputIterator, InputIterator::base_type>  ia;
         typedef InputIterator::pointer pointer;
         
         pointer first_pointer = bolt::cl::addressof(first) ;

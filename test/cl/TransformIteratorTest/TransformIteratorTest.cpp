@@ -390,6 +390,44 @@ TEST( TransformIterator, UnaryTransformRoutine)
     }
 }
 
+TEST( Transform, UnaryTransform)
+{
+    {
+        const int length = 100;
+        std::vector< int > svInVec( length );
+        std::vector< int > svOutVec( length );
+        std::vector< int > stlOut( length );
+        bolt::BCKND::device_vector< int > dvInVec( length );
+        bolt::BCKND::device_vector< int > dvOutVec( length );
+
+        add_3 add3;
+        //square sq;
+        gen_input gen;
+        typedef std::vector< int >::const_iterator                                                          sv_itr;
+        typedef bolt::BCKND::device_vector< int >::iterator                                                 dv_itr;
+        
+        /*Generate inputs*/
+        std::generate(svInVec.begin(), svInVec.end(), gen);
+        global_id = 0;
+        bolt::BCKND::generate(dvInVec.begin(), dvInVec.end(), gen);
+        global_id = 0;
+        bolt::cl::transform(dvInVec.begin(), dvInVec.end(), dvOutVec.begin(), add3);
+        bolt::cl::transform(svInVec.begin(), svInVec.end(), svOutVec.begin(), add3);
+        ///*Compute expected results*/
+        for(int ii=0; ii<length; ii++)
+            std::cout << *(dvOutVec.begin() + ii) << "  " ;
+        std::cout << "\n\n";
+        for(int ii=0; ii<length; ii++)
+            std::cout << *(svOutVec.begin() + ii) << "  " ;
+        std::transform(svInVec.begin(), svInVec.end(), stlOut.begin(), add3);
+        ///*Check the results*/
+        cmpArrays(svOutVec, stlOut, length);
+        //cmpArrays(dvOutVec, stlOut, length);
+        global_id = 0; // Reset the global id counter
+    }
+}
+
+
 std::string temp_str_1 = BOLT_CODE_STRING(typedef bolt::cl::transform_iterator< add_3, bolt::cl::device_vector< int >::iterator > trf_add_3_itr;);
 BOLT_CREATE_TYPENAME( trf_add_3_itr );
 BOLT_CREATE_CLCODE  ( trf_add_3_itr, ClCode<add_3>::get() + bolt::cl::deviceTransformIteratorTemplate + temp_str_1);

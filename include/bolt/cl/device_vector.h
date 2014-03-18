@@ -244,6 +244,16 @@ namespace cl
                     m_Index = rhs.m_Index;
                     return *this;
                 }
+
+                iterator_base< Container > & base() const
+                {
+                    return this;
+                }
+
+                iterator_base< Container > & create_device_itr(iterator_base< Container >) const 
+                {
+                    return this;
+                }
     
                 iterator_base< Container > & operator+= ( const difference_type & n )
                 {

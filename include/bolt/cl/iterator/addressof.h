@@ -1,5 +1,6 @@
 #ifndef BOLT_ADDRESSOF_H
 #define BOLT_ADDRESSOF_H
+#include <bolt/cl/device_vector.h>
 
 namespace bolt{
 namespace cl{
@@ -17,6 +18,28 @@ namespace cl{
         pointer ptr = itr;
         return ptr;
     }
+
+
+    template <typename Iterator>
+    Iterator create_device_itr(Iterator itr)
+    {
+        return itr;
+    }
+    //Specialize device_vector iterator
+    /*template <typename ValueType>
+    bolt::cl::device_vector<ValueType>::iterator & create_device_itr(bolt::cl::device_vector<ValueType>::iterator &itr)
+    {
+        return itr;
+    }*/
+
+    template <typename UnaryFunction, typename Iterator>
+    typename bolt::cl::transform_iterator<typename UnaryFunction, typename Iterator>
+        create_device_itr(typename bolt::cl::device_vector<ValueType>::iterator itr)
+    {
+
+        return transform_iterator<UnaryFunc, device_vector<value_type>::iterator> (itr);
+    }
+    
 }} //namespace bolt::cl
 
 #endif

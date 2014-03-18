@@ -141,7 +141,7 @@ namespace cl
    // transform_iterator( value_type * ptr, UnaryFunc f )
    //   : super_t(ptr), m_f(t.functor())
    //{ }
-
+    //This is used in bolt::cl::addressof specialization for transform_iterator
     operator pointer() { 
         return &(*base_reference()); 
     } 
