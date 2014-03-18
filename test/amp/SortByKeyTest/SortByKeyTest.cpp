@@ -96,19 +96,10 @@ typename std::enable_if< !(std::is_same< typename C::value_type,float  >::value 
                        >::type
 cmpArraysSortByKey(const A& ref,const B& key, const C& value, int size)
 {
-    int failures = 8;
-    for( int i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size); ++i )
     {
-        if( (ref[ i ].key == key[ i ])  && (ref[ i ].value == value[ i ]) )
-        {
             EXPECT_EQ( ref[ i ].key, key[ i ] ) << _T( "Where i = " ) << i;
             EXPECT_EQ( ref[ i ].value, value[ i ] ) << _T( "Where i = " ) << i;
-
-			std::cout<< ref[ i ].key << key[ i ];
-        }
-        else
-            failures--;
-		
     }
     return ::testing::AssertionSuccess( );
 }
@@ -121,16 +112,10 @@ typename std::enable_if< !(std::is_same< typename D::value_type,float  >::value 
                        >::type
 cmpArraysSortByKey(const A& ref, const B& refkey, const C& key, const D& value, int size)
 {
-    int failures = 8;
-    for( int i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size); ++i )
     {
-        if( (refkey[ i ] == key[ i ])  && (ref[ i ] == value[ i ]) )
-        {
             EXPECT_EQ( refkey[ i ], key[ i ] ) << _T( "Where i = " ) << i;
             EXPECT_EQ( ref[ i ], value[ i ] ) << _T( "Where i = " ) << i;
-        }
-        else
-            failures--;
     }
     return ::testing::AssertionSuccess( );
 }
@@ -147,16 +132,10 @@ typename std::enable_if< std::is_same< typename C::value_type,float  >::value,
                        >::type
 cmpArraysSortByKey(const A& ref,const B& key, const C& value, int size)
 {
-    int failures = 8;
-    for( int i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size); ++i )
     {
-        if( (ref[ i ].key == key[ i ])  && (ref[ i ].value == value[ i ]) )
-        {
             EXPECT_FLOAT_EQ( (float) ref[ i ].key, (float) key[ i ] ) << _T( "Where i = " ) << i;
             EXPECT_FLOAT_EQ( (float) ref[ i ].value, (float) value[ i ] ) << _T( "Where i = " ) << i;
-        }
-        else
-            failures--;
     }
     return ::testing::AssertionSuccess( );
 }
@@ -167,16 +146,10 @@ typename std::enable_if< std::is_same< typename C::value_type,double  >::value,
                        >::type
 cmpArraysSortByKey(const A& ref,const B& key, const C& value, int size)
 {
-    int failures = 8;
-    for( int i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size); ++i )
     {
-        if( (ref[ i ].key == key[ i ])  && (ref[ i ].value == value[ i ]) )
-        {
             EXPECT_DOUBLE_EQ((double) ref[ i ].key, (double)key[ i ] ) << _T( "Where i = " ) << i;
             EXPECT_DOUBLE_EQ( (double) ref[ i ].value, (double) value[ i ] ) << _T( "Where i = " ) << i;
-        }
-        else
-            failures--;
     }
     return ::testing::AssertionSuccess( );
 }
@@ -191,16 +164,10 @@ typename std::enable_if< std::is_same< typename D::value_type,float  >::value,
                        >::type
 cmpArraysSortByKey(const A& ref, const B& refkey, const C& key, const D& value, int size)
 {
-    int failures = 8;
-    for( int i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size); ++i )
     {
-        if( (refkey[ i ] == key[ i ])  && (ref[ i ] == value[ i ]) )
-        {
             EXPECT_FLOAT_EQ( (float) refkey[ i ], (float) key[ i ] ) << _T( "Where i = " ) << i;
             EXPECT_FLOAT_EQ( (float) ref[ i ], (float) value[ i ] ) << _T( "Where i = " ) << i;
-        }
-        else
-            failures--;
     }
     return ::testing::AssertionSuccess( );
 }
@@ -212,16 +179,10 @@ typename std::enable_if<
                        >::type
 cmpArraysSortByKey(const A& ref, const B& refkey, const C& key, const D& value, int size)
 {
-    int failures = 8;
-    for( int i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size); ++i )
     {
-        if( (refkey[ i ] == key[ i ])  && (ref[ i ] == value[ i ]) )
-        {
             EXPECT_DOUBLE_EQ( (double) refkey[ i ],(double) key[ i ] ) << _T( "Where i = " ) << i;
             EXPECT_DOUBLE_EQ((double) ref[ i ], (double) value[ i ] ) << _T( "Where i = " ) << i;
-        }
-        else
-            failures--;
     }
     return ::testing::AssertionSuccess( );
 }
@@ -256,6 +217,7 @@ protected:
     std::vector< int > boltValues, boltKeys, boltOffsetValues, boltOffsetKeys;
     int VectorSize;
 };
+
 
 class SortbyKeyUnsignedIntegerVector: public ::testing::TestWithParam< int >
 {
@@ -2463,23 +2425,39 @@ INSTANTIATE_TEST_CASE_P( SortByKeyValues, SortbyKeyDoubleNakedPointer,::testing:
 //#if(TEST_LARGE_BUFFERS == 1)																					 
 INSTANTIATE_TEST_CASE_P( SortByKeyValues2, SortbyKeyDoubleNakedPointer,::testing::ValuesIn(TestValues2.begin(),
                                                                                      TestValues2.end() ) );		
-//#endif																					 
-#endif
+#endif																					 
 
-TEST_P( SortbyKeyIntegerNakedPointer, Inplace )
+TEST( ACPpppppppp, Normal )
 {
-    size_t endIndex = GetParam( );
+	int length = (1<<16);
+
+    std::vector< unsigned int  > stdKeys( length);
+	std::vector< unsigned int  > stdValues( length);
+	for (int i=0;i<length;i++)
+    {
+            stdKeys[i] = (int)rand();
+            stdValues[i] = stdKeys[i];
+    }
+	bolt::amp::device_vector< unsigned int  > boltKeys( stdKeys.begin(), stdKeys.end());
+	bolt::amp::device_vector< unsigned int  > boltValues( stdValues.begin(), stdValues.end());
 
     //  Calling the actual functions under test
-    stdext::checked_array_iterator< stdSortData<int>* > wrapstdValues( stdValues, endIndex );
-    std::sort( wrapstdValues, wrapstdValues + endIndex );
-    stdext::checked_array_iterator< int* > wrapboltValues( boltValues, endIndex );
-    stdext::checked_array_iterator< int* > wrapboltKeys( boltKeys, endIndex );
-    bolt::BKND::STABLE_SORT_FUNC( wrapboltKeys, wrapboltKeys + endIndex , wrapboltValues);
+    std::stable_sort( stdValues.begin( ), stdValues.end( ), bolt::amp::less<unsigned int>());
+	std::stable_sort( stdKeys.begin( ), stdKeys.end( ), bolt::amp::less<unsigned int>());
+    bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ), bolt::amp::less<unsigned int>());
+	
+    std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
+                                                                                                 stdValues.end() );
+    std::vector< int >::iterator::difference_type boltValueElements = std::distance( boltValues.begin( ),
+                                                                                     boltValues.end() );
 
-    //TODO - fix this testcase
-    //Loop through the array and compare all the values with each other
-    cmpArraysSortByKey( wrapstdValues, wrapboltKeys, wrapboltValues, VectorSize );
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdValueElements, boltValueElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdValues, boltValues);
+	cmpArrays( stdKeys, boltKeys);
+   
 }
 
 
