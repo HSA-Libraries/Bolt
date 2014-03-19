@@ -63,13 +63,14 @@
 #define BITS_PER_PASS			4
 #define NUM_BUCKET				(1<<BITS_PER_PASS)
 
-//#define AtomInc(x) concurrency::atomic_fetch_inc(&(x))
-//#define AtomAdd(x, value) concurrency::atomic_fetch_add(&(x), value)
+#define AtomInc(x) concurrency::atomic_fetch_inc(&(x))
+#define AtomAdd(x, value) concurrency::atomic_fetch_add(&(x), value)
 #define USE_2LEVEL_REDUCE 
 #define uint_4 Concurrency::graphics::uint_4
 
+
 #define make_uint4 (uint_4)
-inline uint_4 SELECT_UINT4(uint_4 &b,uint_4 &a,uint_4  &condition )  restrict(amp)
+inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
 {
 	uint_4 res;
 	res.x = (condition.x )? b.x : a.x;
@@ -194,21 +195,45 @@ namespace detail {
 		{
 			unsigned int mask = (1<<bitIdx);
 			uint_4 prefixSum;
-			uint_4 cmpResult = (uint_4)( (sortData[0]>>startBit) & mask, (sortData[1]>>startBit) & mask, (sortData[2]>>startBit) & mask, (sortData[3]>>startBit) & mask );
-			if(!Asc_sort)
-				prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), make_uint4(cmpResult != make_uint4(mask,mask,mask,mask)));
-			else
-				prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), make_uint4 (cmpResult != make_uint4(0,0,0,0)));
+			uint_4 cmpResult( (sortData[0]>>startBit) & mask, (sortData[1]>>startBit) & mask, (sortData[2]>>startBit) & mask, (sortData[3]>>startBit) & mask );
+			uint_4 temp;
 
-			unsigned int total;
-			prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData , t_idx);
+			if(!Asc_sort)
 			{
-				uint_4 localAddr = make_uint4(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
+				temp.x = (cmpResult.x != mask);
+				temp.y = (cmpResult.y != mask);
+				temp.z = (cmpResult.z != mask);
+				temp.w = (cmpResult.w != mask);
+			}
+			else
+			{
+				temp.x = (cmpResult.x != 0);
+				temp.y = (cmpResult.y != 0);
+				temp.z = (cmpResult.z != 0);
+				temp.w = (cmpResult.w != 0);
+			}
+			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
+
+			unsigned int total = 0;
+			prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData, t_idx);
+			{
+				uint_4 localAddr(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
 				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
 				if(!Asc_sort)
-					dstAddr = SELECT_UINT4( prefixSum, dstAddr, make_uint4(cmpResult != make_uint4( mask,mask,mask,mask )) );
+				{
+					temp.x = (cmpResult.x != mask);
+					temp.y = (cmpResult.y != mask);
+					temp.z = (cmpResult.z != mask);
+					temp.w = (cmpResult.w != mask);
+					}
 				else
-					dstAddr = SELECT_UINT4( prefixSum, dstAddr,make_uint4( cmpResult != make_uint4(0,0,0,0) ));
+				{
+					temp.x = (cmpResult.x != 0);
+					temp.y = (cmpResult.y != 0);
+					temp.z = (cmpResult.z != 0);
+					temp.w = (cmpResult.w != 0);
+				}
+				dstAddr = SELECT_UINT4( prefixSum, dstAddr, temp);
 
 				t_idx.barrier.wait();
         
@@ -273,38 +298,29 @@ namespace detail {
 	const unsigned int localSize  = WG_SIZE;
 
 	unsigned int szElements = (unsigned int)orig_szElements;
-    /*size_t modWgSize = (szElements & ((localSize)-1));
+    size_t modWgSize = (szElements & ((localSize)-1));
     if( modWgSize )
     {
         szElements &= ~modWgSize;
         szElements += (localSize);
-    }*/
-	unsigned int numGroups = 32*8;//szElements/localSize;
+    }
+	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
 	printf("Calling Radix Sort................%d\n", numGroups);
 	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-
-	device_vector< Keys, concurrency::array > dvSwapInputKeys(static_cast<size_t>(szElements), 0);
-    device_vector< Values, concurrency::array > dvSwapInputValues(static_cast<size_t>(szElements), 0);
-    device_vector< unsigned int, concurrency::array > dvHistogramBins(static_cast<size_t>(localSize * RADICES), 0 );
-/*
-	concurrency::array< Keys >  clSwapKeys( szElements, av );
-    concurrency::array< Values >  clSwapValues( szElements, av );
-	concurrency::array< unsigned int >  clHistData( (localSize * RADICES), av );
-*/
+	device_vector< Keys, concurrency::array > dvSwapInputKeys(static_cast<size_t>(orig_szElements), 0);
+    device_vector< Values, concurrency::array > dvSwapInputValues(static_cast<size_t>(orig_szElements), 0);
     auto&  clInputKeys   = keys_first.getContainer( ).getBuffer(keys_first);
     auto&  clInputValues = values_first.getContainer( ).getBuffer(values_first);
-	auto&  clSwapKeys    = dvSwapInputKeys.begin( ).getContainer().getBuffer(dvSwapInputKeys.begin( ));
-    auto&  clSwapValues  = dvSwapInputValues.begin( ).getContainer().getBuffer(dvSwapInputValues.begin( ));
-    auto&  clHistData    = dvHistogramBins.begin( ).getContainer().getBuffer(dvHistogramBins.begin( ));
+	auto&  clSwapKeys    = dvSwapInputKeys.begin( ).getContainer().getBuffer();
+    auto&  clSwapValues  = dvSwapInputValues.begin( ).getContainer().getBuffer();
 
 	bool Asc_sort = 0;
 	if(comp(2,3))
        Asc_sort = 1;
-
 	int swap = 0;
     unsigned int blockSize = (int)(ELEMENTS_PER_WORK_ITEM*localSize);//set at 1024
-    unsigned int nBlocks = (int)(szElements + blockSize-1)/(blockSize);
+    unsigned int nBlocks = (int)(orig_szElements + blockSize-1)/(blockSize);
     struct b3ConstData
     {
        int m_n;
@@ -312,9 +328,8 @@ namespace detail {
        int m_startBit;
        int m_nBlocksPerWG;
     };
-
     b3ConstData cdata;
-	cdata.m_n = (int)szElements;
+	cdata.m_n = (int)orig_szElements;
 	cdata.m_nWGs = (int)numGroups;
 	cdata.m_nBlocksPerWG = (int)(nBlocks + numGroups - 1)/numGroups;
     if(nBlocks < numGroups)
@@ -323,13 +338,14 @@ namespace detail {
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-     
+	device_vector< unsigned int, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups * RADICES), 0 );
+    auto&  clHistData    = dvHistogramBins.begin( ).getContainer().getBuffer();
+
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
 
-	for(int bits = 0; bits < (sizeof(Keys) * 8)/*Bits per Byte*/; bits += RADIX)
+	for(int bits = 0; bits < (sizeof(Keys) * 8); bits += RADIX)
     {
-          //Launch Kernel
           cdata.m_startBit = bits;
 		  concurrency::parallel_for_each( av, tileK0, 
 				[
@@ -360,7 +376,7 @@ namespace detail {
 			{
 				lmem[i*localSize+ lIdx] = 0;
 			}
-			t_idx.barrier.wait();;
+			t_idx.barrier.wait();
 			const int blockSize = ELEMENTS_PER_WORK_ITEM*localSize;
 			int nBlocks = (w_n)/blockSize - nBlocksPerWG*wgIdx;
 			int addr = blockSize*nBlocksPerWG*wgIdx + lIdx;
@@ -393,7 +409,8 @@ namespace detail {
 				clHistData[lIdx * numGroups + wgIdx] = sum;
 			}
 		});
-  
+
+	
         concurrency::extent< 1 > scaninputExtent( localSize );
 		concurrency::tiled_extent< localSize > tileK1 = scaninputExtent.tile< localSize >();
 		concurrency::parallel_for_each( av, tileK1, 
@@ -405,6 +422,7 @@ namespace detail {
 		  {
 
 			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int llIdx = lIdx;
 			unsigned int wgSize = tileK1.tile_dim0;
 
 			tile_static unsigned int lmem[WG_SIZE*8];
@@ -422,20 +440,7 @@ namespace detail {
 					val = clHistData[(numGroups * d) + lIdx];
 				}
 				// Exclusive scan the counts in local memory
-				lmem[lIdx] = 0;
-				lIdx += wgSize;
-				lmem[lIdx] = val;
-				t_idx.barrier.wait();
-				// Now, perform Kogge-Stone scan
-				unsigned int t;
-				for (unsigned int i = 1; i < wgSize; i *= 2)
-				{
-					t = lmem[lIdx -  i]; 
-					t_idx.barrier.wait();
-					lmem[lIdx] += t;     
-					t_idx.barrier.wait();
-				}
-				unsigned int res =  lmem[lIdx-1];
+				unsigned int res =  scanlMemPrivData(val, lmem,1, t_idx);
 				// Write scanned value out to global
 				if (lIdx < numGroups)
 				{
@@ -449,6 +454,7 @@ namespace detail {
 			}
 
 		});
+
 
 		concurrency::parallel_for_each( av, tileK0, 
 				[
@@ -489,6 +495,7 @@ namespace detail {
 				else
 					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
 			}
+
 			t_idx.barrier.wait();
 			const int blockSize = ELEMENTS_PER_WORK_ITEM*WG_SIZE;
 			int nBlocks = w_n/blockSize - nBlocksPerWG*wgIdx;
@@ -527,12 +534,8 @@ namespace detail {
 						}
 					}
 				}
-				
-				//printf("Before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
-				//sort4Bits1KeyValue(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal);
 				sort4BitsKeyValueAscending(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
 
-				//printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
 				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
 				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
 					keys[i] = (sortData[i]>>startBit) & 0xf;
@@ -548,24 +551,12 @@ namespace detail {
 					
 					for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
 					{
-						//if( addr+i < n )
+						if( addr+i < n )
 						{
-							for(unsigned int j=0; j<localSize; j++)
-							{
-								if(j == lIdx)
-									if( addr+i < n )
-										if(!Asc_sort)
-											++ldsSortData[(setIdx)*NUM_BUCKET+(NUM_BUCKET - keys[i] - 1)];
-										else
-											++ldsSortData[(setIdx)*NUM_BUCKET+ keys[i]];
-								t_idx.barrier.wait();
-							}
-							//#define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]*/
-							/*if(!Asc_sort)
+							if(!Asc_sort)
 								AtomInc( SET_HISTOGRAM( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
 							else
-								AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );*/
-								
+								AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );
 						}
 					}
 					t_idx.barrier.wait();
@@ -575,16 +566,20 @@ namespace detail {
 						unsigned int sum = 0;
 						for(int i=0; i<WG_SIZE/16; i++)
 						{
-							sum += SET_HISTOGRAM( i, lIdx );
+							sum += ldsSortData[(i)*NUM_BUCKET+lIdx];
 						}
 						myHistogram = sum;
 						localHistogram[hIdx] = sum;
 					}
 					t_idx.barrier.wait();
-
-		#if defined (USE_2LEVEL_REDUCE)
 					if( lIdx < NUM_BUCKET )
 					{
+						/*unsigned int temp;
+						if( lIdx < NUM_BUCKET )
+							temp = localHistogram[hIdx-1];
+						t_idx.barrier.wait();
+						if( lIdx < NUM_BUCKET )
+							localHistogram[hIdx] = temp;*/
 						localHistogram[hIdx] = localHistogram[hIdx-1];
 					}
 					t_idx.barrier.wait();
@@ -595,16 +590,9 @@ namespace detail {
 						u1 = localHistogram[hIdx-2];
 						u2 = localHistogram[hIdx-1];
 					}
-						//AtomAdd( localHistogram[hIdx], u0 + u1 + u2 );
-						t_idx.barrier.wait();
-						for(unsigned int j=0; j<localSize; j++)
-						{
-							if(j == lIdx)
-								if( lIdx < NUM_BUCKET )
-									localHistogram[hIdx] += u0 + u1 + u2;
-							t_idx.barrier.wait();
-						}
-					//}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+						localHistogram[hIdx] += u0 + u1 + u2;
 					t_idx.barrier.wait();
 					if( lIdx < NUM_BUCKET )
 					{
@@ -612,36 +600,11 @@ namespace detail {
 						u1 = localHistogram[hIdx-8];
 						u2 = localHistogram[hIdx-4];
 					}
-						//AtomAdd( localHistogram[hIdx], u0 + u1 + u2 );
-						t_idx.barrier.wait();
-						for(unsigned int j=0; j<localSize; j++)
-						{
-							if(j == lIdx)
-								if( lIdx < NUM_BUCKET )
-									localHistogram[hIdx] += u0 + u1 + u2;
-							t_idx.barrier.wait();
-						}
-					//}
 					t_idx.barrier.wait();
-		#else
 					if( lIdx < NUM_BUCKET )
-					{
-						localHistogram[hIdx] = localHistogram[hIdx-1];
-						t_idx.barrier.wait();;
-						localHistogram[hIdx] += localHistogram[hIdx-1];
-						t_idx.barrier.wait();;
-						localHistogram[hIdx] += localHistogram[hIdx-2];
-						t_idx.barrier.wait();;
-						localHistogram[hIdx] += localHistogram[hIdx-4];
-						t_idx.barrier.wait();;
-						localHistogram[hIdx] += localHistogram[hIdx-8];
-						t_idx.barrier.wait();;
-					}
-		#endif
-					
+						localHistogram[hIdx] += u0 + u1 + u2;
 					t_idx.barrier.wait();
 				}
-				
 				{
 					for(int ie=0; ie<ELEMENTS_PER_WORK_ITEM; ie++)
 					{
@@ -665,8 +628,8 @@ namespace detail {
 							{
 								if(swap == 0)
 								{
-									clSwapKeys[ groupOffset + myIdx ] = sortData[ie];
-									clSwapValues[ groupOffset + myIdx ] = sortVal[ie];
+									clSwapKeys[ groupOffset + myIdx ] =  sortData[ie]; 
+									clSwapValues[ groupOffset + myIdx ] =  sortVal[ie]; 
 								}
 								else
 								{
@@ -686,14 +649,38 @@ namespace detail {
 						localHistogramToCarry[lIdx] += myHistogram;
 				}
 				t_idx.barrier.wait();
-				
 			}
 		 });
-
 		 swap = swap? 0: 1;
 	}
     return;
 }
+
+
+unsigned int scanlMemPrivData( unsigned int val,  unsigned int* lmem, int exclusive, 
+	                            concurrency::tiled_index< 256 > t_idx) restrict (amp)
+{
+    // Set first half of local memory to zero to make room for scanning
+    unsigned int lIdx = t_idx.local[ 0 ];
+    unsigned int wgSize = WG_SIZE;
+    lmem[lIdx] = 0;
+    
+    lIdx += wgSize;
+    lmem[lIdx] = val;
+    t_idx.barrier.wait();
+    
+    // Now, perform Kogge-Stone scan
+     unsigned int t;
+    for (unsigned int i = 1; i < wgSize; i *= 2)
+    {
+        t = lmem[lIdx -  i]; 
+        t_idx.barrier.wait();
+        lmem[lIdx] += t;     
+        t_idx.barrier.wait();
+    }
+    return lmem[lIdx-exclusive];
+}
+
 
 
     template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
