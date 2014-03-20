@@ -101,7 +101,7 @@ namespace cl
     //
     typedef typename UnaryFunc                                       unary_func;
     typedef typename std::iterator_traits<Iterator>::value_type      value_type;
-    typedef std::ptrdiff_t                                           difference_type;
+    typedef /*std::ptrdiff_t*/int                                    difference_type;
     typedef typename std::iterator_traits<Iterator>::pointer         pointer;
     typedef transform_iterator<unary_func, typename bolt::cl::device_vector<value_type>::iterator>  device_transform_iterator;
     transform_iterator() { }

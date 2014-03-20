@@ -31,7 +31,7 @@
 #include "bolt/unicode.h"
 
 #include <gtest/gtest.h>
-
+#include "common/test_common.h"
 #include <boost/program_options.hpp>
 #define BCKND cl
 
@@ -39,136 +39,8 @@
 
 namespace po = boost::program_options;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Below are helper routines to compare the results of two arrays for googletest
-//  They return an assertion object that googletest knows how to track
-
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  The following cmpArrays verify the correctness of std::vectors's
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-
-
 BOLT_FUNCTOR(square,
     struct square
-    {
-        int operator() (const int x)  const { return x + 2; }
-        typedef int result_type;
-    };
-);
-
-BOLT_FUNCTOR(square1,
-    struct square1
     {
         int operator() (const int x)  const { return x + 2; }
         typedef int result_type;
@@ -376,16 +248,16 @@ TEST( TransformIterator, UnaryTransformRoutine)
         global_id = 0;
         bolt::cl::transform(dv_trf_begin, dv_trf_end, dvOutVec.begin(), add3);
         bolt::cl::transform(sv_trf_begin, sv_trf_end, svOutVec.begin(), add3);
+        
         ///*Compute expected results*/
         for(int ii=0; ii<length; ii++)
             std::cout << *(dvOutVec.begin() + ii) << "  " ;
         std::cout << "\n\n";
         for(int ii=0; ii<length; ii++)
             std::cout << *(svOutVec.begin() + ii) << "  " ;
-        //std::transform(sv_trf_begin, sv_trf_end, stlOut.begin(), add3);
-        ///*Check the results*/
-        //cmpArrays(svOutVec, stlOut, length);
-        //cmpArrays(svOutVec, stlOut, length);
+        std::transform(sv_trf_begin, sv_trf_end, stlOut.begin(), add3);
+        cmpArrays(svOutVec, stlOut, length);
+        cmpArrays(dvOutVec, stlOut, length);
         global_id = 0; // Reset the global id counter
     }
 }
@@ -422,7 +294,7 @@ TEST( Transform, UnaryTransform)
         std::transform(svInVec.begin(), svInVec.end(), stlOut.begin(), add3);
         ///*Check the results*/
         cmpArrays(svOutVec, stlOut, length);
-        //cmpArrays(dvOutVec, stlOut, length);
+        cmpArrays(dvOutVec, stlOut, length);
         global_id = 0; // Reset the global id counter
     }
 }
@@ -471,14 +343,34 @@ TEST( TransformIterator, BinaryTransformRoutine)
         global_id = 0;
         bolt::BCKND::generate(dvIn1Vec.begin(), dvIn1Vec.end(), gen);
         bolt::BCKND::generate(dvIn2Vec.begin(), dvIn2Vec.end(), gen);
-
-        //bolt::cl::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec.begin(), plus);
-        //bolt::cl::transform(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, dvOutVec.begin(), plus);
-        /*Compute expected results*/
-        std::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, stlOut.begin(), plus);
-        /*Check the results*/
-        //cmpArrays(svOutVec, stlOut, length);
-        //cmpArrays(svOutVec, stlOut, length);
+        global_id = 0;
+        {/*Test case when both inputs are trf Iterators*/
+            bolt::cl::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec.begin(), plus);
+            bolt::cl::transform(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, dvOutVec.begin(), plus);
+            /*Compute expected results*/
+            std::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, stlOut.begin(), plus);
+            /*Check the results*/
+            cmpArrays(svOutVec, stlOut, length);
+            cmpArrays(dvOutVec, stlOut, length);
+        }
+        {/*Test case when the first input is trf_itr and the second is a randomAccessIterator */
+            bolt::cl::transform(sv_trf_begin1, sv_trf_end1, svIn2Vec.begin(), svOutVec.begin(), plus);
+            bolt::cl::transform(dv_trf_begin1, dv_trf_end1, dvIn2Vec.begin(), dvOutVec.begin(), plus);
+            /*Compute expected results*/
+            std::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, stlOut.begin(), plus);
+            /*Check the results*/
+            cmpArrays(svOutVec, stlOut, length);
+            cmpArrays(dvOutVec, stlOut, length);
+        }
+        {/*Test case when the first input is trf_itr and the second is a randomAccessIterator */
+            bolt::cl::transform(svIn1Vec.begin(), svIn1Vec.end(), sv_trf_begin2, svOutVec.begin(), plus);
+            bolt::cl::transform(dvIn1Vec.begin(), dvIn1Vec.end(), dv_trf_begin2, dvOutVec.begin(), plus);
+            /*Compute expected results*/
+            std::transform(svIn1Vec.begin(), svIn1Vec.end(), sv_trf_begin2, stlOut.begin(), plus);
+            /*Check the results*/
+            cmpArrays(svOutVec, stlOut, length);
+            cmpArrays(dvOutVec, stlOut, length);
+        }
         global_id = 0; // Reset the global id counter
     }
 }

@@ -4,6 +4,7 @@
 
 namespace bolt{
 namespace cl{
+
     template <typename Iterator>
     typename Iterator::value_type * addressof(typename Iterator itr)
     {
@@ -20,25 +21,22 @@ namespace cl{
     }
 
 
-    template <typename Iterator>
-    Iterator create_device_itr(Iterator itr)
+    template <typename Iterator, typename DeviceIterator>
+    transform_iterator<typename Iterator::unary_func, typename DeviceIterator> 
+    create_device_itr(bolt::cl::transform_iterator_tag, Iterator &itr, DeviceIterator &dev_itr)
     {
-        return itr;
-    }
-    //Specialize device_vector iterator
-    /*template <typename ValueType>
-    bolt::cl::device_vector<ValueType>::iterator & create_device_itr(bolt::cl::device_vector<ValueType>::iterator &itr)
-    {
-        return itr;
-    }*/
+        typedef typename Iterator::unary_func unary_func;    
+        return transform_iterator<unary_func, typename DeviceIterator> (dev_itr);
+    }   
 
-    template <typename UnaryFunction, typename Iterator>
-    typename bolt::cl::transform_iterator<typename UnaryFunction, typename Iterator>
-        create_device_itr(typename bolt::cl::device_vector<typename Iterator::value_type>::iterator itr)
+    template <typename Iterator, typename DeviceIterator>
+    typename DeviceIterator 
+    create_device_itr(std::random_access_iterator_tag, Iterator &itr, DeviceIterator &dev_itr)
     {
-        return transform_iterator<typename UnaryFunction, device_vector<typename Iterator::value_type>::iterator> (itr);
-    }
-    
+        return dev_itr;
+    }   
+
+
 }} //namespace bolt::cl
 
 #endif

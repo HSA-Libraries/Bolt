@@ -236,6 +236,9 @@ namespace cl
                 iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
                 {}
 
+                iterator_base( value_type *ptr ): m_Container( ptr ), m_Index( 0 )
+                {
+                }
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
                 //template< typename Container >
                 iterator_base< Container >& operator = ( const iterator_base< Container >& rhs )
@@ -255,6 +258,12 @@ namespace cl
                     return *this;
                 }
                 
+                iterator_base< value_type* >
+                mapped_itr(value_type* ptr) const
+                {
+                    return iterator_base< value_type* >(ptr);
+                }
+
                 iterator_base< Container > & operator+= ( const difference_type & n )
                 {
                     advance( n );
