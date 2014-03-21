@@ -68,6 +68,8 @@
 #define AtomAdd(x, value) concurrency::atomic_fetch_add(&(x), value)
 #define USE_2LEVEL_REDUCE 
 #define uint_4 Concurrency::graphics::uint_4
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
 
 
 #define make_uint4 (uint_4)
@@ -384,21 +386,6 @@ namespace detail {
 		}
 		return lmem[lIdx-exclusive];
 	}
-    template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    typename std::enable_if<
-        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
-           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
-         )
-                           >::type
-    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
-                        const DVKeys& keys_last, const DVValues& values_first,
-                        const StrictWeakOrdering& comp)
-    {
-        stablesort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp);
-        return;
-    }// END of sort_by_key_enqueue
-
-
 
 template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
 void sort_by_key_enqueue_int_uint( control &ctl,
@@ -981,6 +968,19 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		return;
 	}
 
+	template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if<
+        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
+           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
+         )
+                           >::type
+    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
+                        const DVKeys& keys_last, const DVValues& values_first,
+                        const StrictWeakOrdering& comp)
+    {
+        stablesort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp);
+        return;
+    }// END of sort_by_key_enqueue
 
 
 
