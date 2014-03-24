@@ -1014,7 +1014,7 @@ TEST( Vector, DataRoutine )
 TEST( Vector, DataReadView )
 {
     std::vector< int > v( 5ul, 3 );
-    bolt::amp::device_vector< int, concurrency::array_view > dV( v );
+	bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end() );
     EXPECT_EQ( 5, dV.size( ) );
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;
@@ -1036,7 +1036,7 @@ TEST( Vector, DataReadView )
 TEST( Vector, DataWriteView )
 {
     std::vector< int > v( 5 );
-    bolt::amp::device_vector< int, concurrency::array_view > dV( v );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end()  );
     EXPECT_EQ( 5, dV.size( ) );
 
     bolt::amp::device_vector< int, concurrency::array_view  >::pointer mySP = dV.data( );
@@ -1056,7 +1056,7 @@ TEST( Vector, DataWriteView )
 TEST( Vector, ClearView )
 {
     std::vector< int > v( 5ul, 3 );
-    bolt::amp::device_vector< int, concurrency::array_view > dV( v );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end()  );
     EXPECT_EQ( 5, dV.size( ) );
     dV.clear( );
     EXPECT_EQ( 0, dV.size( ) );
@@ -1085,7 +1085,7 @@ TEST( Vector, DataRoutineView )
 {
     std::vector<int> arr( 100, 99 );
 
-    bolt::amp::device_vector< int, concurrency::array_view > av( arr );
+    bolt::amp::device_vector< int, concurrency::array_view > av( arr.begin(), arr.end()  );
 
     av[50] = 0;
     av.data( );
@@ -1097,7 +1097,7 @@ TEST( Vector, ArrayViewBegin )
 {
     std::vector<int> arr( 100, 99 );
 
-    bolt::amp::device_vector< int, concurrency::array_view > av( arr );
+    bolt::amp::device_vector< int, concurrency::array_view > av( arr.begin(), arr.end()  );
 
     bolt::amp::device_vector< int, concurrency::array_view >::iterator avIT = av.begin( );
 

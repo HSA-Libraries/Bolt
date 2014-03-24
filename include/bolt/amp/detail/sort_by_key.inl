@@ -1084,7 +1084,6 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		else 
 		{
             
-			printf("Enqueue for STD vector................%d\n", szElements);
 			device_vector< T_keys, concurrency::array_view > dvInputKeys(   keys_first, keys_last, true, ctl );
 			device_vector<  T_values, concurrency::array_view > dvInputValues(  values_first, szElements, true, ctl );
 

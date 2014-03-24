@@ -16,7 +16,7 @@
 ***************************************************************************/
 
 #define TEST_DOUBLE 1
-#define TEST_LARGE_BUFFERS 0
+#define TEST_LARGE_BUFFERS 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
@@ -123,10 +123,6 @@ cmpArraysSortByKey(const A& ref, const B& refkey, const C& key, const D& value, 
 
 //  A very generic template that takes two container, and compares their values assuming a vector interface
 template< typename A, typename B, typename C >
-//typename std::enable_if< std::is_same< typename C::value_type,float  >::value ||
-//                         std::is_same< typename C::value_type,double >::value,
-//                         ::testing::AssertionResult
-//                       >::type
 typename std::enable_if< std::is_same< typename C::value_type,float  >::value,
                          ::testing::AssertionResult
                        >::type
@@ -155,10 +151,6 @@ cmpArraysSortByKey(const A& ref,const B& key, const C& value, int size)
 }
 
 template< typename A, typename B, typename C, typename D >
-//typename std::enable_if< std::is_same< typename D::value_type,float  >::value ||
-//                         std::is_same< typename D::value_type,double >::value,
-//                         ::testing::AssertionResult
-//                       >::type
 typename std::enable_if< std::is_same< typename D::value_type,float  >::value,
                          ::testing::AssertionResult
                        >::type
@@ -201,12 +193,12 @@ class SortbyKeyIntegerVector: public ::testing::TestWithParam< int >
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = i+3;
+            stdValues[i].value = i+3;//stdValues[i].key; 
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
 
             stdOffsetValues[i].key = rand();
-            stdOffsetValues[i].value = i+3;
+            stdOffsetValues[i].value = i+3;//stdOffsetValues[i].key; 
             boltOffsetValues[i] = stdOffsetValues[i].value;
             boltOffsetKeys[i] = stdOffsetValues[i].key;
         }
@@ -229,12 +221,12 @@ class SortbyKeyUnsignedIntegerVector: public ::testing::TestWithParam< int >
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = i+3;
+            stdValues[i].value = rand();//(unsigned int) stdValues[i].key;
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
 
             stdOffsetValues[i].key = rand();
-            stdOffsetValues[i].value = i+3;
+            stdOffsetValues[i].value = rand(); //(unsigned int) stdOffsetValues[i].key;
             boltOffsetValues[i] = stdOffsetValues[i].value;
             boltOffsetKeys[i] = stdOffsetValues[i].key;
         }
@@ -256,12 +248,12 @@ public:
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = (float)(i+3);
+            stdValues[i].value = /*(float) stdValues[i].key;*/ (float)(rand());
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
 
             stdOffsetValues[i].key = rand();
-            stdOffsetValues[i].value = (float)(i+3);
+            stdOffsetValues[i].value = /*(float) stdOffsetValues[i].key;*/ (float)(rand());
             boltOffsetValues[i] = stdOffsetValues[i].value;
             boltOffsetKeys[i] = stdOffsetValues[i].key;
         }
@@ -285,12 +277,12 @@ public:
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = (double)(i+3);
+            stdValues[i].value = (double) i+3;
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
 
             stdOffsetValues[i].key = rand();
-            stdOffsetValues[i].value = (double)(i+3);
+            stdOffsetValues[i].value = (double) i+3;
             boltOffsetValues[i] = stdOffsetValues[i].value;
             boltOffsetKeys[i] = stdOffsetValues[i].key;
         }
@@ -340,7 +332,7 @@ public:
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = (float)(i+3);
+            stdValues[i].value = (float)(rand());
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
         }
@@ -365,7 +357,7 @@ public:
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = (double)(i+3);
+            stdValues[i].value = (double)(rand());
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
         }
@@ -428,7 +420,7 @@ public:
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = (float)(i+3);
+            stdValues[i].value = (float)(rand());
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
         }
@@ -656,12 +648,12 @@ class SortbyFloatKeyVector: public ::testing::TestWithParam< int >
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = (float) rand();
-            stdValues[i].value = (float) i+3;
+            stdValues[i].value = (float)  i+3;
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
 
             stdOffsetValues[i].key = (float) rand();
-            stdOffsetValues[i].value = (float) i+3;
+            stdOffsetValues[i].value = (float)i+3;
             boltOffsetValues[i] = stdOffsetValues[i].value;
             boltOffsetKeys[i] = stdOffsetValues[i].key;
         }
@@ -677,21 +669,32 @@ class SortbyFloatDeviceKeyVector: public ::testing::TestWithParam< int >
 {
     public:
 
-    SortbyFloatDeviceKeyVector( ): stdValues( GetParam( ) ), stdKeys( GetParam( ) ), 
-                                    stdOffsetValues( GetParam( ) ),  stdOffsetKeys( GetParam( ) ), VectorSize(GetParam( )) 
+    SortbyFloatDeviceKeyVector( ): stdValues( GetParam( ) ),Values( GetParam( ) ), OffsetValues(GetParam( ) ), 
+                                    stdOffsetValues( GetParam( ) ),  stdKeys(GetParam()), stdOffsetKeys(GetParam()), VectorSize(GetParam( ))
     {
         for (int i=0;i<GetParam( );i++)
         {
-            stdKeys[i]= (float) rand();
+            /*stdKeys[i]= (float) rand();
             stdValues[i] = (float) i+3;
            
             stdOffsetKeys[i] = (float) rand();
-            stdOffsetValues[i] = (float) i+3;
+            stdOffsetValues[i] = (float) i+3;*/
+
+			Values[i].key = (float) rand();
+            Values[i].value = (float)i+3;
+            stdKeys[i] = Values[i].key;
+            stdValues[i] = Values[i].value;
+
+			OffsetValues[i].key = (float) rand();
+            OffsetValues[i].value = (float)rand();
+            stdOffsetKeys[i] = OffsetValues[i].key;
+            stdOffsetValues[i] = OffsetValues[i].value;
           
         }
     }
 
 protected:
+	std::vector< stdSortDataKey<float> > Values, OffsetValues;
 	std::vector< float > stdValues, stdOffsetValues, stdKeys, stdOffsetKeys;
     //std::vector< stdSortDataKey<float> > stdValues, stdOffsetValues;
     //bolt::amp::device_vector< float > boltValues, boltKeys, boltOffsetValues, boltOffsetKeys;
@@ -708,12 +711,12 @@ class SortbyDoubleKeyVector: public ::testing::TestWithParam< int >
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = (double) i+3;
+            stdValues[i].value = rand();
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
 
             stdOffsetValues[i].key = rand();
-            stdOffsetValues[i].value = (double) i+3;
+            stdOffsetValues[i].value = rand();
             boltOffsetValues[i] = stdOffsetValues[i].value;
             boltOffsetKeys[i] = stdOffsetValues[i].key;
         }
@@ -729,20 +732,32 @@ class SortbyDoubleDeviceKeyVector: public ::testing::TestWithParam< int >
 {
     public:
 
-    SortbyDoubleDeviceKeyVector( ): stdValues( GetParam( ) ), stdKeys( GetParam( ) ), 
-                                    stdOffsetValues( GetParam( ) ),  stdOffsetKeys( GetParam( ) ), VectorSize(GetParam( )) 
+    SortbyDoubleDeviceKeyVector( ): stdValues( GetParam( ) ),Values( GetParam( ) ), OffsetValues(GetParam( ) ), 
+                                    stdOffsetValues( GetParam( ) ),  stdKeys(GetParam()), stdOffsetKeys(GetParam()), VectorSize(GetParam( ))
     {
         for (int i=0;i<GetParam( );i++)
         {
-            stdKeys[i] = rand();
+            /*stdKeys[i] = rand();
             stdValues[i] = (double) i+3;
 
             stdOffsetKeys[i] = rand();
-            stdOffsetValues[i] = (double) i+3;
+            stdOffsetValues[i] = (double) i+3;*/
+
+
+			Values[i].key = rand();
+            Values[i].value = (double) i+3;
+            stdKeys[i] = Values[i].key;
+            stdValues[i] = Values[i].value;
+
+			OffsetValues[i].key = rand();
+            OffsetValues[i].value = (double)i+3;
+            stdOffsetKeys[i] = OffsetValues[i].key;
+            stdOffsetValues[i] = OffsetValues[i].value;
         }
     }
 
 protected:
+	std::vector< stdSortDataKey<double> > Values, OffsetValues;
 	std::vector< double > stdValues, stdOffsetValues, stdKeys, stdOffsetKeys;
     //std::vector< stdSortDataKey<double> > stdValues, stdOffsetValues;
     //bolt::amp::device_vector< double > boltValues, boltKeys, boltOffsetValues, boltOffsetKeys;
@@ -768,7 +783,7 @@ public:
         for (int i=0;i<GetParam( );i++)
         {
             stdValues[i].key = rand();
-            stdValues[i].value = (double)(i+3);
+            stdValues[i].value = (double)rand();
             boltValues[i] = stdValues[i].value;
             boltKeys[i] = stdValues[i].key;
         }
@@ -865,7 +880,7 @@ TEST_P(SortByKeyCountingIterator, DVwithCountingIterator)
 
 } */
 
-#if 0
+//#if 0
 #if (TEST_DOUBLE == 1)
 TEST( SortbyUDDKeyVectorTest, Normal )
 {
@@ -1098,7 +1113,7 @@ TEST_P( SortbyUDDDeviceKeyVector, MultiCore )
 TEST_P( SortbyDoubleKeyVector, Normal )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1122,8 +1137,8 @@ TEST_P( SortbyDoubleKeyVector, Normal )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( )+ startIndex );
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
@@ -1161,7 +1176,7 @@ TEST_P( SortbyDoubleKeyVector, Serial )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1200,7 +1215,7 @@ TEST_P( SortbyDoubleKeyVector, MultiCoreCPU )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1216,7 +1231,7 @@ TEST_P( SortbyDoubleDeviceKeyVector, Normal )
 	bolt::amp::device_vector< double > boltOffsetKeys(stdOffsetKeys.begin(), stdOffsetKeys.end());
 
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( Values.begin( ), Values.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1228,7 +1243,7 @@ TEST_P( SortbyDoubleDeviceKeyVector, Normal )
     EXPECT_EQ( stdValueElements, boltValueElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArraysSortByKey( stdValues, stdKeys, boltKeys, boltValues,  VectorSize);
+    cmpArraysSortByKey( Values, boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
     int startIndex = 17; //Some aribitrary offset position
@@ -1240,27 +1255,27 @@ TEST_P( SortbyDoubleDeviceKeyVector, Normal )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( OffsetValues.begin( ) + startIndex, OffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
-        cmpArraysSortByKey( stdOffsetValues, stdOffsetKeys, boltOffsetKeys, boltOffsetValues,  VectorSize );
+        cmpArraysSortByKey( OffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
     }
 }
 
 TEST_P( SortbyDoubleDeviceKeyVector, Serial )
 {
-	bolt::amp::device_vector< double > boltValues(stdValues.begin(), stdValues.end());
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    bolt::amp::device_vector< double > boltValues(stdValues.begin(), stdValues.end());
 	bolt::amp::device_vector< double > boltKeys(stdKeys.begin(), stdKeys.end());
 	bolt::amp::device_vector< double > boltOffsetValues(stdOffsetValues.begin(), stdOffsetValues.end());
 	bolt::amp::device_vector< double > boltOffsetKeys(stdOffsetKeys.begin(), stdOffsetKeys.end());
 
-    bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
-
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
-    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
+    std::sort( Values.begin( ), Values.end( ));
+    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
                                                                                                  stdValues.end() );
@@ -1271,7 +1286,7 @@ TEST_P( SortbyDoubleDeviceKeyVector, Serial )
     EXPECT_EQ( stdValueElements, boltValueElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArraysSortByKey( stdValues, stdKeys, boltKeys, boltValues,  VectorSize);
+    cmpArraysSortByKey( Values, boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
     int startIndex = 17; //Some aribitrary offset position
@@ -1283,28 +1298,28 @@ TEST_P( SortbyDoubleDeviceKeyVector, Serial )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::sort( OffsetValues.begin( ) + startIndex, OffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
-        cmpArraysSortByKey( stdOffsetValues, stdOffsetKeys, boltOffsetKeys, boltOffsetValues,  VectorSize );
+        cmpArraysSortByKey( OffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
     }
 
 }
 
 TEST_P( SortbyDoubleDeviceKeyVector, MultiCoreCPU )
 {
-	bolt::amp::device_vector< double > boltValues(stdValues.begin(), stdValues.end());
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    bolt::amp::device_vector< double > boltValues(stdValues.begin(), stdValues.end());
 	bolt::amp::device_vector< double > boltKeys(stdKeys.begin(), stdKeys.end());
 	bolt::amp::device_vector< double > boltOffsetValues(stdOffsetValues.begin(), stdOffsetValues.end());
 	bolt::amp::device_vector< double > boltOffsetKeys(stdOffsetKeys.begin(), stdOffsetKeys.end());
 
-    bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
-
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
-    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
+    std::stable_sort( Values.begin( ), Values.end( ));
+    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
                                                                                                  stdValues.end() );
@@ -1315,7 +1330,7 @@ TEST_P( SortbyDoubleDeviceKeyVector, MultiCoreCPU )
     EXPECT_EQ( stdValueElements, boltValueElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArraysSortByKey( stdValues, stdKeys, boltKeys, boltValues,  VectorSize);
+    cmpArraysSortByKey( Values, boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
     int startIndex = 17; //Some aribitrary offset position
@@ -1327,11 +1342,11 @@ TEST_P( SortbyDoubleDeviceKeyVector, MultiCoreCPU )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( OffsetValues.begin( ) + startIndex, OffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
-        cmpArraysSortByKey( stdOffsetValues, stdOffsetKeys, boltOffsetKeys, boltOffsetValues,  VectorSize );
+        cmpArraysSortByKey( OffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
     }
 
 }
@@ -1341,7 +1356,7 @@ TEST_P( SortbyDoubleDeviceKeyVector, MultiCoreCPU )
 TEST_P( SortbyFloatKeyVector, Normal )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1365,8 +1380,8 @@ TEST_P( SortbyFloatKeyVector, Normal )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
@@ -1404,7 +1419,7 @@ TEST_P( SortbyFloatKeyVector, Serial )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1443,7 +1458,7 @@ TEST_P( SortbyFloatKeyVector, MultiCoreCPU )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex  );
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1459,7 +1474,7 @@ TEST_P( SortbyFloatDeviceKeyVector, Normal )
 	bolt::amp::device_vector< float > boltOffsetKeys(stdOffsetKeys.begin(), stdOffsetKeys.end());
 
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( Values.begin( ), Values.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1471,7 +1486,7 @@ TEST_P( SortbyFloatDeviceKeyVector, Normal )
     EXPECT_EQ( stdValueElements, boltValueElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArraysSortByKey( stdValues, stdKeys, boltKeys, boltValues,  VectorSize);
+    cmpArraysSortByKey( Values,  boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
     int startIndex = 17; //Some aribitrary offset position
@@ -1483,28 +1498,28 @@ TEST_P( SortbyFloatDeviceKeyVector, Normal )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( OffsetValues.begin( ) + startIndex, OffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
-        cmpArraysSortByKey( stdOffsetValues, stdOffsetKeys, boltOffsetKeys, boltOffsetValues,  VectorSize );
+        cmpArraysSortByKey( OffsetValues,  boltOffsetKeys, boltOffsetValues,  VectorSize );
     }
 }
 
 TEST_P( SortbyFloatDeviceKeyVector, Serial )
 {
-	bolt::amp::device_vector< float > boltValues(stdValues.begin(), stdValues.end());
-	bolt::amp::device_vector< float > boltKeys(stdKeys.begin(), stdKeys.end());
-	bolt::amp::device_vector< float > boltOffsetValues(stdOffsetValues.begin(), stdOffsetValues.end());
-	bolt::amp::device_vector< float > boltOffsetKeys(stdOffsetKeys.begin(), stdOffsetKeys.end());
-
 
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
 
+    bolt::amp::device_vector< float > boltValues(stdValues.begin(), stdValues.end());
+	bolt::amp::device_vector< float > boltKeys(stdKeys.begin(), stdKeys.end());
+	bolt::amp::device_vector< float > boltOffsetValues(stdOffsetValues.begin(), stdOffsetValues.end());
+	bolt::amp::device_vector< float > boltOffsetKeys(stdOffsetKeys.begin(), stdOffsetKeys.end());
+
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
-    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
+    std::sort( Values.begin( ), Values.end( ));
+    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
                                                                                                  stdValues.end() );
@@ -1515,7 +1530,7 @@ TEST_P( SortbyFloatDeviceKeyVector, Serial )
     EXPECT_EQ( stdValueElements, boltValueElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArraysSortByKey( stdValues, stdKeys, boltKeys, boltValues,  VectorSize);
+    cmpArraysSortByKey( Values,  boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
     int startIndex = 17; //Some aribitrary offset position
@@ -1527,29 +1542,29 @@ TEST_P( SortbyFloatDeviceKeyVector, Serial )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::sort( OffsetValues.begin( ) + startIndex, OffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
-        cmpArraysSortByKey( stdOffsetValues, stdOffsetKeys, boltOffsetKeys, boltOffsetValues,  VectorSize );
+        cmpArraysSortByKey( OffsetValues,  boltOffsetKeys, boltOffsetValues,  VectorSize );
     }
 
 }
 
 TEST_P( SortbyFloatDeviceKeyVector, MultiCoreCPU )
 {
-	bolt::amp::device_vector< float > boltValues(stdValues.begin(), stdValues.end());
+	
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    bolt::amp::device_vector< float > boltValues(stdValues.begin(), stdValues.end());
 	bolt::amp::device_vector< float > boltKeys(stdKeys.begin(), stdKeys.end());
 	bolt::amp::device_vector< float > boltOffsetValues(stdOffsetValues.begin(), stdOffsetValues.end());
 	bolt::amp::device_vector< float > boltOffsetKeys(stdOffsetKeys.begin(), stdOffsetKeys.end());
 
-
-    bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
-
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
-    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
+    std::stable_sort( Values.begin( ), Values.end( ));
+    bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
                                                                                                  stdValues.end() );
@@ -1560,7 +1575,7 @@ TEST_P( SortbyFloatDeviceKeyVector, MultiCoreCPU )
     EXPECT_EQ( stdValueElements, boltValueElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArraysSortByKey( stdValues, stdKeys, boltKeys, boltValues,  VectorSize);
+    cmpArraysSortByKey( Values,  boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
     int startIndex = 17; //Some aribitrary offset position
@@ -1572,11 +1587,11 @@ TEST_P( SortbyFloatDeviceKeyVector, MultiCoreCPU )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( OffsetValues.begin( ) + startIndex, OffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex );
 
         //  Loop through the array and compare all the values with each other
-        cmpArraysSortByKey( stdOffsetValues, stdOffsetKeys, boltOffsetKeys, boltOffsetValues,  VectorSize );
+        cmpArraysSortByKey( OffsetValues,  boltOffsetKeys, boltOffsetValues,  VectorSize );
     }
 
 }
@@ -1585,7 +1600,7 @@ TEST_P( SortbyFloatDeviceKeyVector, MultiCoreCPU )
 TEST_P( SortbyKeyUnsignedIntegerVector, Normal )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData< unsigned int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1600,27 +1615,27 @@ TEST_P( SortbyKeyUnsignedIntegerVector, Normal )
     cmpArraysSortByKey( stdValues, boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
-    //int startIndex = 17; //Some aribitrary offset position
-    //int endIndex   = VectorSize -17; //Some aribitrary offset position
+    int startIndex = 17; //Some aribitrary offset position
+    int endIndex   = VectorSize -17; //Some aribitrary offset position
 
-    //if( (( startIndex > VectorSize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
-    //{
-    //    std::cout <<"\nSkipping NormalOffset Test for size "<< VectorSize << "\n";
-    //}
-    //else
-    //{
-    //    std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-    //    bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+    if( (( startIndex > VectorSize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    {
+        std::cout <<"\nSkipping NormalOffset Test for size "<< VectorSize << "\n";
+    }
+    else
+    {
+        std::stable_sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
-    //    //  Loop through the array and compare all the values with each other
-    //    cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
-    //}
+        //  Loop through the array and compare all the values with each other
+        cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
+    }
 }
 
 TEST_P( SortbyKeyIntegerVector, Normal )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
 
     std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1644,8 +1659,8 @@ TEST_P( SortbyKeyIntegerVector, Normal )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
@@ -1684,7 +1699,7 @@ TEST_P( SortbyKeyIntegerVector, Serial )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1724,7 +1739,7 @@ TEST_P( SortbyKeyIntegerVector, MultiCoreCPU )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1736,7 +1751,7 @@ TEST_P( SortbyKeyIntegerVector, MultiCoreCPU )
 TEST_P( SortbyKeyFloatVector, Normal )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< stdSortData<float> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1760,8 +1775,8 @@ TEST_P( SortbyKeyFloatVector, Normal )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC(boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC(boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1800,7 +1815,7 @@ TEST_P( SortbyKeyFloatVector, Serial )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1839,7 +1854,7 @@ TEST_P( SortbyKeyFloatVector, MultiCoreCPU )
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1850,7 +1865,7 @@ TEST_P( SortbyKeyFloatVector, MultiCoreCPU )
 TEST_P( SortbyKeyDoubleVector, Normal )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< stdSortData<double> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -1874,8 +1889,8 @@ TEST_P( SortbyKeyDoubleVector, Normal )
     }
     else
     {
-        std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        std::stable_sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
+        bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1913,7 +1928,7 @@ TEST_P( SortbyKeyDoubleVector, Serial)
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1951,7 +1966,7 @@ TEST_P( SortbyKeyDoubleVector, MultiCoreCPU)
     else
     {
         std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
-        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+        bolt::BKND::STABLE_SORT_FUNC( ctl, boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) + startIndex);
 
         //  Loop through the array and compare all the values with each other
         cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues, VectorSize );
@@ -1963,7 +1978,7 @@ TEST_P( SortbyKeyDoubleVector, MultiCoreCPU)
 TEST_P( SortbyKeyIntegerDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< int >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -2006,7 +2021,7 @@ TEST_P( SortbyKeyIntegerDeviceVector, MultiCoreInplace )
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
 
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< int >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -2024,7 +2039,7 @@ TEST_P( SortbyKeyIntegerDeviceVector, MultiCoreInplace )
 TEST_P( SortbyKeyFloatDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< float >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -2066,7 +2081,7 @@ TEST_P(SortbyKeyFloatDeviceVector, MultiCoreInplace )
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
 
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< float >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -2085,7 +2100,7 @@ TEST_P(SortbyKeyFloatDeviceVector, MultiCoreInplace )
 TEST_P( SortbyKeyDoubleDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< double >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -2127,7 +2142,7 @@ TEST_P( SortbyKeyDoubleDeviceVector, MultiCoreInplace )
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
 
     //  Calling the actual functions under test
-    std::sort( stdValues.begin( ), stdValues.end( ));
+    std::stable_sort( stdValues.begin( ), stdValues.end( ));
     bolt::BKND::STABLE_SORT_FUNC(ctl, boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ));
 
     std::vector< double >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
@@ -2142,7 +2157,7 @@ TEST_P( SortbyKeyDoubleDeviceVector, MultiCoreInplace )
     cmpArraysSortByKey( stdValues, boltKeys, boltValues, VectorSize );
 }
 
-#endif
+//#endif
 #endif
 #if defined(_WIN32)
 TEST_P( SortbyKeyIntegerNakedPointer, Inplace )
@@ -2151,7 +2166,7 @@ TEST_P( SortbyKeyIntegerNakedPointer, Inplace )
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< stdSortData<int>* > wrapstdValues( stdValues, endIndex );
-    std::sort( wrapstdValues, wrapstdValues + endIndex );
+    std::stable_sort( wrapstdValues, wrapstdValues + endIndex );
     stdext::checked_array_iterator< int* > wrapboltValues( boltValues, endIndex );
     stdext::checked_array_iterator< int* > wrapboltKeys( boltKeys, endIndex );
     bolt::BKND::STABLE_SORT_FUNC( wrapboltKeys, wrapboltKeys + endIndex , wrapboltValues);
@@ -2205,7 +2220,7 @@ TEST_P( SortbyKeyFloatNakedPointer, Inplace )
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< stdSortData<float>* > wrapstdValues( stdValues, endIndex );
-    std::sort( wrapstdValues, wrapstdValues + endIndex );
+    std::stable_sort( wrapstdValues, wrapstdValues + endIndex );
     stdext::checked_array_iterator< float* > wrapboltValues( boltValues, endIndex );
     stdext::checked_array_iterator< int* > wrapboltKeys( boltKeys, endIndex );
     bolt::BKND::STABLE_SORT_FUNC( wrapboltKeys, wrapboltKeys + endIndex , wrapboltValues);
@@ -2260,7 +2275,7 @@ TEST_P( SortbyKeyDoubleNakedPointer, Inplace )
     size_t endIndex = GetParam( );
     //  Calling the actual functions under test
     stdext::checked_array_iterator< stdSortData<double>* > wrapstdValues( stdValues, endIndex );
-    std::sort( wrapstdValues, wrapstdValues + endIndex );
+    std::stable_sort( wrapstdValues, wrapstdValues + endIndex );
 
 
     stdext::checked_array_iterator< double* > wrapboltValues( boltValues, endIndex );
@@ -2310,8 +2325,8 @@ TEST_P( SortbyKeyDoubleNakedPointer, MultiCoreInplace )
 
 #endif
 #endif
-std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
-std::array<int, 5> TestValues2 = {2048,4096,8192,16384,32768};
+std::array<int, 9> TestValues = {2,4,8,16,32,64,128,256,512};
+std::array<int, 6> TestValues2 = {1024, 2048,4096,8192,16384,32768};
 
 //INSTANTIATE_TEST_CASE_P( SortByKeyValues, SortByKeyCountingIterator,
 //                        ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
@@ -2373,11 +2388,20 @@ INSTANTIATE_TEST_CASE_P( SortByKeyValues2,  SortbyUDDKeyVector, ::testing::Value
 INSTANTIATE_TEST_CASE_P( SortByKeyValues2, SortbyUDDDeviceKeyVector, ::testing::ValuesIn( TestValues2.begin(),
                                                                                      TestValues2.end() ) );
 INSTANTIATE_TEST_CASE_P( SortByKeyValues2, SortbyDoubleDeviceKeyVector, ::testing::ValuesIn( TestValues2.begin(),
-                                                                                       TestValues2.end() ) );
+                                                                                      TestValues2.end() ) );
 //#endif
                                                                                        
 #endif
-INSTANTIATE_TEST_CASE_P( SortByKeyRange,  SortbyKeyIntegerDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
+
+INSTANTIATE_TEST_CASE_P( SortByKeyRange,  SortbyKeyUnsignedIntegerVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
+INSTANTIATE_TEST_CASE_P( SortByKeyValues, SortbyKeyUnsignedIntegerVector,::testing::ValuesIn(TestValues.begin(),
+                                                                                            TestValues.end()));
+//#if(TEST_LARGE_BUFFERS == 1)																							
+INSTANTIATE_TEST_CASE_P( SortByKeyValues2, SortbyKeyUnsignedIntegerVector,::testing::ValuesIn(TestValues2.begin(),
+                                                                                            TestValues2.end()));
+
+
+//INSTANTIATE_TEST_CASE_P( SortByKeyRange,  SortbyKeyIntegerDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortByKeyValues, SortbyKeyIntegerDeviceVector,::testing::ValuesIn(TestValues.begin(),
                                                                                             TestValues.end()));
 //#if(TEST_LARGE_BUFFERS == 1)																							
@@ -2427,38 +2451,6 @@ INSTANTIATE_TEST_CASE_P( SortByKeyValues2, SortbyKeyDoubleNakedPointer,::testing
                                                                                      TestValues2.end() ) );		
 #endif																					 
 
-TEST( ACPpppppppp, Normal )
-{
-	int length = (1<<16);
-
-    std::vector< unsigned int  > stdKeys( length);
-	std::vector< unsigned int  > stdValues( length);
-	for (int i=0;i<length;i++)
-    {
-            stdKeys[i] = (int)rand();
-            stdValues[i] = stdKeys[i];
-    }
-	bolt::amp::device_vector< unsigned int  > boltKeys( stdKeys.begin(), stdKeys.end());
-	bolt::amp::device_vector< unsigned int  > boltValues( stdValues.begin(), stdValues.end());
-
-    //  Calling the actual functions under test
-    std::stable_sort( stdValues.begin( ), stdValues.end( ), bolt::amp::less<unsigned int>());
-	std::stable_sort( stdKeys.begin( ), stdKeys.end( ), bolt::amp::less<unsigned int>());
-    bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ), bolt::amp::less<unsigned int>());
-	
-    std::vector< stdSortData<int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
-                                                                                                 stdValues.end() );
-    std::vector< int >::iterator::difference_type boltValueElements = std::distance( boltValues.begin( ),
-                                                                                     boltValues.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdValueElements, boltValueElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdValues, boltValues);
-	cmpArrays( stdKeys, boltKeys);
-   
-}
 
 
 int main(int argc, char* argv[])
