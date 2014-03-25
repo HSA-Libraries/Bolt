@@ -237,7 +237,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     size_t vecPow2 = (vecSize & (vecSize-1));
     numMerges += vecPow2? 1: 0;
 
-	device_vector< iType >       tmpBuffer( globalRange);
+	device_vector< iType >       tmpBuffer( vecSize);
 	ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
      // Size of scratch buffer
     V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
