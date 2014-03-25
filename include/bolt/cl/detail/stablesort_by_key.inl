@@ -336,8 +336,8 @@ namespace detail
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-		device_vector< keyType >       tmpKeyBuffer( globalRange);
-		device_vector< valueType >     tmpValueBuffer( globalRange);
+		device_vector< keyType >       tmpKeyBuffer( vecSize);
+		device_vector< valueType >     tmpValueBuffer( vecSize);
 
          // Size of scratch buffer
         V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" );
