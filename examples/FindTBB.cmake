@@ -111,7 +111,7 @@ else ( )
     mark_as_advanced( TBB_MALLOC_LIBRARY_DEBUG )
 
     mark_as_advanced( TBB_ROOT )
-    message ( "TBB_ROOT: "${TBB_ROOT} )
+    message ( "TBB_ROOT: " ${TBB_ROOT} )
 
     include( FindPackageHandleStandardArgs )
     FIND_PACKAGE_HANDLE_STANDARD_ARGS( TBB DEFAULT_MSG TBB_LIBRARY TBB_MALLOC_LIBRARY TBB_LIBRARY_DEBUG TBB_MALLOC_LIBRARY_DEBUG TBB_INCLUDE_DIRS TBB_ROOT)

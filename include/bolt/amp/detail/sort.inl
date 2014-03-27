@@ -24,12 +24,13 @@
 
 
 #include "bolt/amp/bolt.h"
-#include "bolt/amp/scan.h"
 #include "bolt/amp/functional.h"
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
 #include "bolt/amp/detail/stablesort.inl"
 #include "bolt/amp/iterator/iterator_traits.h"
+#include <amp_short_vectors.h>
+#include "bolt/amp/detail/stablesort.inl"
 
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
@@ -37,581 +38,823 @@
 #endif
 
 
-#define BOLT_UINT_MAX 0xFFFFFFFFU
-#define BOLT_UINT_MIN 0x0U
-#define BOLT_INT_MAX 0x7FFFFFFFU
-#define BOLT_INT_MIN 0x80000000U
+#define WG_SIZE                 256
+#define RADICES                 16
+#define ELEMENTS_PER_WORK_ITEM  4
+#define BITS_PER_PASS			4
+#define NUM_BUCKET				(1<<BITS_PER_PASS)
 
-#define BITONIC_SORT_WGSIZE 64
-/* \brief - SORT_CPU_THRESHOLD should be atleast 2 times the BITONIC_SORT_WGSIZE*/
-#define SORT_CPU_THRESHOLD 128
-#define MERGE_SORT_WAVESIZE 64
+
+#define AtomInc(x) concurrency::atomic_fetch_inc(&(x))
+#define AtomAdd(x, value) concurrency::atomic_fetch_add(&(x), value)
+#define USE_2LEVEL_REDUCE 
+#define uint_4 Concurrency::graphics::uint_4
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+
+
+#define make_uint4 (uint_4)
+inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
+{
+	uint_4 res;
+	res.x = (condition.x )? b.x : a.x;
+	res.y = (condition.y )? b.y : a.y;
+	res.z = (condition.z )? b.z : a.z;
+	res.w = (condition.w )? b.w : a.w;
+	return res;
+
+}
+#define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]
+
 
 
 namespace bolt {
 namespace amp {
 namespace detail {
 
-
 #define BOLT_SORT_INL_DEBUG 0
+
+
+	unsigned int scanLocalMemAndTotal(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	{
+		// Set first half of local memory to zero to make room for scanning
+		int l_id = t_idx.local[ 0 ];
+		int l_size = WG_SIZE;
+		lmem[l_id] = 0;
+    
+		l_id += l_size;
+		lmem[l_id] = val;
+		t_idx.barrier.wait();
+    
+		unsigned int t;
+		for (int i = 1; i < l_size; i *= 2)
+		{
+			t = lmem[l_id -  i]; 
+			t_idx.barrier.wait();
+			lmem[l_id] += t;     
+			t_idx.barrier.wait();
+		}
+		*totalSum = lmem[l_size*2 - 1];
+		return lmem[l_id-exclusive];
+	}
+	unsigned int prefixScanVectorEx( uint_4* data ) restrict(amp)
+	{
+		unsigned int sum = 0;
+		unsigned int tmp = data[0].x;
+		data[0].x = sum;
+		sum += tmp;
+		tmp = data[0].y;
+		data[0].y = sum;
+		sum += tmp;
+		tmp = data[0].z;
+		data[0].z = sum;
+		sum += tmp;
+		tmp = data[0].w;
+		data[0].w = sum;
+		sum += tmp;
+		return sum;
+	}
+	uint_4 localPrefixSum256V( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
+	{
+		unsigned int s4 = prefixScanVectorEx( &pData );
+		unsigned int rank = scanLocalMemAndTotal( s4, sorterSharedMemory, totalSum,  1, t_idx);
+		return pData + make_uint4( rank, rank, rank, rank );
+	}
+	void sort4BitsKeyValueAscending(unsigned int sortData[4],  const int startBit, int lIdx,  unsigned int* ldsSortData,  bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	{
+		for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
+		{
+			unsigned int mask = (1<<bitIdx);
+			uint_4 prefixSum;
+			uint_4 cmpResult( (sortData[0]>>startBit) & mask, (sortData[1]>>startBit) & mask, (sortData[2]>>startBit) & mask, (sortData[3]>>startBit) & mask );
+			uint_4 temp;
+
+			if(!Asc_sort)
+			{
+				temp.x = (cmpResult.x != mask);
+				temp.y = (cmpResult.y != mask);
+				temp.z = (cmpResult.z != mask);
+				temp.w = (cmpResult.w != mask);
+			}
+			else
+			{
+				temp.x = (cmpResult.x != 0);
+				temp.y = (cmpResult.y != 0);
+				temp.z = (cmpResult.z != 0);
+				temp.w = (cmpResult.w != 0);
+			}
+			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
+
+			unsigned int total = 0;
+			prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData, t_idx);
+			{
+				uint_4 localAddr(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
+				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
+				if(!Asc_sort)
+				{
+					temp.x = (cmpResult.x != mask);
+					temp.y = (cmpResult.y != mask);
+					temp.z = (cmpResult.z != mask);
+					temp.w = (cmpResult.w != mask);
+					}
+				else
+				{
+					temp.x = (cmpResult.x != 0);
+					temp.y = (cmpResult.y != 0);
+					temp.z = (cmpResult.z != 0);
+					temp.w = (cmpResult.w != 0);
+				}
+				dstAddr = SELECT_UINT4( prefixSum, dstAddr, temp);
+
+				t_idx.barrier.wait();
+        
+				ldsSortData[dstAddr.x] = sortData[0];
+				ldsSortData[dstAddr.y] = sortData[1];
+				ldsSortData[dstAddr.z] = sortData[2];
+				ldsSortData[dstAddr.w] = sortData[3];
+
+				t_idx.barrier.wait();
+
+				sortData[0] = ldsSortData[localAddr.x];
+				sortData[1] = ldsSortData[localAddr.y];
+				sortData[2] = ldsSortData[localAddr.z];
+				sortData[3] = ldsSortData[localAddr.w];
+
+				t_idx.barrier.wait();
+			}
+		}
+	}
+	void sort4BitsSignedKeyValueAscending(unsigned int sortData[4],  const int startBit, int lIdx,  unsigned int* ldsSortData, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	{
+		unsigned int signedints[4];
+	    signedints[0] = ( ( ( (sortData[0] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[0] >> startBit) & (1<<3));
+	    signedints[1] = ( ( ( (sortData[1] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[1] >> startBit) & (1<<3));
+	    signedints[2] = ( ( ( (sortData[2] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[2] >> startBit) & (1<<3));
+	    signedints[3] = ( ( ( (sortData[3] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[3] >> startBit) & (1<<3));
+
+
+
+		for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
+		{
+			unsigned int mask = (1<<bitIdx);
+			uint_4 prefixSum;
+			uint_4 cmpResult( signedints[0] & mask, signedints[1] & mask, signedints[2] & mask, signedints[3] & mask );
+			uint_4 temp;
+
+			if(!Asc_sort)
+			{
+				temp.x = (cmpResult.x != 0);
+				temp.y = (cmpResult.y != 0);
+				temp.z = (cmpResult.z != 0);
+				temp.w = (cmpResult.w != 0);
+			}
+			else
+			{
+				temp.x = (cmpResult.x != mask);
+				temp.y = (cmpResult.y != mask);
+				temp.z = (cmpResult.z != mask);
+				temp.w = (cmpResult.w != mask);
+			}
+			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
+
+			unsigned int total = 0;
+			prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData, t_idx);
+			{
+				uint_4 localAddr(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
+				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
+				if(!Asc_sort)
+				{
+					temp.x = (cmpResult.x != 0);
+					temp.y = (cmpResult.y != 0);
+					temp.z = (cmpResult.z != 0);
+					temp.w = (cmpResult.w != 0);
+					}
+				else
+				{
+					temp.x = (cmpResult.x != mask);
+					temp.y = (cmpResult.y != mask);
+					temp.z = (cmpResult.z != mask);
+					temp.w = (cmpResult.w != mask);
+				}
+				dstAddr = SELECT_UINT4( prefixSum, dstAddr, temp);
+
+				t_idx.barrier.wait();
+        
+				ldsSortData[dstAddr.x] = sortData[0];
+				ldsSortData[dstAddr.y] = sortData[1];
+				ldsSortData[dstAddr.z] = sortData[2];
+				ldsSortData[dstAddr.w] = sortData[3];
+
+				t_idx.barrier.wait();
+
+				sortData[0] = ldsSortData[localAddr.x];
+				sortData[1] = ldsSortData[localAddr.y];
+				sortData[2] = ldsSortData[localAddr.z];
+				sortData[3] = ldsSortData[localAddr.w];
+
+				t_idx.barrier.wait();
+
+				ldsSortData[dstAddr.x] = signedints[0];
+				ldsSortData[dstAddr.y] = signedints[1];
+				ldsSortData[dstAddr.z] = signedints[2];
+				ldsSortData[dstAddr.w] = signedints[3];
+
+				t_idx.barrier.wait();
+				signedints[0] = ldsSortData[localAddr.x];
+				signedints[1] = ldsSortData[localAddr.y];
+				signedints[2] = ldsSortData[localAddr.z];
+				signedints[3] = ldsSortData[localAddr.w];
+				t_idx.barrier.wait();
+			}
+		}
+	}
+
+
+	unsigned int scanlMemPrivData( unsigned int val,  unsigned int* lmem, int exclusive, 
+	                            concurrency::tiled_index< WG_SIZE > t_idx) restrict (amp)
+	{
+		// Set first half of local memory to zero to make room for scanning
+		unsigned int lIdx = t_idx.local[ 0 ];
+		unsigned int wgSize = WG_SIZE;
+		lmem[lIdx] = 0;
+    
+		lIdx += wgSize;
+		lmem[lIdx] = val;
+		t_idx.barrier.wait();
+    
+		// Now, perform Kogge-Stone scan
+		 unsigned int t;
+		for (unsigned int i = 1; i < wgSize; i *= 2)
+		{
+			t = lmem[lIdx -  i]; 
+			t_idx.barrier.wait();
+			lmem[lIdx] += t;     
+			t_idx.barrier.wait();
+		}
+		return lmem[lIdx-exclusive];
+	}
+
+
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
-sort_enqueue(bolt::amp::control &ctl,
+void sort_enqueue_int_uint(bolt::amp::control &ctl,
              DVRandomAccessIterator &first, DVRandomAccessIterator &last,
-             StrictWeakOrdering comp)
+             StrictWeakOrdering comp,
+			 bool int_flag
+			 )
 {
-    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    const int RADIX = 8;
-    const int RADICES = (1 << RADIX);
-    unsigned int orig_szElements = static_cast<unsigned int>(std::distance(first, last));
-    unsigned int szElements = orig_szElements;
-    bool  newBuffer = false;
-    concurrency::array_view<T> *pLocalArrayView = NULL;
-    concurrency::array<T>      *pLocalArray = NULL;
-    unsigned int groupSize = RADICES;
-    unsigned int mulFactor = groupSize * RADICES;
-    concurrency::extent<1> ext( static_cast< int >( orig_szElements ) );
+  
+	typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type Values;
+    const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
+                         //local array of 16 elements in the histogram kernel.
+    size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
+	const unsigned int localSize  = WG_SIZE;
 
-    if(orig_szElements%mulFactor != 0)
+	unsigned int szElements = (unsigned int)orig_szElements;
+    size_t modWgSize = (szElements & ((localSize)-1));
+    if( modWgSize )
     {
-        szElements  = ((orig_szElements + mulFactor) /mulFactor) * mulFactor;
-        concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
-        pLocalArray     = new concurrency::array<T>( modified_ext );
-        pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as(modified_ext));
-        concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getContainer().getBuffer(first, orig_szElements).copy_to( dest );
-        dest.synchronize( );
-        newBuffer = true;
+        szElements &= ~modWgSize;
+        szElements += (localSize);
     }
-    else
+	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
+	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+
+    device_vector< Values, concurrency::array > dvSwapInputValues(static_cast<size_t>(orig_szElements), 0);
+    auto&  clInputValues = first.getContainer( ).getBuffer(first);
+    auto&  clSwapValues  = dvSwapInputValues.begin( ).getContainer().getBuffer();
+
+	bool Asc_sort = 0;
+	if(comp(2,3))
+       Asc_sort = 1;
+	int swap = 0;
+    unsigned int blockSize = (int)(ELEMENTS_PER_WORK_ITEM*localSize);//set at 1024
+    unsigned int nBlocks = (int)(orig_szElements + blockSize-1)/(blockSize);
+    struct b3ConstData
     {
-        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer(first) );
-    }
-
-    unsigned int numGroups = szElements / mulFactor;
-    concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
-
-    device_vector< T, concurrency::array > dvSwapInputData(static_cast<size_t>(szElements), 0);
-    device_vector< T, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups* groupSize * RADICES), 0);
-    device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
-
-    auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer(dvSwapInputData.begin( ));
-    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer(dvHistogramBins.begin( ));
-    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer(dvHistogramScanBuffer.begin( ));
-    int swap = 0;
-    if(comp(2,3))
+       int m_n;
+       int m_nWGs;
+       int m_startBit;
+       int m_nBlocksPerWG;
+    };
+    b3ConstData cdata;
+	cdata.m_n = (int)orig_szElements;
+	cdata.m_nWGs = (int)numGroups;
+	cdata.m_nBlocksPerWG = (int)(nBlocks + numGroups - 1)/numGroups;
+    if(nBlocks < numGroups)
     {
-        /*If the buffer is a local buffer which is more than the usual buffer size then */
-        if(newBuffer == true)
-        {
-            concurrency::index<1> origin(orig_szElements);
-            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
-            //arrayview_type m_devMemoryAV( *m_devMemory );
-            Concurrency::parallel_for_each( dest.extent, [dest]
-                (Concurrency::index<1> idx) restrict(amp)
-                {
-                    dest[idx] = BOLT_UINT_MAX;
-                }
-            );
-        }
-        /*Ascending Sort*/
-        for(int bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
-        {
-            if (swap == 0)
-                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
-                                                      clInputData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
-            else
-                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
-                                                      clSwapData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
-#if BOLT_SORT_INL_DEBUG
+		cdata.m_nBlocksPerWG = 1;
+		numGroups = nBlocks;
+        cdata.m_nWGs = numGroups;
+	}
+	device_vector< unsigned int, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups * RADICES), 0 );
+    auto&  clHistData    = dvHistogramBins.begin( ).getContainer().getBuffer();
 
-printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
-for (unsigned int ng=0; ng<numGroups; ng++)
-{ printf ("\nGroup-Block =%d",ng);
-    for(unsigned int gS=0;gS<groupSize; gS++)
-    { printf ("\nGroup =%d\n",gS);
-        for(int i=0; i<RADICES;i++)
-        {
-            int index = ng * groupSize * RADICES + gS * RADICES + i;
-            int value = clHistData[ index ];
-            printf("%2x %2x, ",index, value);
-        }
-    }
-}
-int temp = 0;
-printf("\n Printing Histogram scan SUM\n");
-for(int i=0; i<RADICES;i++)
-{
-    printf ("\nRadix = %d\n",i);
-    for (unsigned int ng=0; ng<numGroups; ng++)
+	concurrency::extent< 1 > inputExtent( numGroups*localSize );
+	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
+	int bits;
+	for(bits = 0; bits < (sizeof(Values) * 8); bits += RADIX)
     {
-        printf ("%4x, ",clHistScanData[i*numGroups + ng]);
-    }
-}
-#endif
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
-#if BOLT_SORT_INL_DEBUG
-printf("\nprinting scan_enqueue SUM\n");
-        for(int i=0; i<RADICES;i++)
-        {
-            printf ("\nRadix = %d\n",i);
-            for (unsigned int ng=0; ng<numGroups; ng++)
-            {
-                printf ("%4x, ",clHistScanData[i*numGroups + ng]);
-            }
-        }
-#endif
-            AMP_scanLocalTemplate<T, RADIX>(ctl,
-                                        clHistData,
-                                        clHistScanData,
-                                        szElements);
-#if BOLT_SORT_INL_DEBUG
-        printf("\n\nAfter Scan bits = %d", bits);
-        for (unsigned int ng=0; ng<numGroups; ng++)
-        { printf ("\nGroup-Block =%d",ng);
-            for(unsigned int gS=0;gS<groupSize; gS++)
-            { printf ("\nGroup =%d\n",gS);
-                for(int i=0; i<RADICES;i++)
-                {
-                    int index = ng * groupSize * RADICES + gS * RADICES + i;
-                    int value = clHistData[ index ];
-                    printf("%4x %4x, ",index, value);
-                }
-            }
-        }
-#endif
-            if (swap == 0)
-                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clInputData,
-                                                        clHistData,
-                                                        bits,
-                                                        clSwapData,
-                                                        szElements);
-            else
-                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clSwapData,
-                                                        clHistData,
-                                                        bits,
-                                                        clInputData,
-                                                        szElements);
-#if BOLT_SORT_INL_DEBUG
-if (swap == 0)
-{
-        printf("\n Printing swap data\n");
-        for(unsigned int i=0; i<szElements;i+= RADICES)
-        {
-            for(int j =0;j< RADICES;j++)
-                printf("%8x %8x, ",i+j,clSwapData[i+j]);
-            printf("\n");
-        }
-}
-else
-{
-        printf("\n Printing swap data\n");
-        for(unsigned int i=0; i<szElements;i+= RADICES)
-        {
-            for(int j =0;j< RADICES;j++)
-                printf("%8x %8x, ",i+j,clInputData[i+j]);
-            printf("\n");
-        }
-}
-#endif
-            if(swap==0)
-                swap = 1;
-            else
-                swap = 0;
-        }
-    }
-    else
-    {
-        if(newBuffer == true)
-        {
-            concurrency::index<1> origin(orig_szElements);
-            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
-            //arrayview_type m_devMemoryAV( *m_devMemory );
-            Concurrency::parallel_for_each( dest.extent, [dest]
-                (Concurrency::index<1> idx) restrict(amp)
-                {
-                    dest[idx] = BOLT_UINT_MIN;
-                }
-            );
-        }
-        /*Ascending Sort*/
-        for(int bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
-        {
-            if (swap == 0)
-                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
-                                                      clInputData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
-            else
-                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
-                                                      clSwapData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
+          cdata.m_startBit = bits;
+		  concurrency::parallel_for_each( av, tileK0, 
+				[
+					clInputValues,
+					clSwapValues,
+					clHistData,
+					cdata,
+					swap,
+					Asc_sort,
+					int_flag,
+					tileK0
+				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
+		  {
+			tile_static unsigned int lmem[WG_SIZE*RADICES];
+			unsigned int gIdx = t_idx.global[ 0 ];
+			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int wgIdx = t_idx.tile[ 0 ];
+			unsigned int localSize = tileK0.tile_dim0;
+			unsigned int numGroups = tileK0[0]/tileK0.tile_dim0;
 
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+			const int shift = cdata.m_startBit;
+			const int dataAlignment = 1024;
+			const int n = cdata.m_n;
+			const int w_n = n + dataAlignment-(n%dataAlignment);
+			const int nWGs = cdata.m_nWGs;
+			const int nBlocksPerWG = cdata.m_nBlocksPerWG;
 
-            AMP_scanLocalTemplate<T, RADIX>(ctl,
-                                        clHistData,
-                                        clHistScanData,
-                                        szElements);
+			for(int i=0; i<RADICES; i++)
+			{
+				lmem[i*localSize+ lIdx] = 0;
+			}
+			t_idx.barrier.wait();
+			const int blockSize = ELEMENTS_PER_WORK_ITEM*localSize;
+			int nBlocks = (w_n)/blockSize - nBlocksPerWG*wgIdx;
+			int addr = blockSize*nBlocksPerWG*wgIdx + lIdx;
+			unsigned int local_key;
+			for(int iblock=0; iblock<min(nBlocksPerWG, nBlocks); iblock++)
+			{
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++, addr+=localSize )
+				{
+					if( (addr) < n)
+					{
+						if(int_flag && (shift >= sizeof(Values) * 7))
+						{
+							 if(swap == 0)
+								local_key = (clInputValues[addr] >> shift);
+							 else
+								local_key = (clSwapValues[addr] >> shift);
+				             unsigned int signBit   = local_key & (1<<3);
+							 if(!Asc_sort)
+									local_key = 0xF - (( ( ( local_key & 0x7 ) ^ 0x7 ) & 0x7 ) | signBit);
+							 else
+									local_key = 0xF - (( ( ( local_key & 0x7 ) ^ 0x7 ) & 0x7 ) | signBit);
+						}
+						else
+						{
+							if(swap == 0)
+								local_key = (clInputValues[addr] >> shift) & 0xFU;
+							else
+								local_key = (clSwapValues[addr] >> shift) & 0xFU;
+						}
+						if(!Asc_sort)
+							lmem[(RADICES - local_key -1)*localSize+ lIdx]++;   
+						else
+							lmem[local_key*localSize+ lIdx]++;
+					}
+				}
+			}
+			t_idx.barrier.wait();
+			if( lIdx < RADICES )
+			{
+				unsigned int sum = 0;
+				for(unsigned int i=0; i<localSize; i++)
+				{
+					sum += lmem[lIdx*localSize+ i];
+				}
+				clHistData[lIdx * numGroups + wgIdx] = sum;
+			}
+		});
 
-            if (swap == 0)
-                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clInputData,
-                                                        clHistData,
-                                                        bits,
-                                                        clSwapData,
-                                                        szElements);
-            else
-                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clSwapData,
-                                                        clHistData,
-                                                        bits,
-                                                        clInputData,
-                                                        szElements);
-            /*For swapping the buffers*/
-            swap = swap? 0: 1;
-        }//End of For loop
-    }
-    if(newBuffer == true)
-    {
-        //std::cout << "New buffer was allocated So copying back the buffer\n";
-        //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first, orig_szElements) );
-        first.getContainer().getBuffer(first).synchronize( );
-        delete pLocalArray;
-    }
-    delete pLocalArrayView;
+	
+        concurrency::extent< 1 > scaninputExtent( localSize );
+		concurrency::tiled_extent< localSize > tileK1 = scaninputExtent.tile< localSize >();
+		concurrency::parallel_for_each( av, tileK1, 
+				[
+					clHistData,
+					numGroups,
+					tileK1
+				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
+		  {
+
+			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int llIdx = lIdx;
+			unsigned int wgSize = tileK1.tile_dim0;
+
+			tile_static unsigned int lmem[WG_SIZE*8];
+			tile_static int s_seed; 
+			s_seed = 0;
+			t_idx.barrier.wait();
+    
+			bool last_thread = (lIdx < numGroups && (lIdx+1) == numGroups) ? 1 : 0;
+			//printf("top_scan n = %d\n", n);
+			for (int d = 0; d < 16; d++)
+			{
+				unsigned int val = 0;
+				if (lIdx < numGroups)
+				{
+					val = clHistData[(numGroups * d) + lIdx];
+				}
+				// Exclusive scan the counts in local memory
+				unsigned int res =  scanlMemPrivData(val, lmem,1, t_idx);
+				// Write scanned value out to global
+				if (lIdx < numGroups)
+				{
+					clHistData[(numGroups * d) + lIdx] = res + s_seed;
+				}
+				if (last_thread) 
+				{
+					s_seed += res + val;
+				}
+				t_idx.barrier.wait();
+			}
+
+		});
+		if((bits >= sizeof(Values) * 7) && int_flag)
+			break;
+		concurrency::parallel_for_each( av, tileK0, 
+				[
+					clInputValues,
+					clSwapValues,
+					clHistData,
+					cdata,
+					swap,
+					Asc_sort,
+					tileK0
+				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
+		  {
+
+			tile_static unsigned int ldsSortData[WG_SIZE*ELEMENTS_PER_WORK_ITEM+16];
+			tile_static unsigned int localHistogramToCarry[NUM_BUCKET];
+			tile_static unsigned int localHistogram[NUM_BUCKET*2];
+
+			unsigned int gIdx = t_idx.global[ 0 ];
+			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int wgIdx = t_idx.tile[ 0 ];
+			unsigned int localSize = tileK0.tile_dim0;
+
+			const int dataAlignment = 1024;
+			const int n = cdata.m_n;
+			const int w_n = n + dataAlignment-(n%dataAlignment);
+
+			const int nWGs = cdata.m_nWGs;
+			const int startBit = cdata.m_startBit;
+			const int nBlocksPerWG = cdata.m_nBlocksPerWG;
+
+			if( lIdx < (NUM_BUCKET) )
+			{
+				if(!Asc_sort)
+					localHistogramToCarry[lIdx] = clHistData[(NUM_BUCKET - lIdx -1)*nWGs + wgIdx]; 
+				else
+					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+			}
+
+			t_idx.barrier.wait();
+			const int blockSize = ELEMENTS_PER_WORK_ITEM*WG_SIZE;
+			int nBlocks = w_n/blockSize - nBlocksPerWG*wgIdx;
+			int addr = blockSize*nBlocksPerWG*wgIdx + ELEMENTS_PER_WORK_ITEM*lIdx;
+			for(int iblock=0; iblock<min(nBlocksPerWG, nBlocks); iblock++, addr+=blockSize)
+			{
+				unsigned int myHistogram = 0;
+				unsigned int sortData[ELEMENTS_PER_WORK_ITEM];
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+				{
+					if(!Asc_sort)
+					{
+						if(swap == 0)
+						{
+							sortData[i] = ( addr+i < n )? clInputValues[ addr+i ] : 0x0;
+						}
+						else
+						{
+							sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0x0;
+						}
+					}
+					else
+					{
+						if(swap == 0)
+						{
+							sortData[i] = ( addr+i < n )? clInputValues[ addr+i ] : 0xffffffff;
+						}
+						else
+						{
+							sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0xffffffff;
+						}
+					}
+				}
+				sort4BitsKeyValueAscending(sortData, startBit, lIdx, ldsSortData, Asc_sort, t_idx);
+
+				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+					keys[i] = (sortData[i]>>startBit) & 0xf;
+				
+				{	
+					unsigned int setIdx = lIdx/16;
+					if( lIdx < NUM_BUCKET )
+					{
+						localHistogram[lIdx] = 0;
+					}
+					ldsSortData[lIdx] = 0;
+					t_idx.barrier.wait();
+					
+					for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+					{
+						if( addr+i < n )
+						{
+							if(!Asc_sort)
+								AtomInc( SET_HISTOGRAM( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
+							else
+								AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );
+						}
+					}
+					t_idx.barrier.wait();
+					unsigned int hIdx = NUM_BUCKET+lIdx;
+					if( lIdx < NUM_BUCKET )
+					{
+						unsigned int sum = 0;
+						for(int i=0; i<WG_SIZE/16; i++)
+						{
+							sum += SET_HISTOGRAM( i, lIdx );
+						}
+						myHistogram = sum;
+						localHistogram[hIdx] = sum;
+					}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+					{
+						localHistogram[hIdx] = localHistogram[hIdx-1];//may cause race condition
+					}
+					t_idx.barrier.wait();
+					unsigned int u0, u1, u2;
+					if( lIdx < NUM_BUCKET )
+					{
+						u0 = localHistogram[hIdx-3];
+						u1 = localHistogram[hIdx-2];
+						u2 = localHistogram[hIdx-1];
+					}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+						localHistogram[hIdx] += u0 + u1 + u2;
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+					{
+						u0 = localHistogram[hIdx-12];
+						u1 = localHistogram[hIdx-8];
+						u2 = localHistogram[hIdx-4];
+					}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+						localHistogram[hIdx] += u0 + u1 + u2;
+					t_idx.barrier.wait();
+				}
+				{
+					for(int ie=0; ie<ELEMENTS_PER_WORK_ITEM; ie++)
+					{
+						int dataIdx = ELEMENTS_PER_WORK_ITEM*lIdx+ie;
+						int binIdx;
+						int groupOffset;
+						if(!Asc_sort)
+						{
+							binIdx = NUM_BUCKET - keys[ie] - 1;
+							groupOffset = localHistogramToCarry[NUM_BUCKET - binIdx -1];
+						}
+						else
+						{
+							binIdx = keys[ie];
+							groupOffset = localHistogramToCarry[binIdx];
+						}
+						int myIdx = dataIdx - localHistogram[NUM_BUCKET+binIdx];
+						if( addr+ie < n )
+						{
+							if ((groupOffset + myIdx)<n)
+							{
+								if(swap == 0)
+								{
+									clSwapValues[ groupOffset + myIdx ] =  sortData[ie]; 
+								}
+								else
+								{
+									clInputValues[ groupOffset + myIdx ] = sortData[ie];
+								}
+							}
+						}
+					}
+				}
+				t_idx.barrier.wait();
+				if( lIdx < NUM_BUCKET )
+				{
+					if(!Asc_sort)
+						localHistogramToCarry[NUM_BUCKET - lIdx -1] += myHistogram;
+					else
+						localHistogramToCarry[lIdx] += myHistogram;
+				}
+				t_idx.barrier.wait();
+			}
+		 });
+		 swap = swap? 0: 1;
+	}
+	if(int_flag)
+	{
+		cdata.m_startBit = bits;
+		concurrency::parallel_for_each( av, tileK0, 
+				[
+					clInputValues,
+					clSwapValues,
+					clHistData,
+					cdata,
+					swap,
+					Asc_sort,
+					tileK0
+				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
+		  {
+
+			tile_static unsigned int ldsSortData[WG_SIZE*ELEMENTS_PER_WORK_ITEM+WG_SIZE];
+			tile_static unsigned int localHistogramToCarry[NUM_BUCKET];
+			tile_static unsigned int localHistogram[NUM_BUCKET*2];
+
+			unsigned int gIdx = t_idx.global[ 0 ];
+			unsigned int lIdx = t_idx.local[ 0 ];
+			unsigned int wgIdx = t_idx.tile[ 0 ];
+			unsigned int localSize = tileK0.tile_dim0;
+
+			const int dataAlignment = 1024;
+			const int n = cdata.m_n;
+			const int w_n = n + dataAlignment-(n%dataAlignment);
+
+			const int nWGs = cdata.m_nWGs;
+			const int startBit = cdata.m_startBit;
+			const int nBlocksPerWG = cdata.m_nBlocksPerWG;
+
+			if( lIdx < (NUM_BUCKET) )
+			{
+				if(!Asc_sort)
+					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+				else
+					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+			}
+
+			t_idx.barrier.wait();
+			const int blockSize = ELEMENTS_PER_WORK_ITEM*WG_SIZE;
+			int nBlocks = w_n/blockSize - nBlocksPerWG*wgIdx;
+			int addr = blockSize*nBlocksPerWG*wgIdx + ELEMENTS_PER_WORK_ITEM*lIdx;
+
+			for(int iblock=0; iblock<min(nBlocksPerWG, nBlocks); iblock++, addr+=blockSize)
+			{
+				unsigned int myHistogram = 0;
+				unsigned int sortData[ELEMENTS_PER_WORK_ITEM];
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+				{
+					if(!Asc_sort)
+					{
+						sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0x80000000;
+					}
+					else
+					{
+						sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0x7fffffff;
+					}
+				}
+				sort4BitsSignedKeyValueAscending(sortData, startBit, lIdx, ldsSortData, Asc_sort, t_idx);
+
+				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
+				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+					keys[i] = 0xF - (( ( ( (sortData[i] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[i] >> startBit) & (1<<3)) );
+				
+				{	
+					unsigned int setIdx = lIdx/16;
+					if( lIdx < NUM_BUCKET )
+					{
+						localHistogram[lIdx] = 0;
+					}
+					ldsSortData[lIdx] = 0;
+					t_idx.barrier.wait();
+					
+					for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
+					{
+						if( addr+i < n )
+						{
+							if(!Asc_sort)
+								AtomInc( SET_HISTOGRAM( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
+							else
+								AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );
+						}
+					}
+					t_idx.barrier.wait();
+					unsigned int hIdx = NUM_BUCKET+lIdx;
+					if( lIdx < NUM_BUCKET )
+					{
+						unsigned int sum = 0;
+						for(int i=0; i<WG_SIZE/16; i++)
+						{
+							sum += SET_HISTOGRAM( i, lIdx );
+						}
+						myHistogram = sum;
+						localHistogram[hIdx] = sum;
+					}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+					{
+						localHistogram[hIdx] = localHistogram[hIdx-1];
+					}
+					t_idx.barrier.wait();
+					unsigned int u0, u1, u2;
+					if( lIdx < NUM_BUCKET )
+					{
+						u0 = localHistogram[hIdx-3];
+						u1 = localHistogram[hIdx-2];
+						u2 = localHistogram[hIdx-1];
+					}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+						localHistogram[hIdx] += u0 + u1 + u2;
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+					{
+						u0 = localHistogram[hIdx-12];
+						u1 = localHistogram[hIdx-8];
+						u2 = localHistogram[hIdx-4];
+					}
+					t_idx.barrier.wait();
+					if( lIdx < NUM_BUCKET )
+						localHistogram[hIdx] += u0 + u1 + u2;
+					t_idx.barrier.wait();
+				}
+				{
+					for(int ie=0; ie<ELEMENTS_PER_WORK_ITEM; ie++)
+					{
+						int dataIdx = ELEMENTS_PER_WORK_ITEM*lIdx+ie;
+						int binIdx;
+						int groupOffset;
+						if(!Asc_sort)
+						{
+							binIdx = 0xF - keys[ie];
+							groupOffset = localHistogramToCarry[binIdx];
+						}
+						else
+						{
+							binIdx = keys[ie];
+							groupOffset = localHistogramToCarry[binIdx];
+						}
+						int myIdx = dataIdx - localHistogram[NUM_BUCKET+binIdx];
+						if( addr+ie < n )
+						{
+							if ((groupOffset + myIdx)<n)
+							{
+									clInputValues[ groupOffset + myIdx ] = sortData[ie];
+							}
+						}
+					}
+				}
+				t_idx.barrier.wait();
+				if( lIdx < NUM_BUCKET )
+				{
+					localHistogramToCarry[lIdx] += myHistogram;
+				}
+				t_idx.barrier.wait();
+			}
+		 });
+	}
+
     return;
+
+
+
 }
 
+	template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                           int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_enqueue( control &ctl,
+                         DVRandomAccessIterator first, DVRandomAccessIterator last,
+							 StrictWeakOrdering comp)
+	{
+		bool int_flag = 1;
+		sort_enqueue_int_uint(ctl, first, last, comp, int_flag);
+		return;
+	}
+    template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                           unsigned int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_enqueue( control &ctl,
+                         DVRandomAccessIterator first, DVRandomAccessIterator last,
+                         StrictWeakOrdering comp)
+	{
+		bool int_flag = 0;
+		sort_enqueue_int_uint(ctl, first, last, comp, int_flag);
+		return;
+	}
 
-/*
- *
- */
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value >::type
-sort_enqueue(bolt::amp::control &ctl,
-             DVRandomAccessIterator &first, DVRandomAccessIterator &last,
-             StrictWeakOrdering comp)
-{
-    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    const int RADIX = 4;
-    const int RADICES = (1 << RADIX);
-    unsigned int orig_szElements = static_cast<unsigned int>(std::distance(first, last));
-    unsigned int szElements = orig_szElements;
-    bool  newBuffer = false;
-    concurrency::array_view<T> *pLocalArrayView = NULL;
-    concurrency::array<T>      *pLocalArray = NULL;
-    unsigned int groupSize = RADICES;
-    unsigned int mulFactor = groupSize * RADICES;
-    concurrency::extent<1> ext( static_cast< int >( orig_szElements ) );
-
-    if(orig_szElements%mulFactor != 0)
-    {
-        szElements  = ((orig_szElements + mulFactor) /mulFactor) * mulFactor;
-        concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
-        pLocalArray     = new concurrency::array<T>( modified_ext );
-        pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as( modified_ext ) );
-        concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getContainer().getBuffer(first, orig_szElements).copy_to( dest );
-        dest.synchronize( );
-        newBuffer = true;
-    }
-    else
-    {
-        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer(first) );
-    }
-
-    unsigned int numGroups = szElements / mulFactor;
-    concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
-
-    device_vector< T, concurrency::array > dvSwapInputData(static_cast<size_t>(szElements), 0);
-    device_vector< T, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups* groupSize * RADICES), 0);
-    device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
-
-    auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer(dvSwapInputData.begin( ));
-    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer(dvHistogramBins.begin( ));
-    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer(dvHistogramScanBuffer.begin( ));
-    int swap = 0;
-    if(comp(2,3))
-    {
-        /*If the buffer is a local buffer which is more than the usual buffer size then */
-        if(newBuffer == true)
-        {
-            concurrency::index<1> origin(orig_szElements);
-            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
-            //arrayview_type m_devMemoryAV( *m_devMemory );
-            Concurrency::parallel_for_each( dest.extent, [dest]
-                (Concurrency::index<1> idx) restrict(amp)
-                {
-                    dest[idx] = BOLT_INT_MAX;
-                }
-            );
-        }
-        /*Ascending Sort*/
-        int bits = 0;
-        for(bits = 0; bits < ((sizeof(T) * 8) - RADIX); bits += RADIX)
-        {
-            if (swap == 0)
-                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
-                                                      clInputData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need group size
-            else
-                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
-                                                      clSwapData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need group size
-#if BOLT_SORT_INL_DEBUG
-
-printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
-for (unsigned int ng=0; ng<numGroups; ng++)
-{ printf ("\nGroup-Block =%d",ng);
-    for(unsigned int gS=0;gS<groupSize; gS++)
-    { printf ("\nGroup =%d\n",gS);
-        for(int i=0; i<RADICES;i++)
-        {
-            int index = ng * groupSize * RADICES + gS * RADICES + i;
-            int value = clHistData[ index ];
-            printf("%2x %2x, ",index, value);
-        }
-    }
-}
-int temp = 0;
-printf("\n Printing Histogram scan SUM\n");
-for(int i=0; i<RADICES;i++)
-{
-    printf ("\nRadix = %d\n",i);
-    for (unsigned int ng=0; ng<numGroups; ng++)
-    {
-        printf ("%4x, ",clHistScanData[i*numGroups + ng]);
-    }
-}
-#endif
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
-#if BOLT_SORT_INL_DEBUG
-printf("\nprinting scan_enqueue SUM\n");
-        for(int i=0; i<RADICES;i++)
-        {
-            printf ("\nRadix = %d\n",i);
-            for (unsigned int ng=0; ng<numGroups; ng++)
-            {
-                printf ("%4x, ",clHistScanData[i*numGroups + ng]);
-            }
-        }
-#endif
-            AMP_scanLocalTemplate<T, RADIX>(ctl,
-                                        clHistData,
-                                        clHistScanData,
-                                        szElements);
-#if BOLT_SORT_INL_DEBUG
-        printf("\n\nAfter Scan bits = %d", bits);
-        for (unsigned int ng=0; ng<numGroups; ng++)
-        { printf ("\nGroup-Block =%d",ng);
-            for(unsigned int gS=0;gS<groupSize; gS++)
-            { printf ("\nGroup =%d\n",gS);
-                for(int i=0; i<RADICES;i++)
-                {
-                    int index = ng * groupSize * RADICES + gS * RADICES + i;
-                    int value = clHistData[ index ];
-                    printf("%4x %4x, ",index, value);
-                }
-            }
-        }
-#endif
-            if (swap == 0)
-                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clInputData,
-                                                        clHistData,
-                                                        bits,
-                                                        clSwapData,
-                                                        szElements);
-            else
-                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clSwapData,
-                                                        clHistData,
-                                                        bits,
-                                                        clInputData,
-                                                        szElements);
-#if BOLT_SORT_INL_DEBUG
-if (swap == 0)
-{
-        printf("\n Printing swap data\n");
-        for(unsigned int i=0; i<szElements;i+= RADICES)
-        {
-            for(int j =0;j< RADICES;j++)
-                printf("%8x %8x, ",i+j,clSwapData[i+j]);
-            printf("\n");
-        }
-}
-else
-{
-        printf("\n Printing swap data\n");
-        for(unsigned int i=0; i<szElements;i+= RADICES)
-        {
-            for(int j =0;j< RADICES;j++)
-                printf("%8x %8x, ",i+j,clInputData[i+j]);
-            printf("\n");
-        }
-}
-#endif
-            /*For swapping the buffers*/
-            swap = swap? 0: 1;
-        }
-            /* Do descending for the signed bit
-             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24
-             */
-             AMP_RadixSortHistogramSignedDescendingKernel<T, RADIX>(ctl,
-                                                      clSwapData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
-
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
-
-            AMP_scanLocalTemplate<T, RADIX>(ctl,
-                                        clHistData,
-                                        clHistScanData,
-                                        szElements);
-
-            AMP_permuteSignedDescendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clSwapData,
-                                                        clHistData,
-                                                        bits,
-                                                        clInputData,
-                                                        szElements);
-            /*End of Ascending for the signed bit */
-    }
-    else
-    {
-        if(newBuffer == true)
-        {
-            concurrency::index<1> origin(orig_szElements);
-            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
-            //arrayview_type m_devMemoryAV( *m_devMemory );
-            Concurrency::parallel_for_each( dest.extent, [dest]
-                (Concurrency::index<1> idx) restrict(amp)
-                {
-                    dest[idx] = BOLT_INT_MIN;
-                }
-            );
-        }
-        /* Descending Sort */
-        int bits=0;
-        for(bits = 0; bits < ((sizeof(T) * 8) - RADIX); bits += RADIX)
-        {
-            if (swap == 0)
-                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
-                                                      clInputData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
-            else
-                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
-                                                      clSwapData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
-
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ),
-                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ),
-                                  0, plus< T >( ) );
-
-            AMP_scanLocalTemplate<T, RADIX>(ctl,
-                                        clHistData,
-                                        clHistScanData,
-                                        szElements);
-
-            if (swap == 0)
-                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clInputData,
-                                                        clHistData,
-                                                        bits,
-                                                        clSwapData,
-                                                        szElements);
-            else
-                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clSwapData,
-                                                        clHistData,
-                                                        bits,
-                                                        clInputData,
-                                                        szElements);
-            /*For swapping the buffers*/
-            swap = swap? 0: 1;
-        }//End of For loop
-            /* Do ascending for the signed bit
-             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24
-             */
-             AMP_RadixSortHistogramSignedAscendingKernel<T, RADIX>(ctl,
-                                                      clSwapData, /*this can be either array_view or array*/
-                                                      clHistData,
-                                                      clHistScanData,
-                                                      bits,
-                                                      szElements,
-                                                      groupSize); // \TODO - i don't need gropu size
-
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ),
-                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ),
-                                  0, plus< T >( ) );
-
-            AMP_scanLocalTemplate<T, RADIX>(ctl,
-                                        clHistData,
-                                        clHistScanData,
-                                        szElements);
-
-            AMP_permuteSignedAscendingRadixNTemplate<T, RADIX>( ctl,
-                                                        clSwapData,
-                                                        clHistData,
-                                                        bits,
-                                                        clInputData,
-                                                        szElements);
-            /*End of Ascending for the signed bit */
-
-    }
-    if(newBuffer == true)
-    {
-        //std::cout << "New buffer was allocated So copying back the buffer\n";
-        //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first, orig_szElements) );
-        first.getContainer().getBuffer(first).synchronize( );
-        delete pLocalArray;
-    }
-    delete pLocalArrayView;
-    return;
-}
 
 
 //Device Vector specialization
@@ -637,7 +880,7 @@ void sort_pick_iterator( bolt::amp::control &ctl,
 		runMode = ctl.getDefaultPathToRun();
 	}
 
-    if ((runMode == bolt::amp::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
+    if ((runMode == bolt::amp::control::SerialCpu)) {
         bolt::amp::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
         std::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp);
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
@@ -686,7 +929,7 @@ void sort_pick_iterator( bolt::amp::control &ctl,
 		runMode = ctl.getDefaultPathToRun();
 	}
 
-    if ((runMode == bolt::amp::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
+    if ((runMode == bolt::amp::control::SerialCpu)) {
         std::sort(first, last, comp);
         return;
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
@@ -728,293 +971,6 @@ void sort_detect_random_access( bolt::amp::control &ctl,
                               std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
 };
 
-
-/****** sort_enqueue specailization for unsigned int data types. ******
- * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR sort()
- *********************************************************************/
-
-/*AMP Kernels for unsigned integer sorting*/
-template <typename T, int N, typename Container>
-void AMP_RadixSortHistogramAscendingKernel(bolt::amp::control &ctl,
-                                           Container &unsortedData, /*this can be either array_view or array*/
-                                           Container &buckets,
-                                           Container &histScanBuckets,
-                                           unsigned int shiftCount,
-                                           unsigned int szElements,
-                                           const unsigned int groupSize)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    //printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        buckets,
-        histScanBuckets,
-        shiftCount,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
-        const int MASK_T      = (1<<RADIX_T)  - 1;
-
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size
-        //tileK0.tile_dim0 gives the number of threads in a tile
-        //\TODO - find a API to get the total number of numOfGroups
-        int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;//get_num_groups(0);
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            buckets[bucketPos + localId * RADICES_T + i] = 0;
-        }
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-
-        /* Calculate thread-histograms */
-        for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
-            value = (value >> shiftCount) & MASK_T;
-            buckets[bucketPos + localId * RADICES_T + value]++;
-        }
-
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-
-        //Start First step to scan
-        int sum =0;
-        for(int i = 0; i < groupSize; i++)
-        {
-            sum = sum + buckets[bucketPos + localId + groupSize*i];
-        }
-        histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
-
-    } );// end of concurrency::parallel_for_each
-}
-
-template <typename T, int N, typename Container>
-void AMP_RadixSortHistogramDescendingKernel(bolt::amp::control &ctl,
-                                           Container &unsortedData, /*this can be either array_view or array*/
-                                           Container &buckets,
-                                           Container &histScanBuckets,
-                                           unsigned int shiftCount,
-                                           unsigned int szElements,
-                                           const unsigned int groupSize)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        buckets,
-        histScanBuckets,
-        shiftCount,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
-        const int MASK_T      = (1<<RADIX_T)  -1;
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size
-        //tileK0.tile_dim0 gives the number of threads in a tile
-        //\TODO - find a API to get the total number of numOfGroups
-        int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;
-        /*size_t localId     = get_local_id(0);
-        size_t globalId    = get_global_id(0);
-        size_t groupId     = get_group_id(0);
-        size_t groupSize   = get_local_size(0);
-        size_t numOfGroups = get_num_groups(0);*/
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            buckets[bucketPos + localId * RADICES_T + i] = 0;
-        }
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-
-        /* Calculate thread-histograms */
-        for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
-            value = (value >> shiftCount) & MASK_T;
-            buckets[bucketPos + localId * RADICES_T + (RADICES_T - value -1)]++;
-        }
-
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-        //Start First step to scan
-        int sum = 0;
-        for(int i = 0; i < groupSize; i++)
-            sum = sum + buckets[bucketPos + localId + groupSize*i];
-        histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
-    } );// end of concurrency::parallel_for_each
-}
-
-template <typename T, int N, typename Container>
-void AMP_scanLocalTemplate(bolt::amp::control &ctl,
-                           Container &buckets,
-                           Container &histScanBuckets,
-                           unsigned int szElements)
-{
-    const int RADICES = 1<<N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        buckets,
-        histScanBuckets,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        //create tiled_static for localScanArray
-        tile_static T localScanArray[2*RADICES_T];
-        /*size_t localId     = get_local_id(0);
-        size_t numOfGroups = get_num_groups(0);
-        size_t groupId     = get_group_id(0);
-        size_t groupSize   = get_local_size(0);*/
-        int localId     = t_idx.local[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-        //\TODO - find a API to get the total number of numOfGroups
-        int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;
-
-        localScanArray[localId] = histScanBuckets[localId*numOfGroups + groupId];
-        localScanArray[RADICES_T+localId] = 0;
-
-        //barrier(CLK_LOCAL_MEM_FENCE);
-        t_idx.barrier.wait();
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            unsigned int bucketPos = groupId * RADICES_T * groupSize + i * RADICES_T + localId;
-            unsigned int temp = buckets[bucketPos];
-            buckets[bucketPos] = localScanArray[RADICES_T+localId] + localScanArray[localId];
-            localScanArray[RADICES_T+localId] += temp;
-        }
-    });
-}
-
-template <typename T, int N, typename Container>
-void AMP_permuteAscendingRadixNTemplate(bolt::amp::control &ctl,
-                                    Container &unsortedData,
-                                    Container &scanedBuckets,
-                                    unsigned int shiftCount,
-                                    Container &sortedData,
-                                    unsigned int szElements)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        scanedBuckets,
-        shiftCount,
-        sortedData,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
-        const int MASK_T      = (1<<RADIX_T)  -1;
-        /*size_t groupId   = get_group_id(0);
-        size_t localId   = get_local_id(0);
-        size_t globalId  = get_global_id(0);
-        size_t groupSize = get_local_size(0);*/
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-
-        /* Premute elements to appropriate location */
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * RADICES_T + i];
-            value = (value >> shiftCount) & MASK_T;
-            unsigned int index = scanedBuckets[bucketPos+localId * RADICES_T + value];
-            sortedData[index] = unsortedData[globalId * RADICES_T + i];
-            scanedBuckets[bucketPos+localId * RADICES_T + value] = index + 1;
-            //barrier(CLK_LOCAL_MEM_FENCE);
-            t_idx.barrier.wait();
-        }
-    } );
-}
-
-template <typename T, int N, typename Container>
-void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
-                                    Container &unsortedData,
-                                    Container &scanedBuckets,
-                                    unsigned int shiftCount,
-                                    Container &sortedData,
-                                    unsigned int szElements)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        scanedBuckets,
-        shiftCount,
-        sortedData,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        const int MASK_T      = (1<<RADIX_T)  -1;
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-        /*size_t groupId   = get_group_id(0);
-        size_t localId   = get_local_id(0);
-        size_t globalId  = get_global_id(0);
-        size_t groupSize = get_local_size(0);*/
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-
-        /* Premute elements to appropriate location */
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * RADICES_T + i];
-            value = (value >> shiftCount) & MASK_T;
-            unsigned int index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
-            sortedData[index] = unsortedData[globalId * RADICES_T + i];
-            scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
-            //barrier(CLK_LOCAL_MEM_FENCE);
-            t_idx.barrier.wait();
-        }
-    } );
-}
 
 /*AMP Kernels for Signed integer sorting*/
 /*!
@@ -1060,321 +1016,6 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
 *       0110     0001     0000      0111
 *
 */
-/*Descending*/
-template <typename T, int N, typename Container>
-void AMP_RadixSortHistogramSignedAscendingKernel(bolt::amp::control &ctl,
-                                           Container &unsortedData, /*this can be either array_view or array*/
-                                           Container &buckets,
-                                           Container &histScanBuckets,
-                                           unsigned int shiftCount,
-                                           unsigned int szElements,
-                                           const unsigned int groupSize)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    //printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        buckets,
-        histScanBuckets,
-        shiftCount,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
-        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
-
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size
-        //tileK0.tile_dim0 gives the number of threads in a tile
-        //\TODO - find a API to get the total number of numOfGroups
-        int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;//get_num_groups(0);
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            buckets[bucketPos + localId * RADICES_T + i] = 0;
-        }
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-
-        /* Calculate thread-histograms */
-        for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
-            value = (value >> shiftCount);
-            unsigned int signBit = value & (1<<(RADIX_T-1));
-            value = ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit;
-            buckets[bucketPos + localId * RADICES_T + value]++;
-        }
-
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-
-        //Start First step to scan
-        int sum =0;
-        for(int i = 0; i < groupSize; i++)
-        {
-            sum = sum + buckets[bucketPos + localId + groupSize*i];
-        }
-        histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
-
-    } );// end of concurrency::parallel_for_each
-}
-
-template <typename T, int N, typename Container>
-void AMP_RadixSortHistogramSignedDescendingKernel(bolt::amp::control &ctl,
-                                           Container &unsortedData, /*this can be either array_view or array*/
-                                           Container &buckets,
-                                           Container &histScanBuckets,
-                                           unsigned int shiftCount,
-                                           unsigned int szElements,
-                                           const unsigned int groupSize)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        buckets,
-        histScanBuckets,
-        shiftCount,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
-        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size
-        //tileK0.tile_dim0 gives the number of threads in a tile
-        //\TODO - find a API to get the total number of numOfGroups
-        int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;
-        /*size_t localId     = get_local_id(0);
-        size_t globalId    = get_global_id(0);
-        size_t groupId     = get_group_id(0);
-        size_t groupSize   = get_local_size(0);
-        size_t numOfGroups = get_num_groups(0);*/
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            buckets[bucketPos + localId * RADICES_T + i] = 0;
-        }
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-
-        /* Calculate thread-histograms */
-        for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
-            value = (value >> shiftCount);
-            unsigned int signBit = value & (1<<(RADIX_T-1));
-            value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
-            buckets[bucketPos + localId * RADICES_T + (RADICES_T - value -1)]++;
-        }
-
-        //barrier(CLK_GLOBAL_MEM_FENCE)
-        t_idx.barrier.wait_with_all_memory_fence();
-        //Start First step to scan
-        int sum = 0;
-        for(int i = 0; i < groupSize; i++)
-            sum = sum + buckets[bucketPos + localId + groupSize*i];
-        histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
-    } );// end of concurrency::parallel_for_each
-}
-
-template <typename T, int N, typename Container>
-void AMP_permuteSignedAscendingRadixNTemplate(bolt::amp::control &ctl,
-                                    Container &unsortedData,
-                                    Container &scanedBuckets,
-                                    unsigned int shiftCount,
-                                    Container &sortedData,
-                                    unsigned int szElements)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        scanedBuckets,
-        shiftCount,
-        sortedData,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
-        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) )  -1;
-        /*size_t groupId   = get_group_id(0);
-        size_t localId   = get_local_id(0);
-        size_t globalId  = get_global_id(0);
-        size_t groupSize = get_local_size(0);*/
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-
-        /* Premute elements to appropriate location */
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * RADICES_T + i];
-            unsigned int resultValue = value;
-            value = (value >> shiftCount);
-            unsigned int signBit = value & (1<<(RADIX_T-1));
-            value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
-
-            unsigned int index = scanedBuckets[bucketPos+localId * RADICES_T + value];
-            sortedData[index] = unsortedData[globalId * RADICES_T + i];
-            scanedBuckets[bucketPos+localId * RADICES_T + value] = index + 1;
-            //barrier(CLK_LOCAL_MEM_FENCE);
-            t_idx.barrier.wait();
-        }
-    } );
-}
-
-template <typename T, int N, typename Container>
-void AMP_permuteSignedDescendingRadixNTemplate(bolt::amp::control &ctl,
-                                    Container &unsortedData,
-                                    Container &scanedBuckets,
-                                    unsigned int shiftCount,
-                                    Container &sortedData,
-                                    unsigned int szElements)
-{
-    const int RADICES = 1 << N;
-    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
-    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        unsortedData,
-        scanedBuckets,
-        shiftCount,
-        sortedData,
-        tileK0
-    ]
-    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-    {
-        const int RADIX_T     = N;
-        const int RADICES_T   = (1 << RADIX_T);
-        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) )  -1;
-        int localId     = t_idx.local[ 0 ];
-        int globalId    = t_idx.global[ 0 ];
-        int groupId     = t_idx.tile[ 0 ];
-        int groupSize   = tileK0.tile_dim0;
-        /*size_t groupId   = get_group_id(0);
-        size_t localId   = get_local_id(0);
-        size_t globalId  = get_global_id(0);
-        size_t groupSize = get_local_size(0);*/
-        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
-
-        /* Premute elements to appropriate location */
-        for(int i = 0; i < RADICES_T; ++i)
-        {
-            unsigned int value = unsortedData[globalId * RADICES_T + i];
-            //value = (value >> shiftCount) & MASK_T;
-            value = (value >> shiftCount);
-            unsigned int signBit = value & (1<<(RADIX_T-1));
-            value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
-            unsigned int index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
-            sortedData[index] = unsortedData[globalId * RADICES_T + i];
-            scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
-            //barrier(CLK_LOCAL_MEM_FENCE);
-            t_idx.barrier.wait();
-        }
-    } );
-}
-
-
-
-
-/*!
-* \brief This template function is a Bitonic Algorithm for one work item.
-*        This is called by the the sort_enqueue routine for other than int's and unsigned int's
-* \details Container - can be either array or array_view object and is dependant on the
-*                      device_vector of the calling routine
-*/
-template <typename T, typename Container, typename StrictWeakOrdering>
-void AMP_BitonicSortKernel(bolt::amp::control &ctl,
-                           Container &A, /*this can be either array_view or array*/
-                           int szElements,
-                           unsigned int stage,
-                           unsigned int passOfStage,
-                           StrictWeakOrdering comp)
-{
-    concurrency::extent< 1 > globalSizeK0( szElements/2 );
-    concurrency::tiled_extent< BITONIC_SORT_WGSIZE > tileK0 = globalSizeK0.tile< BITONIC_SORT_WGSIZE >();
-    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0,
-    [
-        A,
-        passOfStage,
-        stage,
-        comp
-    ]
-    ( concurrency::tiled_index< BITONIC_SORT_WGSIZE > t_idx ) restrict(amp)
-    {
-        unsigned int  threadId = t_idx.global[ 0 ];
-        unsigned int  pairDistance = 1 << (stage - passOfStage);
-        unsigned int  blockWidth   = 2 * pairDistance;
-        unsigned int  temp;
-        unsigned int  leftId = (threadId % pairDistance)
-                            + (threadId / pairDistance) * blockWidth;
-        bool compareResult;
-
-        unsigned int  rightId = leftId + pairDistance;
-
-        T greater, lesser;
-        T leftElement = A[leftId];
-        T rightElement = A[rightId];
-
-        unsigned int sameDirectionBlockWidth = 1 << stage;
-
-        if((threadId/sameDirectionBlockWidth) % 2 == 1)
-        {
-            temp = rightId;
-            rightId = leftId;
-            leftId = temp;
-        }
-
-        compareResult = comp(leftElement, rightElement);
-
-        if(compareResult)
-        {
-            greater = rightElement;
-            lesser  = leftElement;
-        }
-        else
-        {
-            greater = leftElement;
-            lesser  = rightElement;
-        }
-        A[leftId]  = lesser;
-        A[rightId] = greater;
-    } );// end of concurrency::parallel_for_each
-}
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if<
@@ -1384,43 +1025,9 @@ typename std::enable_if<
 sort_enqueue(bolt::amp::control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
 const StrictWeakOrdering& comp)
 {
-    unsigned int numStages,stage,passOfStage;
-    size_t  temp;
-    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-
-    int szElements = static_cast<int>( std::distance(first, last) );
-
-    if(((szElements-1) & (szElements)) != 0)
-    {
-        //sort_enqueue_non_powerOf2(ctl,first,last,comp);
-        bolt::amp::detail::stablesort_enqueue(ctl,first,last,comp);
-        return;
-    }
-    /*if((szElements/2) < BITONIC_SORT_WGSIZE)
-    {
-        wgSize = (int)szElements/2;
-    }*/
-    auto&  A = first.getContainer().getBuffer(first); //( numElements, av );
-
-    numStages = 0;
-    for(temp = szElements; temp > 1; temp >>= 1)
-        ++numStages;
-
-    for(stage = 0; stage < numStages; ++stage)
-    {
-        for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage)
-        {
-            //\TODO - can we remove this <T> specialization by getting the data type type from the container.
-            AMP_BitonicSortKernel<T>(  ctl,
-                                    A,
-                                    szElements,
-                                    stage,
-                                    passOfStage,
-                                    comp );
-        }//end of for passStage = 0:stage-1
-    }//end of for stage = 0:numStage-1
-
-    return;
+    
+      bolt::amp::detail::stablesort_enqueue(ctl,first,last,comp);
+      return;
 }// END of sort_enqueue
 
 

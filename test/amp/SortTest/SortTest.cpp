@@ -15,12 +15,12 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 1
-#define TEST_LARGE_BUFFERS 0
-#define TEST_OFFSET_BUFFERS 0 // OFFSET BUffers not working in C++ AMP
+#define TEST_LARGE_BUFFERS 1
+#define TEST_OFFSET_BUFFERS 1 // OFFSET BUffers not working in C++ AMP
 #define GOOGLE_TEST 1
 #define BKND amp 
 #define SORT_FUNC sort
@@ -79,7 +79,7 @@ struct uddtD4
 //BOLT_FUNCTOR(AddD4,
 struct AddD4
 {
-    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
+    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const restrict(amp, cpu)
     {
 
         if( ( lhs.a + lhs.b + lhs.c + lhs.d ) > ( rhs.a + rhs.b + rhs.c + rhs.d) )

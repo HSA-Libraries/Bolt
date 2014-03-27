@@ -605,7 +605,7 @@ namespace cl
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE,
+            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR,
                 bool init = true, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ),
                 m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
@@ -661,7 +661,7 @@ namespace cl
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
+            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,

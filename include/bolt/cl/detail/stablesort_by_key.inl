@@ -336,8 +336,9 @@ namespace detail
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-        control::buffPointer tmpKeyBuffer = ctrl.acquireBuffer( globalRange * sizeof( keyType ) );
-        control::buffPointer tmpValueBuffer = ctrl.acquireBuffer( globalRange * sizeof( valueType ) );
+		device_vector< keyType >       tmpKeyBuffer( vecSize);
+		device_vector< valueType >     tmpValueBuffer( vecSize);
+
          // Size of scratch buffer
         V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" );
          // Scratch buffer
@@ -350,10 +351,10 @@ namespace detail
         ::cl::Event kernelEvent;
         for( size_t pass = 1; pass <= numMerges; ++pass )
         {
-        typename DVRandomAccessIterator1::Payload  keys_first_payload = keys_first.gpuPayload( );
-        typename DVRandomAccessIterator2::Payload  values_first_payload = values_first.gpuPayload( );
-        typename DVRandomAccessIterator1::Payload  keys_first1_payload = keys_first.gpuPayload( );
-        typename DVRandomAccessIterator2::Payload  values_first1_payload = values_first.gpuPayload( );
+			typename DVRandomAccessIterator1::Payload  keys_first_payload = keys_first.gpuPayload( );
+			typename DVRandomAccessIterator2::Payload  values_first_payload = values_first.gpuPayload( );
+			typename DVRandomAccessIterator1::Payload  keys_first1_payload = tmpKeyBuffer.begin().gpuPayload( );
+			typename DVRandomAccessIterator2::Payload  values_first1_payload = tmpValueBuffer.begin().gpuPayload( );
 
             //  For each pass, flip the input-output buffers
             if( pass & 0x1 )
@@ -367,31 +368,31 @@ namespace detail
                 V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ),&values_first_payload  ),
                                                "Error setting a kernel argument" );
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),"Error setting argument for kernels[0]");
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ),&keys_first1_payload),
+                V_OPENCL( kernels[ 1 ].setArg( 4, tmpKeyBuffer.begin().getContainer().getBuffer() ),"Error setting argument for kernels[0]");
+                V_OPENCL( kernels[ 1 ].setArg( 5, tmpKeyBuffer.begin().gpuPayloadSize( ),&keys_first1_payload),
                                                "Error setting a kernel argument" );
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),"Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first1_payload ),
+                V_OPENCL( kernels[ 1 ].setArg( 6, tmpValueBuffer.begin().getContainer().getBuffer() ),"Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 7, tmpValueBuffer.begin().gpuPayloadSize( ),&values_first1_payload ),
                                                "Error setting a kernel argument" );
             }
             else
             {
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload),
+                V_OPENCL( kernels[ 1 ].setArg( 0, tmpKeyBuffer.begin().getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 1, tmpKeyBuffer.begin().gpuPayloadSize( ),&keys_first1_payload),
                                                "Error setting a kernel argument" );
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ),&values_first_payload ),
+                V_OPENCL( kernels[ 1 ].setArg( 2, tmpValueBuffer.begin().getContainer().getBuffer()),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 3, tmpValueBuffer.begin().gpuPayloadSize( ),&values_first1_payload ),
                                                "Error setting a kernel argument" );
                 V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getContainer().getBuffer() ),
                                                "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ),&keys_first1_payload),
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ),&keys_first_payload),
                                                "Error setting a kernel argument" );
                 V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getContainer().getBuffer() ),
                                                "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first1_payload ),
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first_payload ),
                                                "Error setting a kernel argument" );
             }
             //  For each pass, the merge window doubles
@@ -409,7 +410,7 @@ namespace detail
             else
             {
                 l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
-                        ::cl::NDRange( localRange ), NULL, NULL );
+                        ::cl::NDRange( localRange ), NULL, &kernelEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
             }
 
@@ -419,20 +420,23 @@ namespace detail
         //  the results back into the input array
         if( numMerges & 1 )
         {
-            ::cl::Event copyEvent;
+			detail::copy_enqueue(ctrl, tmpKeyBuffer.begin(), vecSize, keys_first);
+			detail::copy_enqueue(ctrl, tmpValueBuffer.begin(), vecSize, values_first);
+
+            /*::cl::Event copyEvent;
 
             wait( ctrl, kernelEvent );
-            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getContainer().getBuffer(), 0,
+            l_Error = myCQ.enqueueCopyBuffer( tmpKeyBuffer.begin().getContainer().getBuffer(), keys_first.getContainer().getBuffer(), 0,
                                                keys_first.m_Index * sizeof( keyType ),
                                                vecSize * sizeof( keyType ), NULL, NULL );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getContainer().getBuffer(), 0,
-                                               values_first.m_Index * sizeof( keyType ),
-                                               vecSize * sizeof( keyType ), NULL, &copyEvent );
+            l_Error = myCQ.enqueueCopyBuffer( tmpValueBuffer.begin().getContainer().getBuffer(), values_first.getContainer().getBuffer(), 0,
+                                               values_first.m_Index * sizeof( valueType ),
+                                               vecSize * sizeof( valueType ), NULL, &copyEvent );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            wait( ctrl, copyEvent );
+            wait( ctrl, copyEvent );*/
         }
         else
         {

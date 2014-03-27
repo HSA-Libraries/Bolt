@@ -184,7 +184,7 @@
 <tr>
 <td align="center">sort_by_key</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -198,7 +198,7 @@
 <tr>
 <td align="center">stable_sort_by_key</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>

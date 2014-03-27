@@ -192,23 +192,20 @@ reduce_by_key_enqueue(
      *********************************************************************************/
     
     concurrency::extent< 1 > globalSizeK0( sizeInputBuff );
-    concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
 	try
 	{
-    concurrency::parallel_for_each( av, tileK0,
+    concurrency::parallel_for_each( av, globalSizeK0,
         [
             keyBuffer,
             binary_pred,
             numElements,
             offsetArray,	
             kernel0_WgSize
-        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
+        ] ( concurrency::index< 1 > t_idx ) restrict(amp)
   {
 
-    unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int groId = t_idx.tile[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
-    unsigned int wgSize = kernel0_WgSize;
+    unsigned int gloId = t_idx[ 0 ];
+
 
     if (gloId >= numElements) return;
 
@@ -243,11 +240,31 @@ reduce_by_key_enqueue(
 
    //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 
-    concurrency::extent< 1 > globalSizeK1( sizeInputBuff);
-    concurrency::tiled_extent< kernel0_WgSize > tileK1 = globalSizeK1.tile< kernel0_WgSize >();
+
 
 	try
 	{
+
+    
+
+#define MSVC_TILE_LIMIT 65535
+
+    unsigned int max_extent = MSVC_TILE_LIMIT * kernel0_WgSize;
+    unsigned int iteration = sizeInputBuff/max_extent;
+    /* Check if second iteration is required */
+    if (sizeInputBuff % max_extent )
+        iteration++;
+
+    max_extent = sizeInputBuff > max_extent ? max_extent : sizeInputBuff;
+
+    concurrency::extent< 1 > globalSizeK1( max_extent);
+    concurrency::tiled_extent< kernel0_WgSize > tileK1 = globalSizeK1.tile< kernel0_WgSize >();
+
+    for(unsigned int i=0; i < iteration; i++)
+	{
+	   
+    unsigned int global_offset = i  * max_extent;
+    unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
     concurrency::parallel_for_each( av, tileK1,
         [
             offsetArray,
@@ -257,12 +274,14 @@ reduce_by_key_enqueue(
             &keySumArray,
             &preSumArray,
             binary_op,
-            kernel0_WgSize
+            kernel0_WgSize,
+            global_offset,
+            wg_offset
         ] ( concurrency::tiled_index< kernel0_WgSize > t_idx )  restrict(amp)
   {
 
-    unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int groId = t_idx.tile[ 0 ];
+    unsigned int gloId = t_idx.global[ 0 ] + global_offset ;
+    unsigned int groId = t_idx.tile[ 0 ] + wg_offset ;
     unsigned int locId = t_idx.local[ 0 ];
     unsigned int wgSize = kernel0_WgSize;
 
@@ -316,6 +335,8 @@ reduce_by_key_enqueue(
     }
 
   } );
+
+    }
 	}
 
 	 catch(std::exception &e)
@@ -456,11 +477,32 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 3
      *********************************************************************************/
-    concurrency::extent< 1 > globalSizeK3( sizeInputBuff );
-    concurrency::tiled_extent< kernel2_WgSize > tileK3 = globalSizeK3.tile< kernel2_WgSize >();
+
+
+
+
     //std::cout << "Kernel 3 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
 	try
 	{
+
+
+    unsigned int max_extent = MSVC_TILE_LIMIT * kernel2_WgSize;
+    unsigned int iteration = sizeInputBuff/max_extent;
+    /* Check if second iteration is required */
+    if (sizeInputBuff % max_extent )
+        iteration++;
+
+    max_extent = sizeInputBuff > max_extent ? max_extent : sizeInputBuff;
+
+    concurrency::extent< 1 > globalSizeK3( max_extent );
+    concurrency::tiled_extent< kernel2_WgSize > tileK3 = globalSizeK3.tile< kernel2_WgSize >();
+
+
+    for(unsigned int i=0; i < iteration; i++)
+	{
+
+    unsigned int global_offset = i  * max_extent;
+    unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
     concurrency::parallel_for_each( av, tileK3,
         [
             offsetArray,
@@ -470,13 +512,15 @@ reduce_by_key_enqueue(
             binary_pred,
             numElements,
             binary_op,
-            kernel2_WgSize
+            kernel2_WgSize,
+            global_offset,
+            wg_offset
         ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
   {
 
-    unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int groId = t_idx.tile[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
+    unsigned int gloId = t_idx.global[ 0 ]+ global_offset;
+    unsigned int groId = t_idx.tile[ 0 ]+ wg_offset;
+
 
     //  Abort threads that are passed the end of the input vector
     if( gloId >= numElements )
@@ -498,6 +542,8 @@ reduce_by_key_enqueue(
     }
     
   } );
+
+    }
 	}
 	 catch(std::exception &e)
       {
@@ -516,6 +562,25 @@ reduce_by_key_enqueue(
     //std::cout << "Kernel 4 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
 	try
 	{
+
+    unsigned int max_extent = MSVC_TILE_LIMIT * kernel0_WgSize;
+    unsigned int iteration = sizeInputBuff/max_extent;
+    /* Check if second iteration is required */
+    if (sizeInputBuff % max_extent )
+        iteration++;
+
+    max_extent = sizeInputBuff > max_extent ? max_extent : sizeInputBuff;
+
+    concurrency::extent< 1 > globalSizeK4( max_extent );
+    concurrency::tiled_extent< kernel0_WgSize > tileK4 = globalSizeK4.tile< kernel0_WgSize >();
+
+
+    for(unsigned int i=0; i < iteration; i++)
+	{
+
+    unsigned int global_offset = i  * max_extent;
+    unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
+
     concurrency::parallel_for_each( av, tileK4,
         [
             keyBuffer,
@@ -526,12 +591,14 @@ reduce_by_key_enqueue(
             numElements,
             binary_op,
             kernel0_WgSize,
-            offsetArray
+            offsetArray,
+            global_offset,
+            wg_offset
         ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
   {
 
-    unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
+    unsigned int gloId = t_idx.global[ 0 ]+ global_offset;
+    unsigned int locId = t_idx.local[ 0 ]+ wg_offset;
     unsigned int count_number_of_sections = 0;		
 
     //  Abort threads that are passed the end of the input vector
@@ -553,6 +620,7 @@ reduce_by_key_enqueue(
     }
     
   } );
+    }
 	}
 	 catch(std::exception &e)
       {
