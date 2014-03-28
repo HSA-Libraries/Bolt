@@ -2063,12 +2063,12 @@ TEST( ReduceFunctor, MultiCoreLambdaFunctor )
 
 void testTBBDevicevector()
 {
-    size_t aSize = 1<<16;
+    int aSize = 1<<16;
     std::vector<int> stdInput(aSize);
  //   bolt::amp::device_vector<int> tbbInput(aSize, 0);
     bolt::amp::device_vector<int> tbbInput(aSize);
 
-	for (size_t i = 0; i<aSize; i++) {
+	for (int i = 0; i<aSize; i++) {
         stdInput[i] = (int)i;
         tbbInput[i] = (int)i;
     };
