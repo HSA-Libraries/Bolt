@@ -2192,7 +2192,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
 	bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::BKND::greater<double>( ) );
 
-	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+	for (int i = 0 ; i < sizeOfInputBufer; i++){
 	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
 	}
 }
