@@ -29,9 +29,9 @@
 #include <algorithm>
 #include <type_traits>
 #define TEST_CPU_DEVICE 0
-#define TEST_DOUBLE 0
-#define TEST_DEVICE_VECTOR 0
-#define TEST_LARGE_BUFFERS 0
+#define TEST_DOUBLE 1
+#define TEST_DEVICE_VECTOR 1
+#define TEST_LARGE_BUFFERS 1
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -198,7 +198,7 @@ TYPED_TEST_P( ReduceArrayTest, CPU_DeviceNormal )
     ctl.setAccelerator(cpuAccelerator);
 
 
-    ArrayType boltReduce = bolt::cl::reduce( ctl, boltInput.begin( ), boltInput.end( ),
+    ArrayType boltReduce = bolt::amp::reduce( ctl, boltInput.begin( ), boltInput.end( ),
                                                        bolt::amp::square<ArrayType>(), init,
                                                        bolt::amp::plus<ArrayType>());
 
@@ -294,8 +294,8 @@ TYPED_TEST_P( ReduceArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
+  ::cl::Context myContext = bolt::amp::control::getDefault( ).context( );
+    bolt::amp::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
     bolt::amp::control c_gpu(accel);
@@ -333,7 +333,7 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
 
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    ArrayType boltReduce = bolt::cl::reduce( c_cpu,boltInput.begin( ), boltInput.end( ),init,
+    ArrayType boltReduce = bolt::amp::reduce( c_cpu,boltInput.begin( ), boltInput.end( ),init,
                                                        bolt::amp::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
@@ -576,15 +576,14 @@ public:
 
 TEST( ReduceStdVectWithInit, OffsetTest)
 {
-    int length = 1024;
+    int length = 1000;
     std::vector<int> stdInput( length );
-    std::vector<int> stdOutput( length );
-    std::vector<int> boltInput( length );
+    bolt::amp::device_vector<int> boltInput( length );
 
 
     for (int i = 0; i < length; ++i)
     {
-        stdInput[i] = 1;
+        stdInput[i] = i;
         boltInput[i] = stdInput[i];
     }
     
@@ -1372,96 +1371,6 @@ TEST_P( ReduceFloatVector, MultiCore )
     cmpArrays( stdInput, boltInput );
 }
 
-#if (TEST_DOUBLE == 1)
-TEST_P( ReduceDoubleVector, Inplace )
-{
-    double init(0);
-    //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<double>());
-    double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
-
-    double boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::amp::negate<double>(), init,
-                                                       bolt::amp::plus<double>());
-
-    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-    EXPECT_EQ( stlReduce, boltReduce );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
-}
-#endif
-#if (TEST_DEVICE_VECTOR == 1)
-TEST_P( TransformIntegerDeviceVector, Inplace )
-{
-    int init(0);
-    //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<int>());
-    int stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
-
-    int boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::amp::negate<int>(), init,
-                                                       bolt::amp::plus<int>());
-
-    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-    EXPECT_EQ( stlReduce, boltReduce );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
-}
-TEST_P( TransformFloatDeviceVector, Inplace )
-{
-    float init(0);
-    //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<float>());
-    float stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
-
-    float boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<float>(), init,
-                                                       bolt::cl::plus<float>());
-
-    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-    EXPECT_EQ( stlReduce, boltReduce );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
-}
-#if (TEST_DOUBLE == 1)
-TEST_P( TransformDoubleDeviceVector, Inplace )
-{
-    double init(0);
-    //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<double>());
-    double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
-
-    double boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<double>(), init,
-                                                       bolt::cl::plus<double>());
-
-    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-    EXPECT_EQ( stlReduce, boltReduce );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
-}
-#endif
-#endif
 
 TEST_P( ReduceIntegerNakedPointer, Inplace )
 {
@@ -1611,31 +1520,7 @@ TEST_P( ReduceFloatNakedPointer, MultiCoreInplace )
 }
 
 
-#if (TEST_DOUBLE == 1)
-TEST_P( TransformDoubleNakedPointer, Inplace )
-{
-    size_t endIndex = GetParam( );
 
-    //  Calling the actual functions under test
-    stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
-    stdext::checked_array_iterator< double* > wrapStdOutput( stdOutput, endIndex );
-    stdext::checked_array_iterator< double* > wrapBoltInput( boltInput, endIndex );
-
-    double init(0);
-    //  Calling the actual functions under test
-    std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<double>());
-    double stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
-
-    double boltReduce = bolt::cl::transform_reduce( wrapBoltInput, wrapBoltInput + endIndex,
-                                                       bolt::cl::negate<double>(), init,
-                                                       bolt::cl::plus<double>());
-
-    EXPECT_EQ( stlReduce, boltReduce );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput, endIndex );
-}
-#endif
 std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
 std::array<int, 5> TestValues1 = {2048,4096,8192,16384,32768};
 
@@ -1691,12 +1576,7 @@ INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceIntegerNakedPointer, ::testing::Va
 INSTANTIATE_TEST_CASE_P( ReduceValues1, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues1.begin(), 
                                                                                     TestValues1.end() ) );
 //#endif
-#if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
-INSTANTIATE_TEST_CASE_P( Reduce, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
-//#if TEST_LARGE_BUFFERS
-INSTANTIATE_TEST_CASE_P( Reduce1, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues1.begin(),TestValue1s.end()));
-#endif
+
 //#endif
 
 typedef ::testing::Types< 

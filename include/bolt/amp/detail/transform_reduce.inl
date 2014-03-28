@@ -70,13 +70,9 @@ namespace bolt {
 				length = residual ? (length + _T_REDUCE_WAVEFRONT_SIZE - residual): length ;
 				unsigned int numTiles = (length / _T_REDUCE_WAVEFRONT_SIZE);
 
-                auto inputV = first.getContainer().getBuffer(first);
-
 				concurrency::array< iType, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
                                                                                         cpuAcceleratorView);
-
                 concurrency::array_view<iType, 1> result ( resultArray );
-
 				concurrency::extent< 1 > inputExtent(length);
                 concurrency::tiled_extent< _T_REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< _T_REDUCE_WAVEFRONT_SIZE >();
 
@@ -87,7 +83,7 @@ namespace bolt {
                 {
                     concurrency::parallel_for_each(ctl.getAccelerator().default_view,
                                                    tiledExtentReduce,
-                                                    [ inputV,
+                                                    [ first,
                                                     szElements,
                                                     length,
                                                     transform_op,
@@ -104,7 +100,7 @@ namespace bolt {
 						iType accumulator;
 						if (gloId < szElements)
 						{
-							accumulator = transform_op(inputV[gx]);
+							accumulator = transform_op(first[gx]);
 							gx += length;
 						}
 						
@@ -113,7 +109,7 @@ namespace bolt {
 						// length into a length related to the number of workgroups
 						while (gx < szElements)
 						{
-							iType element = transform_op(inputV[gx]);
+							iType element = transform_op(first[gx]);
 							accumulator = binary_op(accumulator, element);
 							gx += length;
 						}

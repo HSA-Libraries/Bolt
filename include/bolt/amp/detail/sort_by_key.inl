@@ -128,11 +128,11 @@ namespace detail {
         typedef std_sort<keyType, valType> KeyValuePair;
         typedef std_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
 
-        size_t vecSize = std::distance( keys_first, keys_last );
+        unsigned int vecSize = static_cast< unsigned int >(std::distance( keys_first, keys_last ));
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_sort vector.
-        for (size_t i=0; i< vecSize; i++)
+        for (unsigned int i=0; i< vecSize; i++)
         {
             KeyValuePairVector[i].key   = *(keys_first + i);
             KeyValuePairVector[i].value = *(values_first + i);
@@ -140,13 +140,13 @@ namespace detail {
         //Sort the std_sort vector using std::sort
         std::sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
         //Extract the keys and values from the KeyValuePair and fill the respective iterators.
-        for (size_t i=0; i< vecSize; i++)
+        for (unsigned int i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
         }
     }
-	unsigned int scanLocalMemAndTotal(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	unsigned int scanLocalMemAndTotal_by_key(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		// Set first half of local memory to zero to make room for scanning
 		int l_id = t_idx.local[ 0 ];
@@ -168,7 +168,7 @@ namespace detail {
 		*totalSum = lmem[l_size*2 - 1];
 		return lmem[l_id-exclusive];
 	}
-	unsigned int prefixScanVectorEx( uint_4* data ) restrict(amp)
+	unsigned int prefixScanVectorEx_by_key( uint_4* data ) restrict(amp)
 	{
 		unsigned int sum = 0;
 		unsigned int tmp = data[0].x;
@@ -185,14 +185,14 @@ namespace detail {
 		sum += tmp;
 		return sum;
 	}
-	uint_4 localPrefixSum256V( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
+	uint_4 localPrefixSum256V_by_key( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
 	{
-		unsigned int s4 = prefixScanVectorEx( &pData );
-		unsigned int rank = scanLocalMemAndTotal( s4, sorterSharedMemory, totalSum,  1, t_idx);
+		unsigned int s4 = prefixScanVectorEx_by_key( &pData );
+		unsigned int rank = scanLocalMemAndTotal_by_key( s4, sorterSharedMemory, totalSum,  1, t_idx);
 		return pData + make_uint4( rank, rank, rank, rank );
 	}
 	template<typename Values>
-	void sort4BitsKeyValueAscending(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	void sort4BitsKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
 		{
@@ -218,7 +218,7 @@ namespace detail {
 			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
 
 			unsigned int total = 0;
-			prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData, t_idx);
+			prefixSum = localPrefixSum256V_by_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
 			{
 				uint_4 localAddr(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
 				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
@@ -267,7 +267,7 @@ namespace detail {
 		}
 	}
 	template<typename Values>
-	void sort4BitsSignedKeyValueAscending(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	void sort4BitsSignedKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		unsigned int signedints[4];
 	    signedints[0] = ( ( ( (sortData[0] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[0] >> startBit) & (1<<3));
@@ -301,7 +301,7 @@ namespace detail {
 			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
 
 			unsigned int total = 0;
-			prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData, t_idx);
+			prefixSum = localPrefixSum256V_by_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
 			{
 				uint_4 localAddr(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
 				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
@@ -363,7 +363,7 @@ namespace detail {
 	}
 
 
-	unsigned int scanlMemPrivData( unsigned int val,  unsigned int* lmem, int exclusive, 
+	unsigned int scanlMemPrivData_by_key( unsigned int val,  unsigned int* lmem, int exclusive, 
 	                            concurrency::tiled_index< WG_SIZE > t_idx) restrict (amp)
 	{
 		// Set first half of local memory to zero to make room for scanning
@@ -398,12 +398,12 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 	typedef typename std::iterator_traits< DVKeys >::value_type Keys;
     typedef typename std::iterator_traits< DVValues >::value_type Values;
     const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
-                         //local array of 16 elements in the histogram kernel.
-    size_t orig_szElements = static_cast<size_t>(std::distance(keys_first, keys_last));
+                         //local array_view of 16 elements in the histogram kernel.
+    unsigned int orig_szElements = static_cast<unsigned int>(std::distance(keys_first, keys_last));
 	const unsigned int localSize  = WG_SIZE;
 
 	unsigned int szElements = (unsigned int)orig_szElements;
-    size_t modWgSize = (szElements & ((localSize)-1));
+    unsigned int modWgSize = (szElements & ((localSize)-1));
     if( modWgSize )
     {
         szElements &= ~modWgSize;
@@ -412,12 +412,8 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
 	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-	device_vector< Keys, concurrency::array > dvSwapInputKeys(static_cast<size_t>(orig_szElements), 0);
-    device_vector< Values, concurrency::array > dvSwapInputValues(static_cast<size_t>(orig_szElements), 0);
-    auto&  clInputKeys   = keys_first.getContainer( ).getBuffer(keys_first);
-    auto&  clInputValues = values_first.getContainer( ).getBuffer(values_first);
-	auto&  clSwapKeys    = dvSwapInputKeys.begin( ).getContainer().getBuffer();
-    auto&  clSwapValues  = dvSwapInputValues.begin( ).getContainer().getBuffer();
+	device_vector< Keys, concurrency::array_view > dvSwapInputKeys(static_cast<unsigned int>(orig_szElements), 0);
+    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<unsigned int>(orig_szElements), 0);
 
 	bool Asc_sort = 0;
 	if(comp(2,3))
@@ -442,8 +438,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< unsigned int, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups * RADICES), 0 );
-    auto&  clHistData    = dvHistogramBins.begin( ).getContainer().getBuffer();
+	device_vector< unsigned int, concurrency::array_view > dvHistogramBins(static_cast<unsigned int>(numGroups * RADICES), 0 );
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
@@ -453,9 +448,9 @@ void sort_by_key_enqueue_int_uint( control &ctl,
           cdata.m_startBit = bits;
 		  concurrency::parallel_for_each( av, tileK0, 
 				[
-					clInputKeys,
-					clSwapKeys,
-					clHistData,
+					keys_first,
+					dvSwapInputKeys,
+					dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -495,9 +490,9 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						if(int_flag && (shift >= sizeof(Keys) * 7))
 						{
 							 if(swap == 0)
-								local_key = (clInputKeys[addr] >> shift);
+								local_key = (keys_first[addr] >> shift);
 							 else
-								local_key = (clSwapKeys[addr] >> shift);
+								local_key = (dvSwapInputKeys[addr] >> shift);
 				             unsigned int signBit   = local_key & (1<<3);
 							 if(!Asc_sort)
 									local_key = 0xF - (( ( ( local_key & 0x7 ) ^ 0x7 ) & 0x7 ) | signBit);
@@ -507,9 +502,9 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						else
 						{
 							if(swap == 0)
-								local_key = (clInputKeys[addr] >> shift) & 0xFU;
+								local_key = (keys_first[addr] >> shift) & 0xFU;
 							else
-								local_key = (clSwapKeys[addr] >> shift) & 0xFU;
+								local_key = (dvSwapInputKeys[addr] >> shift) & 0xFU;
 						}
 						if(!Asc_sort)
 							lmem[(RADICES - local_key -1)*localSize+ lIdx]++;   
@@ -526,7 +521,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 				{
 					sum += lmem[lIdx*localSize+ i];
 				}
-				clHistData[lIdx * numGroups + wgIdx] = sum;
+				dvHistogramBins[lIdx * numGroups + wgIdx] = sum;
 			}
 		});
 
@@ -535,7 +530,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		concurrency::tiled_extent< localSize > tileK1 = scaninputExtent.tile< localSize >();
 		concurrency::parallel_for_each( av, tileK1, 
 				[
-					clHistData,
+					dvHistogramBins,
 					numGroups,
 					tileK1
 				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
@@ -557,14 +552,14 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 				unsigned int val = 0;
 				if (lIdx < numGroups)
 				{
-					val = clHistData[(numGroups * d) + lIdx];
+					val = dvHistogramBins[(numGroups * d) + lIdx];
 				}
 				// Exclusive scan the counts in local memory
-				unsigned int res =  scanlMemPrivData(val, lmem,1, t_idx);
+				unsigned int res =  scanlMemPrivData_by_key(val, lmem,1, t_idx);
 				// Write scanned value out to global
 				if (lIdx < numGroups)
 				{
-					clHistData[(numGroups * d) + lIdx] = res + s_seed;
+					dvHistogramBins[(numGroups * d) + lIdx] = res + s_seed;
 				}
 				if (last_thread) 
 				{
@@ -578,11 +573,11 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 			break;
 		concurrency::parallel_for_each( av, tileK0, 
 				[
-					clInputKeys,
-					clInputValues,
-					clSwapKeys,
-					clSwapValues,
-					clHistData,
+					keys_first,
+					values_first,
+					dvSwapInputKeys,
+					dvSwapInputValues,
+					dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -611,9 +606,9 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 			if( lIdx < (NUM_BUCKET) )
 			{
 				if(!Asc_sort)
-					localHistogramToCarry[lIdx] = clHistData[(NUM_BUCKET - lIdx -1)*nWGs + wgIdx]; 
+					localHistogramToCarry[lIdx] = dvHistogramBins[(NUM_BUCKET - lIdx -1)*nWGs + wgIdx]; 
 				else
-					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+					localHistogramToCarry[lIdx] = dvHistogramBins[lIdx*nWGs + wgIdx];
 			}
 
 			t_idx.barrier.wait();
@@ -631,30 +626,30 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 					{
 						if(swap == 0)
 						{
-							sortData[i] = ( addr+i < n )? clInputKeys[ addr+i ] : 0x0;
-							sortVal[i]  = ( addr+i < n )? clInputValues[ addr+i ] : 0x0;
+							sortData[i] = ( addr+i < n )? keys_first[ addr+i ] : 0x0;
+							sortVal[i]  = ( addr+i < n )? values_first[ addr+i ] : 0x0;
 						}
 						else
 						{
-							sortData[i] = ( addr+i < n )? clSwapKeys[ addr+i ] : 0x0;
-							sortVal[i]  = ( addr+i < n )? clSwapValues[ addr+i ] : 0x0;
+							sortData[i] = ( addr+i < n )? dvSwapInputKeys[ addr+i ] : 0x0;
+							sortVal[i]  = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0x0;
 						}
 					}
 					else
 					{
 						if(swap == 0)
 						{
-							sortData[i] = ( addr+i < n )? clInputKeys[ addr+i ] : 0xffffffff;
-							sortVal[i]  = ( addr+i < n )? clInputValues[ addr+i ] : 0xffffffff;
+							sortData[i] = ( addr+i < n )? keys_first[ addr+i ] : 0xffffffff;
+							sortVal[i]  = ( addr+i < n )? values_first[ addr+i ] : 0xffffffff;
 						}
 						else
 						{
-							sortData[i] = ( addr+i < n )? clSwapKeys[ addr+i ] : 0xffffffff;
-							sortVal[i]  = ( addr+i < n )? clSwapValues[ addr+i ] : 0xffffffff;
+							sortData[i] = ( addr+i < n )? dvSwapInputKeys[ addr+i ] : 0xffffffff;
+							sortVal[i]  = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0xffffffff;
 						}
 					}
 				}
-				sort4BitsKeyValueAscending(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
+				sort4BitsKeyValueAscending_by_key(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
 
 				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
 				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
@@ -742,13 +737,13 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 							{
 								if(swap == 0)
 								{
-									clSwapKeys[ groupOffset + myIdx ] =  sortData[ie]; 
-									clSwapValues[ groupOffset + myIdx ] =  sortVal[ie]; 
+									dvSwapInputKeys[ groupOffset + myIdx ] =  sortData[ie]; 
+									dvSwapInputValues[ groupOffset + myIdx ] =  sortVal[ie]; 
 								}
 								else
 								{
-									clInputKeys[ groupOffset + myIdx ] = sortData[ie];
-									clInputValues[ groupOffset + myIdx ] = sortVal[ie];
+									keys_first[ groupOffset + myIdx ] = sortData[ie];
+									values_first[ groupOffset + myIdx ] = sortVal[ie];
 								}
 							}
 						}
@@ -772,11 +767,11 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		cdata.m_startBit = bits;
 		concurrency::parallel_for_each( av, tileK0, 
 				[
-					clInputKeys,
-					clInputValues,
-					clSwapKeys,
-					clSwapValues,
-					clHistData,
+					keys_first,
+					values_first,
+					dvSwapInputKeys,
+					dvSwapInputValues,
+					dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -805,9 +800,9 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 			if( lIdx < (NUM_BUCKET) )
 			{
 				if(!Asc_sort)
-					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+					localHistogramToCarry[lIdx] = dvHistogramBins[lIdx*nWGs + wgIdx];
 				else
-					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+					localHistogramToCarry[lIdx] = dvHistogramBins[lIdx*nWGs + wgIdx];
 			}
 
 			t_idx.barrier.wait();
@@ -824,16 +819,16 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 				{
 					if(!Asc_sort)
 					{
-						sortData[i] = ( addr+i < n )? clSwapKeys[ addr+i ] : 0x80000000;
-						sortVal[i]  = ( addr+i < n )? clSwapValues[ addr+i ] : 0x80000000;
+						sortData[i] = ( addr+i < n )? dvSwapInputKeys[ addr+i ] : 0x80000000;
+						sortVal[i]  = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0x80000000;
 					}
 					else
 					{
-						sortData[i] = ( addr+i < n )? clSwapKeys[ addr+i ] : 0x7fffffff;
-						sortVal[i]  = ( addr+i < n )? clSwapValues[ addr+i ] : 0x7fffffff;
+						sortData[i] = ( addr+i < n )? dvSwapInputKeys[ addr+i ] : 0x7fffffff;
+						sortVal[i]  = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0x7fffffff;
 					}
 				}
-				sort4BitsSignedKeyValueAscending(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
+				sort4BitsSignedKeyValueAscending_by_key(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
 
 				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
 				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
@@ -919,8 +914,8 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						{
 							if ((groupOffset + myIdx)<n)
 							{
-									clInputKeys[ groupOffset + myIdx ] = sortData[ie];
-									clInputValues[ groupOffset + myIdx ] = sortVal[ie];
+									keys_first[ groupOffset + myIdx ] = sortData[ie];
+									values_first[ groupOffset + myIdx ] = sortVal[ie];
 							}
 						}
 					}
@@ -1004,7 +999,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
         // User defined Data types are not supported with device_vector. Hence we have a static assert here.
         // The code here should be in compliant with the routine following this routine.
-        size_t szElements = (size_t)(keys_last - keys_first);
+        unsigned int szElements = (unsigned int)(keys_last - keys_first);
         if (szElements == 0 )
                 return;
         bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
@@ -1057,7 +1052,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
         typedef typename std::iterator_traits<RandomAccessIterator2>::value_type T_values;
-        size_t szElements = (size_t)(keys_last - keys_first);
+        unsigned int szElements = (unsigned int)(keys_last - keys_first);
         if (szElements == 0)
             return;
 

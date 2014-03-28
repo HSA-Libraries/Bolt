@@ -318,7 +318,7 @@ public:
 
         value_type& operator[](int x) const restrict(cpu,amp)
         {
-            return m_Container[x];
+            return m_Container[m_Index + x];
         }
 
         value_type& operator*() const restrict(cpu,amp)
@@ -429,7 +429,7 @@ private:
 
         value_type& operator[](int x) const restrict(cpu,amp)
         {
-            return m_Container[x];
+            return m_Container[m_Index - x];
         }
 
         value_type& operator*() const restrict(cpu,amp)
