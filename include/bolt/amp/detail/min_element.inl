@@ -85,8 +85,6 @@ namespace bolt {
 				length = residual ? (length + MIN_MAX_WAVEFRONT_SIZE - residual): length ;
 				unsigned int numTiles = (length / MIN_MAX_WAVEFRONT_SIZE);
 
-				auto inputV = first.getContainer().getBuffer(first);
-
 				concurrency::array< unsigned int, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
                                                                                         cpuAcceleratorView);
                 concurrency::array_view<unsigned int, 1> result ( resultArray );
@@ -103,7 +101,7 @@ namespace bolt {
                 {
                     concurrency::parallel_for_each(ctl.getAccelerator().default_view,
                                                    tiledExtentReduce,
-                                                   [ inputV,
+                                                   [ first,
                                                      szElements,
 													 length,
                                                      result,
@@ -123,7 +121,7 @@ namespace bolt {
                       {
                        //  Initialize the accumulator private variable with data from the input array
                        //  This essentially unrolls the loop below at least once
-					   scratch[tileIndex] = inputV[globalId];
+					   scratch[tileIndex] = first[globalId];
                        scratch_index[tileIndex] = gx;
 					   gx += length;
                       }
@@ -134,7 +132,7 @@ namespace bolt {
 					  // length into a length related to the number of workgroups
 					  while (gx < szElements)
 					  {
-						  iType element = inputV[gx];						  
+						  iType element = first[gx];						  
 						  bool stat = binary_op(scratch[tileIndex], element);
 						  scratch[tileIndex] = stat ? scratch[tileIndex] : element;						
 						  scratch_index[tileIndex] = stat ? scratch_index[tileIndex] : gx;
@@ -174,13 +172,13 @@ namespace bolt {
 
                     
                     unsigned int *cpuPointerReduce =  result.data();
-                    iType minele =  inputV[cpuPointerReduce[0]];
+                    iType minele =  first[cpuPointerReduce[0]];
                     unsigned int minele_indx = cpuPointerReduce[0];;
 
 					for (unsigned int i = 0; i < numTiles; ++i)
                     {
-                        bool stat = binary_op( minele, inputV[cpuPointerReduce[i]]);
-                        minele = stat ? minele : inputV[cpuPointerReduce[i]];
+                        bool stat = binary_op( minele, first[cpuPointerReduce[i]]);
+                        minele = stat ? minele : first[cpuPointerReduce[i]];
                         minele_indx =  stat ? minele_indx :cpuPointerReduce[i] ;
 
                     }
@@ -206,7 +204,7 @@ namespace bolt {
                 {
 					concurrency::parallel_for_each(ctl.getAccelerator().default_view,
 						tiledExtentReduce,
-						[inputV,
+						[first,
 						szElements,
 						length,
 						result,
@@ -226,7 +224,7 @@ namespace bolt {
 						{
 							//  Initialize the accumulator private variable with data from the input array
 							//  This essentially unrolls the loop below at least once
-							scratch[tileIndex] = inputV[globalId];
+							scratch[tileIndex] = first[globalId];
 							scratch_index[tileIndex] = gx;
 							gx += length;
 						}
@@ -237,7 +235,7 @@ namespace bolt {
 						// length into a length related to the number of workgroups
 						while (gx < szElements)
 						{
-							iType element = inputV[gx];
+							iType element = first[gx];
 							bool stat = binary_op(scratch[tileIndex], element);
 							scratch[tileIndex] = stat ? scratch[tileIndex] : element;
 							scratch_index[tileIndex] = stat ? scratch_index[tileIndex] : gx;
@@ -278,14 +276,14 @@ namespace bolt {
                     
                     unsigned int *cpuPointerReduce =  result.data();
 
-                    iType minele =  inputV[cpuPointerReduce[0]];
+                    iType minele =  first[cpuPointerReduce[0]];
 					unsigned int minele_indx = cpuPointerReduce[0];
 
                 
 					for (unsigned int i = 0; i < numTiles; ++i)
                     {
-                        bool stat = binary_op(inputV[cpuPointerReduce[i]], minele);
-                        minele = stat ? minele : inputV[cpuPointerReduce[i]];
+                        bool stat = binary_op(first[cpuPointerReduce[i]], minele);
+                        minele = stat ? minele : first[cpuPointerReduce[i]];
                         minele_indx =  stat ? minele_indx : cpuPointerReduce[i];
                     }
                 

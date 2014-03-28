@@ -54,7 +54,6 @@ void generate_enqueue(
 
                const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
 
-    	    concurrency::array_view<Type,1> outputV (first.getContainer().getBuffer(first));
             const unsigned int leng =  szElements + GEN_WAVEFRONT_SIZE - (szElements % GEN_WAVEFRONT_SIZE);
 
             concurrency::extent< 1 > inputExtent(leng);
@@ -70,7 +69,7 @@ void generate_enqueue(
                     if( globalId >= szElements)
                          return;
 
-                    outputV[globalId] =(Type) gen();
+                    first[globalId] =(Type) gen();
 
                 });
             }

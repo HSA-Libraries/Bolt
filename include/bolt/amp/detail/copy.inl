@@ -51,11 +51,6 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
       typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
     
       const unsigned int szElements = static_cast< unsigned int >( n );
-    
-      auto inputV  = (first.getContainer().getBuffer(first));
-      auto outputV = (result.getContainer().getBuffer(result));
-
-
       const unsigned int leng =  szElements + COPY_WAVEFRONT_SIZE - (szElements % COPY_WAVEFRONT_SIZE);
 
 	 concurrency::extent< 1 > inputExtent(leng);
@@ -70,7 +65,7 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
             if( globalId >= szElements)
                 return;
 
-             outputV[globalId] = inputV[globalId];
+             result[globalId] = first[globalId];
          });
       }
 

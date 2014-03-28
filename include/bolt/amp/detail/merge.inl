@@ -38,7 +38,7 @@ namespace bolt {
         namespace detail {
 
 			template< typename iTypePtr1, typename iTypeIter1, typename StrictWeakCompare >
-			int binary_search1(iTypePtr1 value, iTypeIter1  a, int start, int length, const  StrictWeakCompare &userFunctor)   restrict(amp)
+			int binary_search1(iTypePtr1 value, const iTypeIter1  a, int start, int length, const  StrictWeakCompare &userFunctor)   restrict(amp)
 			{
 				int low = start;
 				int high = length;
@@ -56,7 +56,7 @@ namespace bolt {
 			}
 
 			template< typename iTypePtr1, typename iTypeIter1, typename StrictWeakCompare >
-			int binary_search2(iTypePtr1 value, iTypeIter1  a, int start, int length, const StrictWeakCompare &userFunctor)   restrict(amp)
+			int binary_search2(iTypePtr1 value, const iTypeIter1  a, int start, int length, const StrictWeakCompare &userFunctor)   restrict(amp)
 			{
 				int low = start;
 				int high = length;
@@ -97,18 +97,11 @@ namespace bolt {
 				const unsigned int length1 = static_cast< unsigned int >(std::distance(first1, last1));
 				const unsigned int length2 = static_cast< unsigned int >(std::distance(first2, last2));
 
-		
-				concurrency::array_view<iType1, 1> inputV1(first1.getContainer().getBuffer(first1));
-				concurrency::array_view<iType2, 1> inputV2(first2.getContainer().getBuffer(first2));
-				concurrency::array_view<rType, 1> resultV(result.getContainer().getBuffer(result));
 				int wgSize = 64;
-
-
 				unsigned int leng = length1 > length2 ? length1 : length2;
 				leng = leng + wgSize - (leng % wgSize);
 
 				concurrency::extent< 1 > inputExtent(leng);
-
 				try
 				{
 				concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
@@ -119,20 +112,20 @@ namespace bolt {
 
 					if (gx < length1)
 					{
-						iType1 val = inputV1[gx];
-						pos1 = binary_search1<iType1, concurrency::array_view<iType1, 1>,  StrictWeakCompare > (val, inputV2, 0, length2, comp);
-						if ((inputV2[pos1 - 1] == val)  && pos1 != 0)
-							resultV[pos1 + gx - 1] = val;
+						iType1 val = first1[gx];
+						pos1 = binary_search1<iType1, DVInputIterator2,  StrictWeakCompare > (val, first2, 0, length2, comp);
+						if ((first2[pos1 - 1] == val)  && pos1 != 0)
+							result[pos1 + gx - 1] = val;
 						else
-							resultV[pos1 + gx] = val;
+							result[pos1 + gx] = val;
 
 					}
 
 					if (gx < length2)
 					{
-						iType2 val = inputV2[gx];
-						pos2 = binary_search2<iType1, concurrency::array_view<iType1, 1>, StrictWeakCompare >(val, inputV1, 0, length1, comp);
-						resultV[pos2 + gx] = val;
+						iType2 val = first2[gx];
+						pos2 = binary_search2<iType1, DVInputIterator2, StrictWeakCompare >(val, first1, 0, length1, comp);
+						result[pos2 + gx] = val;
 					}
 				});
 				}
@@ -187,7 +180,7 @@ namespace bolt {
 					  #if defined(BOLT_DEBUG_LOG)
                       dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_GPU,"::Merge::GPU");
                       #endif
-                      size_t sz = (last1-first1) + (last2-first2);
+                      int sz = static_cast<int>((last1-first1) + (last2-first2));
 					  device_vector< iType1, concurrency::array_view  > dvInput1(first1, last1, false, ctl);
 					  device_vector< iType2, concurrency::array_view  > dvInput2(first2, last2, false, ctl);
 					  device_vector< oType, concurrency::array_view  >  dvresult(result, sz, true, ctl);

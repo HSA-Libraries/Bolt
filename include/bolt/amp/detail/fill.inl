@@ -51,10 +51,7 @@ namespace detail {
             concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
             typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
-
             const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
-
-    	    concurrency::array_view<Type,1> outputV (first.getContainer().getBuffer(first));
             const unsigned int leng =  szElements + FILL_WAVEFRONT_SIZE - (szElements % FILL_WAVEFRONT_SIZE);
 
             concurrency::extent< 1 > inputExtent(leng);
@@ -70,7 +67,7 @@ namespace detail {
                     if( globalId >= szElements)
                          return;
 
-                    outputV[globalId] =(Type) val;
+                    first[globalId] =(Type) val;
 
                 });
             }

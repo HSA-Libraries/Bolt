@@ -68,8 +68,6 @@ namespace bolt {
 				length = residual ? (length + COUNT_WAVEFRONT_SIZE - residual): length ;
 				unsigned int numTiles = (length / COUNT_WAVEFRONT_SIZE);
 
-				auto inputV = first.getContainer().getBuffer(first);
-
 				concurrency::array< unsigned int, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
 					cpuAcceleratorView);
 
@@ -89,7 +87,7 @@ namespace bolt {
                 {
 					concurrency::parallel_for_each(ctl.getAccelerator().default_view,
                                                    tiledExtentReduce,
-                                                   [ inputV,
+                                                   [ first,
                                                      szElements,
 													 length,
                                                      result,
@@ -110,7 +108,7 @@ namespace bolt {
                       {
                        //  Initialize the accumulator private variable with data from the input array
                        //  This essentially unrolls the loop below at least once
-						  iType accumulator = inputV[gloId];
+						  iType accumulator = first[gloId];
                        stat =  predicate(accumulator);
 					   scratch_count[tileIndex]  = stat ? ++count : count;
 					   gx += length;
@@ -122,7 +120,7 @@ namespace bolt {
 					  // length into a length related to the number of workgroups
 					  while (gx < szElements)
 					  {
-						  iType element = inputV[gx];
+						  iType element = first[gx];
 						  stat = predicate(element);
 						  scratch_count[tileIndex] = stat ? ++scratch_count[tileIndex] : scratch_count[tileIndex];
 						  gx += length;

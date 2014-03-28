@@ -19,7 +19,7 @@
 //
 
 #define TEST_DOUBLE 1
-#define TEST_LARGE_BUFFERS 0
+#define TEST_LARGE_BUFFERS 1
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.

@@ -70,27 +70,25 @@
 #define uint_4 Concurrency::graphics::uint_4
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
-
-
 #define make_uint4 (uint_4)
-inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
-{
-	uint_4 res;
-	res.x = (condition.x )? b.x : a.x;
-	res.y = (condition.y )? b.y : a.y;
-	res.z = (condition.z )? b.z : a.z;
-	res.w = (condition.w )? b.w : a.w;
-	return res;
-
-}
 #define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]
+
 
 namespace bolt {
 namespace amp {
 
 namespace detail {
 
+	inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
+	{
+		uint_4 res;
+		res.x = (condition.x )? b.x : a.x;
+		res.y = (condition.y )? b.y : a.y;
+		res.z = (condition.z )? b.z : a.z;
+		res.w = (condition.w )? b.w : a.w;
+		return res;
 
+	}
     //Serial CPU code path implementation.
     //Class to hold the key value pair. This will be used to zip th ekey and value together in a vector.
     template <typename keyType, typename valueType>
