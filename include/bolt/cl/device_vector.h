@@ -257,12 +257,6 @@ namespace cl
                 {
                     return *this;
                 }
-                
-                iterator_base< value_type* >
-                mapped_itr(value_type* ptr) const
-                {
-                    return iterator_base< value_type* >(ptr);
-                }
 
                 iterator_base< Container > & operator+= ( const difference_type & n )
                 {
@@ -624,7 +618,7 @@ namespace cl
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE,
+            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR,
                 bool init = true, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ),
                 m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
@@ -680,7 +674,7 @@ namespace cl
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
+            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
@@ -702,11 +696,6 @@ namespace cl
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
-                    //if(std::iterator_traits<InputIterator>::iterator_category() == bolt::cl::fancy_iterator_tag())
-                    //    m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
-                    //        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin.base() ) ) );
-                    //else
-                        //value_type temp = *begin;
                         m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
                             reinterpret_cast< value_type* >( const_cast< value_type* >( std::addressof(*(begin) ) /*&*begin*/ ) ) );
 
@@ -1430,7 +1419,7 @@ namespace cl
 
                 --m_Size;
 
-				size_t newIndex = (m_Size < (size_t)index.m_Index) ? m_Size : index.m_Index;
+                size_t newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
                 return iterator( *this, static_cast< difference_type >( (int)newIndex ) );
             }
 
@@ -1444,7 +1433,7 @@ namespace cl
                 if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( (size_t)last.m_Index > m_Size )
+                if( last.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 if( (first == begin( )) && (last == end( )) )
@@ -1471,7 +1460,7 @@ namespace cl
 
                 m_Size -= sizeErase;
 
-				size_type newIndex = (m_Size < (size_t)last.m_Index) ? m_Size : last.m_Index;
+                size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
                 return iterator( *this, static_cast< typename iterator::difference_type >( newIndex ) );
             }
 
@@ -1487,7 +1476,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-				if ((size_t)index.m_Index > m_Size)
+                if (index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
             if( index.m_Index == m_Size )
@@ -1539,7 +1528,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-				if ((size_t)index.m_Index > m_Size)
+                if( index.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
@@ -1580,7 +1569,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-				if ((size_t)index.m_Index > m_Size)
+                if ( index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.

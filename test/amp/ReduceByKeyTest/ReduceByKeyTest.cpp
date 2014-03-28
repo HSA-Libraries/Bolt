@@ -774,6 +774,14 @@ struct uddfltint
             equal = ( (1.0f*y - rhs.y)/rhs.y < ths && (1.0f*y - rhs.y)/rhs.y > -ths) ? equal : false;
         return equal;
     }
+
+	 bool operator&&(const uddfltint& rhs) const restrict(amp, cpu)
+    {
+        bool res = true;
+        res = ( (x && rhs.x ) && (y && rhs.y)) ? res : false;
+        return res;
+    }
+
     void operator++(int) restrict(amp, cpu)
     {
         x += (float)1.0f;
@@ -1244,7 +1252,11 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
 }
  TEST(ReduceByKeyBasic, MultiCoreCPUDeviceVectorTest)
 {
-    int length = 1<<10;
+    //for(int i=15; i<20; i++)
+	//{
+    //printf("\n i = %d\n", i);
+
+	int length = 1<<15;
     std::vector< int > keys(length);
 
     int segmentLength = 0;
@@ -1297,6 +1309,7 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
 
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
+	//}
 }
  
 TEST(reduce_by_key__bolt_Std_vect, Basic_EPR377067){
@@ -2472,7 +2485,7 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTestOddSizes)
 
     int num,i, count=0;
 
-   for(num=1<<16;count<=20;num++)
+   for(num=1<<18;count<=20;num++)
    {
       for(i=2;i<num;i++)
       {

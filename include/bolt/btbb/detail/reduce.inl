@@ -19,7 +19,7 @@
 #define BOLT_BTBB_REDUCE_INL
 #pragma once
 
-#include <thread>
+//#include <thread>
 #include "tbb/partitioner.h"
 
 namespace bolt{
@@ -73,7 +73,8 @@ namespace bolt{
             //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
 
 			//Gets the number of concurrent threads supported by the underlying platform
-            unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+            //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+			unsigned int concurentThreadsSupported = tbb::task_scheduler_init::default_num_threads();
 			//Explicitly setting the number of threads to spawn
             tbb::task_scheduler_init((int) concurentThreadsSupported);
 

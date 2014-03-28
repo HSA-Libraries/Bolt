@@ -29,7 +29,7 @@
 #include "bolt/amp/device_vector.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 #include <amp.h>
-//#include "bolt/amp/detail/sort_by_key.inl"
+#include "bolt/amp/detail/sort_by_key.inl"
 
 #ifdef ENABLE_TBB
 //TBB Includes
@@ -104,38 +104,38 @@ namespace detail
     /**************************************************************/
     /**StableSort_by_key with keys as unsigned int specialization**/
     /**************************************************************/
-    //template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    //typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
-    //                                       unsigned int
-    //                                     >::value
-    //                       >::type   /*If enabled then this typename will be evaluated to void*/
-    //stablesort_by_key_enqueue( control& ctrl,
-    //                                const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
-    //                                const DVRandomAccessIterator2 values_first,
-    //                                const StrictWeakOrdering& comp, const std::string& cl_code )
-    //{
+    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
+                                           unsigned int
+                                         >::value
+                           >::type   /*If enabled then this typename will be evaluated to void*/
+    stablesort_by_key_enqueue( control& ctrl,
+                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
+                                    const DVRandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp )
+    {
 		
-    //    bolt::amp::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
-    //    return;    
-    //}
+        bolt::amp::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp);
+        return;    
+    }
 
     /**************************************************************/
     /*StableSort_by_key with keys as int specialization*/
     /**************************************************************/
-    //template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    //typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
-    //                                       int
-    //                                     >::value
-    //                       >::type   /*If enabled then this typename will be evaluated to void*/
-    //stablesort_by_key_enqueue( control& ctrl,
-    //                           const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
-    //                           const DVRandomAccessIterator2 values_first,
-    //                           const StrictWeakOrdering& comp, const std::string& cl_code )
-    //{
+    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
+                                           int
+                                         >::value
+                           >::type   /*If enabled then this typename will be evaluated to void*/
+    stablesort_by_key_enqueue( control& ctrl,
+                               const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
+                               const DVRandomAccessIterator2 values_first,
+                               const StrictWeakOrdering& comp )
+    {
 		
-    //    bolt:amp::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
-    //    return;    
-    //}
+        bolt::amp::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp);
+        return;    
+    }
 
 
 	template< typename sType, typename Container, typename StrictWeakOrdering >
@@ -216,11 +216,11 @@ namespace detail
 
 
     template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    /*typename std::enable_if<
+    typename std::enable_if<
     !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type, unsigned int >::value || 
       std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type, int >::value  )
-                       >::type*/
-    void stablesort_by_key_enqueue( control& ctrl,
+                       >::type
+    stablesort_by_key_enqueue( control& ctrl,
                                     const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
                                     const DVRandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp)
@@ -232,7 +232,6 @@ namespace detail
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
 
-       
         const unsigned int localRange= STABLESORT_BY_KEY_BUFFER_SIZE;
 		
         //  Make sure that globalRange is a multiple of localRange
@@ -354,7 +353,7 @@ namespace detail
 								  val_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds2[ locId ];
 							}
 					  }
-					  //barrier( CLK_LOCAL_MEM_FENCE );
+					  t_idx.barrier.wait();
 					}	  
 					if( gloId < vecSize)
 					{
@@ -391,11 +390,8 @@ namespace detail
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-        device_vector<keyType> keytmpBufferVec(static_cast<size_t>(vecSize));
-        auto&  tmpKeyBuffer   =  keytmpBufferVec.begin().getContainer().getBuffer(); 
-
-        device_vector<valueType> keyvalBufferVec(static_cast<size_t>(vecSize));
-        auto&  tmpValueBuffer   =  keyvalBufferVec.begin().getContainer().getBuffer(); 
+		concurrency::array< keyType >  tmpKeyBuffer( vecSize, av );
+		concurrency::array< valueType >  tmpValueBuffer( vecSize, av );
 
 
 		/**********************************************************************************
@@ -416,8 +412,8 @@ namespace detail
                 [
                   inputBuffer,
 				  keyBuffer,
-                  tmpKeyBuffer,
-				  tmpValueBuffer,
+                  &tmpKeyBuffer,
+				  &tmpValueBuffer,
                   vecSize,
                   comp,
                   localRange,

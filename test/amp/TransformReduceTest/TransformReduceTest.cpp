@@ -553,7 +553,7 @@ class TransformFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( stdInput ), boltOutput( stdInput )
+	TransformFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( stdInput.begin(), stdInput.end() ), boltOutput( stdInput.begin(), stdInput.end() )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
         stdOutput = stdInput;
