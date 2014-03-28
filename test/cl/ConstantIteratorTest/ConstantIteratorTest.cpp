@@ -303,38 +303,6 @@ BOLT_CREATE_CLCODE  ( trf_sq_itr, ClCode<square>::get() + bolt::cl::deviceTransf
 //#define BOLT_CREATE_TYPENAME( Type ) \
 //    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
 
-TEST( TransformIterator, FirstTest)
-{
-    // initialize the data vector to be sequential numbers
-    std::vector< int > devVec( 100 );
-    std::vector< int > outVec( 100 );
-    std::generate(devVec.begin(), devVec.end(), rand);
-    square sq;
-    std::vector<int>::const_iterator it(devVec.begin() );
-    std::array<int, 1000>::const_iterator array_it;
-    bolt::cl::device_vector<int> dv_input(devVec.begin(), devVec.end());
-    bolt::cl::device_vector<int> dv_output(outVec.begin(), outVec.end());
-
-    bolt::cl::transform_iterator< square, std::vector< int >::const_iterator> trf_begin( devVec.begin(), sq );
-    bolt::cl::transform_iterator< square, std::vector< int >::const_iterator> trf_begin1(trf_begin);
-    bolt::cl::transform_iterator< square, std::vector< int >::const_iterator> trf_end( devVec.end(), sq );
-    bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator> dv_trf_begin( dv_input.begin(), sq );
-    bolt::cl::transform_iterator< square, bolt::cl::device_vector< int >::iterator> dv_trf_end( dv_input.end(), sq );
-    //std::vector<int>::const_iterator temp = trf_begin.base();
-    
-    int dist = std::distance(trf_begin, trf_end);
-    std::cout << "distance = " << dist << "\n" ;
-    int dist1 = std::distance( dv_trf_begin, dv_trf_end );
-    std::cout << "distance = " << dist1 << "\n" ;
-    for(int i =0; i< 100; i++)
-    {
-        std::cout << *trf_begin++ << "   " << *dv_trf_begin++ << "\n";
-    }
-
-    //bolt::cl::transform(trf_begin1, trf_end, outVec.begin(), sq);
-
-}
-
 
 REGISTER_TYPED_TEST_CASE_P( CountingIterator, HostSideNaive, StdTransformVector, DeviceTransformVector );
 

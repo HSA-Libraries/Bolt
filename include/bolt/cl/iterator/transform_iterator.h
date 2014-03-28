@@ -1,40 +1,38 @@
+/***************************************************************************         
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
+
+***************************************************************************/         
+
 // (C) Copyright David Abrahams 2002.
 // (C) Copyright Jeremy Siek    2002.
 // (C) Copyright Thomas Witt    2002.
 // Distributed under the Boost Software License, Version 1.0. (See
-// accompanying file LICENSE_1_0.txt or copy at
+// accompanying file BOOST_LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 #ifndef BOLT_TRANSFORM_ITERATOR_H
 #define BOLT_TRANSFORM_ITERATOR_H
 
-//#include <boost/iterator.hpp>
-//#include <boost/iterator/detail/enable_if.hpp>
-//#include <boost/iterator/iterator_adaptor.hpp>
-//#include <boost/iterator/iterator_categories.hpp>
-//#include <boost/mpl/not.hpp>
-//#include <boost/mpl/bool.hpp>
-//#include <boost/type_traits/function_traits.hpp>
-//#include <boost/type_traits/is_const.hpp>
-//#include <boost/type_traits/is_class.hpp>
-//#include <boost/type_traits/is_function.hpp>
-//#include <boost/type_traits/is_reference.hpp>
-//#include <boost/type_traits/remove_const.hpp>
-//#include <boost/type_traits/remove_reference.hpp>
-//#include <boost/utility/result_of.hpp>
-
-//#include <bolt/cl/iterator/detail/transform_iterator.inl>
 #include <type_traits>
+
 #include <bolt/cl/iterator/iterator_adaptor.h>
 #include <bolt/cl/iterator/iterator_facade.h>
-#include <bolt/cl/detail/type_traits.h>
+#include <bolt/cl/iterator/iterator_traits.h>
+#include <bolt/cl/device_vector.h>
 
 
 
-//#if BOOST_WORKAROUND(BOOST_MSVC, BOOST_TESTED_AT(1310))
-//# include <boost/type_traits/is_base_and_derived.hpp>
-
-//#endif 
-//#include <boost/iterator/detail/config_def.hpp>
 #include <type_traits>
 
 namespace bolt
@@ -101,7 +99,7 @@ namespace cl
     //
     typedef typename UnaryFunc                                       unary_func;
     typedef typename std::iterator_traits<Iterator>::value_type      value_type;
-    typedef /*std::ptrdiff_t*/int                                    difference_type;
+    typedef std::ptrdiff_t                                           difference_type;
     typedef typename std::iterator_traits<Iterator>::pointer         pointer;
     typedef transform_iterator<unary_func, typename bolt::cl::device_vector<value_type>::iterator>  device_transform_iterator;
     transform_iterator() { }
@@ -126,32 +124,16 @@ namespace cl
    { }
 
     
-    transform_iterator<UnaryFunc, value_type*> 
-    mapped_itr(value_type* ptr) const
-    {
-        return transform_iterator<UnaryFunc, value_type*>(ptr);
-    }
+        operator pointer() { 
+            return &(*base_reference()); 
+        } 
 
-    transform_iterator<UnaryFunc, typename device_vector<value_type>::iterator> 
-    create_device_itr(typename device_vector<value_type>::iterator itr) const
-    {
-        return transform_iterator<UnaryFunc, device_vector<value_type>::iterator> (itr);
-    }
-
-   // transform_iterator( value_type * ptr, UnaryFunc f )
-   //   : super_t(ptr), m_f(t.functor())
-   //{ }
-    //This is used in bolt::cl::addressof specialization for transform_iterator
-    operator pointer() { 
-        return &(*base_reference()); 
-    } 
-
-    operator const pointer() const { 
-        return &(*base_reference()); 
-    } 
+        operator const pointer() const { 
+            return &(*base_reference()); 
+        } 
     
-    UnaryFunc functor() const
-      { return m_f; }
+        UnaryFunc functor() const
+        { return m_f; }
 
         struct Payload
         {
@@ -243,6 +225,8 @@ namespace cl
 
    //  This string represents the device side definition of the Transform Iterator template
     static std::string deviceTransformIteratorTemplate = STRINGIFY_CODE(
+        #if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n
+        #define BOLT_CL_TRANSFORM_ITERATOR \n
         namespace bolt { namespace cl { \n
         template< typename UnaryFunc, typename Iterator > \n
         class transform_iterator \n
@@ -278,11 +262,10 @@ namespace cl
                 UnaryFunc          m_f; \n
         }; \n
     } } \n
+    #endif \n
     );
 
 } // namespace cl
 } // namespace bolt
 
-//#include <boost/iterator/detail/config_undef.hpp>
-
-#endif // BOOST_TRANSFORM_ITERATOR_23022003THW_HPP
+#endif // BOLT_TRANSFORM_ITERATOR_H

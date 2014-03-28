@@ -1,36 +1,29 @@
 // (C) Copyright David Abrahams 2002.
 // (C) Copyright Jeremy Siek    2002.
 // (C) Copyright Thomas Witt    2002.
+/***************************************************************************         
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
+
+***************************************************************************/        
+
 // Distributed under the Boost Software License, Version 1.0. (See
-// accompanying file LICENSE_1_0.txt or copy at
+// accompanying file BOOST_LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef BOLT_ITERATOR_ADAPTOR_H
 #define BOLT_ITERATOR_ADAPTOR_H
-
-//#include <boost/static_assert.hpp>
-//#include <boost/iterator.hpp>
-//#include <boost/detail/iterator.hpp>
-//
-//#include <boost/iterator/iterator_categories.hpp>
-//#include <boost/iterator/iterator_facade.hpp>
-//#include <boost/iterator/detail/enable_if.hpp>
-//
-//#include <boost/mpl/and.hpp>
-//#include <boost/mpl/not.hpp>
-//#include <boost/mpl/or.hpp>
-//
-//#include <boost/type_traits/is_same.hpp>
-//#include <boost/type_traits/is_convertible.hpp>
-//
-//#ifdef BOOST_ITERATOR_REF_CONSTNESS_KILLS_WRITABILITY
-//# include <boost/type_traits/remove_reference.hpp>
-//#endif
-//
-//#include <boost/type_traits/add_reference.hpp>
-//#include <boost/iterator/detail/config_def.hpp>
-//
-//#include <boost/iterator/iterator_traits.hpp>
-
 
 #include <type_traits>
 #include <bolt/cl/detail/type_traits.h>
@@ -317,7 +310,7 @@ namespace cl
 
       void advance(typename super_t::difference_type n)
       {
-          m_iterator += n;
+          m_iterator += (int)n;
       }
   
       void increment() { ++m_iterator; }

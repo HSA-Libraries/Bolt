@@ -1,38 +1,30 @@
+/***************************************************************************         
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
+
+***************************************************************************/         
+
 // Copyright David Abrahams 2003. Use, modification and distribution is
 // subject to the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file BOOST_LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 #ifndef BOLT_FACADE_ITERATOR_CATEGORY_H
 # define BOLT_FACADE_ITERATOR_CATEGORY_H
 
-//# include <boost/iterator/iterator_categories.hpp>
-//
-//# include <boost/mpl/or.hpp>  // used in iterator_tag inheritance logic
-//# include <boost/mpl/and.hpp>
-//# include <boost/mpl/if.hpp>
-//# include <boost/mpl/eval_if.hpp>
-//# include <boost/mpl/identity.hpp>
-//# include <boost/mpl/assert.hpp>
-//
-//# include <boost/type_traits/is_same.hpp>
-//# include <boost/type_traits/is_const.hpp>
-//# include <boost/type_traits/is_reference.hpp>
-//# include <boost/type_traits/is_convertible.hpp>
-//
-//# include <boost/type_traits/is_same.hpp>
-//
-//# include <boost/iterator/detail/config_def.hpp> // try to keep this last
-//
-//# ifdef BOOST_ITERATOR_REF_CONSTNESS_KILLS_WRITABILITY
-//#  include <boost/detail/indirect_traits.hpp>
-//# endif
 
-//
-// iterator_category deduction for iterator_facade
-//
+
 #include <bolt/cl/iterator/iterator_categories.h>
-#include <boost/iterator/iterator_categories.hpp>
 
-// forward declaration
 namespace bolt {
 namespace cl { 
     struct use_default; 
@@ -57,17 +49,6 @@ struct input_output_iterator_tag
         return std::output_iterator_tag();
     }
 };
-
-//
-// True iff the user has explicitly disabled writability of this
-// iterator.  Pass the iterator_facade's Value parameter and its
-// nested ::reference type.
-//
-////template <class ValueParam, class Reference>
-////struct iterator_writability_disabled
-////  : is_const<ValueParam>
-////{};
-
 
 //
 // Convert an iterator_facade's traversal category, Value parameter,
@@ -162,7 +143,7 @@ struct facade_iterator_category_impl
 //
 template <class CategoryOrTraversal, class ValueParam, class Reference>
 struct facade_iterator_category
-  : boost::mpl::eval_if<
+  : bolt::cl::detail::eval_if<
         is_iterator_category<CategoryOrTraversal>
       , bolt::cl::detail::identity_<CategoryOrTraversal> // old-style categories are fine as-is
       , facade_iterator_category_impl<CategoryOrTraversal,ValueParam,Reference>
@@ -172,6 +153,5 @@ struct facade_iterator_category
 
 }}} // namespace bolt::cl::detail
 
-//# include <boost/iterator/detail/config_undef.hpp>
 
-#endif // FACADE_ITERATOR_CATEGORY_DWA20031118_HPP
+#endif // BOLT_FACADE_ITERATOR_CATEGORY_H

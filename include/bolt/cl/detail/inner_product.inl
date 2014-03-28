@@ -87,7 +87,8 @@ namespace detail {
                     return init;
 
                 device_vector< iType > tempDV( distVec, iType(), CL_MEM_READ_WRITE, false, ctl );
-                detail::transform_enqueue( ctl, first1, last1, first2, tempDV.begin() ,f2,cl_code);
+                //detail::transform_enqueue( ctl, first1, last1, first2, tempDV.begin() ,f2,cl_code);
+                detail::cl::binary_transform( ctl, first1, last1, first2, tempDV.begin() ,f2,cl_code);
                 return detail::reduce_enqueue( ctl, tempDV.begin(), tempDV.end(), init, f1, cl_code);
                 bolt::cl::wait(ctl, innerproductEvent);
 

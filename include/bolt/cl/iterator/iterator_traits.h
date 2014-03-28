@@ -71,6 +71,9 @@ namespace cl {
 
     struct fancy_iterator_tag: public std::random_access_iterator_tag
     {
+        operator fancy_iterator_tag ( ) const
+        {
+        }
     };
 
     template< typename iterator >

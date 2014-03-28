@@ -106,13 +106,20 @@ namespace bolt
 		void operator( )( transformBinaryRange< tbbInputIterator1, tbbInputIterator2, tbbOutputIterator, tbbFunctor >& r ) const
 		{
 			//size_t sz = std::distance( r.first1, r.last1 );
-
-#if defined( _WIN32 )
-			std::transform( r.first1, r.last1, r.first2,
-				stdext::make_unchecked_array_iterator( r.result ), r.func );
-#else
-			std::transform( r.first1, r.last1, r.first2, r.result, r.func );
-#endif
+            size_t sz = (r.last1 - r.first1);
+            if (sz == 0)
+                return;
+            //std::transform( first, last, result, f );
+            for(int index=0; index < (int)(sz); index++)
+            {
+                *(r.result + index) = r.func( *(r.first1+index), *(r.first2+index) );
+            }
+//#if defined( _WIN32 )
+//			std::transform( r.first1, r.last1, r.first2,
+//				stdext::make_unchecked_array_iterator( r.result ), r.func );
+//#else
+//			std::transform( r.first1, r.last1, r.first2, r.result, r.func );
+//#endif
 		}
 	};
 
@@ -121,13 +128,16 @@ namespace bolt
 	{
 		void operator( )( transformUnaryRange< tbbInputIterator1, tbbOutputIterator, tbbFunctor >& r ) const
 		{
-			//size_t sz = std::distance( r.first1, r.last1 );
-
-#if defined( _WIN32 )
-			std::transform( r.first1, r.last1, stdext::make_unchecked_array_iterator( r.result ), r.func );
-#else
-			std::transform( r.first1, r.last1, r.result, r.func );
-#endif
+			size_t sz = std::distance( r.first1, r.last1 );
+            for(int index=0; index < (int)(sz); index++)
+            {
+                *(r.result + index) = r.func( *(r.first1+index) );
+            }
+//#if defined( _WIN32 )
+//			std::transform( r.first1, r.last1, stdext::make_unchecked_array_iterator( r.result ), r.func );
+//#else
+//			std::transform( r.first1, r.last1, r.result, r.func );
+//#endif
 		}
 	};
 

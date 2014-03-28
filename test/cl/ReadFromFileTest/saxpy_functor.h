@@ -19,7 +19,7 @@ struct SaxpyFunctor
 {
 	float _a;
 	SaxpyFunctor(float a) : _a(a) {};
-	float operator() (const float &xx, const float &yy)
+	float operator() (const float &xx, const float &yy) const
 	{
 		return _a * xx + yy;
 	};

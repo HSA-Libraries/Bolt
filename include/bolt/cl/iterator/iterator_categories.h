@@ -1,29 +1,33 @@
+/***************************************************************************         
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
+
+***************************************************************************/         
+
 // (C) Copyright Jeremy Siek 2002.
 // Distributed under the Boost Software License, Version 1.0. (See
-// accompanying file LICENSE_1_0.txt or copy at
+// accompanying file BOOST_LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef BOLT_ITERATOR_CATEGORIES_H
 # define BOLT_ITERATOR_CATEGORIES_H
 
-////# include <boost/config.hpp>
-////# include <boost/detail/iterator.hpp>
-////# include <boost/iterator/detail/config_def.hpp>
-////
-////# include <boost/detail/workaround.hpp>
-////
-////# include <boost/mpl/eval_if.hpp>
-////# include <boost/mpl/identity.hpp>
-////# include <boost/mpl/placeholders.hpp>
-////# include <boost/mpl/aux_/lambda_support.hpp>
-////
-////# include <boost/type_traits/is_convertible.hpp>
-////
-////# include <boost/static_assert.hpp>
+
 #include <type_traits>
-#include "bolt\cl\detail\type_traits.h"
-//#include <boost/type_traits/is_convertible.hpp>
-//# include <boost/mpl/eval_if.hpp>
+#include <bolt/cl/detail/type_traits.h>
+#include <bolt/cl/iterator/iterator_traits.h>
+
 namespace bolt {
 namespace cl {
 //
@@ -101,65 +105,6 @@ namespace detail
   {};
 
 
-  /*template <class Cat>
-  struct old_category_to_traversal
-    : bolt::cl::detail::eval_if<
-          boost::is_convertible<Cat,std::random_access_iterator_tag>
-        , bolt::cl::detail::identity_<random_access_traversal_tag>
-        , bolt::cl::detail::eval_if<
-              boost::is_convertible<Cat,std::bidirectional_iterator_tag>
-            , bolt::cl::detail::identity_<bidirectional_traversal_tag>
-            , bolt::cl::detail::eval_if<
-                  boost::is_convertible<Cat,std::forward_iterator_tag>
-                , bolt::cl::detail::identity_<forward_traversal_tag>
-                , bolt::cl::detail::eval_if<
-                      boost::is_convertible<Cat,std::input_iterator_tag>
-                    , bolt::cl::detail::identity_<single_pass_traversal_tag>
-                    , bolt::cl::detail::eval_if<
-                          boost::is_convertible<Cat,std::output_iterator_tag>
-                        , bolt::cl::detail::identity_<incrementable_traversal_tag>
-                        , void
-                      >
-                  >
-              >
-          >
-      >
-  {};*/
-
-  //////template <class Traversal>
-  //////struct pure_traversal_tag
-  //////  : mpl::eval_if<
-  //////        is_convertible<Traversal,random_access_traversal_tag>
-  //////      , mpl::identity<random_access_traversal_tag>
-  //////      , mpl::eval_if<
-  //////            is_convertible<Traversal,bidirectional_traversal_tag>
-  //////          , mpl::identity<bidirectional_traversal_tag>
-  //////          , mpl::eval_if<
-  //////                is_convertible<Traversal,forward_traversal_tag>
-  //////              , mpl::identity<forward_traversal_tag>
-  //////              , mpl::eval_if<
-  //////                    is_convertible<Traversal,single_pass_traversal_tag>
-  //////                  , mpl::identity<single_pass_traversal_tag>
-  //////                  , mpl::eval_if<
-  //////                        is_convertible<Traversal,incrementable_traversal_tag>
-  //////                      , mpl::identity<incrementable_traversal_tag>
-  //////                      , void
-  //////                    >
-  //////                >
-  //////            >
-  //////        >
-  //////    >
-  //////{
-  //////};
-  //////
-////# if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
-////  template <>
-////  struct pure_traversal_tag<int>
-////  {
-////      typedef int type;
-////  };
-////# endif
-
 } // namespace detail
 
 
@@ -183,28 +128,7 @@ struct iterator_traversal
     >
 {};
 
-//////
-//////# ifdef BOOST_MPL_CFG_NO_FULL_LAMBDA_SUPPORT
-//////// Hack because BOOST_MPL_AUX_LAMBDA_SUPPORT doesn't seem to work
-//////// out well.  Instantiating the nested apply template also
-//////// requires instantiating iterator_traits on the
-//////// placeholder. Instead we just specialize it as a metafunction
-//////// class.
-//////template <>
-//////struct iterator_traversal<mpl::_1>
-//////{
-//////    template <class T>
-//////    struct apply : iterator_traversal<T>
-//////    {};
-//////};
-//////template <>
-//////struct iterator_traversal<mpl::_>
-//////  : iterator_traversal<mpl::_1>
-//////{};
-//////# endif
-
 } } // namespace bolt::cl
 
-//#include <boost/iterator/detail/config_undef.hpp>
 
-#endif // BOLT_ITERATOR_CATEGORIES_HPP
+#endif // BOLT_ITERATOR_CATEGORIES_H

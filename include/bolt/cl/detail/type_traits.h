@@ -226,12 +226,12 @@ namespace cl {
 
         // is_reference
         template< typename T > struct is_lvalue_reference 
-            : public ::boost::integral_constant<bool,false> 
+            : public integral_constant<bool,false> 
         { 
         public:
         }; 
         template< typename T > struct is_rvalue_reference 
-            : public ::boost::integral_constant<bool,false> 
+            : public integral_constant<bool,false> 
         {
         public:
         }; 
@@ -263,7 +263,7 @@ namespace cl {
  
 
         template< typename T > struct is_reference 
-            : public integral_constant<bool,::boost::detail::is_reference_impl<T>::value> 
+            : public integral_constant<bool, is_reference_impl<T>::value> 
         { 
         public:
         }; 
