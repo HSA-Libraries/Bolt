@@ -66,12 +66,6 @@ namespace bolt
 
                 const unsigned int szElements =  static_cast< unsigned int >( std::distance( first1, last1 ) );
 
-
-                auto inputV1 = first1.getContainer().getBuffer(first1);
-                auto inputV2 = first2.getContainer().getBuffer(first2);
-                auto resultV = result.getContainer().getBuffer(result);
-
-
                 const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
 
                 concurrency::extent< 1 > inputExtent(leng);
@@ -86,7 +80,7 @@ namespace bolt
                         if( globalId >= szElements)
                         return;
 
-                        resultV[globalId] = f(inputV1[globalId],inputV2[globalId]);
+                        result[globalId] = f(first1[globalId],first2[globalId]);
                     });
                 }
 
@@ -114,10 +108,6 @@ namespace bolt
                 const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
                 concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-                auto inputV1 = first.getContainer().getBuffer(first);
-                auto resultV = result.getContainer().getBuffer(result);
-
-
                 const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
 
                 concurrency::extent< 1 > inputExtent(leng);
@@ -132,7 +122,7 @@ namespace bolt
                         if( globalId >= szElements)
                         return;
 
-                        resultV[globalId] = f(inputV1[globalId]);
+                        result[globalId] = f(first[globalId]);
                     });
                 }
 
@@ -159,7 +149,7 @@ namespace bolt
                 typedef std::iterator_traits<InputIterator1>::value_type iType1;
                 typedef std::iterator_traits<InputIterator2>::value_type iType2;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
-                size_t sz = (last1 - first1);
+                int sz = static_cast<int>(last1 - first1);
                 if (sz == 0)
                   return;
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
@@ -205,7 +195,7 @@ namespace bolt
                 typedef std::iterator_traits<InputIterator1>::value_type iType1;
                 typedef std::iterator_traits<InputIterator2>::value_type iType2;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
-                size_t sz = (last1 - first1);
+                int sz = static_cast<int>(last1 - first1);
                 if (sz == 0)
                   return;
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
@@ -269,7 +259,7 @@ namespace bolt
                 typedef std::iterator_traits<InputIterator1>::value_type iType1;
                 typedef std::iterator_traits<InputIterator2>::value_type iType2;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
-                size_t sz = (last1 - first1);
+                int sz = static_cast<int>(last1 - first1);
                 if (sz == 0)
                     return;
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
@@ -319,7 +309,7 @@ namespace bolt
                 typedef std::iterator_traits<InputIterator1>::value_type iType1;
                 typedef std::iterator_traits<InputIterator2>::value_type iType2;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
-                size_t sz = (last1 - first1);
+                int sz = static_cast<int>(last1 - first1);
                 if (sz == 0)
                     return;
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
@@ -365,7 +355,7 @@ namespace bolt
                 typedef std::iterator_traits<InputIterator1>::value_type iType1;
                 typedef std::iterator_traits<InputIterator2>::value_type iType2;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
-                size_t sz = (last1 - first1);
+                int sz = static_cast<int>(last1 - first1);
                 if (sz == 0)
                     return;
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
@@ -416,7 +406,7 @@ namespace bolt
                typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-               size_t sz = std::distance( first1, last1 );
+               int sz = static_cast<int>(std::distance( first1, last1 ));
                if( sz == 0 )
                     return;
 
@@ -472,7 +462,7 @@ namespace bolt
             {
                 typedef std::iterator_traits<InputIterator>::value_type iType;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
-                size_t sz = (last - first);
+                int sz = static_cast<int>(last - first);
                 if (sz == 0)
                     return;
                 const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
@@ -525,7 +515,7 @@ namespace bolt
               typedef std::iterator_traits< DVInputIterator >::value_type iType;
               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-              size_t sz = std::distance( first, last );
+              int sz = static_cast<int>(std::distance( first, last ));
               if( sz == 0 )
                   return;
 
@@ -578,7 +568,7 @@ namespace bolt
               typedef std::iterator_traits< DVInputIterator >::value_type iType;
               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-              size_t sz = std::distance( first, last );
+              int sz = std::distance( first, last );
               if( sz == 0 )
                   return;
 

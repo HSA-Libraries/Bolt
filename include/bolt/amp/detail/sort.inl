@@ -319,10 +319,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
 	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-    device_vector< Values, concurrency::array > dvSwapInputValues(static_cast<size_t>(orig_szElements), 0);
-    auto&  clInputValues = first.getContainer( ).getBuffer(first);
-    auto&  clSwapValues  = dvSwapInputValues.begin( ).getContainer().getBuffer();
-
+    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<unsigned int>(orig_szElements), 0);
 	bool Asc_sort = 0;
 	if(comp(2,3))
        Asc_sort = 1;
@@ -346,8 +343,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< unsigned int, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups * RADICES), 0 );
-    auto&  clHistData    = dvHistogramBins.begin( ).getContainer().getBuffer();
+	device_vector< unsigned int, concurrency::array_view > dvHistogramBins(static_cast<size_t>(numGroups * RADICES), 0 );
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
@@ -357,9 +353,9 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
           cdata.m_startBit = bits;
 		  concurrency::parallel_for_each( av, tileK0, 
 				[
-					clInputValues,
-					clSwapValues,
-					clHistData,
+					first,
+					dvSwapInputValues,
+					dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -399,9 +395,9 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 						if(int_flag && (shift >= sizeof(Values) * 7))
 						{
 							 if(swap == 0)
-								local_key = (clInputValues[addr] >> shift);
+								local_key = (first[addr] >> shift);
 							 else
-								local_key = (clSwapValues[addr] >> shift);
+								local_key = (dvSwapInputValues[addr] >> shift);
 				             unsigned int signBit   = local_key & (1<<3);
 							 if(!Asc_sort)
 									local_key = 0xF - (( ( ( local_key & 0x7 ) ^ 0x7 ) & 0x7 ) | signBit);
@@ -411,9 +407,9 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 						else
 						{
 							if(swap == 0)
-								local_key = (clInputValues[addr] >> shift) & 0xFU;
+								local_key = (first[addr] >> shift) & 0xFU;
 							else
-								local_key = (clSwapValues[addr] >> shift) & 0xFU;
+								local_key = (dvSwapInputValues[addr] >> shift) & 0xFU;
 						}
 						if(!Asc_sort)
 							lmem[(RADICES - local_key -1)*localSize+ lIdx]++;   
@@ -430,7 +426,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 				{
 					sum += lmem[lIdx*localSize+ i];
 				}
-				clHistData[lIdx * numGroups + wgIdx] = sum;
+				dvHistogramBins[lIdx * numGroups + wgIdx] = sum;
 			}
 		});
 
@@ -439,7 +435,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		concurrency::tiled_extent< localSize > tileK1 = scaninputExtent.tile< localSize >();
 		concurrency::parallel_for_each( av, tileK1, 
 				[
-					clHistData,
+					dvHistogramBins,
 					numGroups,
 					tileK1
 				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
@@ -461,14 +457,14 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 				unsigned int val = 0;
 				if (lIdx < numGroups)
 				{
-					val = clHistData[(numGroups * d) + lIdx];
+					val = dvHistogramBins[(numGroups * d) + lIdx];
 				}
 				// Exclusive scan the counts in local memory
 				unsigned int res =  scanlMemPrivData(val, lmem,1, t_idx);
 				// Write scanned value out to global
 				if (lIdx < numGroups)
 				{
-					clHistData[(numGroups * d) + lIdx] = res + s_seed;
+					dvHistogramBins[(numGroups * d) + lIdx] = res + s_seed;
 				}
 				if (last_thread) 
 				{
@@ -482,9 +478,9 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 			break;
 		concurrency::parallel_for_each( av, tileK0, 
 				[
-					clInputValues,
-					clSwapValues,
-					clHistData,
+					first,
+					dvSwapInputValues,
+					dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -512,9 +508,9 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 			if( lIdx < (NUM_BUCKET) )
 			{
 				if(!Asc_sort)
-					localHistogramToCarry[lIdx] = clHistData[(NUM_BUCKET - lIdx -1)*nWGs + wgIdx]; 
+					localHistogramToCarry[lIdx] = dvHistogramBins[(NUM_BUCKET - lIdx -1)*nWGs + wgIdx]; 
 				else
-					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+					localHistogramToCarry[lIdx] = dvHistogramBins[lIdx*nWGs + wgIdx];
 			}
 
 			t_idx.barrier.wait();
@@ -531,22 +527,22 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 					{
 						if(swap == 0)
 						{
-							sortData[i] = ( addr+i < n )? clInputValues[ addr+i ] : 0x0;
+							sortData[i] = ( addr+i < n )? first[ addr+i ] : 0x0;
 						}
 						else
 						{
-							sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0x0;
+							sortData[i] = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0x0;
 						}
 					}
 					else
 					{
 						if(swap == 0)
 						{
-							sortData[i] = ( addr+i < n )? clInputValues[ addr+i ] : 0xffffffff;
+							sortData[i] = ( addr+i < n )? first[ addr+i ] : 0xffffffff;
 						}
 						else
 						{
-							sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0xffffffff;
+							sortData[i] = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0xffffffff;
 						}
 					}
 				}
@@ -638,11 +634,11 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 							{
 								if(swap == 0)
 								{
-									clSwapValues[ groupOffset + myIdx ] =  sortData[ie]; 
+									dvSwapInputValues[ groupOffset + myIdx ] =  sortData[ie]; 
 								}
 								else
 								{
-									clInputValues[ groupOffset + myIdx ] = sortData[ie];
+									first[ groupOffset + myIdx ] = sortData[ie];
 								}
 							}
 						}
@@ -666,9 +662,9 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		cdata.m_startBit = bits;
 		concurrency::parallel_for_each( av, tileK0, 
 				[
-					clInputValues,
-					clSwapValues,
-					clHistData,
+					first,
+					dvSwapInputValues,
+					dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -696,9 +692,9 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 			if( lIdx < (NUM_BUCKET) )
 			{
 				if(!Asc_sort)
-					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+					localHistogramToCarry[lIdx] = dvHistogramBins[lIdx*nWGs + wgIdx];
 				else
-					localHistogramToCarry[lIdx] = clHistData[lIdx*nWGs + wgIdx];
+					localHistogramToCarry[lIdx] = dvHistogramBins[lIdx*nWGs + wgIdx];
 			}
 
 			t_idx.barrier.wait();
@@ -714,11 +710,11 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 				{
 					if(!Asc_sort)
 					{
-						sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0x80000000;
+						sortData[i] = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0x80000000;
 					}
 					else
 					{
-						sortData[i] = ( addr+i < n )? clSwapValues[ addr+i ] : 0x7fffffff;
+						sortData[i] = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0x7fffffff;
 					}
 				}
 				sort4BitsSignedKeyValueAscending(sortData, startBit, lIdx, ldsSortData, Asc_sort, t_idx);
@@ -807,7 +803,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 						{
 							if ((groupOffset + myIdx)<n)
 							{
-									clInputValues[ groupOffset + myIdx ] = sortData[ie];
+									first[ groupOffset + myIdx ] = sortData[ie];
 							}
 						}
 					}

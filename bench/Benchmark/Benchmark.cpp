@@ -20,7 +20,7 @@
 #define CL_BENCH  101
 
 #if !defined(BENCHMARK_CL_AMP)
-#define BENCHMARK_CL_AMP  CL_BENCH
+#define BENCHMARK_CL_AMP  AMP_BENCH
 #endif
 
 #include <iostream>
@@ -67,7 +67,7 @@
 
     #elif (BENCHMARK_CL_AMP ==  AMP_BENCH)
         #define BENCH_BEND amp
-        #define BOLT_BENCH_DEVICE_VECTOR_FLAGS
+        #define BOLT_BENCH_DEVICE_VECTOR_FLAGS true,
         #include "bolt/countof.h"
         #include "bolt/amp/functional.h"
         #include "bolt/amp/device_vector.h"
@@ -84,10 +84,10 @@
         #include "bolt/amp/scan.h"
         #include "bolt/amp/sort.h"
         #include "bolt/amp/reduce.h"
-        //#include "bolt/amp/sort_by_key.h"
+        #include "bolt/amp/sort_by_key.h"
         #include "bolt/amp/stablesort.h"
         #include "bolt/amp/reduce_by_key.h"
-        //#include "bolt/amp/stablesort_by_key.h"
+        #include "bolt/amp/stablesort_by_key.h"
         #include "bolt/amp/transform_scan.h"
         #include "bolt/amp/scan_by_key.h"
         //#include "bolt/amp/gather.h"

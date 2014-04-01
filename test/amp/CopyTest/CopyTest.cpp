@@ -87,11 +87,11 @@ static const int lengths[23] = {
 
 
 
-template< size_t N >
+template< int N >
 class TypeValue
 {
 public:
-    static const size_t value = N;
+    static const int value = N;
 };
 
 
@@ -527,7 +527,7 @@ TEST(Copy, DeviceRandom)
         bolt::amp::copy(src.begin(), src.end(), dest.begin());
        
         // GoogleTest Comparison
-        cmpArrays(src, dest);
+        cmpArrays(dest, src);
     }
 } 
 
@@ -554,7 +554,7 @@ TEST(Copy, SerialDeviceRandom)
         bolt::amp::copy(ctl, src.begin(), src.end(), dest.begin());
        
         // GoogleTest Comparison
-        cmpArrays(src, dest);
+       cmpArrays(dest, src);
     }
 } 
 
@@ -581,7 +581,7 @@ TEST(Copy, MultiCoreDeviceRandom)
         bolt::amp::copy(ctl, src.begin(), src.end(), dest.begin());
        
         // GoogleTest Comparison
-        cmpArrays(src, dest);
+        cmpArrays(dest, src);
     }
 } 
 
@@ -605,7 +605,7 @@ TEST(Copy, DeviceRandomIntFloat)
         bolt::amp::copy(src.begin(), src.end(), dest.begin());
        
         // GoogleTest Comparison
-        cmpArrays(src, dest);
+        cmpArrays(dest, src);
     }
 } 
 
@@ -631,7 +631,7 @@ TEST(Copy, SerialDeviceRandomIntFloat)
         bolt::amp::copy(ctl, src.begin(), src.end(), dest.begin());
        
         // GoogleTest Comparison
-        cmpArrays(src, dest);
+        cmpArrays(dest, src);
     }
 } 
 
@@ -657,7 +657,7 @@ TEST(Copy, MultiCoreDeviceRandomIntFloat)
         bolt::amp::copy(ctl, src.begin(), src.end(), dest.begin());
        
         // GoogleTest Comparison
-        cmpArrays(src, dest);
+        cmpArrays(dest, src);
     }
 } 
 
@@ -2416,7 +2416,7 @@ TEST(Copy, FancyDeviceIterator)
     for (int i = 0; i < numLengths; i++)
     {
         // test length
-        size_t length = lengths[i];
+        int length = lengths[i];
         int ilength = lengths[i];
 
         bolt::amp::counting_iterator<int> first(0);
@@ -2450,7 +2450,7 @@ TEST(Copy, SerialFancyDeviceIterator)
     for (int i = 0; i < numLengths; i++)
     {
         // test length
-        size_t length = lengths[i];
+        int length = lengths[i];
         int ilength = lengths[i];
 
         bolt::amp::counting_iterator<int> first(0);
@@ -2486,7 +2486,7 @@ TEST(Copy, MultiCoreFancyDeviceIterator)
     for (int i = 0; i < numLengths; i++)
     {
         // test length
-        size_t length = lengths[i];
+        int length = lengths[i];
         int ilength = lengths[i];
 
         bolt::amp::counting_iterator<int> first(0);
@@ -2522,7 +2522,7 @@ TEST(Copy, FancyDeviceIntFloat)
     for (int i = 0; i < numLengths; i++)
     {
         // test length
-        size_t length = lengths[i];
+        int length = lengths[i];
         int ilength = lengths[i];
 
         bolt::amp::counting_iterator<int> first(0);
@@ -2555,7 +2555,7 @@ TEST(Copy, SerialFancyDeviceIntFloat)
     for (int i = 0; i < numLengths; i++)
     {
         // test length
-        size_t length = lengths[i];
+        int length = lengths[i];
         int ilength = lengths[i];
 
         bolt::amp::counting_iterator<int> first(0);
@@ -2591,7 +2591,7 @@ TEST(Copy, MultiCoreFancyDeviceIntFloat)
     for (int i = 0; i < numLengths; i++)
     {
         // test length
-        size_t length = lengths[i];
+        int length = lengths[i];
         int ilength = lengths[i];
 
         bolt::amp::counting_iterator<int> first(0);

@@ -420,7 +420,7 @@ TEST_P (TransformScan, InclTransformScanTestFloat)
     ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
    
     /*cmpArrays(output, refInput);*/
-	cmpArrays(input, refInput);
+	cmpArrays(refInput, input);
     
 }
 
@@ -442,7 +442,7 @@ TEST_P (TransformScan, ExclTransformScanTestFloat)
     std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
     Serial_scan<float,  bolt::amp::plus< float >, float>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
 
-    cmpArrays(input, refInput);
+    cmpArrays(refInput, input);
     
 } 
 
@@ -465,7 +465,7 @@ TEST_P (TransformScanMultiCore, InclTransformScanTestFloat)
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
     ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
    
-    cmpArrays(input, refInput);
+    cmpArrays(refInput, input);
     
 } 
 
@@ -491,7 +491,7 @@ TEST_P (TransformScanMultiCore, ExclTransformScanTestFloat)
     std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
     Serial_scan<float,  bolt::amp::plus< float >, float>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
 
-    cmpArrays(input, refInput);
+    cmpArrays(refInput, input);
     
 } 
 
@@ -516,7 +516,7 @@ TEST_P (TransformScan, InclTransformScanTestDouble)
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
     ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
    
-    cmpArrays(input, refInput);
+    cmpArrays(refInput, input);
     
 }
 
@@ -538,7 +538,7 @@ TEST_P (TransformScan, ExclTransformScanTestDouble)
     std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
     Serial_scan<double,  bolt::amp::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
 
-    cmpArrays(input, refInput);
+    cmpArrays(refInput, input);
     
 } 
 
@@ -561,7 +561,7 @@ TEST_P (TransformScanMultiCore, InclTransformScanTestDouble)
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
     ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
    
-    cmpArrays(input, refInput);
+    cmpArrays(refInput, input);
     
 } 
 
@@ -587,7 +587,7 @@ TEST_P (TransformScanMultiCore, ExclTransformScanTestDouble)
     std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
     Serial_scan<double,  bolt::amp::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
 
-    cmpArrays(input, refInput);
+    cmpArrays(refInput, input);
     
 } 
 
