@@ -172,8 +172,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         globalRange += localRange;
     }
 
-    auto&  inputBuffer =  first.getContainer().getBuffer(first); 
-
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
@@ -196,7 +194,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
 			concurrency::parallel_for_each( av, tileK0,
 				[
-					inputBuffer,
+					first,
 					vecSize,
 					comp,
 					index,
@@ -215,7 +213,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
 			//  Abort threads that have passed the end of the input vector
 			if (gloId < vecSize) {
-				lds[ locId ] = inputBuffer[ gloId ];;
+				lds[ locId ] = first[ gloId ];;
 			}
 			//  Make a copy of the entire input array into fast local memory
 			t_idx.barrier.wait();
@@ -275,7 +273,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 			}	  
 
 			if (gloId < vecSize) {
-				inputBuffer[ gloId ] = lds2[ locId ];;
+				first[ gloId ] = lds2[ locId ];;
 			}
     
 			} );
@@ -323,7 +321,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         {
         concurrency::parallel_for_each( av, globalSizeK1,
         [
-            inputBuffer,
+            first,
             &tmpBuffer,
             vecSize,
             comp,
@@ -363,11 +361,11 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 	{
       if( (srcBlockNum & 0x1) == 0 )
       {
-        insertionIndex = sort_lowerBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
+        insertionIndex = sort_lowerBoundBinary( first, leftBlockIndex, rightBlockIndex, first[ gloID ], comp ) - leftBlockIndex;
       }
       else
       {
-        insertionIndex = sort_upperBoundBinary( inputBuffer, leftBlockIndex, rightBlockIndex, inputBuffer[ gloID ], comp ) - leftBlockIndex;
+        insertionIndex = sort_upperBoundBinary( first, leftBlockIndex, rightBlockIndex, first[ gloID ], comp ) - leftBlockIndex;
       }
     
       //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -375,7 +373,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
       unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
       unsigned int dstBlockNum = srcBlockNum/2;
     
-      tmpBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = inputBuffer[ gloID ];
+      tmpBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = first[ gloID ];
 	}
 
 	else
@@ -395,7 +393,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
       unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
       unsigned int dstBlockNum = srcBlockNum/2;
     
-      inputBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpBuffer[ gloID ];
+      first[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpBuffer[ gloID ];
 
 	}
 

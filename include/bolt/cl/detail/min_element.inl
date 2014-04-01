@@ -314,7 +314,8 @@ namespace bolt {
                 bolt::cl::device_vector_tag,
                 const char * min_max )
             {
-                size_t szElements = (size_t)(last - first);
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+				size_t szElements = (size_t)(last - first);
                 if (szElements == 0)
                     return last;
 
@@ -346,6 +347,7 @@ namespace bolt {
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
+					{
                     #ifdef ENABLE_TBB
 					    #if defined(BOLT_DEBUG_LOG)
 						if(std::strcmp(min_max,str) == 0)
@@ -353,38 +355,46 @@ namespace bolt {
 						else
 						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Min_Element::MULTICORE_CPU");
                         #endif
+						typename bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+						iType* stlPtr;
                         if(std::strcmp(min_max,str) == 0)
-                              return bolt::btbb::max_element(first, last, binary_op);
+                              stlPtr = bolt::btbb::max_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
                         else
-                              return bolt::btbb::min_element(first, last, binary_op);
+                              stlPtr = bolt::btbb::min_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
+						return first+(unsigned int)(stlPtr-&InputBuffer[first.m_Index]);
                     #else
                         throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
-
-                case bolt::cl::control::SerialCpu:
+					}
+                 case bolt::cl::control::SerialCpu:
+					 {
 				    #if defined(BOLT_DEBUG_LOG)
-					if(std::strcmp(min_max,str) == 0)
-					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
-					else
-                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
-                    #endif
-                    if(std::strcmp(min_max,str) == 0)
-                       return std::max_element(first, last, binary_op);
-                    else
-                    return std::min_element(first, last, binary_op);
-
+						if(std::strcmp(min_max,str) == 0)
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+					#endif
+						typename bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+						iType* stlPtr;
+						if(std::strcmp(min_max,str) == 0)
+						   stlPtr = std::max_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
+						else
+						   stlPtr = std::min_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
+						return first+(unsigned int)(stlPtr-&InputBuffer[first.m_Index]);
+					 }
                 default:
-				    #if defined(BOLT_DEBUG_LOG)
-					if(std::strcmp(min_max,str) == 0)
-					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
-					else
-                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
-                    #endif
-                    if(std::strcmp(min_max,str) == 0)
-                       return std::max_element(first, last, binary_op);
-                    else
-                    return std::min_element(first, last, binary_op);
-
+					{
+					#if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+					#endif
+						if(std::strcmp(min_max,str) == 0)
+						   return std::max_element(first, last, binary_op);
+						else
+						return std::min_element(first, last, binary_op);
+					}
                 }
 
             }

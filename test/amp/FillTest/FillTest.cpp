@@ -303,11 +303,11 @@ protected:
 //Test Cases for Fill
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-template< size_t N >
+template< int N >
 class TypeValue
 {
 public:
-    static const size_t value = N;
+    static const int value = N;
 };
 
 //template< typename ArrayTuple>
@@ -1558,7 +1558,7 @@ INSTANTIATE_TEST_CASE_P( FillLarge, DevDblVector,  ::testing::Range(1026, 105000
 
 TEST (simpleTest, basicDataBoltAMPDevVectAutoConvertCheck)
 { 
-    size_t size =10; 
+    int size =10; 
     int iValue = 48; 
     union ieeeconvert
     {
@@ -1642,7 +1642,7 @@ TEST (simpleTest, basicDataBoltAMPDevVectAutoConvertCheck)
 
 TEST (SerialsimpleTest, basicDataBoltAMPDevVectAutoConvertCheck)
 { 
-    size_t size =10; 
+    int size =10; 
     int iValue = 48; 
     union ieeeconvert
     {
@@ -1729,7 +1729,7 @@ TEST (SerialsimpleTest, basicDataBoltAMPDevVectAutoConvertCheck)
 
 TEST (MultiCoresimpleTest, basicDataBoltAMPDevVectAutoConvertCheck)
 { 
-    size_t size =10; 
+    int size =10; 
     int iValue = 48; 
     union ieeeconvert
     {
@@ -1870,7 +1870,7 @@ int checkResults(std::string &msg, InputIterator1 first1 , InputIterator1 end1 ,
 {
     int errCnt = 0;
     static const int maxErrCnt = 10;
-    size_t sz = end1-first1 ;
+    int sz = end1-first1 ;
     for (int i=0; i<sz ; i++) {
         if (first1 [i] != *(first2 + i) ) {
             errCnt++;

@@ -243,9 +243,6 @@ namespace detail
             globalRange += localRange;
         }
 
-		auto&  inputBuffer =  values_first.getContainer().getBuffer(values_first); 
-		auto&  keyBuffer   =  keys_first.getContainer().getBuffer(keys_first); 
-
 	    /*********************************************************************************
           Kernel 0
         *********************************************************************************/
@@ -269,8 +266,8 @@ namespace detail
 
 				  concurrency::parallel_for_each( av, tileK0,
 				  [
-					inputBuffer,
-					keyBuffer,
+					values_first,
+					keys_first,
 					vecSize,
 					comp,
 					index,
@@ -292,8 +289,8 @@ namespace detail
 					   //  Make a copy of the entire input array into fast local memory
 					   if( gloId < vecSize)
 					   {
-						  key_lds[ locId ] = keyBuffer[ gloId ];
-						  val_lds[ locId ] = inputBuffer[ gloId ];
+						  key_lds[ locId ] = keys_first[ gloId ];
+						  val_lds[ locId ] = values_first[ gloId ];
 					   }
 					   //barrier( CLK_LOCAL_MEM_FENCE );
 					   unsigned int end =  wgSize;
@@ -357,8 +354,8 @@ namespace detail
 					}	  
 					if( gloId < vecSize)
 					{
-						keyBuffer[ gloId ] = key_lds[ locId ];
-						inputBuffer[ gloId ] = val_lds[ locId ];
+						keys_first[ gloId ] = key_lds[ locId ];
+						values_first[ gloId ] = val_lds[ locId ];
 					}
     
 				} );
@@ -410,8 +407,8 @@ namespace detail
              {
                 concurrency::parallel_for_each( av, globalSizeK1,
                 [
-                  inputBuffer,
-				  keyBuffer,
+                  values_first,
+				  keys_first,
                   &tmpKeyBuffer,
 				  &tmpValueBuffer,
                   vecSize,
@@ -451,11 +448,11 @@ namespace detail
 	              {
                     if( (srcBlockNum & 0x1) == 0 )
                     {
-					  insertionIndex = sort_by_key_lowerBoundBinary( keyBuffer, leftBlockIndex, rightBlockIndex, keyBuffer[ gloID ], comp ) - leftBlockIndex;
+					  insertionIndex = sort_by_key_lowerBoundBinary( keys_first, leftBlockIndex, rightBlockIndex, keys_first[ gloID ], comp ) - leftBlockIndex;
                     }
                     else
                     {
-                      insertionIndex = sort_by_key_upperBoundBinary( keyBuffer, leftBlockIndex, rightBlockIndex, keyBuffer[ gloID ], comp ) - leftBlockIndex;
+                      insertionIndex = sort_by_key_upperBoundBinary( keys_first, leftBlockIndex, rightBlockIndex, keys_first[ gloID ], comp ) - leftBlockIndex;
                     }
                   
                     //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -463,8 +460,8 @@ namespace detail
                     unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
                     unsigned int dstBlockNum = srcBlockNum/2;
                   
-                    tmpValueBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = inputBuffer[ gloID ];
-					tmpKeyBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = keyBuffer[ gloID ];
+                    tmpValueBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = values_first[ gloID ];
+					tmpKeyBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = keys_first[ gloID ];
 	              }
 	              
 	              else
@@ -484,8 +481,8 @@ namespace detail
                     unsigned int dstBlockIndex = srcBlockIndex + insertionIndex;
                     unsigned int dstBlockNum = srcBlockNum/2;
 
-                    inputBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpValueBuffer[ gloID ];
-					keyBuffer[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpKeyBuffer[ gloID ];
+                    values_first[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpValueBuffer[ gloID ];
+					keys_first[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = tmpKeyBuffer[ gloID ];
 	              
 	              }  
              } );
@@ -525,7 +522,7 @@ namespace detail
         typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
 
-        size_t vecSize = std::distance( keys_first, keys_last );
+        unsigned int vecSize = (unsigned int)std::distance( keys_first, keys_last );
         if( vecSize < 2 )
             return;
 

@@ -131,13 +131,6 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
-    //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
-    //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
-    //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
-    //  is wrapping an array or an array_view
-    auto&  input = first.getContainer().getBuffer(first); 
-    auto& output = result.getContainer().getBuffer(result); 
-     
   //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
   //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 #ifdef BOLT_ENABLE_PROFILING
@@ -164,8 +157,8 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 
 		  concurrency::parallel_for_each( av, tileK0, 
 				[
-					output,
-					input,
+					result,
+					first,
 					init,
 					numElements,
 					&preSumArray,
@@ -189,14 +182,14 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 				unsigned int input_offset = (groId*wgSize)+locId;
 				// if exclusive, load gloId=0 w/ identity, and all others shifted-1
 				if(input_offset < numElements)
-					lds[locId] = input[input_offset];
+					lds[locId] = first[input_offset];
 				if(input_offset+(wgSize/2) < numElements)
-					lds[locId+(wgSize/2)] = input[ input_offset+(wgSize/2)];
+					lds[locId+(wgSize/2)] = first[ input_offset+(wgSize/2)];
 
 	    			// Exclusive case
 				if(exclusive && gloId == 0)
 				{
-					iType start_val = input[0];
+					iType start_val = first[0];
 					lds[locId] = binary_op(init, start_val);
 				}
 				unsigned int  offset = 1;
@@ -227,7 +220,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 		 tempBuffsize = tempBuffsize - max_ext;
 	}
     //std::cout << "Kernel 0 Done" << std::endl;
-    PEEK_AT( output )
+    PEEK_AT( result )
 
     /**********************************************************************************
      *  Kernel 1
@@ -368,8 +361,8 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 
 		concurrency::parallel_for_each( av, tileK2,
 				[
-					input,
-					output,
+					first,
+					result,
 					&preSumArray,
 					&preSumArray1,
 					numElements,
@@ -395,7 +388,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 				   {
 					  if (gloId > 0)
 					  { // thread>0
-						  val = input[gloId-1];
+						  val = first[gloId-1];
 						  lds[ locId ] = val;
 					  }
 					  else
@@ -406,7 +399,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 				   }
 				   else
 				   {
-					  val = input[gloId];
+					  val = first[gloId];
 					  lds[ locId ] = val;
 				   }
 				}
@@ -455,14 +448,14 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 			//  Abort threads that are passed the end of the input vector
 				if (gloId >= numElements) return; 
 
-				output[ gloId ] = sum;
+				result[ gloId ] = sum;
 
 			} );
 
 			 tempBuffsize = tempBuffsize - max_ext;
 		}
     //std::cout << "Kernel 2 Done" << std::endl;
-    PEEK_AT( output )
+    PEEK_AT( result )
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Copy Results Back");

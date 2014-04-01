@@ -81,7 +81,7 @@ namespace detail {
                                        std::random_access_iterator_tag )
             {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                size_t sz = (last1 - first1);
+                unsigned int sz = static_cast<unsigned int>((last1 - first1));
                 if (sz == 0)
                     return -1;
 
