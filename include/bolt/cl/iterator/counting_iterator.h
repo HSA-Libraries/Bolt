@@ -44,6 +44,10 @@ namespace cl {
 
 	    typedef typename boost::iterator_facade< counting_iterator< value_type >, value_type, 
             counting_iterator_tag, value_type, int >::difference_type  difference_type;
+            typedef typename counting_iterator_tag                           iterator_category;
+            typedef typename value_type                                      value_type;
+            //typedef std::ptrdiff_t                                           difference_type;
+            typedef typename value_type *                                    pointer; 
 
             struct Payload
             {
@@ -73,6 +77,14 @@ namespace cl {
             {
             }
 
+            operator pointer() { 
+                return &m_initValue; 
+            } 
+
+            operator const pointer() const { 
+                return &m_initValue; 
+            } 
+    
             counting_iterator< value_type >& operator= ( const counting_iterator< value_type >& rhs )
             {
                 if( this == &rhs )
@@ -102,7 +114,12 @@ namespace cl {
                 return m_devMemory;
             }
 
-          const counting_iterator< value_type > & getContainer( ) const
+            const counting_iterator< value_type > & getContainer( ) const
+            {
+                return *this;
+            }
+
+            const counting_iterator< value_type > & base( ) const
             {
                 return *this;
             }

@@ -71,6 +71,9 @@ namespace cl {
 
     struct fancy_iterator_tag: public std::random_access_iterator_tag
     {
+        operator fancy_iterator_tag ( ) const
+        {
+        }
     };
 
     template< typename iterator >
@@ -105,7 +108,41 @@ namespace cl {
         typedef const T& reference;
     };
 
-/*
+    template<typename Iterator>
+      struct iterator_value
+    {
+      typedef typename bolt::cl::iterator_traits<Iterator>::value_type type;
+    }; // end iterator_value
+
+
+    template<typename Iterator>
+      struct iterator_pointer
+    {
+      typedef typename bolt::cl::iterator_traits<Iterator>::pointer type;
+    }; // end iterator_pointer
+
+
+    template<typename Iterator>
+      struct iterator_reference
+    {
+      typedef typename bolt::cl::iterator_traits<Iterator>::reference type;
+    }; // end iterator_reference
+
+
+    template<typename Iterator>
+      struct iterator_difference
+    {
+      typedef typename bolt::cl::iterator_traits<Iterator>::difference_type type;
+    }; // end iterator_difference
+
+//This was causing a resolving sissue. For iterator traversal 
+    template<typename Iterator>
+      struct iterator_category
+    {
+      typedef typename bolt::cl::iterator_traits<Iterator>::iterator_category type;
+    }; // end iterator_category
+
+
     template< typename newTag, typename InputIterator >
     InputIterator retag( InputIterator )
     {
@@ -125,7 +162,7 @@ namespace cl {
 
         return iter;
     }
-*/
+
 }
 };
 
