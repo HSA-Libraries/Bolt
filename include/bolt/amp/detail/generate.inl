@@ -49,11 +49,11 @@ void generate_enqueue(
     const DVForwardIterator &last,
     const Generator &gen )
 {
-	           concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+	        concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-	           typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
+	        typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
 
-               const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
+            const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
 
             const unsigned int leng =  szElements + GEN_WAVEFRONT_SIZE - (szElements % GEN_WAVEFRONT_SIZE);
 
@@ -76,12 +76,12 @@ void generate_enqueue(
             }
 
 
-			   catch(std::exception &e)
-               {
+			catch(std::exception &e)
+            {
                    std::cout << "Exception while calling bolt::amp::generate parallel_for_each " ;
                    std::cout<< e.what() << std::endl;
                    throw std::exception();
-               }
+            }
 
 
 }; // end generate_enqueue
@@ -96,8 +96,6 @@ void generate_enqueue(
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
             template<typename ForwardIterator, typename Generator>
-			/*typename std::enable_if<
-                   !(std::is_base_of<typename device_vector<typename std::iterator_traits<ForwardIterator>::value_type>::iterator,ForwardIterator>::value),void >::type*/
             void generate_pick_iterator(bolt::amp::control &ctl,  const ForwardIterator &first,
                 const ForwardIterator &last, const Generator &gen, std::random_access_iterator_tag)
             {
@@ -143,8 +141,6 @@ void generate_enqueue(
             // it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVForwardIterator, typename Generator>
-			/*typename std::enable_if<
-                   (std::is_base_of<typename device_vector<typename std::iterator_traits< DVForwardIterator>::value_type>::iterator, DVForwardIterator>::value),void >::type*/
             void generate_pick_iterator(bolt::amp::control &ctl, const DVForwardIterator &first,
                 const DVForwardIterator &last, const Generator &gen, bolt::amp::device_vector_tag)
             {
