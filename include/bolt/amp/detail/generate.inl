@@ -145,7 +145,7 @@ void generate_enqueue(
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVForwardIterator, typename Generator>
 			/*typename std::enable_if<
-                   (std::is_base_of<typename device_vector<typename std::iterator_traits< DVForwardIterator>::value_type>::iterator, DVForwardIterator>::value),void >::type*/\
+                   (std::is_base_of<typename device_vector<typename std::iterator_traits< DVForwardIterator>::value_type>::iterator, DVForwardIterator>::value),void >::type*/
             void generate_pick_iterator(bolt::amp::control &ctl, const DVForwardIterator &first,
                 const DVForwardIterator &last, const Generator &gen, bolt::amp::device_vector_tag)
             {
