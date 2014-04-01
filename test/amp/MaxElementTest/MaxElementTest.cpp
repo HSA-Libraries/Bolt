@@ -499,7 +499,6 @@ TEST( MaxEleDevice , SerialDeviceVectoroffset )
       stdinput[i] = length - i;
 
     }
-    
     bolt::amp::device_vector< int > input( stdinput.begin(), stdinput.end() );
     
     bolt::amp::control ctl = bolt::amp::control::getDefault( );

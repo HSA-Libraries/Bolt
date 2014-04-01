@@ -487,6 +487,55 @@ TEST( MinEleDevice , DeviceVectoroffset )
 
 }
 
+
+TEST( MinEleDevice , DeviceVectoroffsetSerial )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > stdinput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      stdinput[i] = rand();
+
+    }
+    
+	bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
+	
+	bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element(ctl, input.begin()+20, input.end());
+    std::vector<int>::iterator stdReduce =  min_element(stdinput.begin()+20, stdinput.end());;
+
+    EXPECT_EQ(*boltReduce, *stdReduce);
+
+}
+
+TEST( MinEleDevice , DeviceVectoroffsetMultiCore )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > stdinput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      stdinput[i] = rand();
+
+    }
+    
+	bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
+	
+	bolt::cl::control ctl = bolt::cl::control::getDefault( );
+	ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element(ctl, input.begin()+20, input.end());
+    std::vector<int>::iterator stdReduce =  min_element(stdinput.begin()+20, stdinput.end());;
+
+    EXPECT_EQ(*boltReduce, *stdReduce);
+
+}
+
 //TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
 //{
 //    bolt::cl::counting_iterator<int> first(0);

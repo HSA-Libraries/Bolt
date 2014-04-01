@@ -374,6 +374,7 @@ namespace bolt {
                 const char * min_max,
                 bolt::amp::device_vector_tag)
             {
+				typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
                 size_t szElements = (size_t)(last - first);
                 if (szElements == 0)
                     return last;
@@ -390,25 +391,33 @@ namespace bolt {
                 {
 
                 case bolt::amp::control::MultiCoreCpu:
+					{
                     #ifdef ENABLE_TBB   
+						typename bolt::amp::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+						iType* stlPtr;
                         if(std::strcmp(min_max,str) == 0)
-                              return bolt::btbb::max_element(first, last, binary_op);
+                              stlPtr = bolt::btbb::max_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
                         else
-                              return bolt::btbb::min_element(first, last, binary_op);
+                              stlPtr = bolt::btbb::min_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
+						return first+(unsigned int)(stlPtr-&InputBuffer[first.m_Index]);
                     #else
                         throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
-
+					}
                 case bolt::amp::control::SerialCpu:
-                    if(std::strcmp(min_max,str) == 0)
-                       return std::max_element(first, last, binary_op);
-                    else
-                       return std::min_element(first, last, binary_op);
-
+					{
+						typename bolt::amp::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+						iType* stlPtr;
+						if(std::strcmp(min_max,str) == 0)
+						   stlPtr = std::max_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
+						else
+						   stlPtr = std::min_element(&InputBuffer[first.m_Index], &InputBuffer[last.m_Index], binary_op);
+						return first+(unsigned int)(stlPtr-&InputBuffer[first.m_Index]);
+					}
                 default:
                      {
-                     int minele = min_element_enqueue( ctl, first, last,  binary_op, min_max);
-                     return first + minele;
+						 int minele = min_element_enqueue( ctl, first, last,  binary_op, min_max);
+						 return first + minele;
                      }
 
                 }

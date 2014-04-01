@@ -38,7 +38,7 @@ namespace bolt {
         namespace detail {
 
 			template< typename iTypePtr1, typename iTypeIter1, typename StrictWeakCompare >
-			int binary_search1(iTypePtr1 value, const iTypeIter1  a, int start, int length, const  StrictWeakCompare &userFunctor)   restrict(amp)
+			int binary_search1(iTypePtr1 value, iTypeIter1& a, int start, int length, const  StrictWeakCompare &userFunctor)   restrict(amp)
 			{
 				int low = start;
 				int high = length;
@@ -56,7 +56,7 @@ namespace bolt {
 			}
 
 			template< typename iTypePtr1, typename iTypeIter1, typename StrictWeakCompare >
-			int binary_search2(iTypePtr1 value, const iTypeIter1  a, int start, int length, const StrictWeakCompare &userFunctor)   restrict(amp)
+			int binary_search2(iTypePtr1 value, iTypeIter1&  a, int start, int length, const StrictWeakCompare &userFunctor)   restrict(amp)
 			{
 				int low = start;
 				int high = length;
@@ -113,7 +113,7 @@ namespace bolt {
 					if (gx < length1)
 					{
 						iType1 val = first1[gx];
-						pos1 = binary_search1<iType1, DVInputIterator2,  StrictWeakCompare > (val, first2, 0, length2, comp);
+						pos1 = binary_search1(val, first2, 0, length2, comp);
 						if ((first2[pos1 - 1] == val)  && pos1 != 0)
 							result[pos1 + gx - 1] = val;
 						else
@@ -124,7 +124,7 @@ namespace bolt {
 					if (gx < length2)
 					{
 						iType2 val = first2[gx];
-						pos2 = binary_search2<iType1, DVInputIterator2, StrictWeakCompare >(val, first1, 0, length1, comp);
+						pos2 = binary_search2(val, first1, 0, length1, comp);
 						result[pos2 + gx] = val;
 					}
 				});
