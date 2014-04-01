@@ -52,9 +52,10 @@ namespace bolt {
         * is "0"
         * and the binary operator is "plus<>()".
         *
-        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which
-        * \p reduce applies the binary_op
-        * is not deterministic.
+        * \details \p reduce requires that the binary reduction op ("binary_op") be commutative.  The order in which
+        * \p reduce applies the binary_op is not deterministic.
+		* If the reduction operator is not commutative then bolt::reduce should not be used. 
+		* Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.
         *
         * \details The \p reduce operation is similar the std::accumulate function
         *
@@ -102,9 +103,10 @@ namespace bolt {
         * is "0"
         * and the binary operator is "plus<>()".
         *
-        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which
-        * \p reduce applies the binary_op
-        * is not deterministic.
+        * \details \p reduce requires that the binary reduction op ("binary_op") be commutative.  The order in which
+        * \p reduce applies the binary_op is not deterministic.
+		* If the reduction operator is not commutative then bolt::reduce should not be used. 
+		* Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.
         *
         * \details The \p reduce operation is similar the std::accumulate function
         *
@@ -151,9 +153,10 @@ namespace bolt {
         * The classic example is a summation, where the binary_op is the plus operator.  By default,
         * the binary operator is "plus<>()".  The version takes a bolt::cl::control structure as a first argument.
         *
-        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which
-        * \p reduce applies the binary_op
-        * is not deterministic.
+        * \details \p reduce requires that the binary reduction op ("binary_op") be commutative.  The order in which
+        * \p reduce applies the binary_op is not deterministic.
+		* If the reduction operator is not commutative then bolt::reduce should not be used. 
+		* Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.
         *
         * \details The \p reduce operation is similar the std::accumulate function.
         *
