@@ -268,17 +268,6 @@ namespace cl {
         public:
         }; 
 
-        //////template <typename From, typename To>
-        //////struct is_convertible_impl_dispatch 
-        //////   : public is_convertible_impl_dispatch_base<From, To>::type
-        //////{};
-
-        //////template< typename From, typename To > struct is_convertible 
-        //////    : public integral_constant<bool,(bolt::cl::detail::is_convertible_impl_dispatch<From,To>::value)> 
-        //////{ 
-        //////public:
-        //////}; 
-        //////
 
     } // namespace detail
 } // namespace cl

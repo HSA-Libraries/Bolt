@@ -114,12 +114,6 @@ namespace bolt
             {
                 *(r.result + index) = r.func( *(r.first1+index), *(r.first2+index) );
             }
-//#if defined( _WIN32 )
-//			std::transform( r.first1, r.last1, r.first2,
-//				stdext::make_unchecked_array_iterator( r.result ), r.func );
-//#else
-//			std::transform( r.first1, r.last1, r.first2, r.result, r.func );
-//#endif
 		}
 	};
 
@@ -133,11 +127,7 @@ namespace bolt
             {
                 *(r.result + index) = r.func( *(r.first1+index) );
             }
-//#if defined( _WIN32 )
-//			std::transform( r.first1, r.last1, stdext::make_unchecked_array_iterator( r.result ), r.func );
-//#else
-//			std::transform( r.first1, r.last1, r.result, r.func );
-//#endif
+
 		}
 	};
 
