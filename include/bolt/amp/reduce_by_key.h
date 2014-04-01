@@ -112,6 +112,8 @@ namespace bolt
             /*! \brief \p reduce_by_key performs, on a sequence,
             * a reduction of each sub-sequence as defined by equivalent keys;
             * the BinaryFunction in this version is plus().
+			* reduce_by_key is a generalization of reduce to key-value pairs.
+			* If the reduction operator is not commutative then bolt::reduce_by_key should not be used. 
             *
             * \param ctl           \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
             * \param keys_first    The first element of the key sequence.
@@ -183,6 +185,8 @@ namespace bolt
 
            /*! \brief \p reduce_by_key performs, on a sequence,
             * a reduction of each sub-sequence as defined by equivalent keys;
+			* reduce_by_key is a generalization of reduce to key-value pairs.
+			* If the reduction operator is not commutative then bolt::reduce_by_key should not be used. 
             *
             * \param ctl           \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
             * \param keys_first    The first element of the key sequence.
