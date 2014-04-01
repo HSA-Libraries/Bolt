@@ -117,7 +117,7 @@ TEST(BSearchUDD_large_power, AddDouble4)
     // call sort
     AddD4 ad4gt;
     //bolt::BKND::sort(input.begin(), input.end(), ad4gt);
-	std::sort(input.begin(), input.end(), ad4gt);
+	bolt::amp::sort(input.begin(), input.end(), ad4gt);
     std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     bool stdresult, boltresult;
@@ -146,7 +146,7 @@ TEST(BSearchUDD, AddDouble4)
     // call sort
     AddD4 ad4gt;
     //bolt::BKND::sort(input.begin(), input.end(), ad4gt);
-	std::sort(input.begin(), input.end(), ad4gt);
+	bolt::amp::sort(input.begin(), input.end(), ad4gt);
     std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     bool stdresult, boltresult;
@@ -229,7 +229,7 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
     // call search
     AddD4 ad4gt;
     //bolt::BKND::sort(ctl, input.begin(), input.end(), ad4gt);
-	std::sort(input.begin(), input.end(), ad4gt);
+	bolt::amp::sort(input.begin(), input.end(), ad4gt);
     std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     bool stdresult, boltresult;

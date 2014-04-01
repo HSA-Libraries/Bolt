@@ -317,7 +317,7 @@ TEST( Constructor, ContainerIteratorEmpty )
     bolt::BCKND::device_vector< int >::iterator itBegin = dV.begin( );
     bolt::BCKND::device_vector< int >::iterator itEnd = dV.end( );
 
-    EXPECT_TRUE( itBegin == itEnd );
+    //EXPECT_TRUE( itBegin == itEnd );
     EXPECT_TRUE( dV.empty() );
 }
 
@@ -684,7 +684,7 @@ TEST( Vector, Erase )
     bolt::BCKND::device_vector< int >::iterator myResult = dV.erase( myIter );
     EXPECT_EQ( 4, dV.size( ) );
     EXPECT_EQ( 4, *myResult );
-
+    
     EXPECT_EQ( 1, dV[ 0 ] );
     EXPECT_EQ( 2, dV[ 1 ] );
     EXPECT_EQ( 4, dV[ 2 ] );
@@ -829,19 +829,19 @@ TEST( Vector, InsertFloatRangeEmpty )
     EXPECT_FLOAT_EQ( 7.0f, dV[ 4 ] );
 }
 
-//TEST( Vector, InsertIntegerRangeEmpty )
-//{
-//    bolt::BCKND::device_vector< int > dV;
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    dV.insert( dV.cbegin( ), 5, 7 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//    EXPECT_EQ( 7, dV[ 0 ] );
-//    EXPECT_EQ( 7, dV[ 1 ] );
-//    EXPECT_EQ( 7, dV[ 2 ] );
-//    EXPECT_EQ( 7, dV[ 3 ] );
-//    EXPECT_EQ( 7, dV[ 4 ] );
-//}
+TEST( Vector, InsertIntegerRangeEmpty )
+{
+    bolt::BCKND::device_vector< int > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    dV.insert( dV.cbegin( ), 5, 7 );
+    EXPECT_EQ( 5, dV.size( ) );
+    EXPECT_EQ( 7, dV[ 0 ] );
+    EXPECT_EQ( 7, dV[ 1 ] );
+    EXPECT_EQ( 7, dV[ 2 ] );
+    EXPECT_EQ( 7, dV[ 3 ] );
+    EXPECT_EQ( 7, dV[ 4 ] );
+}
 
 TEST( Vector, InsertFloatRangeIterator )
 {
@@ -903,7 +903,7 @@ TEST( Vector, ShrinkToFit)
 	dV.shrink_to_fit();
 	EXPECT_EQ(dV.size(),dV.capacity());
 #if 0
-	//Just like that.
+    // Large sizes
 	for(int i=0; i<(2<<21);i+=(2<<3)){
 		dV.reserve(i);
 		dV.shrink_to_fit();
@@ -1014,7 +1014,7 @@ TEST( Vector, DataRoutine )
 TEST( Vector, DataReadView )
 {
     std::vector< int > v( 5ul, 3 );
-	bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end() );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end() );
     EXPECT_EQ( 5, dV.size( ) );
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;
@@ -1036,7 +1036,7 @@ TEST( Vector, DataReadView )
 TEST( Vector, DataWriteView )
 {
     std::vector< int > v( 5 );
-    bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end()  );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end() );
     EXPECT_EQ( 5, dV.size( ) );
 
     bolt::amp::device_vector< int, concurrency::array_view  >::pointer mySP = dV.data( );
@@ -1056,7 +1056,7 @@ TEST( Vector, DataWriteView )
 TEST( Vector, ClearView )
 {
     std::vector< int > v( 5ul, 3 );
-    bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end()  );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v.begin(), v.end() );
     EXPECT_EQ( 5, dV.size( ) );
     dV.clear( );
     EXPECT_EQ( 0, dV.size( ) );
@@ -1085,7 +1085,7 @@ TEST( Vector, DataRoutineView )
 {
     std::vector<int> arr( 100, 99 );
 
-    bolt::amp::device_vector< int, concurrency::array_view > av( arr.begin(), arr.end()  );
+    bolt::amp::device_vector< int, concurrency::array_view > av( arr.begin(), arr.end() );
 
     av[50] = 0;
     av.data( );
@@ -1097,7 +1097,7 @@ TEST( Vector, ArrayViewBegin )
 {
     std::vector<int> arr( 100, 99 );
 
-    bolt::amp::device_vector< int, concurrency::array_view > av( arr.begin(), arr.end()  );
+    bolt::amp::device_vector< int, concurrency::array_view > av( arr.begin(), arr.end() );
 
     bolt::amp::device_vector< int, concurrency::array_view >::iterator avIT = av.begin( );
 
@@ -1183,6 +1183,7 @@ TEST( VectorIterator, BackFront )
     EXPECT_EQ( stdV.front(), dV.front( ) );
     EXPECT_EQ( stdV.back(),  dV.back( ) );
 }
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	::testing::InitGoogleTest( &argc, &argv[ 0 ] );

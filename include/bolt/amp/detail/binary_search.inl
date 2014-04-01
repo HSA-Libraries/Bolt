@@ -73,16 +73,7 @@ namespace bolt {
 				//concurrency::array< int > result( szElements, av );
 				std::vector<int> stdResBuffer(totalThreads);
                 device_vector<int, concurrency::array_view > stdResVec(stdResBuffer.begin(), stdResBuffer.end(), false, ctl );
-                auto&  result   =  stdResVec.begin().getContainer().getBuffer(stdResVec.begin()); 
 
-
-                auto&  inputBuffer =  first.getContainer().getBuffer(first); 
-
-
-                // Input buffer
-               // unsigned int startIndex = 0;
-               // unsigned int endIndex = static_cast< unsigned int >( numElementsProcessedperWI * nmofthreads );
-                   
                 if(nmofthreads != 0 )
                 {
 					     concurrency::extent< 1 > inputExtent( nmofthreads);
@@ -91,11 +82,11 @@ namespace bolt {
 	                     {
                           concurrency::parallel_for_each( av, inputExtent,
                               [
-                                 inputBuffer,
+                                 first,
                                  val,
                                  numElementsProcessedperWI,
                                  comp,	
-                                 result
+                                 stdResVec
 	                          ] ( concurrency::index<1> idx ) restrict(amp)
                            {
 
@@ -107,11 +98,11 @@ namespace bolt {
                                  while(low < high)
                                  {	
                                      mid = (low + high) / 2;
-                                     iType midVal = inputBuffer[mid];
+                                     iType midVal = first[mid];
    
                                      if( !(comp(midVal, val)) && !(comp(val, midVal)) )
                                      {
-                                        result[gloId] = true;
+                                        stdResVec[gloId] = true;
                                         return;
                                      }
                                      else if ( comp(midVal, val) ) /*if true, midVal comes before val hence adjust low*/
@@ -140,11 +131,11 @@ namespace bolt {
 	                        {
                              concurrency::parallel_for_each( av, inputExtent,
                               [
-                                 inputBuffer,
+                                 first,
                                  val,
                                  numElementsProcessedperWI,
                                  comp,	
-                                 result,
+                                 stdResVec,
 								 startIndex,
 								 szElements_b,
                                  nmofthreads
@@ -165,11 +156,11 @@ namespace bolt {
                                  {	
                                      mid = (low + high) / 2;
         
-                                     iType midVal = inputBuffer[mid];
+                                     iType midVal = first[mid];
    
                                      if( !(comp(midVal, val)) && !(comp(val, midVal)) )
                                      {
-                                      result[resultIndex] = true;
+                                      stdResVec[resultIndex] = true;
                                        return;
                                      }
                                      else if ( comp(midVal, val) ) /*if true, midVal comes before val hence adjust low*/
@@ -189,10 +180,10 @@ namespace bolt {
                     }
                
                     
-                  //result.synchronize();
+                  //stdResVec.synchronize();
                   for(unsigned int i=0; i<totalThreads; i++)
                   {
-                    if(result[i] == 1)
+                    if(stdResVec[i] == 1)
                     {
                         return true;
                     }
@@ -219,7 +210,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
-                size_t sz = (last - first);
+                unsigned int sz = static_cast<unsigned int>((last - first));
                 if (sz < 1)
                      return false;
 
