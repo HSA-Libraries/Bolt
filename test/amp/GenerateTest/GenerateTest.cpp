@@ -32,6 +32,10 @@
 #define TEST_CPU_DEVICE 0
 #define TEST_LARGE_BUFFERS 0
 
+#define STRESS_LIMIT_INT_MAX INT_MAX
+#define STRESS_LIMIT_MAX_MEM_ALLOCOTABLE (2147483648/10)
+#define STRESS_SIZE_EQ_TOPOWER 2<<15
+
 struct UDD
 {
     int a;
@@ -1000,6 +1004,266 @@ TEST_P( HostIntVector, MultiCoreGenerate )
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
+}
+
+
+struct ConstFunctor25 
+{     
+	int val;     
+	ConstFunctor25(int a) : val(a) {};     
+	int operator() () const restrict(amp, cpu)    
+	{         return val;     
+	}
+ 
+}; 
+
+ConstFunctor25 ampcf(100);
+
+TEST(stress_generate_n_amp_1with_ctl, stressLimit1)
+{
+
+	int size  = STRESS_LIMIT_MAX_MEM_ALLOCOTABLE;
+	std::vector<int> vec(size);
+	std::vector<int> stdvec(size);
+
+
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(vec.begin(), size, ampcf);
+	std::generate_n(stdvec.begin(), size, ampcf);
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(vec[i],stdvec[i]);
+	}
+		
+}
+
+TEST(stress_generate_n_amp_2with_ctl, stressLimit2){
+	int size  = STRESS_SIZE_EQ_TOPOWER;
+	std::vector<int> vec(size);
+	std::vector<int> stdvec(size);
+
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(vec.begin(), size, ampcf);
+	std::generate_n(stdvec.begin(), size, ampcf);
+
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(vec[i],stdvec[i]);
+		
+	}
+}
+
+TEST (stress_generate_n_amp_copyWithgenerate__stdVect2, stressLimit3){
+	int size = STRESS_LIMIT_INT_MAX/100;
+	
+	std::vector<int> myFloatVect(size); 
+	std::vector<int> myFloatVect2(size); 
+	
+	
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(myFloatVect.begin(), size, ampcf);
+	bolt::amp::generate_n(myFloatVect2.begin(), size, ampcf);
+
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ (myFloatVect2[i],myFloatVect[i])<<std::endl;
+	}
+
+}
+
+TEST(stress_generate_n_amp_withdev_ctl, stressLimit4){
+
+	int size  = STRESS_LIMIT_MAX_MEM_ALLOCOTABLE/1000;
+	//bolt::amp::device_vector<int> vec(size);
+	std::vector<int> stdvec(size);
+	std::vector<int> vec(size);
+
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(vec.begin(), size, ampcf);
+	std::generate_n(stdvec.begin(), size, ampcf);
+	
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(vec[i],stdvec[i]);
+		
+	}
+}
+
+TEST(stress_generate_n_amp_withdev_ctl, stressLimit5){
+	int size  = STRESS_SIZE_EQ_TOPOWER;
+	//bolt::amp::device_vector<int> vec(size);
+	std::vector<int> stdvec(size);
+	std::vector<int> vec(size);
+
+
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(vec.begin(), size, ampcf);
+	std::generate_n(stdvec.begin(), size, ampcf);
+
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(vec[i],stdvec[i]);
+		
+	}
+}
+
+struct ConstFunctor26 {     
+	float val;     
+	ConstFunctor26(float a) : val(++a) {};     
+	float operator() ()  const restrict(cpu, amp)    
+	{         return val;     
+	}
+ 
+}; 
+
+ConstFunctor26 floatcf(123.0f);
+
+
+TEST(stress_generate_n_amp_with_ctl_float, stressLimit1)
+{
+
+	int size = STRESS_LIMIT_MAX_MEM_ALLOCOTABLE/1000;
+
+    std::vector<float> stdInput( size); //,1
+    bolt::amp::device_vector<float> boltInput(size); //( stdInput.begin(),stdInput.end() );
+
+    //  Calling the actual functions under test
+    std::vector< float >::iterator              stdEnd =      std::generate_n(  stdInput.begin( ), size, floatcf);
+    bolt::amp::device_vector< float >::iterator boltEnd = bolt::amp::generate_n( boltInput.begin( ), size, floatcf );
+
+        
+    //  Both collections should have the same number of elements
+    std::vector< float >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+
+TEST(sanity_generate_n_amp_withdev_ctl, mallocfloat)
+{
+	int size  = 100;
+	
+	float *ptr1, *ptr2;
+
+	ptr1 = (float *) malloc(size * sizeof(float));
+	ptr2 = (float *) malloc(size * sizeof(float));
+
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n( ptr1, size, floatcf);
+	std::generate_n(ptr2, size, floatcf);
+
+	std::cout <<" val = " << ptr1[1] << std::endl;
+
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(ptr1[i],ptr2[i]);
+		
+	}
+}
+
+struct ConstFunctor27 {     
+	int val;     
+	ConstFunctor27(int a) : val(a/10) {};     
+	int operator() ()  const restrict(cpu, amp)    
+	{         return val;     
+	}
+ 
+}; 
+
+ConstFunctor27 icf = rand()+100;
+
+TEST (sanity_generate_n_amp_mallocRand, intValues)
+{
+	int* myarray;
+	int size =100;
+
+	myarray = (int *) malloc (size * sizeof(int));
+
+	srand(111);
+
+	bolt::amp::generate_n(myarray, size, icf);
+
+	for (int i = 1 ; i < size; ++i){
+		std::cout<<myarray[i]<<" ";
+	}
+	std::cout<<std::endl;
+}
+
+TEST (sanity_generate_n_amp_mallocRand_ctl, intValues)
+{
+	int* ptr1, *ptr2;
+	int size =10000;
+
+	ptr1 = (int *) malloc (size * sizeof(int));
+	ptr2 = (int *) malloc (size * sizeof(int));
+
+	srand(111);
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(ptr1, size, icf);
+	std::generate_n(ptr2, size, icf);
+
+	for (int i = 1 ; i < 10; ++i){
+		std::cout<<ptr1[i]<<" " << ptr2[i] << std::endl;
+	}
+	
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(ptr1[i],ptr2[i]);
+		
+	}
+}
+
+struct ConstFunctor31 {     
+	long val;     
+	ConstFunctor31(long a) : val(a) {};     
+	long operator() () const restrict(cpu, amp)     
+	{         return val;     
+	}
+ 
+}; 
+
+ConstFunctor31 cf31(92233720);
+
+TEST (sanity_generate_n_amp_mallocRand_64ctl, int64Values)
+{
+	long *ptr1, *ptr2;
+	int size =10000;
+
+	ptr1 = (long *) malloc (size * sizeof(long));
+	ptr2 = (long *) malloc (size * sizeof(long));
+
+	//srand(111);
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(ptr1, size, cf31);
+	std::generate_n(ptr2, size, cf31);
+
+	for (int i = 1 ; i < 10; ++i){
+		std::cout<<ptr1[i]<<" " << ptr2[i] << std::endl;
+	}
+	
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(ptr1[i],ptr2[i]);
+		
+	}
+}
+
+TEST (sanity_generate_n_amp_malloc_64ctl, int64Values)
+{
+	long *ptr1, *ptr2;
+	int size =10000;
+
+	ptr1 = (long *) malloc (size * sizeof(long));
+	ptr2 = (long *) malloc (size * sizeof(long));
+
+	//srand(111);
+    //TAKE_AMP_CONTROL_PATH
+	bolt::amp::generate_n(ptr1, size, cf31);
+	bolt::amp::generate_n(ptr2, size, cf31);
+
+	for (int i = 1 ; i < 10; ++i){
+		std::cout<<ptr1[i]<<" " << ptr2[i] << std::endl;
+	}
+	
+	for (int i = 1 ; i < size; ++i){
+		EXPECT_EQ(ptr1[i],ptr2[i]);
+		
+	}
 }
 
 //BOLT_FUNCTOR(ConstFunctor,

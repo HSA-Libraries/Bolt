@@ -182,7 +182,7 @@ void generate_enqueue(
 
 // generate, yes random-access
 template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::amp::control &ctrl, ForwardIterator& first,  ForwardIterator& last,
+void generate_detect_random_access( bolt::amp::control &ctrl, const ForwardIterator& first,  const ForwardIterator& last,
                         const Generator& gen, std::random_access_iterator_tag )
 {
                 generate_pick_iterator(ctrl, first, last, gen);
@@ -190,7 +190,7 @@ void generate_detect_random_access( bolt::amp::control &ctrl, ForwardIterator& f
 
 // generate, not random-access
 template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::amp::control &ctrl, ForwardIterator& first,  ForwardIterator& last,
+void generate_detect_random_access( bolt::amp::control &ctrl, const ForwardIterator& first,  const ForwardIterator& last,
                         const Generator& gen,  std::forward_iterator_tag )
 {
                 static_assert(std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
