@@ -485,10 +485,7 @@ private:
     {
         if( m_Size > 0 )
         {
-            //m_devMemory = new container_type( static_cast< int >( m_Size ) );
-            concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-
-            concurrency::array<value_type> *tmp = new array_type( static_cast< int >( m_Size ) );
+			concurrency::array<value_type> *tmp = new array_type( static_cast< int >( m_Size ), ctl.getAccelerator().default_view );
             m_devMemory = arrayview_type( *tmp );
 
             if( init )
