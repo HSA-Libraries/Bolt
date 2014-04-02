@@ -44,6 +44,9 @@ namespace cl {
 
 	    typedef typename boost::iterator_facade< counting_iterator< value_type >, value_type, 
             counting_iterator_tag, value_type, int >::difference_type  difference_type;
+            typedef counting_iterator_tag                              iterator_category;
+            //typedef value_type                                         value_type;
+            typedef value_type *                                       pointer; 
 
             struct Payload
             {
@@ -73,6 +76,14 @@ namespace cl {
             {
             }
 
+            operator pointer() { 
+                return &m_initValue; 
+            } 
+
+            operator const pointer() const { 
+                return &m_initValue; 
+            } 
+    
             counting_iterator< value_type >& operator= ( const counting_iterator< value_type >& rhs )
             {
                 if( this == &rhs )
@@ -102,7 +113,12 @@ namespace cl {
                 return m_devMemory;
             }
 
-          const counting_iterator< value_type > & getContainer( ) const
+            const counting_iterator< value_type > & getContainer( ) const
+            {
+                return *this;
+            }
+
+            const counting_iterator< value_type > & base( ) const
             {
                 return *this;
             }
@@ -171,8 +187,9 @@ namespace cl {
     //)
 
     //  This string represents the device side definition of the counting_iterator template
-    static std::string deviceCountingIterator = STRINGIFY_CODE( 
-
+    static std::string deviceCountingIterator = 
+        std::string("#if !defined(BOLT_CL_COUNTING_ITERATOR) \n") +
+        STRINGIFY_CODE( 
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class counting_iterator \n
@@ -207,7 +224,8 @@ namespace cl {
             value_type m_StartIndex; \n
         }; \n
     } } \n
-    );
+    )
+    +  std::string("#endif \n"); 
 
 
     template< typename Type >

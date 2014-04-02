@@ -32,18 +32,20 @@ namespace cl {
     struct constant_iterator_tag
         : public fancy_iterator_tag
         {   // identifying tag for random-access iterators
+
         };
 
-    //  This represents the host side definition of the constant_iterator template
-    //BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
+        //  This represents the host side definition of the constant_iterator template
+        //BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
         template< typename value_type >
         class constant_iterator: public boost::iterator_facade< constant_iterator< value_type >, value_type, 
             constant_iterator_tag, value_type, int >
         {
         public:
-             typedef typename boost::iterator_facade< constant_iterator< value_type >, value_type, 
-            constant_iterator_tag, value_type, int >::difference_type difference_type;
-           
+            typedef typename boost::iterator_facade< constant_iterator< value_type >, value_type, constant_iterator_tag, 
+                                   value_type, int >::difference_type        difference_type;
+            typedef constant_iterator_tag                                    iterator_category;
+            typedef value_type *                                             pointer; 
 
             struct Payload
             {
@@ -82,7 +84,15 @@ namespace cl {
                 m_Index = rhs.m_Index;
                 return *this;
             }
-                
+
+            operator pointer() { 
+                return &m_constValue; 
+            } 
+
+            operator const pointer() const { 
+                return &m_constValue; 
+            }                 
+
             constant_iterator< value_type >& operator+= ( const  difference_type & n )
             {
                 advance( n );
@@ -101,11 +111,16 @@ namespace cl {
                 return m_devMemory;
             }
 
-          const constant_iterator< value_type > & getContainer( ) const
+            const constant_iterator< value_type > & getContainer( ) const
             {
                 return *this;
             }
 
+            const constant_iterator< value_type > & base( ) const
+            {
+                return *this;
+            }
+            
             Payload gpuPayload( ) const
             {
                 Payload payload = { m_constValue };
@@ -153,7 +168,6 @@ namespace cl {
             bool equal( const constant_iterator< OtherType >& rhs ) const
             {
                 bool sameIndex = (rhs.m_constValue == m_constValue) && (rhs.m_Index == m_Index);
-
                 return sameIndex;
             }
 
@@ -169,7 +183,9 @@ namespace cl {
     //)
 
     //  This string represents the device side definition of the constant_iterator template
-    static std::string deviceConstantIterator = STRINGIFY_CODE( 
+    static std::string deviceConstantIterator = 
+        std::string("#if !defined(BOLT_CL_CONSTANT_ITERATOR) \n") +
+        STRINGIFY_CODE( 
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class constant_iterator \n
@@ -201,7 +217,8 @@ namespace cl {
             value_type m_constValue; \n
         }; \n
     } } \n
-    );
+    )
+    +  std::string("#endif \n"); 
 
     template< typename Type >
     constant_iterator< Type > make_constant_iterator( Type constValue )

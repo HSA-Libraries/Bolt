@@ -236,6 +236,9 @@ namespace cl
                 iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
                 {}
 
+                iterator_base( value_type *ptr ): m_Container( ptr ), m_Index( 0 )
+                {
+                }
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
                 //template< typename Container >
                 iterator_base< Container >& operator = ( const iterator_base< Container >& rhs )
@@ -244,7 +247,17 @@ namespace cl
                     m_Index = rhs.m_Index;
                     return *this;
                 }
-    
+
+                iterator_base< Container > & base() 
+                {
+                    return *this;
+                }
+
+                const iterator_base< Container > & base() const
+                {
+                    return *this;
+                }
+
                 iterator_base< Container > & operator+= ( const difference_type & n )
                 {
                     advance( n );
@@ -683,8 +696,9 @@ namespace cl
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
-                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
+                        m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
+                            reinterpret_cast< value_type* >( const_cast< value_type* >( std::addressof(*(begin) ) /*&*begin*/ ) ) );
+
                 }
                 else
                 {
@@ -699,11 +713,13 @@ namespace cl
                     std::copy( begin, end,  stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
 #else
                     std::copy( begin, end, pointer );
-#endif
+#endif             
                     l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, pointer, 0, 0 );
                     V_OPENCL( l_Error, "enqueueUnmapMemObject failed in device_vector constructor" );
                 }
-            };
+            }
+            
+
 
             /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
             *   \param rhs A pre-existing ::cl::Buffer supplied by the user.
@@ -1403,7 +1419,7 @@ namespace cl
 
                 --m_Size;
 
-				size_t newIndex = (m_Size < (size_t)index.m_Index) ? m_Size : index.m_Index;
+                size_t newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
                 return iterator( *this, static_cast< difference_type >( (int)newIndex ) );
             }
 
@@ -1417,7 +1433,7 @@ namespace cl
                 if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( (size_t)last.m_Index > m_Size )
+                if( last.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 if( (first == begin( )) && (last == end( )) )
@@ -1444,7 +1460,7 @@ namespace cl
 
                 m_Size -= sizeErase;
 
-				size_type newIndex = (m_Size < (size_t)last.m_Index) ? m_Size : last.m_Index;
+                size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
                 return iterator( *this, static_cast< typename iterator::difference_type >( newIndex ) );
             }
 
@@ -1460,7 +1476,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-				if ((size_t)index.m_Index > m_Size)
+                if (index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
             if( index.m_Index == m_Size )
@@ -1512,7 +1528,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-				if ((size_t)index.m_Index > m_Size)
+                if( index.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
@@ -1553,7 +1569,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-				if ((size_t)index.m_Index > m_Size)
+                if ( index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
@@ -1733,7 +1749,10 @@ namespace cl
         };
 
     //  This string represents the device side definition of the constant_iterator template
-    static std::string deviceVectorIteratorTemplate = STRINGIFY_CODE(
+    static std::string deviceVectorIteratorTemplate = 
+    std::string ("#if !defined(BOLT_CL_DEVICE_ITERATOR) \n") +
+    STRINGIFY_CODE(
+        #define BOLT_CL_DEVICE_ITERATOR \n
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class device_vector \n
@@ -1772,7 +1791,8 @@ namespace cl
             }; \n
         }; \n
     } } \n
-    );
+    ) +
+    std::string ("#endif \n");
 }
 }
 

@@ -130,8 +130,8 @@ struct ClCode
  *
  * See TypeName for more information.
  */
-#define BOLT_CREATE_TYPENAME( Type ) \
-    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
+#define BOLT_CREATE_TYPENAME( ... ) \
+    template<> struct TypeName< __VA_ARGS__ > { static std::string get( ) { return #__VA_ARGS__; } };
 
 /*!
  * Creates the ClCode trait that associates the specified type \p T with the string \p CODE_STRING.
@@ -203,6 +203,43 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
 #define BOLT_CREATE_DEFINE( DefineName,D,... ) struct DefineName {}; BOLT_CREATE_CLCODE( DefineName,   std::string("#ifndef ") + std::string(#D) + std::string(" \n")\
                                                                                                   + std::string("#define ") + std::string(#D) + std::string(" ") + std::string(#__VA_ARGS__) + std::string(" \n")\
                                                                                                   + std::string("#endif \n"));
+
+/*!
+ * \brief This macro specializes a template transform iterator with a new type using the template definition of a previously 
+ * defined iterator type
+ * \detail This is a convenience macro to specialize an iterator for a new type, using the generic template 
+ * definition from a previosly defined iterator
+ * \param CONTAINER A template template parameter, such as std::vector without the type specified
+ * \param OLDTYPE A type that has already been registered with the container template definition
+ * \param NEWTYPE A new type to register with the template definition
+ */
+#if defined(WIN32)
+#define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( ITERATOR, FUNCTOR, DATATYPE) \
+            BOLT_CREATE_TYPENAME( bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > );\
+            template<> struct ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > > {	static std::vector< std::string > dependencies;\
+                                        static void addDependency(std::string s) { dependencies.push_back(s); }; \
+                                        static std::string getDependingCodeString() { \
+                                            std::string c;\
+                                            for (std::vector< std::string >::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
+                                            return c; \
+                                        };\
+                                        static std::string getCodeString() { return ClCode<DATATYPE>::get() + ClCode<FUNCTOR>::get() + bolt::cl::deviceTransformIteratorTemplate; }; \
+                                        static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
+                                        __declspec( selectany ) std::vector< std::string > ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > >::dependencies; 
+#else
+#define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( ITERATOR, FUNCTOR, DATATYPE) \
+            BOLT_CREATE_TYPENAME( bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > );\
+            template<> struct ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > > {	static std::vector< std::string > dependencies;\
+                                        static void addDependency(std::string s) { dependencies.push_back(s); }; \
+                                        static std::string getDependingCodeString() { \
+                                            std::string c;\
+                                            for (std::vector< std::string >::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
+                                            return c; \
+                                        };\
+                                        static std::string getCodeString() { return ClCode<DATATYPE>::get() + ClCode<FUNCTOR>::get() + bolt::cl::deviceTransformIteratorTemplate; }; \
+                                        static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
+                                        __attribute__((weak))  std::vector< std::string > ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > >::dependencies; 
+#endif
 
 /*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate 
