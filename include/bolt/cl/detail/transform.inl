@@ -50,7 +50,7 @@ namespace serial{
     binary_transform( ::bolt::cl::control &ctl, const InputIterator1& first1, const InputIterator1& last1,
                       const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f)
     {
-            InputIterator1::difference_type sz = (last1 - first1);
+            typename InputIterator1::difference_type sz = (last1 - first1);
             if (sz == 0)
                 return;
             typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
@@ -72,11 +72,11 @@ namespace serial{
                                                                              first2_sz, NULL, NULL, &map_err);
             oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                              result_sz, NULL, NULL, &map_err);
-            auto mapped_first1_itr = create_mapped_iterator(std::iterator_traits<InputIterator1>::iterator_category(), 
+            auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
                                                            first1, first1Ptr);
-            auto mapped_first2_itr = create_mapped_iterator(std::iterator_traits<InputIterator2>::iterator_category(), 
+            auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
                                                            first2, first2Ptr);
-            auto mapped_result_itr = create_mapped_iterator(std::iterator_traits<OutputIterator>::iterator_category(), 
+            auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                                            result, resultPtr);
             for(int index=0; index < (int)(sz); index++)
             {
@@ -135,9 +135,9 @@ namespace serial{
                                                                             first_sz, NULL, NULL, &map_err);
         oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                             result_sz, NULL, NULL, &map_err);
-        auto mapped_first_itr = create_mapped_iterator(std::iterator_traits<InputIterator>::iterator_category(), 
+        auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
                                                         first, firstPtr);
-        auto mapped_result_itr = create_mapped_iterator(std::iterator_traits<OutputIterator>::iterator_category(), 
+        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                                         result, resultPtr);
         for(int index=0; index < (int)(sz); index++)
         {
@@ -181,7 +181,7 @@ namespace btbb{
     binary_transform( ::bolt::cl::control &ctl, const InputIterator1& first1, const InputIterator1& last1,
                const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f)
     {
-        InputIterator1::difference_type sz = (last1 - first1);
+        typename InputIterator1::difference_type sz = (last1 - first1);
         if (sz == 0)
             return;
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
@@ -205,11 +205,11 @@ namespace btbb{
                                                                             first2_sz, NULL, NULL, &map_err);
         oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                             result_sz, NULL, NULL, &map_err);
-        auto mapped_first1_itr = create_mapped_iterator(std::iterator_traits<InputIterator1>::iterator_category(), 
+        auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
                                                         first1, first1Ptr);
-        auto mapped_first2_itr = create_mapped_iterator(std::iterator_traits<InputIterator2>::iterator_category(), 
+        auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
                                                         first2, first2Ptr);
-        auto mapped_result_itr = create_mapped_iterator(std::iterator_traits<OutputIterator>::iterator_category(), 
+        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                                         result, resultPtr);
         bolt::btbb::transform(mapped_first1_itr, mapped_first1_itr+(int)sz, mapped_first2_itr, mapped_result_itr, f);
 
@@ -263,9 +263,9 @@ namespace btbb{
                                                                             first_sz, NULL, NULL, &map_err);
         oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                             result_sz, NULL, NULL, &map_err);
-        auto mapped_first_itr = create_mapped_iterator(std::iterator_traits<InputIterator>::iterator_category(), 
+        auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
                                                         first, firstPtr);
-        auto mapped_result_itr = create_mapped_iterator(std::iterator_traits<OutputIterator>::iterator_category(), 
+        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                                         result, resultPtr);
         bolt::btbb::transform(mapped_first_itr, mapped_first_itr + (int)sz, mapped_result_itr, f);
 
@@ -391,7 +391,7 @@ namespace cl{
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-        InputIterator1::difference_type distVec = last1 - first1;
+        typename InputIterator1::difference_type distVec = last1 - first1;
         if( distVec == 0 )
             return;
 
@@ -539,15 +539,15 @@ namespace cl{
                       const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f, 
                       const std::string& user_code )
     {
-        InputIterator1::difference_type sz = (last1 - first1);
+        typename InputIterator1::difference_type sz = (last1 - first1);
         if (sz == 0)
             return;
         typedef typename std::iterator_traits<InputIterator1>::value_type  iType1;
         typedef typename std::iterator_traits<InputIterator2>::value_type  iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
        
-        typedef InputIterator1::pointer pointer1;
-        typedef InputIterator2::pointer pointer2;
+        typedef typename InputIterator1::pointer pointer1;
+        typedef typename InputIterator2::pointer pointer2;
         
         pointer1 first_pointer1 = bolt::cl::addressof(first1) ;
         pointer2 first_pointer2 = bolt::cl::addressof(first2) ;
@@ -585,7 +585,7 @@ namespace cl{
     unary_transform( ::bolt::cl::control &ctl, const InputIterator& first, const InputIterator& last,
     const OutputIterator& result, const UnaryFunction& f, const std::string& user_code)
     {
-        InputIterator::difference_type sz = bolt::cl::distance(first, last);
+        typename InputIterator::difference_type sz = bolt::cl::distance(first, last);
         if (sz == 0)
             return;
         typedef typename std::iterator_traits<InputIterator>::value_type  iType;
@@ -732,7 +732,7 @@ namespace cl{
         typedef typename std::iterator_traits<InputIterator>::value_type  iType;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
        
-        typedef InputIterator::pointer pointer;
+        typedef typename InputIterator::pointer pointer;
         
         pointer first_pointer = bolt::cl::addressof(first) ;
 
@@ -766,7 +766,7 @@ namespace cl{
                      const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f,
                      const std::string& user_code)
     {
-        InputIterator1::difference_type sz = bolt::cl::distance(first1, last1 );
+        typename InputIterator1::difference_type sz = bolt::cl::distance(first1, last1 );
         if (sz == 0)
             return;
 
@@ -854,7 +854,7 @@ namespace cl{
          InputIterator& last,  OutputIterator& result,  UnaryFunction& f,
         const std::string& user_code)
     {
-        InputIterator::difference_type sz = bolt::cl::distance(first, last );
+        typename InputIterator::difference_type sz = bolt::cl::distance(first, last );
         if (sz == 0)
             return;
 

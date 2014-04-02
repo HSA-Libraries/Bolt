@@ -8,34 +8,34 @@ namespace bolt{
 namespace cl{
 
     template <typename Iterator>
-    typename Iterator::value_type * addressof(typename Iterator itr)
+    typename Iterator::value_type * addressof(Iterator itr)
     {
         return std::addressof(*itr);
     }
 
     template <typename UnaryFunction, typename Iterator>
-    typename bolt::cl::transform_iterator<typename UnaryFunction, typename Iterator>::pointer 
-        addressof(typename bolt::cl::transform_iterator<typename UnaryFunction, typename Iterator> itr)
+    typename bolt::cl::transform_iterator<UnaryFunction, Iterator>::pointer 
+        addressof(typename bolt::cl::transform_iterator<UnaryFunction, Iterator> itr)
     {
-        typedef typename bolt::cl::transform_iterator<typename UnaryFunction, typename Iterator>::pointer pointer;
+        typedef typename bolt::cl::transform_iterator<UnaryFunction, Iterator>::pointer pointer;
         pointer ptr = itr;
         return ptr;
     }
 
     template <typename value_type>
-    typename bolt::cl::counting_iterator<typename value_type>::pointer 
-        addressof(typename bolt::cl::counting_iterator<typename value_type> itr)
+    typename bolt::cl::counting_iterator<value_type>::pointer 
+        addressof(typename bolt::cl::counting_iterator<value_type> itr)
     {
-        typedef typename bolt::cl::counting_iterator<typename value_type>::pointer pointer;
+        typedef typename bolt::cl::counting_iterator<value_type>::pointer pointer;
         pointer ptr = itr;
         return itr;
     }
 
     template <typename value_type>
-    typename bolt::cl::constant_iterator<typename value_type>::pointer 
-        addressof(typename bolt::cl::constant_iterator<typename value_type> itr)
+    typename bolt::cl::constant_iterator<value_type>::pointer 
+        addressof(typename bolt::cl::constant_iterator<value_type> itr)
     {
-        typedef typename bolt::cl::constant_iterator<typename value_type>::pointer pointer;
+        typedef typename bolt::cl::constant_iterator<value_type>::pointer pointer;
         pointer ptr = itr;
         return itr;
     }
@@ -44,30 +44,30 @@ namespace cl{
     /*******************Create device side Iterators **********************/
 
     template <typename Iterator, typename DeviceIterator>
-    transform_iterator<typename Iterator::unary_func, typename DeviceIterator>
-    create_device_itr(bolt::cl::transform_iterator_tag, Iterator &itr, DeviceIterator &dev_itr)
+    const transform_iterator<typename Iterator::unary_func, DeviceIterator>
+    create_device_itr(bolt::cl::transform_iterator_tag, Iterator itr, DeviceIterator dev_itr)
     {
         typedef typename Iterator::unary_func unary_func;
-        return transform_iterator<unary_func, typename DeviceIterator> (dev_itr, itr.functor());
+        return transform_iterator<unary_func, DeviceIterator> (dev_itr, itr.functor());
     }   
 
     template <typename Iterator, typename DeviceIterator>
-    typename bolt::cl::device_vector<typename Iterator::value_type>::iterator &
-    create_device_itr(std::random_access_iterator_tag, Iterator &itr, DeviceIterator &dev_itr)
+    const typename bolt::cl::device_vector<typename Iterator::value_type>::iterator 
+    create_device_itr(std::random_access_iterator_tag, Iterator itr, DeviceIterator dev_itr)
     {
         return dev_itr;
     }
 
     template <typename Iterator, typename DeviceIterator>
-    const constant_iterator<typename Iterator::value_type> &
-    create_device_itr(bolt::cl::constant_iterator_tag, Iterator &itr, DeviceIterator &dev_itr)
+    const constant_iterator<typename Iterator::value_type> 
+    create_device_itr(bolt::cl::constant_iterator_tag, Iterator itr, DeviceIterator &dev_itr)
     {
         return itr;
     }
 
     template <typename Iterator, typename DeviceIterator>
-    const counting_iterator<typename Iterator::value_type> &
-    create_device_itr(bolt::cl::counting_iterator_tag, Iterator &itr, DeviceIterator &dev_itr)
+    const counting_iterator<typename Iterator::value_type> 
+    create_device_itr(bolt::cl::counting_iterator_tag, Iterator itr, DeviceIterator dev_itr)
     {
         return itr;
     }
@@ -83,7 +83,7 @@ namespace cl{
     }   
 
     template <typename Iterator, typename T>
-    typename T*
+    T*
     create_mapped_iterator(bolt::cl::device_vector_tag, Iterator &itr, T* ptr)
     {
         return ptr + itr.m_Index;

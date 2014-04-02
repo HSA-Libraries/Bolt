@@ -94,10 +94,10 @@ namespace cl
     friend class iterator_core_access;
 
   public:
-    typedef typename transform_iterator_tag                          iterator_category;
-    typedef typename super_t                                         iterator_base_class;
+    typedef transform_iterator_tag                                   iterator_category;
+    typedef super_t                                                  iterator_base_class;
     //
-    typedef typename UnaryFunc                                       unary_func;
+    typedef UnaryFunc                                                unary_func;
     typedef typename std::iterator_traits<Iterator>::value_type      value_type;
     typedef std::ptrdiff_t                                           difference_type;
     typedef typename std::iterator_traits<Iterator>::pointer         pointer;
@@ -124,12 +124,14 @@ namespace cl
    { }
 
     
-        operator pointer() { 
-            return &(*base_reference()); 
+        operator pointer() {
+            //return &(*bolt::cl::detail::transform_iterator_base<UnaryFunc, Iterator, Reference, Value>::type::base_reference()); 
+            return &(*(this->base_reference())); 
         } 
 
         operator const pointer() const { 
-            return &(*base_reference()); 
+            //return &(*bolt::cl::detail::transform_iterator_base<UnaryFunc, Iterator, Reference, Value>::type::base_reference()); 
+            return &(*(this->base_reference())); 
         } 
     
         UnaryFunc functor() const
@@ -198,72 +200,57 @@ namespace cl
   // function pointer in the iterator be 0, leading to a runtime
   // crash.
   template <class UnaryFunc, class Iterator>
-#if BOOST_WORKAROUND(BOOST_MSVC, <= 1300)
-  typename mpl::if_<
-#else 
   typename std::enable_if<
-#endif 
       std::is_class<UnaryFunc>::value   // We should probably find a cheaper test than is_class<>
     , transform_iterator<UnaryFunc, Iterator>
-#if BOOST_WORKAROUND(BOOST_MSVC, <= 1300)
-    , int[3]
-#endif 
   >::type
   make_transform_iterator(Iterator it)
   {
       return transform_iterator<UnaryFunc, Iterator>(it, UnaryFunc());
   }
 
-#if defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION ) && !defined(BOOST_NO_FUNCTION_TEMPLATE_ORDERING)
-  template <class Return, class Argument, class Iterator>
-  transform_iterator< Return (*)(Argument), Iterator, Return>
-  make_transform_iterator(Iterator it, Return (*fun)(Argument))
-  {
-    return transform_iterator<Return (*)(Argument), Iterator, Return>(it, fun);
-  }
-#endif
-
    //  This string represents the device side definition of the Transform Iterator template
-    static std::string deviceTransformIteratorTemplate = STRINGIFY_CODE(
-        #if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n
-        #define BOLT_CL_TRANSFORM_ITERATOR \n
-        namespace bolt { namespace cl { \n
-        template< typename UnaryFunc, typename Iterator > \n
-        class transform_iterator \n
-        { \n
-            public:    \n
-                typedef int iterator_category;        \n
-                typedef typename Iterator::value_type value_type; \n
-                typedef int difference_type; \n
-                typedef int size_type; \n
-                typedef value_type* pointer; \n
-                typedef value_type& reference; \n
+    static std::string deviceTransformIteratorTemplate = 
+        std::string("#if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n") +
+        STRINGIFY_CODE(
+            #define BOLT_CL_TRANSFORM_ITERATOR \n
+            namespace bolt { namespace cl { \n
+            template< typename UnaryFunc, typename Iterator > \n
+            class transform_iterator \n
+            { \n
+                public:    \n
+                    typedef int iterator_category;        \n
+                    typedef typename Iterator::value_type value_type; \n
+                    typedef int difference_type; \n
+                    typedef int size_type; \n
+                    typedef value_type* pointer; \n
+                    typedef value_type& reference; \n
+    
+                    transform_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
+                    {} \n
+    
+                    void init( global value_type* ptr )\n
+                    { \n
+                        m_Ptr = ptr; \n
+                    } \n
 
-                transform_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
-                {}; \n
+                    value_type operator[]( size_type threadID ) const \n
+                    { \n
+                       return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                    } \n
 
-                void init( global value_type* ptr )\n
-                { \n
-                    m_Ptr = ptr; \n
-                }; \n
+                    value_type operator*( ) const \n
+                    { \n
+                        return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                    } \n
 
-                value_type operator[]( size_type threadID ) const \n
-                { \n
-                   return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
-                } \n
-
-                value_type operator*( ) const \n
-                { \n
-                    return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
-                } \n
-
-                size_type m_StartIndex; \n
-                global value_type* m_Ptr; \n
-                UnaryFunc          m_f; \n
-        }; \n
-    } } \n
-    #endif \n
-    );
+                    size_type m_StartIndex; \n
+                    global value_type* m_Ptr; \n
+                    UnaryFunc          m_f; \n
+            }; \n
+            } } \n
+        )
+        +  std::string("#endif \n"); 
 
 } // namespace cl
 } // namespace bolt

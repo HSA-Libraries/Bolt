@@ -121,7 +121,7 @@ struct iterator_category_to_traversal
 {};
 
 // Trait to get an iterator's traversal category
-template <class Iterator = mpl::_1>
+template <class Iterator >
 struct iterator_traversal
   : iterator_category_to_traversal<
         typename bolt::cl::iterator_traits<Iterator>::iterator_category

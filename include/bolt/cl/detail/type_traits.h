@@ -267,7 +267,12 @@ namespace cl {
         { 
         public:
         }; 
-
+        
+        template <class T>
+        struct add_reference
+        {
+            typedef typename std::remove_reference<T>::type& type;
+        };
 
     } // namespace detail
 } // namespace cl
