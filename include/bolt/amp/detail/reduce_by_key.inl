@@ -179,13 +179,6 @@ reduce_by_key_enqueue(
     std::vector<int> stdoffset(numElements, 0);
     device_vector<int, concurrency::array_view > offsetArrayVec(stdoffset.begin(), stdoffset.end(), true, ctl );
 
-    auto&  offsetArray   =  offsetArrayVec.begin().getContainer().getBuffer(offsetArrayVec.begin()); 
-    auto&  keyBuffer   =  keys_first.getContainer().getBuffer(keys_first); 
-    auto&  inputBuffer =  values_first.getContainer().getBuffer(values_first); 
-    auto&  outputBuffer=  values_output.getContainer().getBuffer(values_output); 
-    auto&  keysoutputBuffer=  keys_output.getContainer().getBuffer(keys_output);
-    
- 
 
     /**********************************************************************************
      *  Kernel 0
@@ -196,10 +189,10 @@ reduce_by_key_enqueue(
 	{
     concurrency::parallel_for_each( av, globalSizeK0,
         [
-            keyBuffer,
+            keys_first,
             binary_pred,
             numElements,
-            offsetArray,	
+            offsetArrayVec,	
             kernel0_WgSize
         ] ( concurrency::index< 1 > t_idx ) restrict(amp)
   {
@@ -212,15 +205,15 @@ reduce_by_key_enqueue(
     kType key, prev_key;
 
     if(gloId > 0){
-      key = keyBuffer[ gloId ];
-      prev_key = keyBuffer[ gloId - 1];
+      key = keys_first[ gloId ];
+      prev_key = keys_first[ gloId - 1];
       if(binary_pred(key, prev_key))
-        offsetArray[ gloId ] = 0;
+        offsetArrayVec[ gloId ] = 0;
       else
-        offsetArray[ gloId ] = 1;
+        offsetArrayVec[ gloId ] = 1;
     }
     else{
-        offsetArray[ gloId ] = 0;
+        offsetArrayVec[ gloId ] = 0;
     }
     
   } );
@@ -267,8 +260,8 @@ reduce_by_key_enqueue(
     unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
     concurrency::parallel_for_each( av, tileK1,
         [
-            offsetArray,
-            inputBuffer,
+            offsetArrayVec,
+            values_first,
             &offsetValArray,
             numElements,
             &keySumArray,
@@ -292,8 +285,8 @@ reduce_by_key_enqueue(
     voType val; 
 
     if(gloId < numElements){
-      key = offsetArray[ gloId ];
-      val = inputBuffer[ gloId ];
+      key = offsetArrayVec[ gloId ];
+      val = values_first[ gloId ];
       ldsKeys[ locId ] =  key;
       ldsVals[ locId ] = val;
     }
@@ -324,7 +317,7 @@ reduce_by_key_enqueue(
     // of each work group
     int key2 = -1;
     if (gloId < numElements -1 )
-        key2 = offsetArray[gloId + 1];
+        key2 = offsetArrayVec[gloId + 1];
     if(key != key2)
        offsetValArray[ gloId ] = sum;
 
@@ -505,7 +498,7 @@ reduce_by_key_enqueue(
     unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
     concurrency::parallel_for_each( av, tileK3,
         [
-            offsetArray,
+            offsetArrayVec,
             &keySumArray,
             &postSumArray,
             &offsetValArray,
@@ -528,10 +521,10 @@ reduce_by_key_enqueue(
 
     // accumulate prefix
     int  key1 =  keySumArray[ groId-1 ];
-    int key2 = offsetArray[ gloId ];
+    int key2 = offsetArrayVec[ gloId ];
     int  key3 = -1;
     if(gloId < numElements -1 )
-      key3 =  offsetArray[ gloId + 1];
+      key3 =  offsetArrayVec[ gloId + 1];
     if (groId > 0 && key1 == key2 && key2 != key3)
     {
         voType scanResult = offsetValArray[ gloId ];
@@ -583,15 +576,15 @@ reduce_by_key_enqueue(
 
     concurrency::parallel_for_each( av, tileK4,
         [
-            keyBuffer,
-            keysoutputBuffer,
-            outputBuffer,
+            keys_first,
+            keys_output,
+            values_output,
             &offsetValArray,
             binary_pred,
             numElements,
             binary_op,
             kernel0_WgSize,
-            offsetArray,
+            offsetArrayVec,
             global_offset,
             wg_offset
         ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
@@ -605,18 +598,18 @@ reduce_by_key_enqueue(
     if( gloId >= numElements )
         return;
 
-    count_number_of_sections = offsetArray[numElements-1] + 1;
-    if(gloId < (numElements-1) && offsetArray[ gloId ] != offsetArray[ gloId +1])
+    count_number_of_sections = offsetArrayVec[numElements-1] + 1;
+    if(gloId < (numElements-1) && offsetArrayVec[ gloId ] != offsetArrayVec[ gloId +1])
     {
-        keysoutputBuffer [offsetArray [ gloId ]] = keyBuffer[ gloId];
-        outputBuffer[ offsetArray [ gloId ]] = offsetValArray [ gloId];
+        keys_output [offsetArrayVec [ gloId ]] = keys_first[ gloId];
+        values_output[ offsetArrayVec [ gloId ]] = offsetValArray [ gloId];
     }
 
     if( gloId == (numElements-1) )
     {
-        keysoutputBuffer[ count_number_of_sections - 1 ] = keyBuffer[ gloId ]; //Copying the last key directly. Works either ways
-        outputBuffer[ count_number_of_sections - 1 ] = offsetValArray [ gloId ];
-        offsetArray [ gloId ] = count_number_of_sections;
+        keys_output[ count_number_of_sections - 1 ] = keys_first[ gloId ]; //Copying the last key directly. Works either ways
+        values_output[ count_number_of_sections - 1 ] = offsetValArray [ gloId ];
+        offsetArrayVec [ gloId ] = count_number_of_sections;
     }
     
   } );
@@ -630,7 +623,7 @@ reduce_by_key_enqueue(
       }	
 
     unsigned int count_number_of_sections = 0;
-    count_number_of_sections = offsetArray[numElements-1];
+    count_number_of_sections = offsetArrayVec[numElements-1];
     return count_number_of_sections;
 
 }   //end of reduce_by_key_enqueue( )

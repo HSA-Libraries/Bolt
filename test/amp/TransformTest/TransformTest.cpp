@@ -1456,7 +1456,7 @@ TEST( TransformDeviceVector, UDDOutOfPlaceTransform)
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 0 );
 
-  bolt::amp::device_vector<UDD, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+  bolt::amp::device_vector<UDD> dVectorA(hVectorA.begin(), hVectorA.end()),
     dVectorB(hVectorB.begin(), hVectorB.end()),
     dVectorO(hVectorO.begin(), hVectorO.end());
 
@@ -1479,7 +1479,7 @@ TEST( TransformDeviceVector, SerialUDDOutOfPlaceTransform)
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 0 );
 
-  bolt::amp::device_vector<UDD, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+  bolt::amp::device_vector<UDD> dVectorA(hVectorA.begin(), hVectorA.end()),
     dVectorB(hVectorB.begin(), hVectorB.end()),
     dVectorO(hVectorO.begin(), hVectorO.end());
 
@@ -1506,7 +1506,7 @@ TEST( TransformDeviceVector, MulticoreUDDOutOfPlaceTransform)
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 0 );
 
-  bolt::amp::device_vector<UDD, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+  bolt::amp::device_vector<UDD> dVectorA(hVectorA.begin(), hVectorA.end()),
     dVectorB(hVectorB.begin(), hVectorB.end()),
     dVectorO(hVectorO.begin(), hVectorO.end());
 
@@ -1533,7 +1533,7 @@ TEST( TransformDeviceVector, OutOfPlaceTransform)
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 0 );
 
-  bolt::amp::device_vector<int, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+  bolt::amp::device_vector<int> dVectorA(hVectorA.begin(), hVectorA.end()),
     dVectorB(hVectorB.begin(), hVectorB.end()),
     dVectorO(hVectorO.begin(), hVectorO.end());
 
@@ -1556,7 +1556,7 @@ TEST( TransformDeviceVector, SerialOutOfPlaceTransform)
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 0 );
 
-  bolt::amp::device_vector<int, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+  bolt::amp::device_vector<int> dVectorA(hVectorA.begin(), hVectorA.end()),
     dVectorB(hVectorB.begin(), hVectorB.end()),
     dVectorO(hVectorO.begin(), hVectorO.end());
   
@@ -1583,7 +1583,7 @@ TEST( TransformDeviceVector, MulticoreOutOfPlaceTransform)
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 0 );
 
-  bolt::amp::device_vector<int, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+  bolt::amp::device_vector<int> dVectorA(hVectorA.begin(), hVectorA.end()),
     dVectorB(hVectorB.begin(), hVectorB.end()),
     dVectorO(hVectorO.begin(), hVectorO.end());
 

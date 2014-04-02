@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <type_traits>
 #include "bolt/amp/bolt.h"
+#include "bolt/amp/iterator/iterator_traits.h"
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
 
@@ -48,13 +49,12 @@ void generate_enqueue(
     const DVForwardIterator &last,
     const Generator &gen )
 {
-	           concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+	        concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-	           typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
+	        typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
 
-               const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
+            const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
 
-    	    concurrency::array_view<Type,1> outputV (first.getContainer().getBuffer(first));
             const unsigned int leng =  szElements + GEN_WAVEFRONT_SIZE - (szElements % GEN_WAVEFRONT_SIZE);
 
             concurrency::extent< 1 > inputExtent(leng);
@@ -70,18 +70,18 @@ void generate_enqueue(
                     if( globalId >= szElements)
                          return;
 
-                    outputV[globalId] =(Type) gen();
+                    first[globalId] =(Type) gen();
 
                 });
             }
 
 
-			   catch(std::exception &e)
-               {
+			catch(std::exception &e)
+            {
                    std::cout << "Exception while calling bolt::amp::generate parallel_for_each " ;
                    std::cout<< e.what() << std::endl;
                    throw std::exception();
-               }
+            }
 
 
 }; // end generate_enqueue
@@ -96,10 +96,8 @@ void generate_enqueue(
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
             template<typename ForwardIterator, typename Generator>
-			typename std::enable_if<
-                   !(std::is_base_of<typename device_vector<typename std::iterator_traits<ForwardIterator>::value_type>::iterator,ForwardIterator>::value),void >::type
-            generate_pick_iterator(bolt::amp::control &ctl,  const ForwardIterator &first,
-                const ForwardIterator &last, const Generator &gen)
+            void generate_pick_iterator(bolt::amp::control &ctl,  const ForwardIterator &first,
+                const ForwardIterator &last, const Generator &gen, std::random_access_iterator_tag)
             {
                 typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
 
@@ -143,10 +141,8 @@ void generate_enqueue(
             // it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVForwardIterator, typename Generator>
-			typename std::enable_if<
-                   (std::is_base_of<typename device_vector<typename std::iterator_traits< DVForwardIterator>::value_type>::iterator, DVForwardIterator>::value),void >::type
-            generate_pick_iterator(bolt::amp::control &ctl, const DVForwardIterator &first,
-                const DVForwardIterator &last, const Generator &gen)
+            void generate_pick_iterator(bolt::amp::control &ctl, const DVForwardIterator &first,
+                const DVForwardIterator &last, const Generator &gen, bolt::amp::device_vector_tag)
             {
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -176,6 +172,16 @@ void generate_enqueue(
             }
 
 
+            // This template is called by the non-detail versions of generate,
+            // it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVForwardIterator, typename Generator>
+            void generate_pick_iterator(bolt::amp::control &ctl,  const DVForwardIterator &first,
+                const DVForwardIterator &last,
+                const Generator &gen, bolt::amp::fancy_iterator_tag )
+            {
+                static_assert( std::is_same< DVForwardIterator, bolt::amp::fancy_iterator_tag  >::value, "It is not possible to generate into fancy iterators. They are not mutable! " );
+            }
 
 /*****************************************************************************
              * Random Access
@@ -183,15 +189,16 @@ void generate_enqueue(
 
 // generate, yes random-access
 template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::amp::control &ctrl, ForwardIterator& first,  ForwardIterator& last,
+void generate_detect_random_access( bolt::amp::control &ctrl, const ForwardIterator& first,  const ForwardIterator& last,
                         const Generator& gen, std::random_access_iterator_tag )
 {
-                generate_pick_iterator(ctrl, first, last, gen);
+                generate_pick_iterator(ctrl, first, last, gen, 
+				typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
 }
 
 // generate, not random-access
 template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::amp::control &ctrl, ForwardIterator& first,  ForwardIterator& last,
+void generate_detect_random_access( bolt::amp::control &ctrl, const ForwardIterator& first,  const ForwardIterator& last,
                         const Generator& gen,  std::forward_iterator_tag )
 {
                 static_assert(std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );

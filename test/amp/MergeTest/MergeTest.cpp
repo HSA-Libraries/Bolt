@@ -332,14 +332,14 @@ TEST(sanity_merge_amp_ArrWithDiffTypes2, WithDouble){
 
 TEST(sanity_merge_bolt_vect, wo_control_ints)
 {
-	size_t aSize = 10;
-	size_t Size = 20;
+	int aSize = 10;
+	int Size = 20;
 
 	std::vector<int> A(aSize);
 	std::vector<int> B(aSize);
 	std::vector<int>   stdmerge(Size);
 
-	for (size_t i = 0; i < aSize; i++) {
+	for (int i = 0; i < aSize; i++) {
 		B[i] = A[i] = (int)i;
 	}
 

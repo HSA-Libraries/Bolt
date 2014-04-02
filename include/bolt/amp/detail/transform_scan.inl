@@ -147,9 +147,6 @@ transform_scan_enqueue(
      *  Kernel 0
      *********************************************************************************/
 
-	auto&  input = first.getContainer().getBuffer(first); //( numElements, av );
-    auto& output = result.getContainer().getBuffer(result); //( sizeInputBuff, av );
-
     const unsigned int tile_limit = TRANSFORMSCAN_TILE_MAX;
 	const unsigned int max_ext = (tile_limit*kernel0_WgSize);
 	unsigned int	   tempBuffsize = (sizeInputBuff/2); 
@@ -166,7 +163,7 @@ transform_scan_enqueue(
 		{
 		concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
 		   [
-				input,
+				first,
 				init_T,
 				numElements,
 				&preSumArray,
@@ -193,12 +190,12 @@ transform_scan_enqueue(
 			unsigned int input_offset = (groId*wgSize)+locId+index;
 			// load input into shared memory
 			if(input_offset < numElements){
-			  iType inVal = input[input_offset];
+			  iType inVal = first[input_offset];
 			  val = unary_op(inVal);
 			  lds[locId] = val;
 			}
 			if(input_offset + (wgSize/2) < numElements){
-			  iType inVal = input[ input_offset + (wgSize/2)];
+			  iType inVal = first[ input_offset + (wgSize/2)];
 			  val = unary_op(inVal);
 			  lds[locId+(wgSize/2)] = val;
 			}
@@ -206,7 +203,7 @@ transform_scan_enqueue(
 			// Exclusive case
 			if(exclusive && gloId == 0)
 			{
-				iType start_val = input[0];
+				iType start_val = first[0];
 				oType val = unary_op(start_val);
 				lds[locId] = binary_op(init_T, val);
 			}
@@ -377,8 +374,8 @@ transform_scan_enqueue(
 		{
 		concurrency::parallel_for_each( av, tileK2,
 			[
-				input,
-				output,
+				first,
+				result,
 				&preSumArray,
 				&preSumArray1,
 				numElements,
@@ -406,7 +403,7 @@ transform_scan_enqueue(
 			   {
 				  if (gloId > 0)
 				  { // thread>0
-					  val = input[gloId-1];
+					  val = first[gloId-1];
 					  oval = unary_op(val);
 					  lds[ locId ] = oval;
 				  }
@@ -418,7 +415,7 @@ transform_scan_enqueue(
 			   }
 			   else
 			   {
-				  val = input[gloId];
+				  val = first[gloId];
 				  oval = unary_op(val);
 				  lds[ locId ] = oval;
 			   }
@@ -468,7 +465,7 @@ transform_scan_enqueue(
 		//  Abort threads that are passed the end of the input vector
 			if (gloId >= numElements) return; 
 
-			output[ gloId ] = sum;
+			result[ gloId ] = sum;
 
 		} );
 		}

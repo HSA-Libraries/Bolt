@@ -224,13 +224,6 @@ scan_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
-   //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
-    //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
-    //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
-    //  is wrapping an array or an array_view
-	auto&  keyBuffer   =  firstKey.getContainer().getBuffer(firstKey); 
-    auto&  inputBuffer =  firstValue.getContainer().getBuffer(firstValue); 
-    auto&  outputBuffer=  result.getContainer().getBuffer(result); 
   //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
   //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 
@@ -249,8 +242,8 @@ scan_by_key_enqueue(
 
 			concurrency::parallel_for_each( av, tileK0,
 			[
-				keyBuffer,
-				inputBuffer,
+				firstKey,
+				firstValue,
 				init,
 				numElements,
 				&keySumArray,
@@ -282,51 +275,51 @@ scan_by_key_enqueue(
 				{
 				   if (gloId > 0 && input_offset < numElements)
 				   {
-					  kType key1 = keyBuffer[ input_offset ];
-					  kType key2 = keyBuffer[ input_offset-1 ];
+					  kType key1 = firstKey[ input_offset ];
+					  kType key2 = firstKey[ input_offset-1 ];
 					  if( binary_pred( key1, key2 )  )
 					  {
-						 ldsVals[locId] = inputBuffer[ input_offset ];
+						 ldsVals[locId] = firstValue[ input_offset ];
 					  }
 					  else 
 					  {
-						 vType start_val = inputBuffer[ input_offset ]; 
+						 vType start_val = firstValue[ input_offset ]; 
 						 ldsVals[locId] = binary_funct(init, start_val);
 					  }
-					  ldsKeys[locId] = keyBuffer[ input_offset ];
+					  ldsKeys[locId] = firstKey[ input_offset ];
 				   }
 				   else{ 
-					  vType start_val = inputBuffer[0];
+					  vType start_val = firstValue[0];
 					  ldsVals[locId] = binary_funct(init, start_val);
-					  ldsKeys[locId] = keyBuffer[0];
+					  ldsKeys[locId] = firstKey[0];
 				   }
 				   if(input_offset + (wgSize/2) < numElements)
 				   {
-					  kType key1 = keyBuffer[ input_offset + (wgSize/2)];
-					  kType key2 = keyBuffer[ input_offset + (wgSize/2) -1];
+					  kType key1 = firstKey[ input_offset + (wgSize/2)];
+					  kType key2 = firstKey[ input_offset + (wgSize/2) -1];
 					  if( binary_pred( key1, key2 )  )
 					  {
-						 ldsVals[locId+(wgSize/2)] = inputBuffer[ input_offset + (wgSize/2)];
+						 ldsVals[locId+(wgSize/2)] = firstValue[ input_offset + (wgSize/2)];
 					  }
 					  else 
 					  {
-						 vType start_val = inputBuffer[ input_offset + (wgSize/2)]; 
+						 vType start_val = firstValue[ input_offset + (wgSize/2)]; 
 						 ldsVals[locId+(wgSize/2)] = binary_funct(init, start_val);
 					  } 
-					  ldsKeys[locId+(wgSize/2)] = keyBuffer[ input_offset + (wgSize/2)];
+					  ldsKeys[locId+(wgSize/2)] = firstKey[ input_offset + (wgSize/2)];
 				   }
 				}
 				else
 				{
 				   if(input_offset < numElements)
 				   {
-					   ldsVals[locId] = inputBuffer[input_offset];
-					   ldsKeys[locId] = keyBuffer[input_offset];
+					   ldsVals[locId] = firstValue[input_offset];
+					   ldsKeys[locId] = firstKey[input_offset];
 				   }
 				   if(input_offset + (wgSize/2) < numElements)
 				   {
-					   ldsVals[locId+(wgSize/2)] = inputBuffer[ input_offset + (wgSize/2)];
-					   ldsKeys[locId+(wgSize/2)] = keyBuffer[ input_offset + (wgSize/2)];
+					   ldsVals[locId+(wgSize/2)] = firstValue[ input_offset + (wgSize/2)];
+					   ldsKeys[locId+(wgSize/2)] = firstKey[ input_offset + (wgSize/2)];
 				   }
 				}
 				for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
@@ -498,9 +491,9 @@ scan_by_key_enqueue(
 
 			concurrency::parallel_for_each( av, tileK2,
 				[
-	      			keyBuffer,
-					inputBuffer,
-					outputBuffer,
+	      			firstKey,
+					firstValue,
+					result,
 					&preSumArray,
 					&preSumArray1,
 					binary_pred,
@@ -530,11 +523,11 @@ scan_by_key_enqueue(
 			   {
 				  if (gloId > 0)
 				  { // thread>0
-					  key = keyBuffer[ gloId];
-					  kType key1 = keyBuffer[ gloId];
-					  kType key2 = keyBuffer[ gloId-1];
+					  key = firstKey[ gloId];
+					  kType key1 = firstKey[ gloId];
+					  kType key2 = firstKey[ gloId-1];
 					  if( binary_pred( key1, key2 )  )
-						  val = inputBuffer[ gloId-1 ];
+						  val = firstValue[ gloId-1 ];
 					  else 
 						  val = init;
 					  ldsKeys[ locId ] = key;
@@ -544,7 +537,7 @@ scan_by_key_enqueue(
 				  { // thread=0
 					  val = init;
 					  ldsVals[ locId ] = val;
-					  ldsKeys[ locId ] = keyBuffer[gloId];
+					  ldsKeys[ locId ] = firstKey[gloId];
 					// key stays null, this thread should never try to compare it's key
 					// nor should any thread compare it's key to ldsKey[ 0 ]
 					// I could put another key into lds just for whatevs
@@ -553,8 +546,8 @@ scan_by_key_enqueue(
 			   }
 			   else
 			   {
-				  key = keyBuffer[ gloId ];
-				  val = inputBuffer[ gloId ];
+				  key = firstKey[ gloId ];
+				  val = firstValue[ gloId ];
 				  ldsKeys[ locId ] = key;
 				  ldsVals[ locId ] = val;
 			   }
@@ -571,8 +564,8 @@ scan_by_key_enqueue(
 			{
 				if(groId > 0)
 				{
-				   key1 = keyBuffer[gloId];
-				   key2 = keyBuffer[groId*wgSize -1 ];
+				   key1 = firstKey[gloId];
+				   key2 = firstKey[groId*wgSize -1 ];
 
 				   if(groId % 2 == 0)
 				   {
@@ -584,8 +577,8 @@ scan_by_key_enqueue(
 				   }
 				   else
 				   {
-					  key3 = keyBuffer[groId*wgSize -1 ];
-					  key4 = keyBuffer[(groId-1)*wgSize -1];
+					  key3 = firstKey[groId*wgSize -1 ];
+					  key4 = firstKey[(groId-1)*wgSize -1];
 					  if(binary_pred(key3 ,key4))
 					  {
 						 y = preSumArray[ groId/2 -1 ];
@@ -647,7 +640,7 @@ scan_by_key_enqueue(
 			 t_idx.barrier.wait(); // needed for large data types
 			//  Abort threads that are passed the end of the input vector
 			if (gloId >= numElements) return; 
-			outputBuffer[ gloId ] = sum;
+			result[ gloId ] = sum;
 	
 	
 		  } );
@@ -751,14 +744,12 @@ scan_by_key_pick_iterator(
         
         device_vector< kType, concurrency::array_view > dvKeys( firstKey, lastKey, false, ctl );
         device_vector< vType, concurrency::array_view > dvValues( firstValue, numElements, false, ctl );
-	      device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
+	    device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
 
 
         //Now call the actual cl algorithm
         scan_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvOutput.begin( ),
             init, binary_pred, binary_funct, user_code, inclusive );
-
-		    PEEK_AT( dvOutput.begin().getContainer().getBuffer())
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -825,8 +816,8 @@ scan_by_key_pick_iterator(
         dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
         #endif
           
-	  	  bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
-		    bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+	  	bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
+		bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
         bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
         if(inclusive)
@@ -848,7 +839,7 @@ scan_by_key_pick_iterator(
             #endif
       
             bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
-		        bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+		    bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
             bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
             if (inclusive)
