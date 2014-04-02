@@ -183,7 +183,9 @@ namespace cl {
     //)
 
     //  This string represents the device side definition of the constant_iterator template
-    static std::string deviceConstantIterator = STRINGIFY_CODE( 
+    static std::string deviceConstantIterator = 
+        std::string("#if !defined(BOLT_CL_CONSTANT_ITERATOR) \n") +
+        STRINGIFY_CODE( 
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class constant_iterator \n
@@ -215,7 +217,8 @@ namespace cl {
             value_type m_constValue; \n
         }; \n
     } } \n
-    );
+    )
+    +  std::string("#endif \n"); 
 
     template< typename Type >
     constant_iterator< Type > make_constant_iterator( Type constValue )
