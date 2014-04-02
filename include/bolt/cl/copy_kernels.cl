@@ -26,7 +26,7 @@ void copy_I(
     const uint numElements) 
 {
     input_iter.init( src );
-    output_iter.init( dst );
+    //output_iter.init( dst );
 
     size_t gloIdx = get_global_id( 0 );
     if( gloIdx >= numElements) return; // on SI this doesn't mess-up barriers

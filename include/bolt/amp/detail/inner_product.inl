@@ -31,7 +31,7 @@ TODO:
 #include <type_traits>
 #include <bolt/amp/detail/reduce.inl>
 #include <bolt/amp/detail/transform.inl>
-
+#include "bolt/amp/device_vector.h"
 #include "bolt/amp/bolt.h"
 
 //TBB Includes
@@ -83,7 +83,7 @@ namespace detail {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
                 unsigned int sz = static_cast<unsigned int>((last1 - first1));
                 if (sz == 0)
-                    return -1;
+                    return init;
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if (runMode == bolt::amp::control::Automatic)
@@ -133,8 +133,9 @@ namespace detail {
                                          const OutputType& init, const BinaryFunction1&f1, const BinaryFunction2& f2,
                                          bolt::amp::device_vector_tag )
             {
-
-                size_t sz = (last1 - first1);
+                 size_t sz = (last1 - first1);
+                 if (sz == 0)
+                    return init;
 
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType1;
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -188,7 +189,7 @@ namespace detail {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
                 size_t sz = (last1 - first1);
                 if (sz == 0)
-                    return -1;
+                    return init;
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if (runMode == bolt::amp::control::Automatic)

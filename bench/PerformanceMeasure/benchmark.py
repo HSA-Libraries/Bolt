@@ -50,23 +50,23 @@ if (args.iterations and args.length and args.routine and args.lib_option):
 	#python commonPerformance.py --label reduce_bolt_device --library=BOLT --routine=reduce --memory device -l 1024-33554432:x2 --tablefile reduce_bolt_device.txt
 	if sys.argv[8] == 'bolt':
 		string = " --label "\
-		+sys.argv[2]+"_bolt_device --library=BOLT --routine="\
+		"boltOCL_Tahiti7970 --library=BOLT --routine="\
 		+sys.argv[2]+" --memory device -l "\
 		+sys.argv[4]+" -i "\
 		+sys.argv[6]+" --tablefile "\
-		+sys.argv[2]+"_bolt_device.txt";
+		+sys.argv[2]+"_boltOCL_device.txt";
 		os.system('python commonPerformance.py%s'%string)
-		
+		'''
 		string = " --label "\
-		+sys.argv[2]+"_bolt_host --library=BOLT --routine="\
+		+sys.argv[2]+"_boltOCL_host --library=BOLT --routine="\
 		+sys.argv[2]+" --memory host -l "\
 		+sys.argv[4]+" -i "\
 		+sys.argv[6]+" --tablefile "\
-		+sys.argv[2]+"_bolt_host.txt";
-		os.system('python commonPerformance.py%s'%string)
+		+sys.argv[2]+"_boltOCL_host.txt";
+		os.system('python commonPerformance.py%s'%string)'''
 		
 		string = " --label "\
-		+sys.argv[2]+"_tbb_host --library=TBB --routine="\
+		"tbb --library=TBB --routine="\
 		+sys.argv[2]+" --memory host -l "\
 		+sys.argv[4]+" -i "\
 		+sys.argv[6]+" --tablefile "\
@@ -84,36 +84,35 @@ if (args.iterations and args.length and args.routine and args.lib_option):
 		#python plotPerformance.py --y_axis_label "MKeys/sec" --title "sort Performance" --x_axis_scale log2 -d sort_bolt_device.txt -d sort_bolt_host.txt -d sort_tbb_host.txt -d sort_stl_host.txt --outputfile sortPerf_boltDevice_boltHost_tbbHost_stl_Holst.pdf	
 		string = " --y_axis_label \"MKeys/sec\" --title \""\
 		+sys.argv[2]+" Performance\" --x_axis_scale log2 -d "\
-		+sys.argv[2]+"_bolt_device.txt -d "\
-		+sys.argv[2]+"_bolt_host.txt -d "\
+		+sys.argv[2]+"_boltOCL_device.txt -d "\
 		+sys.argv[2]+"_tbb_host.txt -d "\
 		+sys.argv[2]+"_stl_host.txt --outputfile "\
-		+sys.argv[2]+"Perf_boltDevice_boltHost_tbbHost_stl_Host.pdf";
+		+sys.argv[2]+"Perf_boltOCLDevice'_tbbHost_stl_Host.pdf";
 		os.system('python plotPerformance.py%s'%string)
 		
 		print("generate the graph for Bolt_With_DeviceVector VS Tbb_With_HostVector")
 		string = " --y_axis_label \"MKeys/sec\" --title \""\
 		+sys.argv[2]+" Performance\" --x_axis_scale log2 -d "\
-		+sys.argv[2]+"_bolt_device.txt -d "\
+		+sys.argv[2]+"_boltOCL_device.txt -d "\
 		+sys.argv[2]+"_tbb_host.txt --outputfile "\
-		+sys.argv[2]+"Perf_boltDevice_tbbHost.pdf";
+		+sys.argv[2]+"Perf_boltOCLDevice_tbbHost.pdf";
 		os.system('python plotPerformance.py%s'%string)
 		
 		print("generate the individual graph for Bolt_With_DeviceVector")
 		string = " --y_axis_label \"MKeys/sec\" --title \""\
 		+sys.argv[2]+" Performance\" --x_axis_scale log2 -d "\
-		+sys.argv[2]+"_bolt_device.txt --outputfile "\
-		+sys.argv[2]+"Perf_boltDevice.pdf";
+		+sys.argv[2]+"_boltOCL_device.txt --outputfile "\
+		+sys.argv[2]+"Perf_boltOCLDevice.pdf";
 		os.system('python plotPerformance.py%s'%string)
 	elif sys.argv[8] == 'thrust':
 		string = " --label "\
-		+sys.argv[2]+"_thrust_device --library=THRUST --routine="\
+		"thrust_GTX680 --library=THRUST --routine="\
 		+sys.argv[2]+" --memory device -l "\
 		+sys.argv[4]+" -i "\
 		+sys.argv[6]+" --tablefile "\
 		+sys.argv[2]+"_thrust_device.txt";
 		os.system('python commonPerformance.py%s'%string)
-		
+		'''
 		string = " --label "\
 		+sys.argv[2]+"_thrust_host --library=THRUST --routine="\
 		+sys.argv[2]+" --memory host -l "\
@@ -129,7 +128,7 @@ if (args.iterations and args.length and args.routine and args.lib_option):
 		+sys.argv[2]+"_thrust_device.txt -d "\
 		+sys.argv[2]+"_thrust_host.txt --outputfile "\
 		+sys.argv[2]+"Perf_thrustDevice_thrustHost.pdf";
-		os.system('python plotPerformance.py%s'%string)
+		os.system('python plotPerformance.py%s'%string)'''
 		
 		print("generate the individual graph for thrust_With_DeviceVector")
 		string = " --y_axis_label \"MKeys/sec\" --title \""\
@@ -139,34 +138,41 @@ if (args.iterations and args.length and args.routine and args.lib_option):
 		os.system('python plotPerformance.py%s'%string)
 	else:
 		string = " --label "\
-		+sys.argv[2]+"_amp_device --library=AMP --routine="\
+		"BoltAmp_tahiti7970 --library=AMP --routine="\
 		+sys.argv[2]+" --memory device -l "\
 		+sys.argv[4]+" -i "\
 		+sys.argv[6]+" --tablefile "\
-		+sys.argv[2]+"_amp_device.txt";
+		+sys.argv[2]+"_Boltamp_device.txt";
 		os.system('python commonPerformance.py%s'%string)
-		
+		'''
 		string = " --label "\
 		+sys.argv[2]+"_amp_host --library=AMP --routine="\
 		+sys.argv[2]+" --memory host -l "\
 		+sys.argv[4]+" -i "\
 		+sys.argv[6]+" --tablefile "\
 		+sys.argv[2]+"_amp_host.txt";
-		os.system('python commonPerformance.py%s'%string)
-				
+		os.system('python commonPerformance.py%s'%string)'''
+		
+		string = " --label "\
+		+sys.argv[2]+"_tbb_host --library=TBB --routine="\
+		+sys.argv[2]+" --memory host -l "\
+		+sys.argv[4]+" -i "\
+		+sys.argv[6]+" --tablefile "\
+		+sys.argv[2]+"_tbb_host.txt";
+		os.system('python commonPerformance.py%s'%string)				
 			
 		#python plotPerformance.py --y_axis_label "MKeys/sec" --title "sort Performance" --x_axis_scale log2 -d sort_bolt_device.txt -d sort_bolt_host.txt -d sort_tbb_host.txt -d sort_stl_host.txt --outputfile sortPerf_boltDevice_boltHost_tbbHost_stl_Holst.pdf	
 		string = " --y_axis_label \"MKeys/sec\" --title \""\
 		+sys.argv[2]+" Performance\" --x_axis_scale log2 -d "\
-		+sys.argv[2]+"_amp_device.txt -d "\
-		+sys.argv[2]+"_amp_host.txt --outputfile "\
-		+sys.argv[2]+"Perf_ampDevice_ampHost.pdf";
+		+sys.argv[2]+"_Boltamp_device.txt -d "\
+		+sys.argv[2]+"_tbb_host.txt --outputfile "\
+		+sys.argv[2]+"Perf_BoltampDevice_tbbHost.pdf";
 		os.system('python plotPerformance.py%s'%string)
 		
 		print("generate the individual graph for amp_With_DeviceVector")
 		string = " --y_axis_label \"MKeys/sec\" --title \""\
 		+sys.argv[2]+" Performance\" --x_axis_scale log2 -d "\
-		+sys.argv[2]+"_amp_device.txt --outputfile "\
+		+sys.argv[2]+"_Boltamp_device.txt --outputfile "\
 		+sys.argv[2]+"Perf_ampDevice.pdf";
 		os.system('python plotPerformance.py%s'%string)
 		

@@ -167,6 +167,12 @@ namespace amp {
         bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs > rhs;}
     };
 
+	template<typename T>
+	struct identity : public unary_function<T,T>
+	{
+		T operator()(const T &x) const restrict(cpu,amp) {return x;}
+	};
+
     template<typename T>
     struct less : public binary_function<T,T,T>
     {

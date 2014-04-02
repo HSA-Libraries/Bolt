@@ -71,15 +71,14 @@
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 #define make_uint4 (uint_4)
-#define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]
-
+#define SET_HISTOGRAM_BY_KEY(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]
 
 namespace bolt {
 namespace amp {
 
 namespace detail {
 
-	inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
+	inline uint_4 SELECT_UINT4_BY_KEY(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
 	{
 		uint_4 res;
 		res.x = (condition.x )? b.x : a.x;
@@ -213,7 +212,7 @@ namespace detail {
 				temp.z = (cmpResult.z != 0);
 				temp.w = (cmpResult.w != 0);
 			}
-			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
+			prefixSum = SELECT_UINT4_BY_KEY( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
 
 			unsigned int total = 0;
 			prefixSum = localPrefixSum256V_by_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
@@ -234,7 +233,7 @@ namespace detail {
 					temp.z = (cmpResult.z != 0);
 					temp.w = (cmpResult.w != 0);
 				}
-				dstAddr = SELECT_UINT4( prefixSum, dstAddr, temp);
+				dstAddr = SELECT_UINT4_BY_KEY( prefixSum, dstAddr, temp);
 
 				t_idx.barrier.wait();
         
@@ -296,7 +295,7 @@ namespace detail {
 				temp.z = (cmpResult.z != mask);
 				temp.w = (cmpResult.w != mask);
 			}
-			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
+			prefixSum = SELECT_UINT4_BY_KEY( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
 
 			unsigned int total = 0;
 			prefixSum = localPrefixSum256V_by_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
@@ -317,7 +316,7 @@ namespace detail {
 					temp.z = (cmpResult.z != mask);
 					temp.w = (cmpResult.w != mask);
 				}
-				dstAddr = SELECT_UINT4( prefixSum, dstAddr, temp);
+				dstAddr = SELECT_UINT4_BY_KEY( prefixSum, dstAddr, temp);
 
 				t_idx.barrier.wait();
         
@@ -667,9 +666,9 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						if( addr+i < n )
 						{
 							if(!Asc_sort)
-								AtomInc( SET_HISTOGRAM( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
+								AtomInc( SET_HISTOGRAM_BY_KEY( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
 							else
-								AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );
+								AtomInc( SET_HISTOGRAM_BY_KEY( setIdx, keys[i] ) );
 						}
 					}
 					t_idx.barrier.wait();
@@ -679,7 +678,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						unsigned int sum = 0;
 						for(int i=0; i<WG_SIZE/16; i++)
 						{
-							sum += SET_HISTOGRAM( i, lIdx );
+							sum += SET_HISTOGRAM_BY_KEY( i, lIdx );
 						}
 						myHistogram = sum;
 						localHistogram[hIdx] = sum;
@@ -846,9 +845,9 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						if( addr+i < n )
 						{
 							if(!Asc_sort)
-								AtomInc( SET_HISTOGRAM( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
+								AtomInc( SET_HISTOGRAM_BY_KEY( setIdx, (NUM_BUCKET - keys[i] - 1) ) );
 							else
-								AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );
+								AtomInc( SET_HISTOGRAM_BY_KEY( setIdx, keys[i] ) );
 						}
 					}
 					t_idx.barrier.wait();
@@ -858,7 +857,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						unsigned int sum = 0;
 						for(int i=0; i<WG_SIZE/16; i++)
 						{
-							sum += SET_HISTOGRAM( i, lIdx );
+							sum += SET_HISTOGRAM_BY_KEY( i, lIdx );
 						}
 						myHistogram = sum;
 						localHistogram[hIdx] = sum;
