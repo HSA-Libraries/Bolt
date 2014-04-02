@@ -208,7 +208,7 @@ namespace cl
               , bolt::cl::detail::eval_if<
                     std::is_same<Value,use_default>
                   , bolt::cl::iterator_reference<Base>
-                  , std::add_reference<Value>
+                  , bolt::cl::detail::add_reference<Value>
                 >
             >::type
 

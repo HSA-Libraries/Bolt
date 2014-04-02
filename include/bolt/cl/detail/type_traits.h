@@ -267,7 +267,12 @@ namespace cl {
         { 
         public:
         }; 
-
+        
+        template <class T>
+        struct add_reference
+        {
+        typedef typename std::remove_reference<T>::type& type;
+        };
         //////template <typename From, typename To>
         //////struct is_convertible_impl_dispatch 
         //////   : public is_convertible_impl_dispatch_base<From, To>::type

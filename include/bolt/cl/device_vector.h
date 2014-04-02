@@ -1750,7 +1750,7 @@ namespace cl
 
     //  This string represents the device side definition of the constant_iterator template
     static std::string deviceVectorIteratorTemplate = STRINGIFY_CODE(
-        #if !defined(BOLT_CL_DEVICE_ITERATOR) \n
+        #if !defined(BOLT_CL_DEVICE_ITERATOR) //\n
         #define BOLT_CL_DEVICE_ITERATOR \n
         namespace bolt { namespace cl { \n
         template< typename T > \n
@@ -1790,7 +1790,7 @@ namespace cl
             }; \n
         }; \n
     } } \n
-    #endif \n
+    #endif //\n
     );
 }
 }
