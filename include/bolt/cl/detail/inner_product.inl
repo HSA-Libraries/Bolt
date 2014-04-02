@@ -110,7 +110,7 @@ namespace detail {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
                 size_t sz = (last1 - first1);
                 if (sz == 0)
-                    return -1;
+                    return init;
 
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
@@ -118,16 +118,16 @@ namespace detail {
                      runMode = ctl.getDefaultPathToRun();
                 }
 
-				#if defined(BOLT_DEBUG_LOG)
+                #if defined(BOLT_DEBUG_LOG)
                 BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
                 #endif
-				
+                
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_SERIAL_CPU,"::Inner_Product::SERIAL_CPU");
                     #endif
-						
+                        
                     #if defined( _WIN32 )
                            return std::inner_product(first1, last1, stdext::checked_array_iterator<iType*>(&(*first2), sz ), init, f1, f2);
                     #else
@@ -137,7 +137,7 @@ namespace detail {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-					       #if defined(BOLT_DEBUG_LOG)
+                           #if defined(BOLT_DEBUG_LOG)
                            dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_MULTICORE_CPU,"::Inner_Product::MULTICORE_CPU");
                            #endif
                            return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
@@ -148,10 +148,10 @@ namespace detail {
                 else
                 {
 
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_OPENCL_GPU,"::Inner_Product::OPENCL_GPU");
                     #endif
-						
+                        
                     // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
                     // Map the input iterator to a device_vector
@@ -192,13 +192,13 @@ namespace detail {
                 #if defined(BOLT_DEBUG_LOG)
                 BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
                 #endif
-				
+                
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_SERIAL_CPU,"::Inner_Product::SERIAL_CPU");
                     #endif
-					
+                    
                     typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                     typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
 
@@ -216,10 +216,10 @@ namespace detail {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                 #ifdef ENABLE_TBB
-				   #if defined(BOLT_DEBUG_LOG)
+                   #if defined(BOLT_DEBUG_LOG)
                    dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_MULTICORE_CPU,"::Inner_Product::MULTICORE_CPU");
                    #endif
-						   
+                           
                    typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                    typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
                     return bolt::btbb::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
@@ -230,7 +230,7 @@ namespace detail {
                 }
                 else
                 {
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_OPENCL_GPU,"::Inner_Product::OPENCL_GPU");
                     #endif
                     return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
@@ -257,13 +257,13 @@ namespace detail {
                 #if defined(BOLT_DEBUG_LOG)
                 BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
                 #endif
-				
+                
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_SERIAL_CPU,"::Inner_Product::SERIAL_CPU");
                     #endif
-					
+                    
                     #if defined( _WIN32 )
                     return std::inner_product(  first1,
                                                 last1,
@@ -280,7 +280,7 @@ namespace detail {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-					       #if defined(BOLT_DEBUG_LOG)
+                           #if defined(BOLT_DEBUG_LOG)
                            dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_MULTICORE_CPU,"::Inner_Product::MULTICORE_CPU");
                            #endif
                            return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
@@ -290,7 +290,7 @@ namespace detail {
                 }
                 else
                 {
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_INNERPRODUCT,BOLTLOG::BOLT_OPENCL_GPU,"::Inner_Product::OPENCL_GPU");
                     #endif
                     return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
@@ -310,7 +310,7 @@ namespace detail {
                 typename std::iterator_traits< InputIterator >::iterator_category( ) );
             };
 
-	    // Wrapper that uses default control class, iterator interface
+        // Wrapper that uses default control class, iterator interface
             template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
             OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
                 const InputIterator& last1, const InputIterator& first2, const OutputType& init,

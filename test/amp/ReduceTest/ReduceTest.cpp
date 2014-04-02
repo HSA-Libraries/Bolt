@@ -22,6 +22,7 @@
 #include "bolt/amp/iterator/iterator_traits.h"
 #include "bolt/amp/iterator/counting_iterator.h"
 #include "bolt/miniDump.h"
+
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
 #include <array>
@@ -32,7 +33,6 @@
 #define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_LARGE_BUFFERS 1
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
 
@@ -1766,6 +1766,28 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, ReduceArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Double, ReduceArrayTest, DoubleTests );
 #endif 
 
+TEST( Reducetest, Normal)
+{
+    const int aSize = 1<<26;
+    std::vector<int> stdInput(aSize);
+    std::vector<int> tbbInput(aSize);
+
+
+    for(int i=0; i<aSize; i++) {
+        stdInput[i] = 2;
+        tbbInput[i] = 2;
+    };
+
+    int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 2);
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::Gpu); 
+    int sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 2);
+    if(hSum == sum)
+        printf ("\nGPU Test case PASSED %d %d\n", hSum, sum);
+    else
+        printf ("\nGPU Test case FAILED\n");
+
+};
 
 void testTBB()
 {

@@ -166,16 +166,16 @@ namespace amp {
             }
 
             // Dereference operators
-            int operator*() const restrict(cpu,amp)
+            value_type operator*() const restrict(cpu,amp)
             {
-                int xy = m_initValue + m_Index;
+                value_type xy = m_initValue + m_Index;
                 return xy;
             }
 
 
-            int operator[](int x) const restrict(cpu,amp)
+            value_type operator[](int x) const restrict(cpu,amp)
             {
-              int temp = x + m_initValue;
+              value_type temp = x + m_initValue;
               return temp;
             }
 

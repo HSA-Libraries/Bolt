@@ -183,8 +183,8 @@ public:
         {
             boundsCheck = 1;
         }
-        if (wgMultiple/wgSize < numWorkGroups)
-            numWorkGroups = wgMultiple/wgSize;
+        /*if (wgMultiple/wgSize < numWorkGroups)  // extra code
+            numWorkGroups = wgMultiple/wgSize;*/
 
         /**********************************************************************************
          * Compile Options
@@ -574,7 +574,7 @@ public:
             #endif
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-            device_vector< iType2 > dvInput( first2, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
+            device_vector< iType2 > dvInput( first2, sz, CL_MEM_WRITE_ONLY/*CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY*/, true, ctl );
 
             // Map the output iterator to a device_vector
             device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
