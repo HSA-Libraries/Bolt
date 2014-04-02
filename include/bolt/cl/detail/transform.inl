@@ -183,8 +183,8 @@ public:
         {
             boundsCheck = 1;
         }
-        if (wgMultiple/wgSize < numWorkGroups)
-            numWorkGroups = wgMultiple/wgSize;
+        /*if (wgMultiple/wgSize < numWorkGroups)  // extra code
+            numWorkGroups = wgMultiple/wgSize;*/
 
         /**********************************************************************************
          * Compile Options

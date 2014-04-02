@@ -68,5 +68,7 @@ add_subdirectory( StableSortByKeyTest )
 add_subdirectory( TransformTest )   
 add_subdirectory( TransformReduceTest )
 add_subdirectory( TransformScanTest )
+add_subdirectory( ScatterTest )
+add_subdirectory( GatherTest )
 add_subdirectory( device_vector )
 

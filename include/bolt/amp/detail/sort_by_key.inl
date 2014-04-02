@@ -73,7 +73,6 @@
 #define make_uint4 (uint_4)
 #define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]
 
-
 namespace bolt {
 namespace amp {
 
