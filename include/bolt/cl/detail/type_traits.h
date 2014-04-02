@@ -215,7 +215,7 @@ namespace cl {
 
         template<class T> T * addressof( T & v )
         {
-            return boost::detail::addressof_impl<T>::f( boost::detail::addr_impl_ref<T>( v ), 0 );
+            return bolt::cl::detail::addressof_impl<T>::f( bolt::cl::detail::addr_impl_ref<T>( v ), 0 );
         }
 
         template< bool C_ > struct bool_;
