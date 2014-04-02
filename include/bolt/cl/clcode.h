@@ -238,7 +238,7 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
                                         };\
                                         static std::string getCodeString() { return ClCode<DATATYPE>::get() + ClCode<FUNCTOR>::get() + bolt::cl::deviceTransformIteratorTemplate; }; \
                                         static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
-                                        __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies; 
+                                        __attribute__((weak))  std::vector< std::string > ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > >::dependencies; 
 #endif
 
 /*!
