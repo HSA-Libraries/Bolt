@@ -103,7 +103,7 @@ namespace cl
             typedef T value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
-            typedef size_t size_type;
+            typedef int size_type;
 
             typedef boost::shared_array< value_type > pointer;
             typedef boost::shared_array< const value_type > const_pointer;
@@ -686,7 +686,7 @@ namespace cl
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
-                m_Size = std::distance( begin, end );
+                m_Size = static_cast< size_type >( std::distance( begin, end ) );
                 if ( m_Size == 0 )
                 {
                     m_devMemory=NULL;
@@ -1017,7 +1017,7 @@ namespace cl
                 ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_size, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
-                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
+                size_type l_srcSize = static_cast<size_type> (m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 ::cl::Event copyEvent;
@@ -1077,7 +1077,7 @@ namespace cl
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
                 //TODO - this is equal to the capacity()
-                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
+                size_type l_srcSize = static_cast< size_type >( m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 std::vector< ::cl::Event > copyEvent( 1 );
@@ -1575,12 +1575,12 @@ namespace cl
                 //  Need to grow the vector to insert a new value.
                 //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem
                 //  right at first blush.
-                size_type n = std::distance( begin, end );
+                size_type n = static_cast< size_type >( std::distance( begin, end ) );
                 if( ( m_Size + n ) > capacity( ) )
                 {
                     reserve( m_Size + n );
                 }
-            size_type sizeMap = (m_Size - index.m_Index) + n;
+                size_type sizeMap = (m_Size - index.m_Index) + n;
 
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
@@ -1694,7 +1694,7 @@ namespace cl
             assign( InputIterator begin, InputIterator end )
 #endif
             {
-                size_type l_Count = std::distance( begin, end );
+                size_type l_Count = static_cast< size_type >( std::distance( begin, end ) );
 
                 if( l_Count > m_Size )
                 {

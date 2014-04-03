@@ -4511,12 +4511,12 @@ TEST( HostMemoryRandomNo_Double, MulticoreScatter_com_Boost )
 
 TEST( UDDTestInt2, SerialScatter_IfPredicate)
 {
-    size_t sz = 63;    
+    int sz = 63;    
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-	for (size_t i = 0; i < sz; i++)
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = (int)i;
         std_input[i].a = (int)(i + 2 * i);
@@ -4542,12 +4542,12 @@ TEST( UDDTestInt2, SerialScatter_IfPredicate)
 }
 TEST( UDDTestInt2, MulticoreScatter_IfPredicate)
 {
-    size_t sz = 63;    
+    int sz = 63;    
     std::vector<Int2> std_input ( sz );
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-	for (size_t i = 0; i < sz; i++)
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = (int)i;
         std_input[i].a = (int)(i + 2 * i);

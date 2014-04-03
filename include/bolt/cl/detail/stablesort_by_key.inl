@@ -148,11 +148,11 @@ namespace detail
         typedef std_stable_sort<keyType, valType> KeyValuePair;
         typedef std_stable_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
 
-        size_t vecSize = std::distance( keys_first, keys_last );
+        int vecSize = static_cast<int>( std::distance( keys_first, keys_last ) );
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_stable_sort vector.
-        for (size_t i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             KeyValuePairVector[i].key   = *(keys_first + i);
             KeyValuePairVector[i].value = *(values_first + i);
@@ -160,7 +160,7 @@ namespace detail
         //Sort the std_stable_sort vector using std::stable_sort
         std::stable_sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
         //Extract the keys and values from the KeyValuePair and fill the respective iterators.
-        for (size_t i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
@@ -463,7 +463,7 @@ namespace detail
         typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
 
-        size_t vecSize = std::distance( keys_first, keys_last );
+        int vecSize = static_cast<int>( std::distance( keys_first, keys_last ) );
         if( vecSize < 2 )
             return;
 
@@ -528,7 +528,7 @@ namespace detail
     {
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
-        size_t vecSize = std::distance( keys_first, keys_last );
+        int vecSize = static_cast<int>( std::distance( keys_first, keys_last ) );
         if( vecSize < 2 )
             return;
 

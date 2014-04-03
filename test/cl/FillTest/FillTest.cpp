@@ -2093,7 +2093,7 @@ TEST(MultiCoreCharPointer, Fill )
 
 TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
 { 
-    size_t size =10; 
+    int size =10; 
     int iValue = 48; 
     union ieeeconvert
     {
@@ -2176,7 +2176,7 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
 
 TEST (AutomaticsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 { 
-    size_t size =10; 
+    int size =10; 
     int iValue = 48; 
     union ieeeconvert
     {
@@ -2262,7 +2262,7 @@ TEST (AutomaticsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 
 TEST (SerialsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 { 
-    size_t size =10; 
+    int size =10; 
     int iValue = 48; 
     union ieeeconvert
     {
@@ -2349,7 +2349,7 @@ TEST (SerialsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 
 TEST (MultiCoresimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 { 
-    size_t size =10; 
+    int size =10; 
     int iValue = 48; 
     union ieeeconvert
     {

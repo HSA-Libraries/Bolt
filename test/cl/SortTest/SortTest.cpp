@@ -2623,11 +2623,11 @@ TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
 INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 10));
 
 TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
-    size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
+    int sizeOfInputBufer = 64; //test case is failing for all values greater than 32
     std::vector<double>  stdVect(0);
     bolt::cl::device_vector<double>  boltVect(0);
 
-    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+    for (int i = 0 ; i < sizeOfInputBufer; i++){
         double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
@@ -2637,7 +2637,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
     std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
     bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
 
-    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+    for (int i = 0 ; i < sizeOfInputBufer; i++){
         EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
     }
 }

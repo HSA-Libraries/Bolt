@@ -132,7 +132,7 @@ template< typename T >
 template< typename S, typename B >
 ::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
 {
-    for( size_t i = 0; i < ref.size( ); ++i )
+    for( int i = 0; i < static_cast<int> (ref.size( ) ); ++i )
     {
         EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
     }

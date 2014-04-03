@@ -119,14 +119,14 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
      *********************************************************************************/
     const cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
     if (numElements < 1) return;
-    const size_t workGroupSize  = 256;
-    const size_t numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
-    const size_t numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
-    const size_t numWorkGroupsIdeal = numComputeUnits * numWorkGroupsPerComputeUnit;
+    const int workGroupSize  = 256;
+    const int numComputeUnits = static_cast<int>( ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ) ); // = 28
+    const int numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
+    const int numWorkGroupsIdeal = numComputeUnits * numWorkGroupsPerComputeUnit;
     const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroupsIdeal * workGroupSize );
     int doBoundaryCheck = 0;
     cl_uint numThreadsRUP = numElements;
-    size_t mod = (numElements & (workGroupSize-1));
+    int mod = (numElements & (workGroupSize-1));
     if( mod )
             {
         numThreadsRUP &= ~mod;
@@ -313,7 +313,7 @@ aProfiler.stopTrial();
             {
                 typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
 
-                size_t sz = (last - first);
+                int sz = static_cast<int>(last - first);
                 if (sz < 1)
                     return;
 

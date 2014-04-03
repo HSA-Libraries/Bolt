@@ -237,8 +237,8 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t orig_szElements = static_cast<size_t>(std::distance(keys_first, keys_last));
-    size_t szElements = orig_szElements;
+    int orig_szElements = static_cast<int>(std::distance(keys_first, keys_last));
+    int szElements = orig_szElements;
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     cl_int l_Error = CL_SUCCESS;
@@ -458,8 +458,8 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t orig_szElements = static_cast<size_t>(std::distance(keys_first, keys_last));
-    size_t szElements = orig_szElements;
+    int orig_szElements = static_cast<int>(std::distance(keys_first, keys_last));
+    int szElements = orig_szElements;
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     cl_int l_Error = CL_SUCCESS;
@@ -833,7 +833,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
         typedef typename std::iterator_traits<RandomAccessIterator2>::value_type T_values;
-        size_t szElements = (size_t)(keys_last - keys_first);
+        int szElements = static_cast<int>(keys_last - keys_first);
         if (szElements == 0)
             return;
 

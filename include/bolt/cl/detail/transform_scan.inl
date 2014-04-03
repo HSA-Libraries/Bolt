@@ -225,9 +225,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
      *********************************************************************************/
     bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
-    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    const int kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    const int kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
+    const int kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     std::string compileOptions;
     std::ostringstream oss;
     oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;

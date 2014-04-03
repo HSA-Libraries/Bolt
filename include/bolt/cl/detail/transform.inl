@@ -539,7 +539,7 @@ namespace cl{
                       const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f, 
                       const std::string& user_code )
     {
-        typename InputIterator1::difference_type sz = (last1 - first1);
+        int sz = static_cast<int>(last1 - first1);
         if (sz == 0)
             return;
         typedef typename std::iterator_traits<InputIterator1>::value_type  iType1;
@@ -726,7 +726,8 @@ namespace cl{
     unary_transform( ::bolt::cl::control &ctl, const InputIterator& first, const InputIterator& last,
     const OutputIterator& result, const UnaryFunction& f, const std::string& user_code )
     {
-        size_t sz = bolt::cl::distance(first, last);
+        //size_t sz = bolt::cl::distance(first, last);
+        int sz = static_cast<int>(last - first);
         if (sz == 0)
             return;
         typedef typename std::iterator_traits<InputIterator>::value_type  iType;

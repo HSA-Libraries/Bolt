@@ -203,7 +203,7 @@ sort_enqueue(control &ctl,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t szElements = static_cast<size_t>(std::distance(first, last));
+    int szElements = static_cast<int>(std::distance(first, last));
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     cl_int l_Error = CL_SUCCESS;
@@ -417,7 +417,7 @@ sort_enqueue(control &ctl,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t szElements = static_cast<size_t>(std::distance(first, last));
+    int szElements = static_cast<int>(std::distance(first, last));
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     cl_int l_Error = CL_SUCCESS;

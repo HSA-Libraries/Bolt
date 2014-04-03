@@ -136,12 +136,13 @@ namespace bolt {
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
-                size_t numWG = computeUnits * wgPerComputeUnit;
+                int numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
 
-                const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
-                    ctl.getDevice( ), &l_Error );
+                const int wgSize = static_cast<int>(
+                                            kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >
+                                                                       (ctl.getDevice( ), &l_Error ) );
 
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
@@ -179,7 +180,7 @@ namespace bolt {
          //       loc.size_ = wgSize*sizeof(T);
          //       V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
                 
-				size_t leng = szElements1 > szElements2 ? szElements1 : szElements2;
+				int leng = szElements1 > szElements2 ? szElements1 : szElements2;
 				leng = leng + wgSize - (leng % wgSize);
                 
                 ::cl::Event mergeEvent;
@@ -237,7 +238,7 @@ namespace bolt {
 					  #if defined(BOLT_DEBUG_LOG)
                       dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_OPENCL_GPU,"::Merge::OPENCL_GPU");
                       #endif
-                      size_t sz = (last1-first1) + (last2-first2);
+                      int sz = static_cast<int> ( (last1-first1) + (last2-first2) );
                       device_vector< iType1 > dvInput1( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                       device_vector< iType2 > dvInput2( first2, last2, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                       device_vector< oType >  dvresult(  result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );

@@ -44,10 +44,10 @@ void serial_gather(InputIterator1 mapfirst,
                    OutputIterator result)
 {
     //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
+   int numElements = static_cast< int >( std::distance( mapfirst, maplast ) );
    typedef typename  std::iterator_traits<InputIterator1>::value_type iType1;
    iType1 temp;
-   for(size_t iter = 0; iter < numElements; iter++)
+   for(int iter = 0; iter < numElements; iter++)
    {
                    temp = *(mapfirst + (int)iter);
                   *(result + (int)iter) = *(input + (int)temp);
@@ -67,8 +67,8 @@ void serial_gather_if(InputIterator1 mapfirst,
                       OutputIterator result)
 {
     //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
-   for(size_t iter = 0; iter < numElements; iter++)
+   int numElements = static_cast< int >( std::distance( mapfirst, maplast ) );
+   for(int iter = 0; iter < numElements; iter++)
    {
        if(stencil[(int)iter]== 1)
             result[(int)iter] = *(input + mapfirst[(int)iter]);
@@ -208,9 +208,9 @@ public:
         if( distVec == 0 )
             return;
 
-        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
-        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+        const int numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const int numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+        int numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
 
         /**********************************************************************************
          * Type Names - used in KernelTemplateSpecializer
@@ -249,14 +249,14 @@ public:
          *********************************************************************************/
 
         cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = WAVEFRONT_SIZE;
+        const int wgSize  = WAVEFRONT_SIZE;
         V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
         assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
 
         int boundsCheck = 0;
-        size_t wgMultiple = distVec;
+        int wgMultiple = distVec;
 
-        size_t lowerBits = ( distVec & (wgSize-1) );
+        int lowerBits = ( distVec & (wgSize-1) );
         if( lowerBits )
         {
             //  Bump the workitem count to the next multiple of wgSize
@@ -272,7 +272,7 @@ public:
          *********************************************************************************/
         bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
         //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        const int kernel_WgSize = (cpuDevice) ? 1 : wgSize;
         std::string compileOptions;
         std::ostringstream oss;
         oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
@@ -346,9 +346,9 @@ public:
         if( distVec == 0 )
             return;
 
-        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
-        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+        const int numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const int numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+        int numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
 
         /**********************************************************************************
          * Type Names - used in KernelTemplateSpecializer
@@ -380,14 +380,14 @@ public:
          *********************************************************************************/
 
         cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = WAVEFRONT_SIZE;
+        const int wgSize  = WAVEFRONT_SIZE;
         V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
         assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
 
         int boundsCheck = 0;
-        size_t wgMultiple = distVec;
+        int wgMultiple = distVec;
 
-        size_t lowerBits = ( distVec & (wgSize-1) );
+        int lowerBits = ( distVec & (wgSize-1) );
         if( lowerBits )
         {
             //  Bump the workitem count to the next multiple of wgSize
@@ -403,7 +403,7 @@ public:
          *********************************************************************************/
         bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
         //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        const int kernel_WgSize = (cpuDevice) ? 1 : wgSize;
         std::string compileOptions;
         std::ostringstream oss;
         oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
@@ -484,7 +484,7 @@ public:
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
 
         if (sz == 0)
             return;
@@ -569,7 +569,7 @@ public:
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
         if (sz == 0)
             return;
 
@@ -651,7 +651,7 @@ public:
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        size_t sz = std::distance( fancymapFirst, fancymapLast );
+        int sz = static_cast<int>( std::distance( fancymapFirst, fancymapLast ) );
         if (sz == 0)
             return;
 
@@ -737,7 +737,7 @@ public:
         typedef typename std::iterator_traits< DVInputIterator3 >::value_type iType3;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
         if( sz == 0 )
             return;
 
@@ -820,7 +820,7 @@ public:
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
 
         if (sz == 0)
             return;
@@ -893,7 +893,7 @@ public:
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        size_t sz = std::distance( firstFancy, lastFancy );
+        int sz = static_cast<int>( std::distance( firstFancy, lastFancy ) );
         if (sz == 0)
             return;
 
@@ -967,7 +967,7 @@ public:
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
         if (sz == 0)
             return;
 
@@ -1040,7 +1040,7 @@ public:
         typedef typename std::iterator_traits< DVInputIterator >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
         if( sz == 0 )
             return;
 
@@ -1112,7 +1112,7 @@ public:
         typedef typename std::iterator_traits< DVInputIterator >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        size_t sz = std::distance( firstFancy, lastFancy );
+        int sz = static_cast<int>( std::distance( firstFancy, lastFancy ) );
         if( sz == 0 )
             return;
 
@@ -1181,7 +1181,7 @@ public:
         typedef typename std::iterator_traits< FancyInput >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        size_t sz = std::distance( mapfirst, maplast );
+        int sz = static_cast<int>( std::distance( mapfirst, maplast ) );
         if( sz == 0 )
             return;
 
@@ -1252,7 +1252,7 @@ public:
         typedef typename std::iterator_traits<DVInputIterator>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
         if (sz == 0)
             return;
 
@@ -1327,7 +1327,7 @@ public:
         typedef typename std::iterator_traits<InputIterator>::value_type iType1;
         typedef typename std::iterator_traits<DVInputIterator>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        size_t sz = std::distance( map_first, map_last );
+        int sz = static_cast<int>( std::distance( map_first, map_last ) );
         if (sz == 0)
             return;
 

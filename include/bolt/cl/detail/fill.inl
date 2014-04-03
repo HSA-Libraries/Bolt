@@ -215,7 +215,7 @@ namespace detail {
 
                 typedef typename  std::iterator_traits<ForwardIterator>::value_type Type;
 
-                size_t sz = (last - first);
+                int sz = static_cast<int>(last - first);
                 if (sz < 1)
                     return;
 

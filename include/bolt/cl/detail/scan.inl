@@ -230,9 +230,9 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
     cl_int l_Error = CL_SUCCESS;
     cl_uint doExclusiveScan = inclusive ? 0 : 1;
-    const size_t numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    const size_t numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
-    const size_t workGroupSize = HSAWAVES*WAVESIZE;
+    const int numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+    const int numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
+    const int workGroupSize = HSAWAVES*WAVESIZE;
 
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
@@ -264,9 +264,9 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
      *********************************************************************************/
     bool cpuDevice = ctrl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
-    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    const int kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    const int kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
+    const int kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     std::string compileOptions;
     std::ostringstream oss;
     oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;

@@ -108,7 +108,7 @@ namespace detail {
                 const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
             {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                size_t sz = (last1 - first1);
+                int sz = static_cast<int>( last1 - first1 );
                 if (sz == 0)
                     return init;
 
@@ -181,7 +181,7 @@ namespace detail {
                 bolt::cl::device_vector_tag )
             {
 
-                size_t sz = (last1 - first1);
+                int sz = static_cast<int> (last1 - first1) ;
 
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType1;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -247,7 +247,7 @@ namespace detail {
                 bolt::cl::fancy_iterator_tag )
             {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                size_t sz = std::distance( first1, last1 );
+                int sz = static_cast<int>( std::distance( first1, last1 ) );
 
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)

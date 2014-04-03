@@ -299,9 +299,9 @@ reduce_by_key_enqueue(
      *********************************************************************************/
     bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
-    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    const int kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    const int kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
+    const int kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     std::string compileOptions;
     std::ostringstream oss;
     oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
@@ -333,7 +333,7 @@ reduce_by_key_enqueue(
     //  Ceiling function to bump the size of input to the next whole wavefront size
     cl_uint numElements = static_cast< cl_uint >( std::distance( keys_first, keys_last ) );
     typename device_vector< kType >::size_type sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
+    int modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
