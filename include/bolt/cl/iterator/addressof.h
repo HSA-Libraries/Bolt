@@ -60,7 +60,7 @@ namespace cl{
 
     template <typename Iterator, typename DeviceIterator>
     const constant_iterator<typename Iterator::value_type> 
-    create_device_itr(bolt::cl::constant_iterator_tag, Iterator itr, DeviceIterator &dev_itr)
+    create_device_itr(bolt::cl::constant_iterator_tag, Iterator itr, DeviceIterator dev_itr)
     {
         return itr;
     }
