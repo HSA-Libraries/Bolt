@@ -18,7 +18,7 @@
 #pragma once
 #if !defined( BOLT_AMP_SCATTER_INL )
 #define BOLT_AMP_SCATTER_INL
-#define TRANSFORM_WAVEFRNT_SIZE 264
+#define SCATTER_WAVEFRNT_SIZE 264
 
 
 #ifdef ENABLE_TBB
@@ -113,7 +113,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
 		typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
         const unsigned int szElements = static_cast< unsigned int >(  std::distance(first1,last1) );
-		const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
+		const unsigned int leng =  szElements + SCATTER_WAVEFRNT_SIZE - (szElements % SCATTER_WAVEFRNT_SIZE);
 		concurrency::extent< 1 > inputExtent(leng);
                 try
                 {
@@ -134,7 +134,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
                 }
 			    catch(std::exception &e)
                 {
-                      std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
+                      std::cout << "Exception while calling bolt::amp::scatter parallel_for_each"<<e.what()<<std::endl;
                       return;
                 }
     };
@@ -157,7 +157,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
 		typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
         const unsigned int szElements = static_cast< unsigned int >(  std::distance(first1,last1) );
-		const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
+		const unsigned int leng =  szElements + SCATTER_WAVEFRNT_SIZE - (szElements % SCATTER_WAVEFRNT_SIZE);
 		concurrency::extent< 1 > inputExtent(leng);
                 try
                 {
@@ -173,7 +173,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
                 }
 			    catch(std::exception &e)
                 {
-                      std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
+                      std::cout << "Exception while calling bolt::amp::scatter parallel_for_each"<<e.what()<<std::endl;
                       return;
                 }
 	};
