@@ -1204,7 +1204,7 @@ public:
 
     virtual void SetUp( )
     {
-        size_t size = GetParam( );
+        int size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<double>);
 
