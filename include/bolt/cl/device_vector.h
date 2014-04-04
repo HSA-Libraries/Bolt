@@ -1683,16 +1683,9 @@ namespace cl
              *  \param end The iterator position signifying the end of the range (exclusive).
             *   \warning All previous iterators, references, and pointers are invalidated.
             */
-#if _MSC_VER >=  1700   
             template<typename InputIterator>
-            typename std::enable_if< std::_Is_iterator<InputIterator>::value, void>::type
+            typename std::enable_if< !std::is_integral<InputIterator>::value, void>::type
             assign( InputIterator begin, InputIterator end )
-#else
-            template<typename InputIterator>
-            typename std::enable_if< !std::is_same< typename std::iterator_traits<InputIterator >::value_type,
-                                       size_type >::value, void>::type
-            assign( InputIterator begin, InputIterator end )
-#endif
             {
                 size_type l_Count = static_cast< size_type >( std::distance( begin, end ) );
 
@@ -1726,9 +1719,9 @@ namespace cl
             *   this location seems less intrusive to the design of the vector class.
             */
             const ::cl::Buffer& getBuffer( ) const
-                {
+            {
                 return m_devMemory;
-                }
+            }
 
             /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
             *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
