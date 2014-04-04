@@ -4507,7 +4507,7 @@ TEST( UDDTestInt2, SerialScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-	for (size_t i = 0; i < sz; i++)
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = (int)i;
         std_input[i].a = (int)(i + 2 * i);
@@ -4538,7 +4538,7 @@ TEST( UDDTestInt2, MulticoreScatter_IfPredicate)
     std::vector<int> std_map ( sz );
     std::vector<int> std_stencil (sz);
 
-	for (size_t i = 0; i < sz; i++)
+	for (int i = 0; i < sz; i++)
     {
         std_map[i] = (int)i;
         std_input[i].a = (int)(i + 2 * i);
