@@ -1708,7 +1708,7 @@ TEST_P( SortDoubleDeviceVector, MulticoreInplace )
 
 TEST_P( SortIntegerNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1728,7 +1728,7 @@ TEST_P( SortIntegerNakedPointer, SerialInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::SerialCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1748,7 +1748,7 @@ TEST_P( SortIntegerNakedPointer, MultiCoreInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::MultiCoreCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1766,7 +1766,7 @@ TEST_P( SortIntegerNakedPointer, MultiCoreInplace )
 
 TEST_P( SortFloatNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1786,7 +1786,7 @@ TEST_P( SortFloatNakedPointer, SerialInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::SerialCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1806,7 +1806,7 @@ TEST_P( SortFloatNakedPointer, MultiCoreInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::MultiCoreCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1824,7 +1824,7 @@ TEST_P( SortFloatNakedPointer, MultiCoreInplace )
 #if (TEST_DOUBLE == 1)
 TEST_P( SortDoubleNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
@@ -1841,7 +1841,7 @@ TEST_P( SortDoubleNakedPointer, Inplace )
 
 TEST_P( SortDoubleNakedPointer, SerialInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
@@ -1860,7 +1860,7 @@ TEST_P( SortDoubleNakedPointer, SerialInplace )
 }
 TEST_P( SortDoubleNakedPointer, MulticoreInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );

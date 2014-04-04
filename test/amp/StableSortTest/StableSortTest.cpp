@@ -1471,7 +1471,7 @@ TEST_P( StableSortDoubleDeviceVector, MulticoreInplace )
 #if defined(_WIN32)
 TEST_P( StableSortIntegerNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1491,7 +1491,7 @@ TEST_P( StableSortIntegerNakedPointer, SerialInplace )
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1511,7 +1511,7 @@ TEST_P( StableSortIntegerNakedPointer, MultiCoreInplace )
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1529,7 +1529,7 @@ TEST_P( StableSortIntegerNakedPointer, MultiCoreInplace )
 
 TEST_P( StableSortFloatNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1549,7 +1549,7 @@ TEST_P( StableSortFloatNakedPointer, SerialInplace )
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1569,7 +1569,7 @@ TEST_P( StableSortFloatNakedPointer, MultiCoreInplace )
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1587,7 +1587,7 @@ TEST_P( StableSortFloatNakedPointer, MultiCoreInplace )
 #if (TEST_DOUBLE == 1)
 TEST_P( StableSortDoubleNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
@@ -1604,7 +1604,7 @@ TEST_P( StableSortDoubleNakedPointer, Inplace )
 
 TEST_P( StableSortDoubleNakedPointer, SerialInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
@@ -1623,7 +1623,7 @@ TEST_P( StableSortDoubleNakedPointer, SerialInplace )
 }
 TEST_P( StableSortDoubleNakedPointer, MulticoreInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
