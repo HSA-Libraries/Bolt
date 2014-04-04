@@ -1374,7 +1374,7 @@ TEST_P( ReduceFloatVector, MultiCore )
 
 TEST_P( ReduceIntegerNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1396,7 +1396,7 @@ TEST_P( ReduceIntegerNakedPointer, Inplace )
 
 TEST_P( ReduceIntegerNakedPointer, SerialInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1422,7 +1422,7 @@ TEST_P( ReduceIntegerNakedPointer, SerialInplace )
 
 TEST_P( ReduceIntegerNakedPointer, MultiCoreInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1449,7 +1449,7 @@ TEST_P( ReduceIntegerNakedPointer, MultiCoreInplace )
 
 TEST_P( ReduceFloatNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1471,7 +1471,7 @@ TEST_P( ReduceFloatNakedPointer, Inplace )
 
 TEST_P( ReduceFloatNakedPointer, SerialInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     bolt::amp::control ctl = bolt::amp::control::getDefault();
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
@@ -1496,7 +1496,7 @@ TEST_P( ReduceFloatNakedPointer, SerialInplace )
 
 TEST_P( ReduceFloatNakedPointer, MultiCoreInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     bolt::amp::control ctl = bolt::amp::control::getDefault();
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
