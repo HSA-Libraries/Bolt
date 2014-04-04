@@ -1148,7 +1148,7 @@ TEST(sanity_generate_n_amp_withdev_ctl, mallocfloat)
 
     //TAKE_AMP_CONTROL_PATH
 	bolt::amp::generate_n( ptr1, size, floatcf);
-	std::generate_n(ptr2, size, floatcf);
+	std::generate_n(stdext::make_checked_array_iterator(ptr2,size), size, floatcf);
 
 	std::cout <<" val = " << ptr1[1] << std::endl;
 
@@ -1197,7 +1197,7 @@ TEST (sanity_generate_n_amp_mallocRand_ctl, intValues)
 	srand(111);
     //TAKE_AMP_CONTROL_PATH
 	bolt::amp::generate_n(ptr1, size, icf);
-	std::generate_n(ptr2, size, icf);
+	std::generate_n(stdext::make_checked_array_iterator(ptr2,size), size, icf);
 
 	for (int i = 1 ; i < 10; ++i){
 		std::cout<<ptr1[i]<<" " << ptr2[i] << std::endl;
@@ -1231,7 +1231,7 @@ TEST (sanity_generate_n_amp_mallocRand_64ctl, int64Values)
 	//srand(111);
     //TAKE_AMP_CONTROL_PATH
 	bolt::amp::generate_n(ptr1, size, cf31);
-	std::generate_n(ptr2, size, cf31);
+	std::generate_n(stdext::make_checked_array_iterator(ptr2,size), size, cf31);
 
 	for (int i = 1 ; i < 10; ++i){
 		std::cout<<ptr1[i]<<" " << ptr2[i] << std::endl;
