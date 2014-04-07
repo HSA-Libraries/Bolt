@@ -124,7 +124,7 @@ transform_scan_enqueue(
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
+    unsigned int modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
@@ -479,7 +479,6 @@ transform_scan_enqueue(
 	    tempBuffsize = tempBuffsize - max_ext;
 	}
     //std::cout << "Kernel 2 Done" << std::endl;
-   
 
 }   //end of transform_scan_enqueue( )
 
@@ -562,9 +561,7 @@ transform_scan_pick_iterator(
         //Now call the actual AMP algorithm
         transform_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), unary_op, init, binary_op, inclusive );
        
-
         // This should immediately map/unmap the buffer
-		dvInput.data();
         dvOutput.data( );
 
     }

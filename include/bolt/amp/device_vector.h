@@ -473,9 +473,7 @@ private:
     *   with a specified initial value.
     *   \param newSize The number of elements of the new device_vector
     *   \param value The value with which to initialize new elements.
-    *   \param flags A bitfield that takes the OpenCL memory flags
-    *   to help specify where the device_vector allocates memory.
-    *   \param init Boolean value to indicate whether to initialize device memory from host memory.
+    *   \param init Boolean value to indicate whether to initialize device memory from initValue.
     *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
     *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
     */
@@ -503,8 +501,6 @@ private:
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.
     *   \param end An iterator pointing at the end of the range.
-    *   \param flags A bitfield that takes the OpenCL memory flags
-    *   to help specify where the device_vector allocates memory.
     *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
     *   this is an output buffer
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
@@ -526,9 +522,6 @@ private:
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param cont An object that has both .data() and .size() members
-    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
-    *   this is an output buffer
-    *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     */
     
     template< typename T>
@@ -595,29 +588,6 @@ private:
         return m_devMemory.view_as( ext );
     }
 
-	/*! \brief A get accessor function to return the encapsulated device buffer for const objects based on the iterator getIndex().
-    *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-    *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument
-    *   to the C++ AMP parallel_for_each constructs.
-	*   \param itr An iterator pointing at the beginning of the range. 
-    *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
-    *   this location seems less intrusive to the design of the vector class.
-    */
-	arrayview_type getBuffer( const_iterator itr ) const
-    {
-		size_type offset = itr.getIndex();
-        concurrency::extent<1> ext( static_cast< int >( m_Size-offset));
-        return m_devMemory.section( Concurrency::index<1>((int)offset), ext );
-    }
-
-
-	arrayview_type getBuffer( const_reverse_iterator itr ) const
-    {
-		size_type offset = itr.getIndex();
-        concurrency::extent<1> ext( static_cast< int >( m_Size-offset));
-        return m_devMemory.section( Concurrency::index<1>((int)offset), ext );
-    }
-
 	/*! \brief A get accessor function to return the encapsulated device buffer for const objects based on the iterator getIndex() and size.
     *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
     *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument
@@ -627,19 +597,35 @@ private:
     *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
     *   this location seems less intrusive to the design of the vector class.
     */
-	arrayview_type getBuffer( const_iterator itr, size_t size ) const
+	arrayview_type getBuffer( const_iterator itr, unsigned int size ) const
     {
-		size_type offset = itr.getIndex();
-        concurrency::extent<1> ext( static_cast< int >( size ) );
-        return m_devMemory.section( Concurrency::index<1>(offset), ext );
+		if(size == static_cast<unsigned int>(m_Size))
+		{
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			return m_devMemory.view_as( ext );
+		}
+		else
+		{
+			size_type offset = itr.getIndex();
+			concurrency::extent<1> ext( static_cast< int >( size ) );
+			return m_devMemory.section( Concurrency::index<1>(offset), ext );
+		}
     }
 
 
-	arrayview_type getBuffer( const_reverse_iterator itr, size_t size  ) const
+	arrayview_type getBuffer( const_reverse_iterator itr, unsigned int size  ) const
     {
-		size_type offset = itr.getIndex();
-        concurrency::extent<1> ext( static_cast< int >( size ) );
-        return m_devMemory.section( Concurrency::index<1>(offset), ext );
+		if(size == static_cast<unsigned int>(m_Size))
+		{
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			return m_devMemory.view_as( ext );
+		}
+		else
+		{
+			size_type offset = itr.getIndex();
+			concurrency::extent<1> ext( static_cast< int >( size ) );
+			return m_devMemory.section( Concurrency::index<1>(offset), ext );
+		}
     }
 
     /*! \brief Change the number of elements in device_vector to reqSize.
@@ -977,7 +963,7 @@ private:
              return NULL;
         }
 		synchronize( *this );
-        arrayview_type av( *m_devMemory );
+        arrayview_type av( m_devMemory );
         return av.data( );
     }
 

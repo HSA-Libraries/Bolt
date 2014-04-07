@@ -48,37 +48,37 @@ namespace detail {
             const DVForwardIterator &last, const T & val)
             {
                 
-            concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+				concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-            typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
-            const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
-            const unsigned int leng =  szElements + FILL_WAVEFRONT_SIZE - (szElements % FILL_WAVEFRONT_SIZE);
+				typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
+				const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
+				const unsigned int leng =  szElements + FILL_WAVEFRONT_SIZE - (szElements % FILL_WAVEFRONT_SIZE);
 
-            concurrency::extent< 1 > inputExtent(leng);
+				concurrency::extent< 1 > inputExtent(leng);
 
-            try
-            {
+				try
+				{
 
-                concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
-                {
+					concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+					{
 
-                    unsigned int globalId = idx[ 0 ];
+						unsigned int globalId = idx[ 0 ];
 
-                    if( globalId >= szElements)
-                         return;
+						if( globalId >= szElements)
+							 return;
 
-                    first[globalId] =(Type) val;
+						first[globalId] =(Type) val;
 
-                });
-            }
+					});
+				}
 
 
-            catch(std::exception &e)
-            {
-            std::cout << "Exception while calling bolt::amp::fill parallel_for_each " ;
-            std::cout<< e.what() << std::endl;
-            throw std::exception();
-            }	
+				catch(std::exception &e)
+				{
+				std::cout << "Exception while calling bolt::amp::fill parallel_for_each " ;
+				std::cout<< e.what() << std::endl;
+				throw std::exception();
+				}	
 									         
 			     
             }; // end fill_enqueue
@@ -103,7 +103,7 @@ namespace detail {
 
                 typedef typename  std::iterator_traits<ForwardIterator>::value_type Type;
 
-                size_t sz = (last - first);
+                unsigned int sz = static_cast< unsigned int >(last - first);
                 if (sz < 1)
                     return;
 
@@ -141,7 +141,7 @@ namespace detail {
             fill_pick_iterator( bolt::amp::control &ctl,  const DVForwardIterator &first,
                 const DVForwardIterator &last,  const T & value)
             {
-				size_t sz = std::distance( first, last );
+				unsigned int sz = static_cast< unsigned int >(std::distance( first, last ));
                 if( sz == 0 )
                     return;
 

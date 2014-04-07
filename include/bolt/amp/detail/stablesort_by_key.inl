@@ -81,11 +81,11 @@ namespace detail
         typedef std_stable_sort<keyType, valType> KeyValuePair;
         typedef std_stable_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
 
-        size_t vecSize = std::distance( keys_first, keys_last );
+        unsigned int vecSize = static_cast< unsigned int >(std::distance( keys_first, keys_last ));
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_stable_sort vector.
-        for (size_t i=0; i< vecSize; i++)
+        for (unsigned int i=0; i< vecSize; i++)
         {
             KeyValuePairVector[i].key   = *(keys_first + i);
             KeyValuePairVector[i].value = *(values_first + i);
@@ -93,7 +93,7 @@ namespace detail
         //Sort the std_stable_sort vector using std::stable_sort
         std::stable_sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
         //Extract the keys and values from the KeyValuePair and fill the respective iterators.
-        for (size_t i=0; i< vecSize; i++)
+        for (unsigned int i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
@@ -372,18 +372,18 @@ namespace detail
 		}
 
         //  An odd number of elements requires an extra merge pass to sort
-        size_t numMerges = 0;
+        unsigned int numMerges = 0;
 
         //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
         //  this is how many merge passes we want
-        size_t log2BlockSize = vecSize >> 8;
+        unsigned int log2BlockSize = vecSize >> 8;
         for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
         {
             ++numMerges;
         }
 
         //  Check to see if the input vector size is a power of 2, if not we will need last merge pass
-        size_t vecPow2 = (vecSize & (vecSize-1));
+        unsigned int vecPow2 = (vecSize & (vecSize-1));
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
@@ -505,7 +505,8 @@ namespace detail
 		   tmpValueBuffer.section( modified_ext ).copy_to( values_first.getContainer().getBuffer(values_first, vecSize) );
 		   tmpKeyBuffer.section( modified_ext ).copy_to( keys_first.getContainer().getBuffer(keys_first, vecSize) );
 		}
-         return;
+
+        return;
     }// END of stablesort_by_key_enqueue
 
 
@@ -577,7 +578,7 @@ namespace detail
     {
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
-        size_t vecSize = std::distance( keys_first, keys_last );
+        unsigned int vecSize = static_cast< unsigned int >(std::distance( keys_first, keys_last ));
         if( vecSize < 2 )
             return;
 

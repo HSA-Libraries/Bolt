@@ -83,7 +83,6 @@ void generate_enqueue(
                    throw std::exception();
             }
 
-
 }; // end generate_enqueue
 
 
@@ -101,7 +100,7 @@ void generate_enqueue(
             {
                 typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
 
-                size_t sz = (last - first);
+                unsigned int sz = static_cast< unsigned int >(last - first);
                 if (sz < 1)
                     return;
 

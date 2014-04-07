@@ -133,7 +133,7 @@ namespace detail {
                                          const OutputType& init, const BinaryFunction1&f1, const BinaryFunction2& f2,
                                          bolt::amp::device_vector_tag )
             {
-                 size_t sz = (last1 - first1);
+                 unsigned int sz = static_cast< unsigned int >(last1 - first1);
                  if (sz == 0)
                     return init;
 
@@ -187,7 +187,7 @@ namespace detail {
                                        bolt::amp::fancy_iterator_tag )
             {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                size_t sz = (last1 - first1);
+                unsigned int sz = static_cast< unsigned int >(last1 - first1);
                 if (sz == 0)
                     return init;
 

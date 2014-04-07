@@ -137,6 +137,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
                       std::cout << "Exception while calling bolt::amp::scatter parallel_for_each"<<e.what()<<std::endl;
                       return;
                 }
+		result.getContainer().getBuffer(result, szElements).synchronize();
     };
 
 ////////////////////////////////////////////////////////////////////
@@ -176,6 +177,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
                       std::cout << "Exception while calling bolt::amp::scatter parallel_for_each"<<e.what()<<std::endl;
                       return;
                 }
+		result.getContainer().getBuffer(result, szElements).synchronize();
 	};
 
 ////////////////////////////////////////////////////////////////////

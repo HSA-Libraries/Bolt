@@ -254,7 +254,7 @@ namespace bolt {
                 bolt::amp::device_vector_tag )
             {
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
-                size_t szElements = static_cast<size_t>(std::distance(first, last) );
+                unsigned int szElements = static_cast<unsigned int>(std::distance(first, last) );
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode(); // could be dynamic choice some day.
                 if(runMode == bolt::amp::control::Automatic)
                 {
@@ -291,7 +291,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
-                size_t szElements = static_cast<size_t>(std::distance(first, last) );
+                unsigned int szElements = static_cast<unsigned int>(std::distance(first, last) );
                 if (szElements == 0)
                     return false;
 

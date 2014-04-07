@@ -77,7 +77,6 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
         throw std::exception();
       }	
 
-
 }
 
 
