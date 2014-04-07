@@ -133,7 +133,6 @@ namespace bolt
 
                       return;
                 }
-
             }
 
             template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>

@@ -306,11 +306,11 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 	typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type Values;
     const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
                          //local array of 16 elements in the histogram kernel.
-    size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
+    unsigned int orig_szElements = static_cast<unsigned int>(std::distance(first, last));
 	const unsigned int localSize  = WG_SIZE;
 
 	unsigned int szElements = (unsigned int)orig_szElements;
-    size_t modWgSize = (szElements & ((localSize)-1));
+    unsigned int modWgSize = (szElements & ((localSize)-1));
     if( modWgSize )
     {
         szElements &= ~modWgSize;
@@ -343,7 +343,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< unsigned int, concurrency::array_view > dvHistogramBins(static_cast<size_t>(numGroups * RADICES), 0 );
+	device_vector< unsigned int, concurrency::array_view > dvHistogramBins(static_cast<unsigned int>(numGroups * RADICES), 0 );
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
@@ -817,7 +817,6 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 			}
 		 });
 	}
-
     return;
 
 

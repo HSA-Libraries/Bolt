@@ -315,7 +315,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<ForwardIterator>::value_type iType;
-                size_t szElements = (size_t)(last - first);
+                unsigned int szElements = static_cast< unsigned int >(last - first);
                 if (szElements == 0)
                     return last;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
@@ -375,7 +375,7 @@ namespace bolt {
                 bolt::amp::device_vector_tag)
             {
 				typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                size_t szElements = (size_t)(last - first);
+                unsigned int szElements = static_cast< unsigned int >(last - first);
                 if (szElements == 0)
                     return last;
 
@@ -435,7 +435,7 @@ namespace bolt {
                 const char * min_max,
                 bolt::amp::fancy_iterator_tag)
             {
-                size_t szElements = (size_t)(last - first);
+                unsigned int szElements = static_cast< unsigned int >(last - first);
                 if (szElements == 0)
                     return last;
 

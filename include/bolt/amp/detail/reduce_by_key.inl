@@ -154,7 +154,7 @@ reduce_by_key_enqueue(
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
+    unsigned int modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
@@ -622,7 +622,7 @@ reduce_by_key_enqueue(
         throw std::exception();
       }	
 
-    unsigned int count_number_of_sections = 0;
+	unsigned int count_number_of_sections = 0;
     count_number_of_sections = offsetArrayVec[numElements-1];
     return count_number_of_sections;
 

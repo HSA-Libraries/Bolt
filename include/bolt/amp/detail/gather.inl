@@ -90,15 +90,7 @@ void serial_gather_if(InputIterator1 mapfirst,
 {
    //std::cout<<"Serial code path ... \n";
    unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
-  // for (InputIterator1 iter = mapfirst; iter != maplast; iter++)
-  // {
-  //      if(pred(*(stencil + ( iter - mapfirst))))
-        //{
-  //          // result[(int)iter] = input[mapfirst[(int)iter]];
-        //	 *(result + (iter - mapfirst) )= input[*iter];
-        //}
-  // }
-      for(unsigned int iter = 0; iter < numElements; iter++)
+   for(unsigned int iter = 0; iter < numElements; iter++)
    {
         if(pred(*(stencil + (int)iter)))
              result[(int)iter] = input[mapfirst[(int)iter]];

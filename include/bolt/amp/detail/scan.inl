@@ -89,7 +89,7 @@ aProfiler.startTrial();
 aProfiler.setStepName("Setup");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
-size_t k0_stepNum, k1_stepNum, k2_stepNum;
+unsigned int k0_stepNum, k1_stepNum, k2_stepNum;
 #endif
   
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
@@ -109,7 +109,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
+    unsigned int modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;

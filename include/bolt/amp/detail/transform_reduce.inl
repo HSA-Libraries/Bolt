@@ -176,7 +176,7 @@ namespace bolt {
             const BinaryFunction& reduce_op )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
-            size_t szElements = (last - first);
+            unsigned int szElements = static_cast< unsigned int >(last - first);
             if (szElements == 0)
                     return init;
 
@@ -230,7 +230,7 @@ namespace bolt {
             const BinaryFunction& reduce_op )
         {
             typedef std::iterator_traits<DVInputIterator>::value_type iType;
-            size_t szElements = (last - first);
+            unsigned int szElements = static_cast< unsigned int >(last - first);
             if (szElements == 0)
                     return init;
 

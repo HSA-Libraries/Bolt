@@ -200,7 +200,7 @@ scan_by_key_enqueue(
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
+    unsigned int modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
@@ -644,10 +644,9 @@ scan_by_key_enqueue(
 	
 	
 		  } );
-		   tempBuffsize = tempBuffsize - max_ext;
+		  tempBuffsize = tempBuffsize - max_ext;
 	}
     PEEK_AT( output )
-
 }   //end of scan_by_key_enqueue( )
 
 

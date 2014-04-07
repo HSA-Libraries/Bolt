@@ -288,18 +288,18 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 		tempBuffsize = tempBuffsize - max_ext;
 	}
     //  An odd number of elements requires an extra merge pass to sort
-    size_t numMerges = 0;
+    unsigned int numMerges = 0;
 
     //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
     //  this is how many merge passes we want
-    size_t log2BlockSize = vecSize >> 9;
+    unsigned int log2BlockSize = vecSize >> 9;
     for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
     {
         ++numMerges;
     }
 
     //  Check to see if the input vector size is a power of 2, if not we will need last merge pass
-    size_t vecPow2 = (vecSize & (vecSize-1));
+    unsigned int vecPow2 = (vecSize & (vecSize-1));
     numMerges += vecPow2? 1: 0;
 
     //  Allocate a flipflop buffer because the merge passes are out of place
@@ -409,7 +409,6 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     }	 
        
     }
-	
      //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
     //  the results back into the input array
     if( numMerges & 1 )
@@ -417,6 +416,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 	   concurrency::extent< 1 > modified_ext( vecSize );
 	   tmpBuffer.section( modified_ext ).copy_to( first.getContainer().getBuffer(first, vecSize) );
     }
+
     return;
 }// END of stablesort_enqueue
 
@@ -434,7 +434,7 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
 
     typedef typename std::iterator_traits< RandomAccessIterator >::value_type Type;
 
-    size_t vecSize = std::distance( first, last );
+    unsigned int vecSize = static_cast< unsigned int >(std::distance( first, last ));
     if( vecSize < 2 )
         return;
 
@@ -484,7 +484,7 @@ void stablesort_pick_iterator( control &ctl,
 
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type Type;
 
-    size_t vecSize = std::distance( first, last );
+    unsigned int vecSize = static_cast< unsigned int >(std::distance( first, last ));
     if( vecSize < 2 )
         return;
 

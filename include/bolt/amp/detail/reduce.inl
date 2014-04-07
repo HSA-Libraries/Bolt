@@ -86,6 +86,8 @@ namespace bolt
 				concurrency::array< iType, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
                                                                                         cpuAcceleratorView);
                 concurrency::array_view<iType, 1> result ( resultArray );
+
+
 				concurrency::extent< 1 > inputExtent(length);
                 concurrency::tiled_extent< REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< REDUCE_WAVEFRONT_SIZE >();
 
@@ -184,7 +186,7 @@ namespace bolt
             {
                 /*************/
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                size_t szElements = (size_t)(last - first);
+                unsigned int szElements = static_cast< unsigned int >(last - first);
                 if (szElements == 0)
                     return init;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
@@ -232,7 +234,7 @@ namespace bolt
                                   bolt::amp::device_vector_tag)
             {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                size_t szElements = (size_t) (last - first);
+                unsigned int szElements = static_cast< unsigned int > (last - first);
                 if (szElements == 0)
                     return init;
 
@@ -277,7 +279,7 @@ namespace bolt
             {
                 /*************/
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                size_t szElements = (size_t)(last - first);
+                unsigned int szElements = static_cast< unsigned int >(last - first);
                 if (szElements == 0)
                     return init;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
