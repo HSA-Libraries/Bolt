@@ -33,10 +33,7 @@ namespace bolt{
              {
 
                OutputType result;
-
-               Inner_Product_Op () {
-				   result = 0;
-			   }
+               Inner_Product_Op () {result = 0;}
                Inner_Product_Op (OutputType _x ): result(_x) {}
 
                void operator() (InputIterator first1, InputIterator last1, InputIterator first2, OutputType init,
