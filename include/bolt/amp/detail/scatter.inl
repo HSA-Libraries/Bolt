@@ -20,6 +20,12 @@
 #define BOLT_AMP_SCATTER_INL
 #define SCATTER_WAVEFRNT_SIZE 264
 
+#include <algorithm>
+#include <type_traits>
+#include "bolt/amp/bolt.h"
+#include "bolt/amp/iterator/iterator_traits.h"
+#include "bolt/amp/device_vector.h"
+#include <amp.h>
 
 #ifdef ENABLE_TBB
     #include "bolt/btbb/scatter.h"
