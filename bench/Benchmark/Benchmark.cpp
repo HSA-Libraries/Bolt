@@ -84,7 +84,7 @@
         #include "bolt/amp/transform.h"
         #include "bolt/amp/transform_reduce.h"
         #include "bolt/amp/scan.h"
-        //#include "bolt/amp/sort.h"
+        #include "bolt/amp/sort.h"
         #include "bolt/amp/reduce.h"
         #include "bolt/amp/sort_by_key.h"
         #include "bolt/amp/stablesort.h"
@@ -92,8 +92,8 @@
         #include "bolt/amp/stablesort_by_key.h"
         #include "bolt/amp/transform_scan.h"
         #include "bolt/amp/scan_by_key.h"
-        //#include "bolt/amp/gather.h"
-        //#include "bolt/amp/scatter.h"
+        #include "bolt/amp/gather.h"
+        #include "bolt/amp/scatter.h"
     #endif
 #else
 #include <thrust/device_vector.h>
@@ -418,7 +418,8 @@ void executeFunctionType(
             }
         }
         break;
-    case f_binarysearch:
+	
+	case f_binarysearch:
         {
             bool tmp;
             typename VectorType::value_type val;
@@ -452,6 +453,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_transformreduce:
         {
             typename VectorType::value_type tmp;
@@ -475,6 +477,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_stablesort:
         {
             std::cout <<  functionNames[f_stablesort] << std::endl;
@@ -495,6 +498,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_stablesortbykey:
         {
             std::cout <<  functionNames[f_stablesortbykey] << std::endl;
@@ -516,29 +520,6 @@ void executeFunctionType(
         }
         break;
 
-#if BENCHMARK_CL_AMP == CL_BENCH
-    case f_reducebykey:
-        {
-            std::cout <<  functionNames[f_reducebykey] << std::endl;
-            for (size_t iter = 0; iter < iterations+1; iter++)
-            {
-                VectorType keys1(input1.size());
-                myTimer.Start( testId );
-#if (BOLT_BENCHMARK == 1)
-                bolt::BENCH_BEND::reduce_by_key(ctrl, keys.begin(), keys.end(),input2.begin(),keys1.begin(),
-                    output.begin(),binaryPredEq, binaryFunct);
-#else
-                thrust::reduce_by_key( keys.begin(), keys.end(),input2.begin(),keys1.begin(),
-                    output.begin(),binaryPredEq, binaryFunct);
-                cudaThreadSynchronize();
-#endif
-                myTimer.Stop( testId );
-            }
-        }
-        break;
-        
-#endif
-#if (BENCHMARK_CL_AMP ==  CL_BENCH)
     case f_sort:
         {
             std::cout <<  functionNames[f_sort] << std::endl;
@@ -548,16 +529,18 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::sort(ctrl, inputBackup.begin(), inputBackup.end(),binaryPredLt);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                Amp_GPU_wait(ctrl);
+#endif 
 #else
-                thrust::sort( inputBackup.begin(), inputBackup.end(), binaryPredL);
+                thrust::sort( inputBackup.begin(), inputBackup.end(), binaryPredLt);
                 cudaThreadSynchronize();
 #endif
                 myTimer.Stop( testId );
             }
         }
         break;
-#endif
-#if (BENCHMARK_CL_AMP ==  CL_BENCH)
+
     case f_sortbykey:
         {
             std::cout <<  functionNames[f_sortbykey] << std::endl;
@@ -567,6 +550,9 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::sort_by_key(ctrl, inputBackup.begin(), inputBackup.end(), input2.begin( ),binaryPredLt );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                Amp_GPU_wait(ctrl);
+#endif 
 #else
                 thrust::sort_by_key( inputBackup.begin(), inputBackup.end(), input2.begin( ), binaryPredLt);
                 cudaThreadSynchronize();
@@ -575,7 +561,7 @@ void executeFunctionType(
             }
         }
         break;
-#endif
+
     case f_reduce:
         {
             typename VectorType::value_type tmp;
@@ -598,6 +584,30 @@ void executeFunctionType(
             }
         }
         break;
+
+    case f_reducebykey:
+        {
+            std::cout <<  functionNames[f_reducebykey] << std::endl;
+            for (size_t iter = 0; iter < iterations+1; iter++)
+            {
+                VectorType keys1(input1.size());
+                myTimer.Start( testId );
+#if (BOLT_BENCHMARK == 1)
+                bolt::BENCH_BEND::reduce_by_key(ctrl, keys.begin(), keys.end(),input2.begin(),keys1.begin(),
+                    output.begin(),binaryPredEq, binaryFunct);
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                Amp_GPU_wait(ctrl);
+#endif 
+#else
+                thrust::reduce_by_key( keys.begin(), keys.end(),input2.begin(),keys1.begin(),
+                    output.begin(),binaryPredEq, binaryFunct);
+                cudaThreadSynchronize();
+#endif
+                myTimer.Stop( testId );
+            }
+        }
+        break;
+
     case f_maxelement:
         {
             std::cout <<  functionNames[f_maxelement] << std::endl;
@@ -619,6 +629,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_minelement:
         {
             std::cout <<  functionNames[f_minelement] << std::endl;
@@ -644,6 +655,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_fill:
         {
             typename VectorType::value_type tmp;
@@ -665,6 +677,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_count:
         {
             typename VectorType::value_type tmp;
@@ -686,6 +699,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_generate:
         {
             std::cout <<  functionNames[f_generate] << std::endl;
@@ -705,6 +719,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_innerproduct:
         { 
             typename VectorType::value_type tmp;
@@ -726,6 +741,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_copy:
         {
             std::cout <<  functionNames[f_copy] << std::endl;
@@ -745,6 +761,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_unarytransform:
         {
             std::cout <<  functionNames[f_unarytransform] << std::endl;
@@ -764,6 +781,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_binarytransform:
         {
             std::cout <<  functionNames[f_binarytransform] << std::endl;
@@ -783,6 +801,7 @@ void executeFunctionType(
             }
         }
         break;
+
     case f_scan:
         {
             std::cout <<  functionNames[f_scan] << std::endl;
@@ -803,27 +822,7 @@ void executeFunctionType(
             }
         }
         break;
-    case f_transformscan:
-        {
-            std::cout <<  functionNames[f_transformscan] << std::endl;
-            for (size_t iter = 0; iter < iterations+1; iter++)
-            {
-                myTimer.Start( testId );
-#if (BOLT_BENCHMARK == 1)
-                bolt::BENCH_BEND::transform_inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(),
-                                                                        unaryFunct, binaryFunct );
-#if BENCHMARK_CL_AMP == AMP_BENCH
-                Amp_GPU_wait(ctrl);
-#endif
-#else
-                thrust::transform_inclusive_scan( input1.begin(), input1.end(), output.begin(),
-                                                                 unaryFunct, binaryFunct );
-                cudaThreadSynchronize();
-#endif
-                myTimer.Stop( testId );
-            }
-        }
-        break;
+
     case f_scanbykey:
         {
             std::cout <<  functionNames[f_scanbykey] << std::endl;
@@ -846,9 +845,30 @@ void executeFunctionType(
             }
         }
         break;
-#if (BENCHMARK_CL_AMP ==  CL_BENCH)
+
+    case f_transformscan:
+        {
+            std::cout <<  functionNames[f_transformscan] << std::endl;
+            for (size_t iter = 0; iter < iterations+1; iter++)
+            {
+                myTimer.Start( testId );
+#if (BOLT_BENCHMARK == 1)
+                bolt::BENCH_BEND::transform_inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(),
+                                                                        unaryFunct, binaryFunct );
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                Amp_GPU_wait(ctrl);
+#endif
+#else
+                thrust::transform_inclusive_scan( input1.begin(), input1.end(), output.begin(),
+                                                                 unaryFunct, binaryFunct );
+                cudaThreadSynchronize();
+#endif
+                myTimer.Stop( testId );
+            }
+        }
+        break;
+
     case f_gather:
-        //TODO - What about host memory MAP
         {
             std::cout <<  functionNames[f_gather] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
@@ -856,6 +876,9 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::gather( ctrl, Map.begin( ), Map.end( ),input1.begin( ),output.begin());
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                Amp_GPU_wait(ctrl);
+#endif
 #else
                 thrust::gather( Map.begin( ), Map.end( ),input1.begin( ),output.begin());
                 cudaThreadSynchronize();
@@ -864,6 +887,7 @@ void executeFunctionType(
              }
         }
         break;
+
     case f_scatter:
         {
             std::cout <<  functionNames[f_scatter] << std::endl;
@@ -872,6 +896,9 @@ void executeFunctionType(
                 myTimer.Start( testId );
 #if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::scatter( ctrl, input1.begin( ),input1.end( ), Map.begin(), output.begin());
+#if BENCHMARK_CL_AMP == AMP_BENCH
+                Amp_GPU_wait(ctrl);
+#endif
 #else
                 thrust::scatter(  input1.begin( ),input1.end( ), Map.begin(), output.begin());
                 cudaThreadSynchronize();
@@ -880,7 +907,7 @@ void executeFunctionType(
             }
         }
         break;
-#endif
+
         default:
             std::cout << "\nUnsupported function = " << function <<"\n"<< std::endl;
             break;
@@ -945,7 +972,7 @@ void executeFunction(
         thrust::plus<DATA_TYPE>   binaryFunct;
         thrust::equal_to<DATA_TYPE>  binaryPredEq;;
         thrust::less<DATA_TYPE>   binaryPredLt;
-        thrust::Multiplies<DATA_TYPE>   binaryFunctMult;
+        thrust::multiplies<DATA_TYPE>   binaryFunctMult;
 #endif
 
         siz = sizeof(DATA_TYPE);

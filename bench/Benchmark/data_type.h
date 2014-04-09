@@ -504,9 +504,7 @@ using namespace std;
         return l_result;
         };
     };
-    
-
-    
+        
     struct vec4plus
     {
         vec4 operator()(const vec4 &lhs, const vec4 &rhs) const restrict(cpu,amp)
