@@ -173,11 +173,9 @@ reduce_by_key_enqueue(
     concurrency::array< int >  keySumArray( sizeScanBuff, av );
     concurrency::array< voType >  preSumArray( sizeScanBuff, av );
     concurrency::array< voType >  postSumArray( sizeScanBuff, av );
-    concurrency::array< voType >  offsetValArray( numElements, av );
     
 
-    std::vector<int> stdoffset(numElements, 0);
-    device_vector<int, concurrency::array_view > offsetArrayVec(stdoffset.begin(), stdoffset.end(), true, ctl );
+   device_vector<int> newKeyArray(numElements, 0, true, ctl);
 
 
     /**********************************************************************************
@@ -187,151 +185,137 @@ reduce_by_key_enqueue(
     concurrency::extent< 1 > globalSizeK0( sizeInputBuff );
 	try
 	{
-    concurrency::parallel_for_each( av, globalSizeK0,
-        [
-            keys_first,
-            binary_pred,
-            numElements,
-            offsetArrayVec,	
-            kernel0_WgSize
-        ] ( concurrency::index< 1 > t_idx ) restrict(amp)
-  {
+		concurrency::parallel_for_each( av, globalSizeK0,
+			[
+				keys_first,
+				binary_pred,
+				numElements,
+				newKeyArray,	
+				kernel0_WgSize
+			] ( concurrency::index< 1 > t_idx ) restrict(amp)
+	   {
 
-    unsigned int gloId = t_idx[ 0 ];
+			unsigned int gloId = t_idx[ 0 ];
 
 
-    if (gloId >= numElements) return;
+			if (gloId >= numElements)
+				return;
 
-    kType key, prev_key;
+			kType key, prev_key;
 
-    if(gloId > 0){
-      key = keys_first[ gloId ];
-      prev_key = keys_first[ gloId - 1];
-      if(binary_pred(key, prev_key))
-        offsetArrayVec[ gloId ] = 0;
-      else
-        offsetArrayVec[ gloId ] = 1;
-    }
-    else{
-        offsetArrayVec[ gloId ] = 0;
-    }
+			if(gloId > 0){
+			  key = keys_first[ gloId ];
+			  prev_key = keys_first[ gloId - 1];
+			  if(binary_pred(key, prev_key))
+				newKeyArray[ gloId ] = 0;
+			  else
+				newKeyArray[ gloId ] = 1;
+			}
+			else{
+				newKeyArray[ gloId ] = 0;
+			}
     
-  } );
+	   } );
 	}
-	 catch(std::exception &e)
-      {
+	catch(std::exception &e)
+    {
         std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
         std::cout<< e.what() << std::endl;
         throw std::exception();
-      }	
-
-  detail::scan_enqueue(ctl, offsetArrayVec.begin(), offsetArrayVec.end(), offsetArrayVec.begin(), 0, plus< int >( ), true);
+    }	
+    detail::scan_enqueue(ctl, newKeyArray.begin(), newKeyArray.end(), newKeyArray.begin(), 0, bolt::amp::plus< int >( ), true);
 
     /**********************************************************************************
      *  Kernel 1
      *********************************************************************************/
-
    //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
-
-
-
 	try
 	{
 
-    
+		#define MSVC_TILE_LIMIT 65535
 
-#define MSVC_TILE_LIMIT 65535
+			unsigned int max_extent = MSVC_TILE_LIMIT * kernel0_WgSize;
+			unsigned int iteration = sizeInputBuff/max_extent;
+			/* Check if second iteration is required */
+			if (sizeInputBuff % max_extent )
+				iteration++;
 
-    unsigned int max_extent = MSVC_TILE_LIMIT * kernel0_WgSize;
-    unsigned int iteration = sizeInputBuff/max_extent;
-    /* Check if second iteration is required */
-    if (sizeInputBuff % max_extent )
-        iteration++;
+			max_extent = sizeInputBuff > max_extent ? max_extent : sizeInputBuff;
 
-    max_extent = sizeInputBuff > max_extent ? max_extent : sizeInputBuff;
+			concurrency::extent< 1 > globalSizeK1( max_extent);
+			concurrency::tiled_extent< kernel0_WgSize > tileK1 = globalSizeK1.tile< kernel0_WgSize >();
 
-    concurrency::extent< 1 > globalSizeK1( max_extent);
-    concurrency::tiled_extent< kernel0_WgSize > tileK1 = globalSizeK1.tile< kernel0_WgSize >();
-
-    for(unsigned int i=0; i < iteration; i++)
-	{
+			for(unsigned int i=0; i < iteration; i++)
+			{
 	   
-    unsigned int global_offset = i  * max_extent;
-    unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
-    concurrency::parallel_for_each( av, tileK1,
-        [
-            offsetArrayVec,
-            values_first,
-            &offsetValArray,
-            numElements,
-            &keySumArray,
-            &preSumArray,
-            binary_op,
-            kernel0_WgSize,
-            global_offset,
-            wg_offset
-        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx )  restrict(amp)
-  {
+				unsigned int global_offset = i  * max_extent;
+				unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
+				concurrency::parallel_for_each( av, tileK1,
+					[
+						newKeyArray,
+						values_first,
+						numElements,
+						&keySumArray,
+						&preSumArray,
+						binary_op,
+						kernel0_WgSize,
+						global_offset,
+						wg_offset
+					] ( concurrency::tiled_index< kernel0_WgSize > t_idx )  restrict(amp)
+			  {
 
-    unsigned int gloId = t_idx.global[ 0 ] + global_offset ;
-    unsigned int groId = t_idx.tile[ 0 ] + wg_offset ;
-    unsigned int locId = t_idx.local[ 0 ];
-    unsigned int wgSize = kernel0_WgSize;
+				unsigned int gloId = t_idx.global[ 0 ] + global_offset ;
+				unsigned int groId = t_idx.tile[ 0 ] + wg_offset ;
+				unsigned int locId = t_idx.local[ 0 ];
+				unsigned int wgSize = kernel0_WgSize;
 
-    tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES ];
-    tile_static int ldsKeys[ WAVESIZE*KERNEL02WAVES ];
+				tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES ];
+				tile_static int ldsKeys[ WAVESIZE*KERNEL02WAVES ];
 
-    int key; 
-    voType val; 
+				int key; 
+				voType val; 
 
-    if(gloId < numElements){
-      key = offsetArrayVec[ gloId ];
-      val = values_first[ gloId ];
-      ldsKeys[ locId ] =  key;
-      ldsVals[ locId ] = val;
-    }
-    // Computes a scan within a workgroup
-    // updates vals in lds but not keys
-    voType sum = val; 
-    unsigned int  offset = 1;
-    // load input into shared memory
-   
-    for( offset = 1; offset < wgSize; offset *= 2 )
-    {
-        t_idx.barrier.wait();
-        int key2 = ldsKeys[locId - offset];
-        if (locId >= offset && key == key2)
-        {
-            voType y = ldsVals[ locId - offset ];
-            sum = binary_op( sum, y );
-        }
-        t_idx.barrier.wait();
-        ldsVals[ locId ] = sum;
-    }
+				if(gloId < numElements){
+				  key = newKeyArray[ gloId ];
+				  val = values_first[ gloId ];
+				  ldsKeys[ locId ] =  key;
+				  ldsVals[ locId ] = val;
+				}
+				// Computes a scan within a workgroup
+				// updates vals in lds but not keys
+				voType sum = val; 
+				for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+				{
+					t_idx.barrier.wait();
+					if (locId >= offset )
+					{
+						int key2 = ldsKeys[ locId - offset];
+						if( key == key2 )
+						{
+							voType y = ldsVals[ locId - offset];
+							sum = binary_op( sum, y );
+						}
+						else
+							sum = ldsVals[ locId];
+					
+					}
+					t_idx.barrier.wait();
+					ldsVals[ locId ] = sum;
+				}
+        		 t_idx.barrier.wait(); // needed for large data types
+				//  Abort threads that are passed the end of the input vector
+				if (gloId >= numElements)
+					return;
+				if (locId == 0)
+				{
+					keySumArray[ groId ] = ldsKeys[ wgSize-1 ];
+					preSumArray[ groId ] = ldsVals[ wgSize-1 ];
+				}
 
-    t_idx.barrier.wait(); // needed for large data types
-    //  Abort threads that are passed the end of the input vector
-    if (gloId >= numElements) return;
+			  } );
 
-    // Each work item writes out its calculated scan result, relative to the beginning
-    // of each work group
-    int key2 = -1;
-    if (gloId < numElements -1 )
-        key2 = offsetArrayVec[gloId + 1];
-    if(key != key2)
-       offsetValArray[ gloId ] = sum;
-
-    if (locId == 0)
-    {
-        keySumArray[ groId ] = ldsKeys[ wgSize-1 ];
-        preSumArray[ groId ] = ldsVals[ wgSize-1 ];
-    }
-
-  } );
-
-    }
-	}
-
+		 }
+	 }
 	 catch(std::exception &e)
       {
         std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
@@ -470,10 +454,6 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 3
      *********************************************************************************/
-
-
-
-
     //std::cout << "Kernel 3 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
 	try
 	{
@@ -498,10 +478,13 @@ reduce_by_key_enqueue(
     unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
     concurrency::parallel_for_each( av, tileK3,
         [
-            offsetArrayVec,
+			values_first,
+			keys_first,
+			keys_output,
+			values_output,
+            newKeyArray,
             &keySumArray,
             &postSumArray,
-            &offsetValArray,
             binary_pred,
             numElements,
             binary_op,
@@ -511,9 +494,44 @@ reduce_by_key_enqueue(
         ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
   {
 
-    unsigned int gloId = t_idx.global[ 0 ]+ global_offset;
-    unsigned int groId = t_idx.tile[ 0 ]+ wg_offset;
-
+	unsigned int gloId = t_idx.global[ 0 ] + global_offset ;
+	unsigned int groId = t_idx.tile[ 0 ] + wg_offset ;
+	unsigned int locId = t_idx.local[ 0 ];
+	unsigned int wgSize = kernel2_WgSize;
+	
+	tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES ];
+	tile_static int ldsKeys[ WAVESIZE*KERNEL02WAVES ];
+	
+	int key; 
+	voType val; 
+	if(gloId < numElements)
+	{
+		  key = newKeyArray[ gloId ];
+		  val = values_first[ gloId ];
+		  ldsKeys[ locId ] =  key;
+		  ldsVals[ locId ] = val;
+	}
+	// Computes a scan within a workgroup
+	// updates vals in lds but not keys
+	voType sum = val; 
+	for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+	{
+		t_idx.barrier.wait();
+		if (locId >= offset )
+		{
+			int key2 = ldsKeys[ locId - offset];
+			if( key == key2 )
+			{
+				voType y = ldsVals[ locId - offset];
+				sum = binary_op( sum, y );
+			}
+			else
+				sum = ldsVals[ locId];
+		}
+		t_idx.barrier.wait();
+		ldsVals[ locId ] = sum;
+	}
+    t_idx.barrier.wait(); // needed for large data types
 
     //  Abort threads that are passed the end of the input vector
     if( gloId >= numElements )
@@ -521,98 +539,35 @@ reduce_by_key_enqueue(
 
     // accumulate prefix
     int  key1 =  keySumArray[ groId-1 ];
-    int key2 = offsetArrayVec[ gloId ];
+    int  key2 =  newKeyArray[ gloId ];
     int  key3 = -1;
     if(gloId < numElements -1 )
-      key3 =  offsetArrayVec[ gloId + 1];
+      key3 =  newKeyArray[ gloId + 1];
     if (groId > 0 && key1 == key2 && key2 != key3)
     {
-        voType scanResult = offsetValArray[ gloId ];
+        voType scanResult = sum;
         voType postBlockSum = postSumArray[ groId-1 ];
         voType newResult = binary_op( scanResult, postBlockSum );
-        offsetValArray[ gloId ] = newResult;
+        sum = newResult;
 
     }
-    
-  } );
-
-    }
-	}
-	 catch(std::exception &e)
-      {
-        std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
-        std::cout<< e.what() << std::endl;
-        throw std::exception();
-      }	
-
-    /**********************************************************************************
-     *  Kernel 4
-     *********************************************************************************/
-    
-
-    concurrency::extent< 1 > globalSizeK4( sizeInputBuff );
-    concurrency::tiled_extent< kernel0_WgSize > tileK4 = globalSizeK4.tile< kernel0_WgSize >();
-    //std::cout << "Kernel 4 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
-	try
-	{
-
-    unsigned int max_extent = MSVC_TILE_LIMIT * kernel0_WgSize;
-    unsigned int iteration = sizeInputBuff/max_extent;
-    /* Check if second iteration is required */
-    if (sizeInputBuff % max_extent )
-        iteration++;
-
-    max_extent = sizeInputBuff > max_extent ? max_extent : sizeInputBuff;
-
-    concurrency::extent< 1 > globalSizeK4( max_extent );
-    concurrency::tiled_extent< kernel0_WgSize > tileK4 = globalSizeK4.tile< kernel0_WgSize >();
-
-
-    for(unsigned int i=0; i < iteration; i++)
-	{
-
-    unsigned int global_offset = i  * max_extent;
-    unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
-
-    concurrency::parallel_for_each( av, tileK4,
-        [
-            keys_first,
-            keys_output,
-            values_output,
-            &offsetValArray,
-            binary_pred,
-            numElements,
-            binary_op,
-            kernel0_WgSize,
-            offsetArrayVec,
-            global_offset,
-            wg_offset
-        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
-  {
-
-    unsigned int gloId = t_idx.global[ 0 ]+ global_offset;
-    unsigned int locId = t_idx.local[ 0 ]+ wg_offset;
-    unsigned int count_number_of_sections = 0;		
-
-    //  Abort threads that are passed the end of the input vector
-    if( gloId >= numElements )
-        return;
-
-    count_number_of_sections = offsetArrayVec[numElements-1] + 1;
-    if(gloId < (numElements-1) && offsetArrayVec[ gloId ] != offsetArrayVec[ gloId +1])
+	unsigned int count_number_of_sections = 0;		
+    count_number_of_sections = newKeyArray[numElements-1] + 1;
+    if(gloId < (numElements-1) && newKeyArray[ gloId ] != newKeyArray[ gloId +1])
     {
-        keys_output [offsetArrayVec [ gloId ]] = keys_first[ gloId];
-        values_output[ offsetArrayVec [ gloId ]] = offsetValArray [ gloId];
+        keys_output [newKeyArray [ gloId ]] = keys_first[ gloId];
+        values_output[ newKeyArray [ gloId ]] = sum;
     }
 
     if( gloId == (numElements-1) )
     {
         keys_output[ count_number_of_sections - 1 ] = keys_first[ gloId ]; //Copying the last key directly. Works either ways
-        values_output[ count_number_of_sections - 1 ] = offsetValArray [ gloId ];
-        offsetArrayVec [ gloId ] = count_number_of_sections;
+        values_output[ count_number_of_sections - 1 ] = sum;
+        newKeyArray [ gloId ] = count_number_of_sections;
     }
-    
+
   } );
+
     }
 	}
 	 catch(std::exception &e)
@@ -621,9 +576,8 @@ reduce_by_key_enqueue(
         std::cout<< e.what() << std::endl;
         throw std::exception();
       }	
-
 	unsigned int count_number_of_sections = 0;
-    count_number_of_sections = offsetArrayVec[numElements-1];
+    count_number_of_sections = newKeyArray[numElements-1];
     return count_number_of_sections;
 
 }   //end of reduce_by_key_enqueue( )
