@@ -587,10 +587,11 @@ void executeFunctionType(
 
     case f_reducebykey:
         {
+                VectorType keys1(input1.size());
+
             std::cout <<  functionNames[f_reducebykey] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
-                VectorType keys1(input1.size());
                 myTimer.Start( testId );
 #if (BOLT_BENCHMARK == 1)
                 bolt::BENCH_BEND::reduce_by_key(ctrl, keys.begin(), keys.end(),input2.begin(),keys1.begin(),

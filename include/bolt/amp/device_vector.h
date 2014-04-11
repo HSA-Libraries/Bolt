@@ -485,7 +485,7 @@ private:
         {
 			concurrency::array<value_type> *tmp = new array_type( static_cast< int >( m_Size ), ctl.getAccelerator().default_view );
             m_devMemory = arrayview_type( *tmp );
-
+			printf("***********************************\n");
             if( init )
             {
                 arrayview_type m_devMemoryAV( m_devMemory );
@@ -500,7 +500,7 @@ private:
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.
-    *   \param end An iterator pointing at the end of the range.
+	*   \param newSize The number of elements of the new device_vector
     *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
     *   this is an output buffer
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
@@ -525,7 +525,8 @@ private:
     */
     
     template< typename T>
-    device_vector( device_vector<T, concurrency::array > & cont ): m_Size( cont.size( ) )
+    device_vector( device_vector<T, concurrency::array > & cont ): m_Size( cont.size( ) ),
+																   m_devMemory( create_empty_array_view<value_type>::getav() )
     {
 		if( m_Size > 0 )
         {
@@ -534,6 +535,24 @@ private:
 			m_devMemory = new container_type( cont.m_devMemory.section(ext) );
 		}
     };
+
+	
+    /*! \brief A constructor that creates a new device_vector using concurrency::array.
+    *   \param cont An concurrency::array object.
+	*   \param newSize The number of elements of the new device_vector
+    */
+	template< typename T>
+    device_vector( concurrency::array<T> &cont): m_devMemory( create_empty_array_view<value_type>::getav() )
+    {
+		m_Size =  cont.get_extent().size();
+		if( m_Size > 0 )
+        {
+			m_devMemory = container_type( cont );
+		}
+		
+    };
+
+
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.
