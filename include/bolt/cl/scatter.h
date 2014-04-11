@@ -29,23 +29,21 @@
 
 namespace bolt {
     namespace cl {
-
-        /*! \addtogroup algorithms
+        
+		/*! \addtogroup algorithms
          */
 
-        /*! \addtogroup copying
-        *   \ingroup algorithms
+        /*! \addtogroup CL-scatter
+        *   \ingroup copying
+        *   \{
+        */
+
+        /*! 
         *   \p scatter APIs copy elements from a source range to a destination array (conditionally) according to a
         *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
         *   implementations. See Bolt Tools for Split-Source for a detailed description.
         */
-
-        /*! \addtogroup CL-scatter
-        *   \ingroup algorithms
-        *   \{
-        */
-
-
+		
        /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
          * the corresponding \p input_first to result[ map [ i ] ]
@@ -73,7 +71,7 @@ namespace bolt {
          *  int output[10];
          *  bolt::cl::scatter(input, input + 10, map, output);
          *
-         *  // output is now {1, 2, 3, 4, 5, 6, 7, 8, 9, 12};
+         *  // output is now {12, 9, 7, 2, 4, 6, 1, 8, 5, 3};
          *  \endcode
          *
          */
@@ -128,7 +126,7 @@ namespace bolt {
          *  int output[10];
          *  bolt::cl::scatter(input, input + 10, map, stencil, output);
          *
-         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  // output is now {0, 9, 0, 0, 4, 6, 1, 8, 0, 0};
          *  \endcode
          *
          */
@@ -202,7 +200,7 @@ namespace bolt {
          *  greater_pred is_gt_5;
          *  bolt::cl::scatter(input, input + 10, map, stencil, output, is_gt_5);
          *
-         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  // output is now {0, 9, 0, 0, 4, 6, 1, 8, 0, 0};
          *  \endcode
          *
          */
