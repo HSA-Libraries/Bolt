@@ -78,7 +78,7 @@ namespace amp {
 
 namespace detail {
 
-	inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
+	static inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
 	{
 		uint_4 res;
 		res.x = (condition.x )? b.x : a.x;
@@ -116,7 +116,7 @@ namespace detail {
     //The serial CPU implementation of sort_by_key routine. This routines zips the key value pair and then sorts
     //using the std::sort routine.
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void serialCPU_sort_by_key( const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
+    static void serialCPU_sort_by_key( const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
                                 const RandomAccessIterator2 values_first,
                                 const StrictWeakOrdering& comp)
     {
@@ -143,7 +143,7 @@ namespace detail {
             *(values_first + i) = KeyValuePairVector[i].value;
         }
     }
-	unsigned int scanLocalMemAndTotal_by_key(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static unsigned int scanLocalMemAndTotal_by_key(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		// Set first half of local memory to zero to make room for scanning
 		int l_id = t_idx.local[ 0 ];
@@ -165,7 +165,7 @@ namespace detail {
 		*totalSum = lmem[l_size*2 - 1];
 		return lmem[l_id-exclusive];
 	}
-	unsigned int prefixScanVectorEx_by_key( uint_4* data ) restrict(amp)
+	static unsigned int prefixScanVectorEx_by_key( uint_4* data ) restrict(amp)
 	{
 		unsigned int sum = 0;
 		unsigned int tmp = data[0].x;
@@ -182,14 +182,14 @@ namespace detail {
 		sum += tmp;
 		return sum;
 	}
-	uint_4 localPrefixSum256V_by_key( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
+	static uint_4 localPrefixSum256V_by_key( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
 	{
 		unsigned int s4 = prefixScanVectorEx_by_key( &pData );
 		unsigned int rank = scanLocalMemAndTotal_by_key( s4, sorterSharedMemory, totalSum,  1, t_idx);
 		return pData + make_uint4( rank, rank, rank, rank );
 	}
 	template<typename Values>
-	void sort4BitsKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static void sort4BitsKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
 		{
@@ -264,7 +264,7 @@ namespace detail {
 		}
 	}
 	template<typename Values>
-	void sort4BitsSignedKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static void sort4BitsSignedKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		unsigned int signedints[4];
 	    signedints[0] = ( ( ( (sortData[0] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[0] >> startBit) & (1<<3));
@@ -360,7 +360,7 @@ namespace detail {
 	}
 
 
-	unsigned int scanlMemPrivData_by_key( unsigned int val,  unsigned int* lmem, int exclusive, 
+	static unsigned int scanlMemPrivData_by_key( unsigned int val,  unsigned int* lmem, int exclusive, 
 	                            concurrency::tiled_index< WG_SIZE > t_idx) restrict (amp)
 	{
 		// Set first half of local memory to zero to make room for scanning

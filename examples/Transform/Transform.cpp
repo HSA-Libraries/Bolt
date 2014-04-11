@@ -24,7 +24,7 @@ struct Functor
 {
 	float _a;
 	Functor(float a) : _a(a) {};
-	float operator() (const float &xx, const float &yy)
+	float operator() (const float &xx, const float &yy) const
 	{
 		return _a * xx + log(yy) + sqrt(xx);
 	};

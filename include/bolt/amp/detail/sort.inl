@@ -51,31 +51,25 @@
 #define uint_4 Concurrency::graphics::uint_4
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
-
-
 #define make_uint4 (uint_4)
-inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
-{
-	uint_4 res;
-	res.x = (condition.x )? b.x : a.x;
-	res.y = (condition.y )? b.y : a.y;
-	res.z = (condition.z )? b.z : a.z;
-	res.w = (condition.w )? b.w : a.w;
-	return res;
-
-}
 #define SET_HISTOGRAM(setIdx, key) ldsSortData[(setIdx)*NUM_BUCKET+key]
-
-
 
 namespace bolt {
 namespace amp {
 namespace detail {
 
-#define BOLT_SORT_INL_DEBUG 0
 
+	static inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
+	{
+		uint_4 res;
+		res.x = (condition.x )? b.x : a.x;
+		res.y = (condition.y )? b.y : a.y;
+		res.z = (condition.z )? b.z : a.z;
+		res.w = (condition.w )? b.w : a.w;
+		return res;
 
-	unsigned int scanLocalMemAndTotal(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	}
+	static unsigned int scanLocalMemAndTotal(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		// Set first half of local memory to zero to make room for scanning
 		int l_id = t_idx.local[ 0 ];
@@ -97,7 +91,7 @@ namespace detail {
 		*totalSum = lmem[l_size*2 - 1];
 		return lmem[l_id-exclusive];
 	}
-	unsigned int prefixScanVectorEx( uint_4* data ) restrict(amp)
+	static unsigned int prefixScanVectorEx( uint_4* data ) restrict(amp)
 	{
 		unsigned int sum = 0;
 		unsigned int tmp = data[0].x;
@@ -114,13 +108,13 @@ namespace detail {
 		sum += tmp;
 		return sum;
 	}
-	uint_4 localPrefixSum256V( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
+	static uint_4 localPrefixSum256V( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
 	{
 		unsigned int s4 = prefixScanVectorEx( &pData );
 		unsigned int rank = scanLocalMemAndTotal( s4, sorterSharedMemory, totalSum,  1, t_idx);
 		return pData + make_uint4( rank, rank, rank, rank );
 	}
-	void sort4BitsKeyValueAscending(unsigned int sortData[4],  const int startBit, int lIdx,  unsigned int* ldsSortData,  bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static void sort4BitsKeyValueAscending(unsigned int sortData[4],  const int startBit, int lIdx,  unsigned int* ldsSortData,  bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
 		{
@@ -184,7 +178,7 @@ namespace detail {
 			}
 		}
 	}
-	void sort4BitsSignedKeyValueAscending(unsigned int sortData[4],  const int startBit, int lIdx,  unsigned int* ldsSortData, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static void sort4BitsSignedKeyValueAscending(unsigned int sortData[4],  const int startBit, int lIdx,  unsigned int* ldsSortData, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		unsigned int signedints[4];
 	    signedints[0] = ( ( ( (sortData[0] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[0] >> startBit) & (1<<3));
@@ -270,7 +264,7 @@ namespace detail {
 	}
 
 
-	unsigned int scanlMemPrivData( unsigned int val,  unsigned int* lmem, int exclusive, 
+	static unsigned int scanlMemPrivData( unsigned int val,  unsigned int* lmem, int exclusive, 
 	                            concurrency::tiled_index< WG_SIZE > t_idx) restrict (amp)
 	{
 		// Set first half of local memory to zero to make room for scanning
