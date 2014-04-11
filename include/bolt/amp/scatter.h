@@ -29,23 +29,20 @@
 
 namespace bolt {
     namespace amp {
-
-        /*! \addtogroup algorithms
+		/*! \addtogroup algorithms
          */
 
-        /*! \addtogroup copying
-        *   \ingroup algorithms
+        /*! \addtogroup AMP-scatter
+        *   \ingroup copying
+        *   \{
+        */
+        
+        /*!      
         *   \p scatter APIs copy elements from a source range to a destination array (conditionally) according to a
         *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
         *   implementations. See Bolt Tools for Split-Source for a detailed description.
         */
-
-        /*! \addtogroup AMP-scatter
-        *   \ingroup algorithms
-        *   \{
-        */
-
-
+			
        /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
          * the corresponding \p input_first to result[ map [ i ] ]
@@ -71,7 +68,7 @@ namespace bolt {
          *  int output[10];
          *  bolt::amp::scatter(input, input + 10, map, output);
          *
-         *  // output is now {1, 2, 3, 4, 5, 6, 7, 8, 9, 12};
+         *  // output is now {12, 9, 7, 2, 4, 6, 1, 8, 5, 3};
          *  \endcode
          *
          */
@@ -93,7 +90,7 @@ namespace bolt {
                       InputIterator2 map,
                       OutputIterator result );
 
-       /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
+       /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
          * the corresponding \p input_first to result[ map [ i ] ] if stencil[ i - first ] is
          * \p true.
@@ -110,7 +107,7 @@ namespace bolt {
          *  \tparam InputIterator3 is a model of InputIterator
          *  \tparam OutputIterator is a model of OutputIterator
          *
-         *  \details The following code snippet demonstrates how to use \p scatter
+         *  \details The following code snippet demonstrates how to use \p scatter_if
          *
          *  \code
          *  #include <bolt/amp/scatter.h>
@@ -120,9 +117,9 @@ namespace bolt {
          *  int map[10]     = {8, 2, 3, 9, 0, 5, 1, 7, 6, 4};
          *  int stencil[10] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
          *  int output[10];
-         *  bolt::amp::scatter(input, input + 10, map, stencil, output);
+         *  bolt::amp::scatter_if(input, input + 10, map, stencil, output);
          *
-         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  // output is now {0, 9, 0, 0, 4, 6, 1, 8, 0, 0};
          *  \endcode
          *
          */
@@ -149,7 +146,7 @@ namespace bolt {
                          InputIterator3 stencil,
                          OutputIterator result);
 
-       /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
+       /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
          * the corresponding \p input_first to result[ map [ i ] ] if pred (stencil[ i - first ])
          * is \p true.
@@ -167,21 +164,19 @@ namespace bolt {
          *  \tparam OutputIterator is a model of OutputIterator
          *  \tparam Predicate is a model of Predicate
          *
-         *  \details The following code snippet demonstrates how to use \p scatter
+         *  \details The following code snippet demonstrates how to use \p scatter_if
          *
          *  \code
          *  #include <bolt/amp/scatter.h>
          *  #include <bolt/amp/functional.h>
          *
-         *  BOLT_FUNCTOR( greater_pred,
          *    struct greater_pred{
          *        bool operator () (int x)
          *        {
          *            return ( (x > 5)?1:0 );
          *        }
          *    };
-         *  );
-         *
+		 *
          *  ...
          *
          *  int input[10]   = {5, 7, 2, 3, 12, 6, 9, 8, 1, 4};
@@ -189,9 +184,9 @@ namespace bolt {
          *  int stencil[10] = {1, 3, 5, 2, 4, 6, 10, 9, 12, 22};
          *  int output[10];
          *  greater_pred is_gt_5;
-         *  bolt::amp::scatter(input, input + 10, map, stencil, output, is_gt_5);
+         *  bolt::amp::scatter_if(input, input + 10, map, stencil, output, is_gt_5);
          *
-         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  // output is now {0, 9, 0, 0, 4, 6, 1, 8, 0, 0};
          *  \endcode
          *
          */

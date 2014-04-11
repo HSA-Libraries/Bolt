@@ -27,21 +27,20 @@
 
 
 namespace bolt {
-    namespace cl {
+    namespace amp {
 
-        /*! \addtogroup algorithms
+		 /*! \addtogroup algorithms
          */
 
-        /*! \addtogroup copying
-        *   \ingroup algorithms
+        /*! \addtogroup AMP-gather
+        *   \ingroup copying
+        *   \{
+        */
+        
+        /*! 
         *   \p gather APIs copy elements from a source array to a destination range (conditionally) according to a
         *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
         *   implementations. See Bolt Tools for Split-Source for a detailed description.
-        */
-
-        /*! \addtogroup CL-gather
-        *   \ingroup algorithms
-        *   \{
         */
 
 
@@ -92,7 +91,7 @@ namespace bolt {
                      OutputIterator result );
 
 
-       /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
+       /*! \brief This version of \p gather_if copies elements from a source array to a destination range according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is
          * \p true.
@@ -108,7 +107,7 @@ namespace bolt {
          *  \tparam InputIterator3 is a model of InputIterator
          *  \tparam OutputIterator is a model of OutputIterator
          *
-         *  \details The following code snippet demonstrates how to use \p gather
+         *  \details The following code snippet demonstrates how to use \p gather_if
          *
          *  \code
          *  #include <bolt/amp/gather.h>
@@ -118,9 +117,9 @@ namespace bolt {
          *  int input[10] = {0, 11, 22, 33, 44, 55, 66, 77, 88, 99};
          *  int stencil[10] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
          *  int output[10];
-         *  bolt::amp::gather(map, map + 10, stencil, input, output);
+         *  bolt::amp::gather_if(map, map + 10, stencil, input, output);
          *
-         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  // output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};
          *  \endcode
          *
          */
@@ -146,7 +145,7 @@ namespace bolt {
                          InputIterator3 input_first,
                          OutputIterator result);
 
-       /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
+       /*! \brief This version of \p gather_if copies elements from a source array to a destination range according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ])
          * is \p true.
@@ -164,21 +163,18 @@ namespace bolt {
          *  \tparam OutputIterator is a model of OutputIterator
          *  \tparam Predicate is a model of Predicate
          *
-         *  \details The following code snippet demonstrates how to use \p gather
+         *  \details The following code snippet demonstrates how to use \p gather_if
          *
          *  \code
          *  #include <bolt/amp/gather.h>
          *  #include <bolt/amp/functional.h>
          *
-         *  BOLT_FUNCTOR( greater_pred,
          *    struct greater_pred{
          *        bool operator () (int x)
          *        {
          *            return ( (x > 5)?1:0 );
          *        }
          *    };
-         *  );
-         * 
          *  ...
          *
          *  int map[10] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
@@ -187,9 +183,9 @@ namespace bolt {
          *  int output[10];
          *
          *  greater_pred is_gt_5;
-         *  bolt::amp::gather(map, map + 10, stencil, input, output, is_gt_5);
+         *  bolt::amp::gather_if(map, map + 10, stencil, input, output, is_gt_5);
          *
-         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  // output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};
          *  \endcode
          *
          */

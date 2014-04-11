@@ -28,23 +28,21 @@
 
 namespace bolt {
     namespace cl {
-
-        /*! \addtogroup algorithms
+        
+		/*! \addtogroup algorithms
          */
 
-        /*! \addtogroup copying
-        *   \ingroup algorithms
+        /*! \addtogroup CL-gather
+        *   \ingroup copying
+        *   \{
+        */
+
+        /*! 
         *   \p gather APIs copy elements from a source array to a destination range (conditionally) according to a
         *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
         *   implementations. See Bolt Tools for Split-Source for a detailed description.
         */
-
-        /*! \addtogroup CL-gather
-        *   \ingroup algorithms
-        *   \{
-        */
-
-
+		
        /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ]
@@ -128,7 +126,7 @@ namespace bolt {
          *  int output[10];
          *  bolt::cl::gather(map, map + 10, stencil, input, output);
          *
-         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  // output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};
          *  \endcode
          *
          */
@@ -202,7 +200,7 @@ namespace bolt {
          *  greater_pred is_gt_5;
          *  bolt::cl::gather(map, map + 10, stencil, input, output, is_gt_5);
          *
-         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  // output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};
          *  \endcode
          *
          */
