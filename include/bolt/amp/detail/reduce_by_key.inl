@@ -174,9 +174,8 @@ reduce_by_key_enqueue(
     concurrency::array< voType >  preSumArray( sizeScanBuff, av );
     concurrency::array< voType >  postSumArray( sizeScanBuff, av );
     
-
-   device_vector<int> newKeyArray(numElements, 0, true, ctl);
-
+	concurrency::array< int >  tempArray( numElements, av );
+    device_vector<int> newKeyArray(tempArray);
 
     /**********************************************************************************
      *  Kernel 0

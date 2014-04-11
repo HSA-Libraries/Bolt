@@ -78,7 +78,7 @@ namespace amp {
 
 namespace detail {
 
-	static inline uint_4 SELECT_UINT4(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
+	static inline uint_4 SELECT_UINT4_FOR_KEY(uint_4 &a,uint_4 &b,uint_4  &condition )  restrict(amp)
 	{
 		uint_4 res;
 		res.x = (condition.x )? b.x : a.x;
@@ -143,7 +143,7 @@ namespace detail {
             *(values_first + i) = KeyValuePairVector[i].value;
         }
     }
-	static unsigned int scanLocalMemAndTotal_by_key(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static unsigned int scanLocalMemAndTotal_for_key(unsigned int val, unsigned int* lmem, unsigned int *totalSum, int exclusive, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		// Set first half of local memory to zero to make room for scanning
 		int l_id = t_idx.local[ 0 ];
@@ -165,7 +165,7 @@ namespace detail {
 		*totalSum = lmem[l_size*2 - 1];
 		return lmem[l_id-exclusive];
 	}
-	static unsigned int prefixScanVectorEx_by_key( uint_4* data ) restrict(amp)
+	static unsigned int prefixScanVectorEx_for_key( uint_4* data ) restrict(amp)
 	{
 		unsigned int sum = 0;
 		unsigned int tmp = data[0].x;
@@ -182,14 +182,14 @@ namespace detail {
 		sum += tmp;
 		return sum;
 	}
-	static uint_4 localPrefixSum256V_by_key( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
+	static uint_4 localPrefixSum256V_for_key( uint_4 pData, unsigned int lIdx, unsigned int* totalSum, unsigned int* sorterSharedMemory, concurrency::tiled_index< WG_SIZE > t_idx ) restrict(amp)
 	{
-		unsigned int s4 = prefixScanVectorEx_by_key( &pData );
-		unsigned int rank = scanLocalMemAndTotal_by_key( s4, sorterSharedMemory, totalSum,  1, t_idx);
+		unsigned int s4 = prefixScanVectorEx_for_key( &pData );
+		unsigned int rank = scanLocalMemAndTotal_for_key( s4, sorterSharedMemory, totalSum,  1, t_idx);
 		return pData + make_uint4( rank, rank, rank, rank );
 	}
 	template<typename Values>
-	static void sort4BitsKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static void sort4BitsKeyValueAscending_for_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
 		{
@@ -212,10 +212,10 @@ namespace detail {
 				temp.z = (cmpResult.z != 0);
 				temp.w = (cmpResult.w != 0);
 			}
-			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
+			prefixSum = SELECT_UINT4_FOR_KEY( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
 
 			unsigned int total = 0;
-			prefixSum = localPrefixSum256V_by_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
+			prefixSum = localPrefixSum256V_for_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
 			{
 				uint_4 localAddr(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
 				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
@@ -233,7 +233,7 @@ namespace detail {
 					temp.z = (cmpResult.z != 0);
 					temp.w = (cmpResult.w != 0);
 				}
-				dstAddr = SELECT_UINT4( prefixSum, dstAddr, temp);
+				dstAddr = SELECT_UINT4_FOR_KEY( prefixSum, dstAddr, temp);
 
 				t_idx.barrier.wait();
         
@@ -264,7 +264,7 @@ namespace detail {
 		}
 	}
 	template<typename Values>
-	static void sort4BitsSignedKeyValueAscending_by_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
+	static void sort4BitsSignedKeyValueAscending_for_key(unsigned int sortData[4],  Values sortVal[4], const int startBit, int lIdx,  unsigned int* ldsSortData,  Values *ldsSortVal, bool Asc_sort, concurrency::tiled_index< WG_SIZE > t_idx) restrict(amp)
 	{
 		unsigned int signedints[4];
 	    signedints[0] = ( ( ( (sortData[0] >> startBit) & 0x7 ) ^ 0x7 ) & 0x7 ) | ((sortData[0] >> startBit) & (1<<3));
@@ -295,10 +295,10 @@ namespace detail {
 				temp.z = (cmpResult.z != mask);
 				temp.w = (cmpResult.w != mask);
 			}
-			prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
+			prefixSum = SELECT_UINT4_FOR_KEY( make_uint4(1,1,1,1), make_uint4(0,0,0,0), temp );//(cmpResult != make_uint4(mask,mask,mask,mask)));
 
 			unsigned int total = 0;
-			prefixSum = localPrefixSum256V_by_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
+			prefixSum = localPrefixSum256V_for_key( prefixSum, lIdx, &total, ldsSortData, t_idx);
 			{
 				uint_4 localAddr(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
 				uint_4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
@@ -316,7 +316,7 @@ namespace detail {
 					temp.z = (cmpResult.z != mask);
 					temp.w = (cmpResult.w != mask);
 				}
-				dstAddr = SELECT_UINT4( prefixSum, dstAddr, temp);
+				dstAddr = SELECT_UINT4_FOR_KEY( prefixSum, dstAddr, temp);
 
 				t_idx.barrier.wait();
         
@@ -360,7 +360,7 @@ namespace detail {
 	}
 
 
-	static unsigned int scanlMemPrivData_by_key( unsigned int val,  unsigned int* lmem, int exclusive, 
+	static unsigned int scanlMemPrivData_for_key( unsigned int val,  unsigned int* lmem, int exclusive, 
 	                            concurrency::tiled_index< WG_SIZE > t_idx) restrict (amp)
 	{
 		// Set first half of local memory to zero to make room for scanning
@@ -552,7 +552,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 					val = dvHistogramBins[(numGroups * d) + lIdx];
 				}
 				// Exclusive scan the counts in local memory
-				unsigned int res =  scanlMemPrivData_by_key(val, lmem,1, t_idx);
+				unsigned int res =  scanlMemPrivData_for_key(val, lmem,1, t_idx);
 				// Write scanned value out to global
 				if (lIdx < numGroups)
 				{
@@ -646,7 +646,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						}
 					}
 				}
-				sort4BitsKeyValueAscending_by_key(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
+				sort4BitsKeyValueAscending_for_key(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
 
 				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
 				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
@@ -825,7 +825,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 						sortVal[i]  = ( addr+i < n )? dvSwapInputValues[ addr+i ] : 0x7fffffff;
 					}
 				}
-				sort4BitsSignedKeyValueAscending_by_key(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
+				sort4BitsSignedKeyValueAscending_for_key(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal, Asc_sort, t_idx);
 
 				unsigned int keys[ELEMENTS_PER_WORK_ITEM];
 				for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
