@@ -137,7 +137,7 @@ public:
 
         reference_base< Container >& operator=( const value_type& rhs )
         {
-            arrayview_type av( m_Container.m_devMemory ); //FIXTHIS
+            arrayview_type av( m_Container.m_devMemory );
             av[static_cast< int >( m_Index )] = rhs;
 
             return *this;
@@ -235,7 +235,7 @@ public:
     public:
 
         //  Basic constructor requires a reference to the container and a positional element
-        iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( int(index) )
+        iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( static_cast<int>(index) )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -293,7 +293,7 @@ public:
 
         void advance( difference_type n )
         {
-            m_Index += static_cast<int>(n); //FIXTHIS
+            m_Index += static_cast<int>(n);
         }
 
         void increment( )
@@ -344,7 +344,7 @@ private:
     public:
 
         //  Basic constructor requires a reference to the container and a positional element
-        reverse_iterator_base( Container& lhs, int index ): m_Container( lhs ), m_Index( int(index-1) )
+        reverse_iterator_base( Container& lhs, int index ): m_Container( lhs ), m_Index( static_cast<int>(index-1) )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -403,7 +403,7 @@ private:
 
         void advance( difference_type n )
         {
-            m_Index += int(n); //FIXTHIS
+            m_Index += static_cast<int>(n);
         }
 
         void increment( )
@@ -485,7 +485,6 @@ private:
         {
 			concurrency::array<value_type> *tmp = new array_type( static_cast< int >( m_Size ), ctl.getAccelerator().default_view );
             m_devMemory = arrayview_type( *tmp );
-			printf("***********************************\n");
             if( init )
             {
                 arrayview_type m_devMemoryAV( m_devMemory );
@@ -930,7 +929,7 @@ private:
     /*! \brief Retrieves the value stored at index 0.
     *   \note This returns a proxy object, to control when device memory gets mapped.
     */
-    value_type& front( void ) //FIXTHIS: implement dereference
+    value_type& front( void )
     {
 		return (*begin());
     }
@@ -938,7 +937,7 @@ private:
     /*! \brief Retrieves the value stored at index 0.
     *   \return Returns a const_reference, which is not a proxy object.
     */
-    const value_type& front( void ) const //FIXTHIS: implement dereference
+    const value_type& front( void ) const
     {
         return (*begin());
     }
@@ -946,7 +945,7 @@ private:
     /*! \brief Retrieves the value stored at index size( ) - 1.
     *   \note This returns a proxy object, to control when device memory gets mapped.
     */
-    value_type& back( void ) //FIXTHIS: implement dereference
+    value_type& back( void )
     {
 		return (*(end() - 1));
     }
@@ -954,7 +953,7 @@ private:
     /*! \brief Retrieves the value stored at index size( ) - 1.
     *   \return Returns a const_reference, which is not a proxy object.
     */
-    const value_type& back( void ) const //FIXTHIS: implement dereference
+    const value_type& back( void ) const
     {
 		return ( *(end() - 1) );
     }
@@ -1048,7 +1047,7 @@ private:
 
         size_type sizeTmp = m_Size;
         m_Size = vec.m_Size;
-        vec.m_Size = int(sizeTmp);
+        vec.m_Size = static_cast<int>(sizeTmp);
     }
 
     /*! \brief Removes an element.
@@ -1093,13 +1092,13 @@ private:
         iterator l_End = end( );
         size_type sizeMap = l_End.m_Index - first.m_Index;
 
-        arrayview_type av( m_devMemory ); //FIXTHIS
+        arrayview_type av( m_devMemory );
         naked_pointer ptrBuff = av.data();
         ptrBuff = ptrBuff + first.m_Index;
         size_type sizeErase = last.m_Index - first.m_Index;
         ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
 
-        m_Size -= int(sizeErase); //FIXTHIS
+        m_Size -= static_cast<int>(sizeErase);
 
         size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
         return iterator( *this, newIndex );
@@ -1133,7 +1132,7 @@ private:
 
         size_type sizeMap = (m_Size - index.m_Index) + 1;
 
-        arrayview_type av( m_devMemory ); //FIXTHIS
+        arrayview_type av( m_devMemory );
         naked_pointer ptrBuff = av.data();
         ptrBuff = ptrBuff + index.m_Index;
 
@@ -1198,7 +1197,7 @@ private:
         }
         size_type sizeMap = (m_Size - index.m_Index) + n;
 
-        arrayview_type av( m_devMemory ); //FIXTHIS
+        arrayview_type av( m_devMemory );
         naked_pointer ptrBuff = av.data() + index.m_Index;
 
         //  Shuffle the old values n element down.
@@ -1210,7 +1209,7 @@ private:
         std::copy( begin, end, ptrBuff );
 #endif
 
-        m_Size += int(n);
+        m_Size += static_cast<int>(n);
     }
 
     /*! \brief Assigns newSize copies of element value.
@@ -1249,7 +1248,7 @@ private:
         {
             reserve( l_Count );
         }
-        m_Size = int(l_Count);
+        m_Size = static_cast<int>(l_Count);
 
         arrayview_type m_devMemoryAV( m_devMemory );
         naked_pointer ptrBuff = m_devMemoryAV.data();

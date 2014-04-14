@@ -33,6 +33,43 @@ namespace amp {
         {   // identifying tag for random-access iterators
         };
 
+        /*! \addtogroup fancy_iterators
+         */
+
+        /*! \addtogroup AMP-CountingIterator
+        *   \ingroup fancy_iterators
+        *   \{
+        */
+
+        /*! counting_iterator iterates a range with sequential values.
+         *
+         *
+         *
+         *  \details The following demonstrates how to use a \p counting_iterator.
+         *
+         *  \code
+         *  #include <bolt/amp/counting_iterator.h>
+         *  #include <bolt/amp/transform.h>
+         *  ...
+         *
+         *  std::vector<int> vecSrc( 5 );
+         *  std::vector<int> vecDest( 5 );
+         *
+         *  std::fill( vecSrc.begin( ), vecSrc.end( ), 10 );
+         *
+         *  bolt::amp::control ctrl = control::getDefault( );
+         *  ...
+         *  bolt::amp::counting_iterator< int > count5( 5 );
+         *  bolt::amp::transform( ctrl, vecSrc.begin( ), vecSrc.end( ), count5, vecDest.begin( ), bolt::amp::plus< int >( ) );
+         *
+         *  // Output:
+         *  // vecDest = { 15, 16, 17, 18, 19 }
+         *
+         *  // counting_iterator can save bandwidth when used instead of a range of values. 
+         *  \endcode
+         *
+         */
+
         template< typename value_type >
         class counting_iterator: public std::iterator< counting_iterator_tag, typename value_type, int>
         {
@@ -96,8 +133,6 @@ namespace amp {
             //  Public member variables
             difference_type m_Index;
 
-       //private:
-
             //  Used for templatized copy constructor and the templatized equal operator
             template < typename > friend class counting_iterator;
 
@@ -156,7 +191,6 @@ namespace amp {
                 return sameIndex;
             }
 
-            // Do we need this? Debug error
             template< typename OtherType >
             bool operator< ( const counting_iterator< OtherType >& rhs ) const
             {
@@ -165,7 +199,6 @@ namespace amp {
                 return sameIndex;
             }
 
-            // Dereference operators
             value_type operator*() const restrict(cpu,amp)
             {
                 value_type xy = m_initValue + m_Index;
@@ -179,7 +212,7 @@ namespace amp {
               return temp;
             }
 
-
+          private:
             value_type m_initValue;
         };
 

@@ -33,6 +33,41 @@ namespace amp {
         {   // identifying tag for random-access iterators
         };
 
+        /*! \addtogroup fancy_iterators
+         */
+
+        /*! \addtogroup AMP-ConstantIterator
+        *   \ingroup fancy_iterators
+        *   \{
+        */
+
+        /*! constant_iterator iterates a range with a constant value.
+         *
+         *
+         *
+         *  \details The following demonstrates how to use a \p constant_iterator.
+         *
+         *  \code
+         *  #include <bolt/amp/constant_iterator.h>
+         *  #include <bolt/amp/transform.h>
+         *  ...
+         *
+         *  std::vector<int> vecSrc( 5 );
+         *  std::vector<int> vecDest( 5 );
+         *
+         *  std::fill( vecSrc.begin( ), vecSrc.end( ), 10 );
+         *
+         *  bolt::amp::control ctrl = control::getDefault( );
+         *  ...
+         *  bolt::amp::constant_iterator< int > const5( 5 );
+         *  bolt::amp::transform( ctrl, vecSrc.begin( ), vecSrc.end( ), const5, vecDest.begin( ), bolt::amp::plus< int >( ) );
+         *
+         *  // vecDest is vector filled with the value 15, the sum of vecSrc and the constant value 5 from the iterator
+         *  // constant_iterator can save bandwidth when used instead of a range of values. 
+         *  \endcode
+         *
+         */
+
         template< typename value_type >
         class constant_iterator: public std::iterator< constant_iterator_tag, typename value_type, int>
         {
@@ -42,7 +77,6 @@ namespace amp {
 
              typedef concurrency::array_view< value_type > arrayview_type;
              typedef constant_iterator<value_type> const_iterator;
-             typedef 
            
 
             struct Payload
@@ -103,7 +137,6 @@ namespace amp {
             //  Public member variables
             difference_type m_Index;
 
-       //private:
 
             //  Used for templatized copy constructor and the templatized equal operator
             template < typename > friend class constant_iterator;
@@ -167,7 +200,6 @@ namespace amp {
                 return sameIndex;
             }
 
-            // Do we need this? Debug error
             template< typename OtherType >
             bool operator< ( const constant_iterator< OtherType >& rhs ) const
             {
@@ -176,14 +208,11 @@ namespace amp {
                 return sameIndex;
             }
 
-
-
             value_type operator*() const restrict(cpu,amp)
             {
               value_type xy =  m_constValue;
               return xy;
             }
-
 
             value_type operator[](int x) const restrict(cpu,amp)
             {
@@ -191,6 +220,7 @@ namespace amp {
               return xy;
             }
 
+           private:
             value_type m_constValue;
         };
 
