@@ -380,7 +380,7 @@ namespace cl{
         const std::string& cl_code,
 		bolt::cl::fancy_iterator_tag)
     {
-		 return count(ctl, first, last, predicate, cl_code, bolt::cl::memory_system<InputIterator>::type() );
+		 return count(ctl, first, last, predicate, cl_code, typename bolt::cl::memory_system<InputIterator>::type() );
 
 	}
 	

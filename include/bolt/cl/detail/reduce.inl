@@ -336,7 +336,7 @@ namespace cl{
                                             typename bolt::cl::iterator_traits< InputIterator >::iterator_category( ), 
                                             last, dvInput.end());
         return cl::reduce(ctl, device_iterator_first, device_iterator_last, init, binary_op, 
-            cl_code, bolt::cl::device_vector_tag() );
+            cl_code, typename bolt::cl::device_vector_tag() );
     }
 
     template<typename T, typename InputIterator, typename BinaryFunction>
@@ -349,7 +349,7 @@ namespace cl{
                 bolt::cl::fancy_iterator_tag)
     {
         //TODO - this is a hacky solution. But for now this is what striking me.
-        return reduce(ctl, first, last, init, binary_op, cl_code, bolt::cl::memory_system<InputIterator>::type() );
+        return reduce(ctl, first, last, init, binary_op, cl_code, typename bolt::cl::memory_system<InputIterator>::type() );
     }
 
 } // end of namespace cl
@@ -383,7 +383,7 @@ namespace cl{
             #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
             #endif
-            return serial::reduce(ctl, first, last, init, binary_op, std::iterator_traits<InputIterator>::iterator_category());
+            return serial::reduce(ctl, first, last, init, binary_op, typename std::iterator_traits<InputIterator>::iterator_category());
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
@@ -391,7 +391,7 @@ namespace cl{
             #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Reduce::MULTICORE_CPU");
             #endif
-            return btbb::reduce(ctl, first, last, init, binary_op, std::iterator_traits<InputIterator>::iterator_category() );
+            return btbb::reduce(ctl, first, last, init, binary_op, typename std::iterator_traits<InputIterator>::iterator_category() );
 #else
             throw std::runtime_error( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
 #endif
@@ -401,7 +401,7 @@ namespace cl{
             #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Reduce::OPENCL_GPU");
             #endif
-            return cl::reduce(ctl, first, last, init, binary_op, cl_code, std::iterator_traits<InputIterator>::iterator_category() );
+            return cl::reduce(ctl, first, last, init, binary_op, cl_code, typename std::iterator_traits<InputIterator>::iterator_category() );
         }
         return init;
     }

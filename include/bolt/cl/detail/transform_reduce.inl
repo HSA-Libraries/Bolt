@@ -383,7 +383,7 @@ namespace cl{
 
 		// Map the input iterator to a device_vector
         return  transform_reduce( ctl, device_iterator_first, device_iterator_last, 
-			transform_op, init, reduce_op, user_code, bolt::cl::device_vector_tag() );
+			transform_op, init, reduce_op, user_code, typename bolt::cl::device_vector_tag() );
 
     }
 
@@ -400,7 +400,7 @@ namespace cl{
 			bolt::cl::fancy_iterator_tag)
     {
         return transform_reduce(ctl, first, last, transform_op, init, reduce_op, user_code,
-                                bolt::cl::memory_system<InputIterator>::type() );  
+                                typename bolt::cl::memory_system<InputIterator>::type() );  
     }
 
 } // end of namespace cl
@@ -437,7 +437,7 @@ namespace cl{
                     #endif
 			      	
                     return serial::transform_reduce(ctl,  first, last, transform_op, init, reduce_op, user_code,
-						std::iterator_traits<InputIterator>::iterator_category() );
+						typename std::iterator_traits<InputIterator>::iterator_category() );
                 }
                 else if (runMode == bolt::cl::control::MultiCoreCpu)
                 {
@@ -448,7 +448,7 @@ namespace cl{
                     #endif
 				      
 				    return  btbb::transform_reduce( ctl, first, last, transform_op, init, reduce_op, user_code,
-						std::iterator_traits<InputIterator>::iterator_category() );
+						typename std::iterator_traits<InputIterator>::iterator_category() );
 #else
 
                     throw std::runtime_error( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");
@@ -461,7 +461,7 @@ namespace cl{
 					"::Transform_Reduce::OPENCL_GPU");
                 #endif
                 return  cl::transform_reduce( ctl, first, last, transform_op, init, reduce_op, user_code,
-					std::iterator_traits<InputIterator>::iterator_category() );
+					typename std::iterator_traits<InputIterator>::iterator_category() );
     };
 
 
