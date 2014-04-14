@@ -45,6 +45,7 @@ namespace cl {
             typedef typename boost::iterator_facade< constant_iterator< value_type >, value_type, constant_iterator_tag, 
                                    value_type, int >::difference_type        difference_type;
             typedef constant_iterator_tag                                    iterator_category;
+            typedef std::random_access_iterator_tag                          memory_system;
             typedef value_type *                                             pointer; 
 
             struct Payload

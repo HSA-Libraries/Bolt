@@ -45,6 +45,7 @@ namespace cl {
 	    typedef typename boost::iterator_facade< counting_iterator< value_type >, value_type, 
             counting_iterator_tag, value_type, int >::difference_type  difference_type;
             typedef counting_iterator_tag                              iterator_category;
+            typedef std::random_access_iterator_tag                    memory_system;
             //typedef value_type                                         value_type;
             typedef value_type *                                       pointer; 
 

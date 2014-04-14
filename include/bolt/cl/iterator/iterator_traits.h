@@ -79,6 +79,7 @@ namespace cl {
     template< typename iterator >
     struct iterator_traits
     {
+        typedef typename iterator::iterator_category memory_system;
         typedef typename iterator::iterator_category iterator_category;
         typedef typename iterator::value_type value_type;
         typedef typename iterator::difference_type difference_type;
@@ -142,6 +143,11 @@ namespace cl {
       typedef typename bolt::cl::iterator_traits<Iterator>::iterator_category type;
     }; // end iterator_category
 
+    template<typename Iterator>
+      struct memory_system
+    {
+      typedef typename Iterator::memory_system type;
+    }; // end iterator_category
 
     ////template< typename newTag, typename InputIterator >
     ////InputIterator retag( InputIterator )

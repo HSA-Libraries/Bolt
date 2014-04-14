@@ -95,6 +95,7 @@ namespace cl
 
   public:
     typedef transform_iterator_tag                                   iterator_category;
+    typedef typename bolt::cl::iterator_category<Iterator>::type     memory_system;
     typedef super_t                                                  iterator_base_class;
     //
     typedef UnaryFunc                                                unary_func;
@@ -211,6 +212,7 @@ namespace cl
 
    //  This string represents the device side definition of the Transform Iterator template
     static std::string deviceTransformIteratorTemplate = 
+        bolt::cl::deviceVectorIteratorTemplate +
         std::string("#if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n") +
         STRINGIFY_CODE(
             #define BOLT_CL_TRANSFORM_ITERATOR \n

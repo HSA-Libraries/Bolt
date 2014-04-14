@@ -13,6 +13,12 @@ namespace cl{
         return std::addressof(*itr);
     }
 
+    template <typename T>
+    T * addressof(T* itr)
+    {
+        return itr;
+    }
+
     template <typename UnaryFunction, typename Iterator>
     typename bolt::cl::transform_iterator<UnaryFunction, Iterator>::pointer 
         addressof(typename bolt::cl::transform_iterator<UnaryFunction, Iterator> itr)
@@ -28,7 +34,7 @@ namespace cl{
     {
         typedef typename bolt::cl::counting_iterator<value_type>::pointer pointer;
         pointer ptr = itr;
-        return itr;
+        return ptr;
     }
 
     template <typename value_type>
@@ -37,7 +43,7 @@ namespace cl{
     {
         typedef typename bolt::cl::constant_iterator<value_type>::pointer pointer;
         pointer ptr = itr;
-        return itr;
+        return ptr;
     }
 
     
@@ -54,6 +60,13 @@ namespace cl{
     template <typename Iterator, typename DeviceIterator>
     const typename bolt::cl::device_vector<typename Iterator::value_type>::iterator 
     create_device_itr(std::random_access_iterator_tag, Iterator itr, DeviceIterator dev_itr)
+    {
+        return dev_itr;
+    }
+
+    template <typename T, typename DeviceIterator>
+    const typename bolt::cl::device_vector<T>::iterator 
+    create_device_itr(std::random_access_iterator_tag, T* ptr, DeviceIterator dev_itr)
     {
         return dev_itr;
     }

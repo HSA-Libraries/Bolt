@@ -314,7 +314,7 @@ namespace cl
       reference
       operator[](difference_type n) const
       {
-          return (this->derived() + n);
+          return *(this->derived() + n);
       }
 
       Derived& operator++()
