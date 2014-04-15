@@ -1,17 +1,17 @@
-/***************************************************************************       
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
 ***************************************************************************/
 #pragma once
@@ -35,18 +35,52 @@ namespace cl {
 
         };
 
-        //  This represents the host side definition of the constant_iterator template
-        //BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
+
+        /*! \addtogroup fancy_iterators
+         */
+
+        /*! \addtogroup CL-ConstantIterator
+        *   \ingroup fancy_iterators
+        *   \{
+        */
+
+        /*! constant_iterator iterates a range with a constant value.
+         *
+         *
+         *
+         *  \details The following demonstrates how to use a \p constant_iterator.
+         *
+         *  \code
+         *  #include <bolt/cl/constant_iterator.h>
+         *  #include <bolt/cl/transform.h>
+         *  ...
+         *
+         *  std::vector<int> vecSrc( 5 );
+         *  std::vector<int> vecDest( 5 );
+         *
+         *  std::fill( vecSrc.begin( ), vecSrc.end( ), 10 );
+         *
+         *  bolt::cl::control ctrl = control::getDefault( );
+         *  ...
+         *  bolt::cl::constant_iterator< int > const5( 5 );
+         *  bolt::cl::transform( ctrl, vecSrc.begin( ), vecSrc.end( ), const5, vecDest.begin( ), bolt::cl::plus< int >( ) );
+         *
+         *  // vecDest is vector filled with the value 15, the sum of vecSrc and the constant value 5 from the iterator
+         *  // constant_iterator can save bandwidth when used instead of a range of values.
+         *  \endcode
+         *
+         */
+
         template< typename value_type >
-        class constant_iterator: public boost::iterator_facade< constant_iterator< value_type >, value_type, 
+        class constant_iterator: public boost::iterator_facade< constant_iterator< value_type >, value_type,
             constant_iterator_tag, value_type, int >
         {
         public:
-            typedef typename boost::iterator_facade< constant_iterator< value_type >, value_type, constant_iterator_tag, 
+            typedef typename boost::iterator_facade< constant_iterator< value_type >, value_type, constant_iterator_tag,
                                    value_type, int >::difference_type        difference_type;
             typedef constant_iterator_tag                                    iterator_category;
             typedef std::random_access_iterator_tag                          memory_system;
-            typedef value_type *                                             pointer; 
+            typedef value_type *                                             pointer;
 
             struct Payload
             {
@@ -54,7 +88,7 @@ namespace cl {
             };
 
             //  Basic constructor requires a reference to the container and a positional element
-            constant_iterator( value_type init, const control& ctl = control::getDefault( ) ): 
+            constant_iterator( value_type init, const control& ctl = control::getDefault( ) ):
                 m_constValue( init ), m_Index( 0 )
             {
                 const ::cl::CommandQueue& m_commQueue = ctl.getCommandQueue( );
@@ -86,20 +120,20 @@ namespace cl {
                 return *this;
             }
 
-            operator pointer() { 
-                return &m_constValue; 
-            } 
+            operator pointer() {
+                return &m_constValue;
+            }
 
-            operator const pointer() const { 
-                return &m_constValue; 
-            }                 
+            operator const pointer() const {
+                return &m_constValue;
+            }
 
             constant_iterator< value_type >& operator+= ( const  difference_type & n )
             {
                 advance( n );
                 return *this;
             }
-                
+
             const constant_iterator< value_type > operator+ ( const difference_type & n ) const
             {
                 constant_iterator< value_type > result( *this );
@@ -121,7 +155,7 @@ namespace cl {
             {
                 return *this;
             }
-            
+
             Payload gpuPayload( ) const
             {
                 Payload payload = { m_constValue };
@@ -172,7 +206,7 @@ namespace cl {
                 return sameIndex;
             }
 
-            typename boost::iterator_facade< constant_iterator< value_type >, value_type, 
+            typename boost::iterator_facade< constant_iterator< value_type >, value_type,
             constant_iterator_tag, value_type, int >::reference dereference( ) const
             {
                 return m_constValue;
@@ -184,9 +218,9 @@ namespace cl {
     //)
 
     //  This string represents the device side definition of the constant_iterator template
-    static std::string deviceConstantIterator = 
+    static std::string deviceConstantIterator =
         std::string("#if !defined(BOLT_CL_CONSTANT_ITERATOR) \n") +
-        STRINGIFY_CODE( 
+        STRINGIFY_CODE(
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class constant_iterator \n
@@ -219,7 +253,7 @@ namespace cl {
         }; \n
     } } \n
     )
-    +  std::string("#endif \n"); 
+    +  std::string("#endif \n");
 
     template< typename Type >
     constant_iterator< Type > make_constant_iterator( Type constValue )
