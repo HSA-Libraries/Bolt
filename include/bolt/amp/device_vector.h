@@ -65,20 +65,18 @@ namespace amp
     {
     public:
         // Create an AV on the CPU
-        static concurrency::array_view<T> getav() restrict(cpu)
+        static concurrency::array<T> getav() restrict(cpu)
         {
             static T type_default;
-            return concurrency::array_view<T>(1, &type_default);
+            return concurrency::array<T>(1, &type_default);
         }
 
         // Create a null AV on Accelerator
-        static concurrency::array_view<T> getav() restrict(amp)
+        static concurrency::array<T> getav() restrict(amp)
         {
-            return concurrency::array_view<T>(0, nullptr);
+            return concurrency::array<T>(0, nullptr);
         }
     };
-
-
 /*! \brief This defines the AMP version of a device_vector
 *   \ingroup AMP-Device
 *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant
@@ -467,7 +465,9 @@ private:
     */
     device_vector( control& ctl = control::getDefault( ) )
         : m_Size( static_cast<int>(0) ), m_devMemory( create_empty_array_view<value_type>::getav() )
-    { }
+    { 
+		
+	}
 
     /*! \brief A constructor that creates a new device_vector with the specified number of elements,
     *   with a specified initial value.
@@ -483,8 +483,8 @@ private:
     {
         if( m_Size > 0 )
         {
-			concurrency::array<value_type> *tmp = new array_type( static_cast< int >( m_Size ), ctl.getAccelerator().default_view );
-            m_devMemory = arrayview_type( *tmp );
+			concurrency::array<value_type> tmp = array_type( static_cast< int >( m_Size ), ctl.getAccelerator().default_view );
+            m_devMemory = arrayview_type( tmp );
             if( init )
             {
                 arrayview_type m_devMemoryAV( m_devMemory );
@@ -514,44 +514,50 @@ private:
 		if( m_Size > 0 )
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-			m_devMemory = container_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ]) );
+			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+            m_devMemory = tmp;
 		}
-
     };
 
-    /*! \brief A constructor that creates a new device_vector using a range specified by the user.
-    *   \param cont An object that has both .data() and .size() members
+    /*! \brief A constructor that creates a new device_vector from device_vector specified by user.
+    *   \param cont An device_vector object that has both .data() and .size() members
     */
-    
-    template< typename T>
-    device_vector( device_vector<T, concurrency::array > & cont ): m_Size( cont.size( ) ),
-																   m_devMemory( create_empty_array_view<value_type>::getav() )
+    device_vector( const device_vector &cont ): m_Size( cont.size( ) ), m_devMemory( create_empty_array_view<value_type>::getav() )
     {
 		if( m_Size > 0 )
         {
-          
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-			m_devMemory = new container_type( cont.m_devMemory.section(ext) );
+			concurrency::array_view<value_type> tmp = arrayview_type(cont.m_devMemory);
+			m_devMemory = tmp;
 		}
     };
-
 	
-    /*! \brief A constructor that creates a new device_vector using concurrency::array.
+    /*! \brief A constructor that creates a new device_vector using a pre-initialized array supplied by the user.
     *   \param cont An concurrency::array object.
-	*   \param newSize The number of elements of the new device_vector
     */
-	template< typename T>
-    device_vector( concurrency::array<T> &cont): m_devMemory( create_empty_array_view<value_type>::getav() )
+    device_vector( arrayview_type &cont): m_devMemory( create_empty_array_view<value_type>::getav() )
     {
 		m_Size =  cont.get_extent().size();
 		if( m_Size > 0 )
         {
-			m_devMemory = container_type( cont );
+			concurrency::array_view<value_type> tmp = arrayview_type(cont);
+			m_devMemory = tmp;
 		}
-		
     };
 
 
+   /*! \brief A constructor that creates a new device_vector using a pre-initialized array_view supplied by the user.
+    *   \param cont An concurrency::array_view object.
+    */
+    device_vector( array_type &cont): m_devMemory( create_empty_array_view<value_type>::getav() )
+    {
+		m_Size =  cont.get_extent().size();
+		if( m_Size > 0 )
+        {
+			concurrency::array_view<value_type> tmp = arrayview_type(cont);
+			m_devMemory = tmp;
+		}
+		
+    };
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.
@@ -570,19 +576,10 @@ private:
 		if( m_Size > 0 )
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-			m_devMemory = container_type( ext, reinterpret_cast< value_type* >( &begin[0] ) );
-
+			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+            m_devMemory = tmp;
 		}
 
-    };
-
-    /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
-    *   \param rhs A pre-existing ::cl::Buffer supplied by the user.
-    *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
-    */
-    device_vector( container_type& rhs, control& ctl = control::getDefault( ) ): m_devMemory( rhs )
-    {
-        m_Size = capacity( );
     };
 
     //destructor for device_vector
@@ -591,7 +588,6 @@ private:
     }
 
     //  Member functions
-
 
     /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
     *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
@@ -657,6 +653,7 @@ private:
     *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
     */
 
+
     void resize( size_type reqSize, const value_type& val = value_type( ) )
     {
         size_type cap = capacity( );
@@ -665,8 +662,8 @@ private:
             return;
 
         //TODO - Add if statement for max size allowed in array class
-        array_type* l_tmpArray = new array_type((int)reqSize);
-        arrayview_type l_tmpBuffer = arrayview_type(*l_tmpArray);
+        array_type l_tmpArray = array_type(reqSize);
+        arrayview_type l_tmpBuffer = arrayview_type(l_tmpArray);
         if( m_Size > 0 )
         {
             //1622 Arrays are logically considered to be value types in that when an array is copied to another array,
@@ -677,7 +674,7 @@ private:
             {
                 m_devMemory.copy_to(l_tmpBuffer.section( 0, m_devMemory.get_extent().size() ) );
                 arrayview_type l_tmpBufferSectionAV =
-                    l_tmpBuffer.section((int)m_Size, (int)(reqSize - m_Size));
+                l_tmpBuffer.section(m_Size, (reqSize - m_Size));
                 concurrency::parallel_for_each(l_tmpBufferSectionAV.extent, [=](Concurrency::index<1> idx) restrict(amp)
                 {
                     l_tmpBufferSectionAV[idx] = val;
@@ -685,9 +682,8 @@ private:
             }
             else
             {
-                arrayview_type l_devMemoryAV = m_devMemory.section(0, (int)reqSize);
-                arrayview_type l_tmpBufferAV = l_tmpBuffer.section(0, (int)reqSize);
-                l_devMemoryAV.copy_to(l_tmpBufferAV);
+                arrayview_type l_devMemoryAV = m_devMemory.section(0, reqSize);
+                l_devMemoryAV.copy_to(l_tmpBuffer);
             }
         }
         else
@@ -698,11 +694,8 @@ private:
                 l_tmpBufferAV[idx] = val;
             });
         }
-
         //  Remember the new size
         m_Size = reqSize;
-        //  delete the old buffer
-        //delete(m_devMemory);
         m_devMemory = l_tmpBuffer;
     }
 
@@ -715,21 +708,7 @@ private:
         return m_Size;
     }
 
-    /*! \brief Return the maximum number of elements possible to allocate on the associated device.
-    *   \return The maximum amount of memory possible to allocate, counted in elements.
-    */
-    /*size_type max_size( void ) const
-    {
-        cl_int l_Error = CL_SUCCESS;
-
-        ::cl::Device l_Device = m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error );
-        V_OPENCL( l_Error, "device_vector failed to query for the device of the command queue" );
-
-        size_type l_MaxSize  = l_Device.getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
-        V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
-
-        return l_MaxSize / sizeof( value_type );
-    }*/
+  
 
     /*! \brief Request a change in the capacity of the device_vector.
     *   If reserve completes successfully,
@@ -742,28 +721,24 @@ private:
     *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
     *   \TODO what if reqSize < the size of the original buffer
     */
+
     void reserve( size_type reqSize )
     {
-        if( reqSize <= capacity( ) )
-            return;
+       if( reqSize <= capacity( ) )
+           return;
 
-        if( capacity() == 0 )
+		concurrency::array<value_type> tmp =  array_type( static_cast< int >( reqSize ) );
+		arrayview_type l_tmpBuffer = arrayview_type( tmp );
+		if( m_Size > 0 )
         {
-            concurrency::extent<1> reqExt( static_cast< int >( reqSize ) );
+			if( capacity() != 0 )
+			{
+				arrayview_type l_tmpBuffer = arrayview_type( tmp );
+				m_devMemory.copy_to(l_tmpBuffer.section(0, m_devMemory.get_extent().size()));
+			}
+		}
+		m_devMemory = l_tmpBuffer;
 
-            concurrency::array<value_type> *tmp = new array_type( static_cast< int >( reqSize ) );
-            m_devMemory = arrayview_type( *tmp );
-        }
-        else
-        {
-            concurrency::extent<1> reqExt( static_cast< int >( reqSize ) );
-
-            concurrency::array<value_type> *tmp = new array_type( static_cast< int >( reqSize ) );
-            arrayview_type l_tmpBuffer = arrayview_type( *tmp );
-
-            m_devMemory.copy_to(l_tmpBuffer.section(0,m_devMemory.get_extent().size()));
-            m_devMemory = l_tmpBuffer;
-        }
     }
 
     /*! \brief Return the maximum possible number of elements without reallocation.
@@ -787,8 +762,8 @@ private:
         if( m_Size == capacity( ) )
              return;
 
-        array_type* l_tmpArray = new array_type( static_cast< int >( size( ) ) );
-        arrayview_type l_tmpBuffer = arrayview_type(*l_tmpArray);
+        array_type l_tmpArray = array_type( static_cast< int >( size( ) ) );
+        arrayview_type l_tmpBuffer = arrayview_type(l_tmpArray);
         arrayview_type l_devMemoryAV = m_devMemory.section( 0,(int)size() );
         arrayview_type l_tmpBufferAV = l_tmpBuffer.section( 0,(int)size() );
 
@@ -1268,7 +1243,6 @@ private:
     void synchronize( device_vector< T, concurrency::array >& rhs )
     {
     };
-
     void synchronize( device_vector< T, concurrency::array_view >& rhs )
     {
         rhs.m_devMemory.synchronize( );
