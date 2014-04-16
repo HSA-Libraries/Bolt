@@ -249,9 +249,9 @@ void serial_gather_if(InputIterator1 mapfirst,
         else
 		{						
           // Map the input iterator to a device_vector
-		  device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, true, ctl );
-		  device_vector< iType2, concurrency::array_view> dvStencil( stencil, sz, true, ctl );
-		  device_vector< iType3, concurrency::array_view> dvInput( input, sz, true, ctl );
+		  device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, false, ctl );
+		  device_vector< iType2, concurrency::array_view> dvStencil( stencil, sz, false, ctl );
+		  device_vector< iType3, concurrency::array_view> dvInput( input, sz, false, ctl );
 
           // Map the output iterator to a device_vector
 		  device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
@@ -316,8 +316,8 @@ void serial_gather_if(InputIterator1 mapfirst,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, true, ctl );
-		    device_vector< iType3, concurrency::array_view> dvInput( input, sz, true, ctl );
+		    device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, false, ctl );
+		    device_vector< iType3, concurrency::array_view> dvInput( input, sz, false, ctl );
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
 
@@ -382,8 +382,8 @@ void serial_gather_if(InputIterator1 mapfirst,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType2, concurrency::array_view> dvStencil( stencil, sz, true, ctl );
-		    device_vector< iType3, concurrency::array_view> dvInput( input, sz, true, ctl );
+		    device_vector< iType2, concurrency::array_view> dvStencil( stencil, sz, false, ctl );
+		    device_vector< iType3, concurrency::array_view> dvInput( input, sz, false, ctl );
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
             gather_if_enqueue( ctl,
@@ -519,8 +519,8 @@ void serial_gather_if(InputIterator1 mapfirst,
         else
         {		  
           // Map the input iterator to a device_vector		  
-		  device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, true, ctl );
-		  device_vector< iType2, concurrency::array_view> dvInput( input, sz, true, ctl );
+		  device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, false, ctl );
+		  device_vector< iType2, concurrency::array_view> dvInput( input, sz, false, ctl );
           // Map the output iterator to a device_vector
 		  device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
           gather_enqueue( ctl,
@@ -574,7 +574,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType2, concurrency::array_view> dvInput( input, sz, true, ctl );
+		    device_vector< iType2, concurrency::array_view> dvInput( input, sz, false, ctl );
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
             gather_enqueue( ctl,
@@ -630,7 +630,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, true, ctl );
+		    device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, false, ctl );
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
             gather_enqueue( ctl,
@@ -856,7 +856,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType2, concurrency::array_view> dvInput( input, sz, true, ctl );
+		    device_vector< iType2, concurrency::array_view> dvInput( input, sz, false, ctl );
 
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
@@ -918,7 +918,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, true, ctl );
+		    device_vector< iType1, concurrency::array_view> dvMap( map_first, map_last, false, ctl );
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
 

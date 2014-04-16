@@ -40,12 +40,12 @@ void scatter(InputIterator1 first1,
              InputIterator2 map, 
              OutputIterator result)
              { 
-                 size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+                 int numElements = static_cast< int >( std::distance( first1, last1 ) );
                  //This allows TBB to choose the number of threads to spawn.               
                  tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);  
-                 tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
+                 tbb::parallel_for (tbb::blocked_range<int>(0,numElements),[&](const tbb::blocked_range<int>& r)
                  {
-                    for(size_t iter = r.begin(); iter!=r.end(); iter++)
+                    for(int iter = r.begin(); iter!=r.end(); iter++)
                              result[*(map+(int)iter)] = first1[(int)iter];
                  });
              }
@@ -61,12 +61,12 @@ template<typename InputIterator1,
                   InputIterator3 stencil,
                   OutputIterator result)
             {
-                 size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+                 int numElements = static_cast< int >( std::distance( first1, last1 ) );
                 //This allows TBB to choose the number of threads to spawn.               
                  tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);  
-                 tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
+                 tbb::parallel_for (tbb::blocked_range<int>(0,numElements),[&](const tbb::blocked_range<int>& r)
                  {
-                    for(size_t iter = r.begin(); iter!=r.end(); iter++)
+                    for(int iter = r.begin(); iter!=r.end(); iter++)
                     {
                         if(stencil[iter] == 1)
                             result[*(map+(int)iter)] = first1[(int)iter];
@@ -88,12 +88,12 @@ template<typename InputIterator1,
                   OutputIterator result,
                   BinaryPredicate pred)
            {
-			     size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+			     int numElements = static_cast< int >( std::distance( first1, last1 ) );
                 //This allows TBB to choose the number of threads to spawn.               
                  tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);  
-                 tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
+                 tbb::parallel_for (tbb::blocked_range<int>(0,numElements),[&](const tbb::blocked_range<int>& r)
                  {
-                    for(size_t iter = r.begin(); iter!=r.end(); iter++)
+                    for(int iter = r.begin(); iter!=r.end(); iter++)
                     {
                        if(pred(stencil[(int)iter]))
                             result[*(map+((int)iter))] = first1[(int)iter];
