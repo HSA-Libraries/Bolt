@@ -72,7 +72,7 @@ gold_reduce_by_key_enqueue( InputIterator1 keys_first,
     static_assert( std::is_convertible< vType, voType >::value,
                    "InputIterator2 and OutputIterator's value types are not convertible." );
 
-   unsigned int numElements = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+   int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
 
     // do zeroeth element
     *values_output = *values_first;
@@ -147,7 +147,7 @@ reduce_by_key_enqueue(
     typedef typename std::iterator_traits< DVOutputIterator1 >::value_type koType;
     typedef typename std::iterator_traits< DVOutputIterator2 >::value_type voType;
    
-    unsigned int numElements = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+    int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
     const unsigned int kernel0_WgSize = WAVESIZE*KERNEL02WAVES;
     const unsigned int kernel1_WgSize = WAVESIZE*KERNEL1WAVES ;
     const unsigned int kernel2_WgSize = WAVESIZE*KERNEL02WAVES;
@@ -160,7 +160,7 @@ reduce_by_key_enqueue(
         sizeInputBuff &= ~modWgSize;
         sizeInputBuff += kernel0_WgSize;
     }
-    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / (kernel0_WgSize) );
+    int numWorkGroupsK0 = static_cast< int >( sizeInputBuff / (kernel0_WgSize) );
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     unsigned int sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
@@ -194,7 +194,7 @@ reduce_by_key_enqueue(
 			] ( concurrency::index< 1 > t_idx ) restrict(amp)
 	   {
 
-			unsigned int gloId = t_idx[ 0 ];
+			int gloId = t_idx[ 0 ];
 
 
 			if (gloId >= numElements)
@@ -263,8 +263,8 @@ reduce_by_key_enqueue(
 					] ( concurrency::tiled_index< kernel0_WgSize > t_idx )  restrict(amp)
 			  {
 
-				unsigned int gloId = t_idx.global[ 0 ] + global_offset ;
-				unsigned int groId = t_idx.tile[ 0 ] + wg_offset ;
+				int gloId = t_idx.global[ 0 ] + global_offset ;
+				int groId = t_idx.tile[ 0 ] + wg_offset ;
 				unsigned int locId = t_idx.local[ 0 ];
 				unsigned int wgSize = kernel0_WgSize;
 
@@ -325,7 +325,7 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
-    unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
+    int workPerThread = static_cast< int >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;		
     concurrency::extent< 1 > globalSizeK2( kernel1_WgSize );
     concurrency::tiled_extent< kernel1_WgSize > tileK2 = globalSizeK2.tile< kernel1_WgSize >();
@@ -345,18 +345,18 @@ reduce_by_key_enqueue(
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
   {
 
-    unsigned int gloId = t_idx.global[ 0 ];
-    unsigned int groId = t_idx.tile[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
-    unsigned int wgSize = kernel1_WgSize;
-    unsigned int mapId  = gloId * workPerThread;
+     int gloId = t_idx.global[ 0 ];
+    int groId = t_idx.tile[ 0 ];
+    int locId = t_idx.local[ 0 ];
+    int wgSize = kernel1_WgSize;
+    int mapId  = gloId * workPerThread;
 
     tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES ];
     tile_static int ldsKeys[ WAVESIZE*KERNEL02WAVES ];
     
 
     // do offset of zero manually
-    unsigned int offset;
+    int offset;
     int key;
     voType workSum;
 
@@ -493,7 +493,7 @@ reduce_by_key_enqueue(
         ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
   {
 
-	unsigned int gloId = t_idx.global[ 0 ] + global_offset ;
+	int gloId = t_idx.global[ 0 ] + global_offset ;
 	unsigned int groId = t_idx.tile[ 0 ] + wg_offset ;
 	unsigned int locId = t_idx.local[ 0 ];
 	unsigned int wgSize = kernel2_WgSize;
@@ -621,7 +621,7 @@ reduce_by_key_pick_iterator(
     typedef typename std::iterator_traits< OutputIterator2 >::value_type voType;
     static_assert( std::is_convertible< vType, voType >::value, "InputValue and Output iterators are incompatible" );
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+    int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
     if( numElements == 1 )
         return  bolt::amp::make_pair( keys_last, values_first+numElements );
 
@@ -708,7 +708,7 @@ reduce_by_key_pick_iterator(
     typedef typename std::iterator_traits< DVOutputIterator2 >::value_type voType;
     static_assert( std::is_convertible< vType, voType >::value, "InputValue and Output iterators are incompatible" );
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+    int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
     if( numElements == 1 )
         return  bolt::amp::make_pair( keys_last, values_first+numElements );
 

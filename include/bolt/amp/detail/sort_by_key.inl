@@ -125,11 +125,11 @@ namespace detail {
         typedef std_sort<keyType, valType> KeyValuePair;
         typedef std_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
 
-        unsigned int vecSize = static_cast< unsigned int >(std::distance( keys_first, keys_last ));
+        int vecSize = static_cast< int >(std::distance( keys_first, keys_last ));
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_sort vector.
-        for (unsigned int i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             KeyValuePairVector[i].key   = *(keys_first + i);
             KeyValuePairVector[i].value = *(values_first + i);
@@ -137,7 +137,7 @@ namespace detail {
         //Sort the std_sort vector using std::sort
         std::sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
         //Extract the keys and values from the KeyValuePair and fill the respective iterators.
-        for (unsigned int i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
@@ -396,7 +396,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
     typedef typename std::iterator_traits< DVValues >::value_type Values;
     const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
                          //local array_view of 16 elements in the histogram kernel.
-    unsigned int orig_szElements = static_cast<unsigned int>(std::distance(keys_first, keys_last));
+    int orig_szElements = static_cast<int>(std::distance(keys_first, keys_last));
 	const unsigned int localSize  = WG_SIZE;
 
 	unsigned int szElements = (unsigned int)orig_szElements;
@@ -409,8 +409,8 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
 	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-	device_vector< Keys, concurrency::array_view > dvSwapInputKeys(static_cast<unsigned int>(orig_szElements), 0);
-    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<unsigned int>(orig_szElements), 0);
+	device_vector< Keys, concurrency::array_view > dvSwapInputKeys(static_cast<int>(orig_szElements), 0);
+    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<int>(orig_szElements), 0);
 
 	bool Asc_sort = 0;
 	if(comp(2,3))
@@ -435,7 +435,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< unsigned int, concurrency::array_view > dvHistogramBins(static_cast<unsigned int>(numGroups * RADICES), 0 );
+	device_vector< int, concurrency::array_view > dvHistogramBins(static_cast<int>(numGroups * RADICES), 0 );
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
@@ -997,7 +997,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
         // User defined Data types are not supported with device_vector. Hence we have a static assert here.
         // The code here should be in compliant with the routine following this routine.
         unsigned int szElements = (unsigned int)(keys_last - keys_first);
-        if (szElements == 0 )
+        if (szElements < 2 )
                 return;
         bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
         if( runMode == bolt::amp::control::Automatic )
@@ -1050,7 +1050,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
         typedef typename std::iterator_traits<RandomAccessIterator2>::value_type T_values;
         unsigned int szElements = (unsigned int)(keys_last - keys_first);
-        if (szElements == 0)
+        if (szElements < 2)
             return;
 
         bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );

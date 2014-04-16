@@ -76,10 +76,10 @@ namespace bolt {
 					accelerator(concurrency::accelerator::cpu_accelerator);
 				concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
 
-				const unsigned int szElements = static_cast< unsigned int >(std::distance(first, last));
+				const int szElements = static_cast< int >(std::distance(first, last));
 
 
-				unsigned int length = (MIN_MAX_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				int length = (MIN_MAX_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
 				length = szElements < length ? szElements : length;
 				unsigned int residual = length % MIN_MAX_WAVEFRONT_SIZE;
 				length = residual ? (length + MIN_MAX_WAVEFRONT_SIZE - residual): length ;
@@ -108,8 +108,8 @@ namespace bolt {
                                                      binary_op ]
 					(concurrency::tiled_index<MIN_MAX_WAVEFRONT_SIZE> t_idx) restrict(amp)
                     {
-                      unsigned int globalId = t_idx.global[ 0 ];
-					  unsigned int gx = globalId;
+                      int globalId = t_idx.global[ 0 ];
+					  int gx = globalId;
 					  unsigned int tileIndex = t_idx.local[0];
 
                       //  Initialize local data store
@@ -211,8 +211,8 @@ namespace bolt {
 						binary_op]
 					(concurrency::tiled_index<MIN_MAX_WAVEFRONT_SIZE> t_idx) restrict(amp)
 					{
-						unsigned int globalId = t_idx.global[0];
-						unsigned int gx = globalId;
+						int globalId = t_idx.global[0];
+						int gx = globalId;
 						unsigned int tileIndex = t_idx.local[0];
 
 						//  Initialize local data store
@@ -315,7 +315,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<ForwardIterator>::value_type iType;
-                unsigned int szElements = static_cast< unsigned int >(last - first);
+                int szElements = static_cast< int >(last - first);
                 if (szElements == 0)
                     return last;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
@@ -375,7 +375,7 @@ namespace bolt {
                 bolt::amp::device_vector_tag)
             {
 				typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                unsigned int szElements = static_cast< unsigned int >(last - first);
+                int szElements = static_cast< int >(last - first);
                 if (szElements == 0)
                     return last;
 
@@ -435,7 +435,7 @@ namespace bolt {
                 const char * min_max,
                 bolt::amp::fancy_iterator_tag)
             {
-                unsigned int szElements = static_cast< unsigned int >(last - first);
+                int szElements = static_cast< int >(last - first);
                 if (szElements == 0)
                     return last;
 

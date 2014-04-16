@@ -53,7 +53,7 @@ void generate_enqueue(
 
 	        typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
 
-            const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
+            const int szElements =  static_cast< int >( std::distance( first, last ) );
 
             const unsigned int leng =  szElements + GEN_WAVEFRONT_SIZE - (szElements % GEN_WAVEFRONT_SIZE);
 
@@ -65,7 +65,7 @@ void generate_enqueue(
                 concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
                 {
 
-                    unsigned int globalId = idx[ 0 ];
+                    int globalId = idx[ 0 ];
 
                     if( globalId >= szElements)
                          return;
@@ -100,7 +100,7 @@ void generate_enqueue(
             {
                 typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
 
-                unsigned int sz = static_cast< unsigned int >(last - first);
+                int sz = static_cast< int >(last - first);
                 if (sz < 1)
                     return;
 

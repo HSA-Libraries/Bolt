@@ -154,7 +154,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 {
 
     concurrency::accelerator_view av = ctrl.getAccelerator().default_view;
-    unsigned int vecSize = static_cast< unsigned int >( std::distance( first, last ) );
+    int vecSize = static_cast< int >( std::distance( first, last ) );
 
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
@@ -203,10 +203,10 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 				] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
 		  {
 
-			unsigned int gloId = t_idx.global[ 0 ] + index;
-			unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+			int gloId = t_idx.global[ 0 ] + index;
+			int groId = t_idx.tile[ 0 ] + tile_index;
 			unsigned int locId = t_idx.local[ 0 ];
-			unsigned int wgSize = localRange;
+			int wgSize = localRange;
 
 			tile_static iType lds[STABLESORT_BUFFER_SIZE]; 
 			tile_static iType lds2[STABLESORT_BUFFER_SIZE]; 
@@ -217,7 +217,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 			}
 			//  Make a copy of the entire input array into fast local memory
 			t_idx.barrier.wait();
-			unsigned int end =  wgSize;
+			int end =  wgSize;
 			if( (groId+1)*(wgSize) >= vecSize )
 				end = vecSize - (groId*wgSize);
 
@@ -225,18 +225,18 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 			unsigned int pass;
 			for( pass = 1; pass <= numMerges; ++pass )
 			{
-				unsigned int srcLogicalBlockSize = 1 << (pass-1);
+				int srcLogicalBlockSize = 1 << (pass-1);
 				if( gloId < vecSize)
 				{
   					unsigned int srcBlockNum = (locId) / srcLogicalBlockSize;
 					unsigned int srcBlockIndex = (locId) % srcLogicalBlockSize;
     
 					unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
-					unsigned int leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
+					int leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
 
 					leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
 					leftBlockIndex = min( leftBlockIndex, end );
-					unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
+					int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
     
 					unsigned int insertionIndex = 0;
 					if(pass%2 != 0)
@@ -315,7 +315,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     {
 
         //  For each pass, the merge window doubles
-        unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
+        int srcLogicalBlockSize = static_cast< int >( localRange << (pass-1) );
 
         try
         {
@@ -331,7 +331,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         ] ( concurrency::index<1> idx ) restrict(amp)
    {
 
-    unsigned int gloID = idx[ 0 ];
+    int gloID = idx[ 0 ];
 
     //  Abort threads that are passed the end of the input vector
     if( gloID >= vecSize )
@@ -347,11 +347,11 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     //  An even block should search for an insertion point in the next odd block, 
     //  and the odd block should look for an insertion point in the corresponding previous even block
     unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
-    unsigned int leftBlockIndex = gloID & ~(dstLogicalBlockSize - 1 );
+    int leftBlockIndex = gloID & ~(dstLogicalBlockSize - 1 );
     //printf("mergeTemplate: leftBlockIndex=%d\n", leftBlockIndex );
     leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
     leftBlockIndex = min( leftBlockIndex, vecSize );
-    unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, vecSize );
+    int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, vecSize );
     
 	//  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
     // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
@@ -434,7 +434,7 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
 
     typedef typename std::iterator_traits< RandomAccessIterator >::value_type Type;
 
-    unsigned int vecSize = static_cast< unsigned int >(std::distance( first, last ));
+    int vecSize = static_cast< int >(std::distance( first, last ));
     if( vecSize < 2 )
         return;
 
@@ -484,7 +484,7 @@ void stablesort_pick_iterator( control &ctl,
 
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type Type;
 
-    unsigned int vecSize = static_cast< unsigned int >(std::distance( first, last ));
+    int vecSize = static_cast< int >(std::distance( first, last ));
     if( vecSize < 2 )
         return;
 

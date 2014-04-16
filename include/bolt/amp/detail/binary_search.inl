@@ -47,7 +47,7 @@ namespace bolt {
 				concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
 
-                unsigned int szElements = static_cast< unsigned int>( std::distance( first, last ) );
+                int szElements = static_cast< int>( std::distance( first, last ) );
                 unsigned int szElements_b = szElements;
                 
                 unsigned int residual = szElements % BINARY_SEARCH_WAVEFRONT_SIZE;
@@ -210,7 +210,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
-                unsigned int sz = static_cast<unsigned int>((last - first));
+                int sz = static_cast<int>((last - first));
                 if (sz < 1)
                      return false;
 
@@ -254,7 +254,7 @@ namespace bolt {
                 bolt::amp::device_vector_tag )
             {
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
-                unsigned int szElements = static_cast<unsigned int>(std::distance(first, last) );
+                int szElements = static_cast<int>(std::distance(first, last) );
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode(); // could be dynamic choice some day.
                 if(runMode == bolt::amp::control::Automatic)
                 {
@@ -291,7 +291,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
-                unsigned int szElements = static_cast<unsigned int>(std::distance(first, last) );
+                int szElements = static_cast<int>(std::distance(first, last) );
                 if (szElements == 0)
                     return false;
 

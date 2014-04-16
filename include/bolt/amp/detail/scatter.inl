@@ -48,7 +48,7 @@ void gold_scatter_enqueue (InputIterator1 first1,
                            InputIterator2 map,
                            OutputIterator result)
     {
-       int numElements = static_cast<  int >( std::distance( first1, last1 ) );
+       int numElements = static_cast< int >( std::distance( first1, last1 ) );
 
 	   for (int iter = 0; iter<(int)numElements; iter++)
                 *(result+*(map + iter)) = *(first1 + iter);
@@ -64,7 +64,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
                               InputIterator3 stencil,
                               OutputIterator result)
    {
-       int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+       int numElements = static_cast< int >( std::distance( first1, last1 ) );
        for(int iter = 0; iter<numElements; iter++)
         {
              if(stencil[iter] == 1)
@@ -118,14 +118,14 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
 		typedef std::iterator_traits< DVInputIterator3 >::value_type iType3;
 		typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        const unsigned int szElements = static_cast< unsigned int >(  std::distance(first1,last1) );
-		const unsigned int leng =  szElements + SCATTER_WAVEFRNT_SIZE - (szElements % SCATTER_WAVEFRNT_SIZE);
+        const int szElements = static_cast< int >(  std::distance(first1,last1) );
+		const int leng =  szElements + SCATTER_WAVEFRNT_SIZE - (szElements % SCATTER_WAVEFRNT_SIZE);
 		concurrency::extent< 1 > inputExtent(leng);
                 try
                 {
                     concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
                     {
-                        unsigned int globalId = idx[ 0 ];
+                        int globalId = idx[ 0 ];
 
                         if( globalId >= szElements)
                         return;
@@ -163,14 +163,14 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
 		typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
 		typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        const unsigned int szElements = static_cast< unsigned int >(  std::distance(first1,last1) );
+        const int szElements = static_cast< int >(  std::distance(first1,last1) );
 		const unsigned int leng =  szElements + SCATTER_WAVEFRNT_SIZE - (szElements % SCATTER_WAVEFRNT_SIZE);
 		concurrency::extent< 1 > inputExtent(leng);
                 try
                 {
                     concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
                     {
-                        unsigned int globalId = idx[ 0 ];
+                        int globalId = idx[ 0 ];
 
                         if( globalId >= szElements)
                         return;
@@ -221,7 +221,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
 
         if (sz == 0)
             return;
@@ -291,7 +291,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
         if (sz == 0)
             return;
 
@@ -360,7 +360,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        int sz = static_cast<  int >(std::distance( fancyIterfirst, fancyIterlast ));
+        int sz = static_cast< int >(std::distance( fancyIterfirst, fancyIterlast ));
         if (sz == 0)
             return;
 
@@ -432,7 +432,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits< DVInputIterator3 >::value_type iType3;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
         if( sz == 0 )
             return;
 
@@ -505,7 +505,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
 
         if (sz == 0)
             return;
@@ -567,7 +567,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        int sz = static_cast<  int >(std::distance( firstFancy, lastFancy ));
+        int sz = static_cast< int >(std::distance( firstFancy, lastFancy ));
         if (sz == 0)
             return;
 
@@ -628,7 +628,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
         if (sz == 0)
             return;
 
@@ -689,7 +689,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits< DVInputIterator2 >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
         if( sz == 0 )
             return;
 
@@ -748,7 +748,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits< DVMapIterator >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        int sz = static_cast<  int >(std::distance( firstFancy, lastFancy ));
+        int sz = static_cast< int >(std::distance( firstFancy, lastFancy ));
         if( sz == 0 )
             return;
 
@@ -802,7 +802,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits< FancyMapIterator >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
         if( sz == 0 )
             return;
 
@@ -857,7 +857,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<DVInputIterator>::value_type iType1;
         typedef typename std::iterator_traits<MapIterator>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        int sz = static_cast<  int >(std::distance( first, last ));
+        int sz = static_cast< int >(std::distance( first, last ));
         if (sz == 0)
             return;
 
@@ -918,7 +918,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         typedef typename std::iterator_traits<InputIterator>::value_type iType1;
         typedef typename std::iterator_traits<DVMapIterator>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        int sz = static_cast<  int >(std::distance( first1, last1 ));
+        int sz = static_cast< int >(std::distance( first1, last1 ));
         if (sz == 0)
             return;
 

@@ -102,7 +102,7 @@ unsigned int k0_stepNum, k1_stepNum, k2_stepNum;
 
     int exclusive = inclusive ? 0 : 1;
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    int numElements = static_cast< int >( std::distance( first, last ) );
     const unsigned int kernel0_WgSize = SCAN_WAVESIZE*SCAN_KERNELWAVES;
     const unsigned int kernel1_WgSize = SCAN_WAVESIZE*SCAN_KERNELWAVES ;
     const unsigned int kernel2_WgSize = SCAN_WAVESIZE*SCAN_KERNELWAVES;
@@ -115,7 +115,7 @@ unsigned int k0_stepNum, k1_stepNum, k2_stepNum;
         sizeInputBuff &= ~modWgSize;
         sizeInputBuff += (kernel0_WgSize*2);
     }
-    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / (kernel0_WgSize*2) );
+    int numWorkGroupsK0 = static_cast< int >( sizeInputBuff / (kernel0_WgSize*2) );
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     unsigned int sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
@@ -173,13 +173,13 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 				unsigned int gloId = t_idx.global[ 0 ] + index;
 				unsigned int groId = t_idx.tile[ 0 ] + tile_index;
 				unsigned int locId = t_idx.local[ 0 ];
-				unsigned int wgSize = kernel0_WgSize;
+				int wgSize = kernel0_WgSize;
 
 				tile_static iType lds[ SCAN_WAVESIZE*SCAN_KERNELWAVES*2 ];
 
 				wgSize *=2;
 
-				unsigned int input_offset = (groId*wgSize)+locId;
+				int input_offset = (groId*wgSize)+locId;
 				// if exclusive, load gloId=0 w/ identity, and all others shifted-1
 				if(input_offset < numElements)
 					lds[locId] = first[input_offset];
@@ -231,7 +231,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 //aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
+    int workPerThread = static_cast< int >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;
 
 
@@ -257,14 +257,14 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
   {
         unsigned int gloId = t_idx.global[ 0 ];
-        unsigned int locId = t_idx.local[ 0 ];
-        unsigned int wgSize = kernel1_WgSize;
-        unsigned int mapId  = gloId * workPerThread;
+        int locId = t_idx.local[ 0 ];
+        int wgSize = kernel1_WgSize;
+        int mapId  = gloId * workPerThread;
 
         tile_static iType lds[ SCAN_WAVESIZE*SCAN_KERNELWAVES ];
 
         // do offset of zero manually
-        unsigned int offset;
+        int offset;
         iType workSum;
         if (mapId < numWorkGroupsK0)
         {
@@ -374,10 +374,10 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 					kernel2_WgSize
 				] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
 		  {
-				unsigned int gloId = t_idx.global[ 0 ] + index;
+				int gloId = t_idx.global[ 0 ] + index;
 				unsigned int groId = t_idx.tile[ 0 ] + tile_index;
-				unsigned int locId = t_idx.local[ 0 ];
-				unsigned int wgSize = kernel2_WgSize;
+				int locId = t_idx.local[ 0 ];
+				int wgSize = kernel2_WgSize;
 
 				 tile_static iType lds[ SCAN_WAVESIZE*SCAN_KERNELWAVES ];
 				// if exclusive, load gloId=0 w/ identity, and all others shifted-1
@@ -433,7 +433,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 				//  Computes a scan within a workgroup
 				sum = lds[ locId ];
 
-				for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+				for( int offset = 1; offset < wgSize; offset *= 2 )
 				{
 					t_idx.barrier.wait();
 					if (locId >= offset)
@@ -536,7 +536,7 @@ scan_pick_iterator(
     typedef typename std::iterator_traits< OutputIterator >::value_type oType;
     static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    int numElements = static_cast< int >( std::distance( first, last ) );
     if( numElements < 1 )
         return result;
 
@@ -625,7 +625,7 @@ scan_pick_iterator(
     typedef typename std::vector<iType>::iterator InputIterator;
     typedef typename std::vector<oType>::iterator OutputIterator;
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    int numElements = static_cast< int >( std::distance( first, last ) );
     if( numElements < 1 )
         return result;
 

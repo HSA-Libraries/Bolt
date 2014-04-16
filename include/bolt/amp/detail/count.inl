@@ -59,14 +59,14 @@ namespace bolt {
 				concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
 
 
-				const unsigned int szElements = static_cast< unsigned int >(std::distance(first, last));
+				const int szElements = static_cast< int >(std::distance(first, last));
 
 
-				unsigned int length = (COUNT_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				int length = (COUNT_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
 				length = szElements < length ? szElements : length;
-				unsigned int residual = length % COUNT_WAVEFRONT_SIZE;
+				int residual = length % COUNT_WAVEFRONT_SIZE;
 				length = residual ? (length + COUNT_WAVEFRONT_SIZE - residual): length ;
-				unsigned int numTiles = (length / COUNT_WAVEFRONT_SIZE);
+				int numTiles = (length / COUNT_WAVEFRONT_SIZE);
 
 				concurrency::array< unsigned int, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
 					cpuAcceleratorView);
@@ -94,8 +94,8 @@ namespace bolt {
                                                      predicate ]
 					(concurrency::tiled_index<COUNT_WAVEFRONT_SIZE> t_idx) restrict(amp)
                     {
-						unsigned int gx = t_idx.global[0];
-						unsigned int gloId = gx;
+						int gx = t_idx.global[0];
+						int gloId = gx;
 						unsigned int tileIndex = t_idx.local[0];
                       //  Initialize local data store
                       bool stat;
@@ -159,7 +159,7 @@ namespace bolt {
 
 					unsigned int *cpuPointerReduce = result.data();
 					unsigned int count = cpuPointerReduce[0];
-					for (unsigned int i = 1; i < numTiles; ++i)
+					for (int i = 1; i < numTiles; ++i)
                     {
 
                        count +=  cpuPointerReduce[i];
@@ -217,7 +217,7 @@ namespace bolt {
             {
                 /*************/
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                unsigned int szElements = static_cast< unsigned int >(last - first);
+                int szElements = static_cast< int >(last - first);
                 if (szElements == 0)
                     return 0;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
@@ -265,7 +265,7 @@ namespace bolt {
                                  bolt::amp::device_vector_tag )
             {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                unsigned int szElements = static_cast< unsigned int > (last - first);
+                int szElements = static_cast< int > (last - first);
                 if (szElements == 0)
                     return 0;
 
@@ -314,7 +314,7 @@ namespace bolt {
                                  bolt::amp::fancy_iterator_tag )
             {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                unsigned int szElements = static_cast< unsigned int > (last - first);
+                int szElements = static_cast< int > (last - first);
                 if (szElements == 0)
                     return 0;
 

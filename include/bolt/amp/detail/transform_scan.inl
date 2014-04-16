@@ -117,7 +117,7 @@ transform_scan_enqueue(
   
 	int exclusive = inclusive ? 0 : 1;
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    int numElements = static_cast< int >( std::distance( first, last ) );
     const unsigned int kernel0_WgSize = TRANSFORMSCAN_WAVESIZE*TRANSFORMSCAN_KERNELWAVES;
     const unsigned int kernel1_WgSize = TRANSFORMSCAN_WAVESIZE*TRANSFORMSCAN_KERNELWAVES ;
     const unsigned int kernel2_WgSize = TRANSFORMSCAN_WAVESIZE*TRANSFORMSCAN_KERNELWAVES;
@@ -130,7 +130,7 @@ transform_scan_enqueue(
         sizeInputBuff &= ~modWgSize;
         sizeInputBuff += (kernel0_WgSize*2);
     }
-    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / (kernel0_WgSize*2) );
+    int numWorkGroupsK0 = static_cast< int >( sizeInputBuff / (kernel0_WgSize*2) );
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     unsigned int sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
@@ -180,14 +180,14 @@ transform_scan_enqueue(
 			unsigned int gloId = t_idx.global[ 0 ];
 			unsigned int groId = t_idx.tile[ 0 ];
 			unsigned int locId = t_idx.local[ 0 ];
-			unsigned int wgSize = kernel0_WgSize;
+			int wgSize = kernel0_WgSize;
 
 			tile_static oType lds[ TRANSFORMSCAN_WAVESIZE*TRANSFORMSCAN_KERNELWAVES*2 ];
 
 			wgSize *=2;
 
 			oType val;
-			unsigned int input_offset = (groId*wgSize)+locId+index;
+			int input_offset = (groId*wgSize)+locId+index;
 			// load input into shared memory
 			if(input_offset < numElements){
 			  iType inVal = first[input_offset];
@@ -248,7 +248,7 @@ transform_scan_enqueue(
      *  Kernel 1
      *********************************************************************************/
 
-    unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
+    int workPerThread = static_cast< int >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;
 
     concurrency::extent< 1 > globalSizeK1( kernel1_WgSize );
@@ -267,14 +267,14 @@ transform_scan_enqueue(
   {
         unsigned int gloId = t_idx.global[ 0 ];
         unsigned int groId = t_idx.tile[ 0 ];
-        unsigned int locId = t_idx.local[ 0 ];
-        unsigned int wgSize = kernel1_WgSize;
-        unsigned int mapId  = gloId * workPerThread;
+        int locId = t_idx.local[ 0 ];
+        int wgSize = kernel1_WgSize;
+        int mapId  = gloId * workPerThread;
 
         tile_static oType lds[ TRANSFORMSCAN_WAVESIZE*TRANSFORMSCAN_KERNELWAVES ];
 
         // do offset of zero manually
-        unsigned int offset;
+        int offset;
         oType workSum;
         if (mapId < numWorkGroupsK0)
         {
@@ -388,10 +388,10 @@ transform_scan_enqueue(
 				kernel2_WgSize
 			] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
 	  {
-			unsigned int gloId = t_idx.global[ 0 ] + index;
+			int gloId = t_idx.global[ 0 ] + index;
 			unsigned int groId = t_idx.tile[ 0 ] + tile_index;
-			unsigned int locId = t_idx.local[ 0 ];
-			unsigned int wgSize = kernel2_WgSize;
+			int locId = t_idx.local[ 0 ];
+			int wgSize = kernel2_WgSize;
 
 			tile_static oType lds[ TRANSFORMSCAN_WAVESIZE*TRANSFORMSCAN_KERNELWAVES ];
 			// if exclusive, load gloId=0 w/ identity, and all others shifted-1
@@ -450,7 +450,7 @@ transform_scan_enqueue(
 			//  Computes a scan within a workgroup
 			sum = lds[ locId ];
         
-			for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+			for( int offset = 1; offset < wgSize; offset *= 2 )
 			{
 				t_idx.barrier.wait();
 				if (locId >= offset)
@@ -511,7 +511,7 @@ transform_scan_pick_iterator(
     typedef typename std::iterator_traits< OutputIterator >::value_type oType;
     //static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    int numElements = static_cast< int >( std::distance( first, last ) );
     if( numElements == 0 )
         return result;
 
@@ -598,7 +598,7 @@ transform_scan_pick_iterator(
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
     //static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    int numElements = static_cast< int >( std::distance( first, last ) );
     if( numElements < 1 )
         return result;
     bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );

@@ -193,7 +193,7 @@ scan_by_key_enqueue(
 
     int exclusive = inclusive ? 0 : 1;
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
+    int numElements = static_cast< int >( std::distance( firstKey, lastKey ) );
     const unsigned int kernel0_WgSize = SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES;
     const unsigned int kernel1_WgSize = SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES;
     const unsigned int kernel2_WgSize = SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES;
@@ -206,7 +206,7 @@ scan_by_key_enqueue(
         sizeInputBuff &= ~modWgSize;
         sizeInputBuff += (kernel0_WgSize*2);
     }
-    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / (kernel0_WgSize*2) );
+    int numWorkGroupsK0 = static_cast< int >( sizeInputBuff / (kernel0_WgSize*2) );
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     unsigned int sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
@@ -258,10 +258,10 @@ scan_by_key_enqueue(
 			] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
 			  {
 
-				unsigned int gloId = t_idx.global[ 0 ] + index;
+				int gloId = t_idx.global[ 0 ] + index;
 				unsigned int groId = t_idx.tile[ 0 ] + tile_index;
 				unsigned int locId = t_idx.local[ 0 ];
-				unsigned int wgSize = kernel0_WgSize;
+				int wgSize = kernel0_WgSize;
 
 				tile_static vType ldsVals[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES*2 ];
 				tile_static kType ldsKeys[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES*2 ];
@@ -269,7 +269,7 @@ scan_by_key_enqueue(
 
   				unsigned int  offset = 1;
 				// load input into shared memory
-				unsigned int input_offset = (groId*wgSize)+locId;
+				int input_offset = (groId*wgSize)+locId;
 
 				if (exclusive)
 				{
@@ -359,7 +359,7 @@ scan_by_key_enqueue(
    /**********************************************************************************
      *  Kernel 1
      *********************************************************************************/
-    unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
+    int workPerThread = static_cast< int >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;
 
 	concurrency::extent< 1 > globalSizeK1( kernel1_WgSize );
@@ -381,15 +381,15 @@ scan_by_key_enqueue(
 
 	unsigned int gloId = t_idx.global[ 0 ];
     unsigned int groId = t_idx.tile[ 0 ];
-    unsigned int locId = t_idx.local[ 0 ];
-    unsigned int wgSize = kernel1_WgSize;
-    unsigned int mapId  = gloId * workPerThread;
+    int locId = t_idx.local[ 0 ];
+    int wgSize = kernel1_WgSize;
+    int mapId  = gloId * workPerThread;
 
     tile_static kType ldsKeys[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES];
 	tile_static vType ldsVals[ SCANBYKEY_WAVESIZE*SCANBYKEY_KERNELWAVES ];
 
 	// do offset of zero manually
-    unsigned int offset;
+    int offset;
     kType key;
     vType workSum;
     if (mapId < numWorkGroupsK0)
@@ -507,7 +507,7 @@ scan_by_key_enqueue(
 				] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
 		  {
 
-			unsigned int gloId = t_idx.global[ 0 ] + index;
+			int gloId = t_idx.global[ 0 ] + index;
 			unsigned int groId = t_idx.tile[ 0 ] + tile_index;
 			unsigned int locId = t_idx.local[ 0 ];
 			unsigned int wgSize = kernel2_WgSize;
@@ -686,7 +686,7 @@ scan_by_key_pick_iterator(
     typedef typename std::iterator_traits< OutputIterator >::value_type oType;
     static_assert( std::is_convertible< vType, oType >::value, "InputValue and Output iterators are incompatible" );
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
+    int numElements = static_cast< int >( std::distance( firstKey, lastKey ) );
     if( numElements < 1 )
         return result;
 
@@ -794,7 +794,7 @@ scan_by_key_pick_iterator(
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
     static_assert( std::is_convertible< vType, oType >::value, "InputValue and Output iterators are incompatible" );
 
-    unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
+    int numElements = static_cast< int >( std::distance( firstKey, lastKey ) );
     if( numElements < 1 )
         return result;
 

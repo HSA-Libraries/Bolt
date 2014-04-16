@@ -50,10 +50,10 @@ void serial_gather(InputIterator1 mapfirst,
                    OutputIterator result)
 {
     //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
+   int numElements = static_cast< int >( std::distance( mapfirst, maplast ) );
    typedef typename  std::iterator_traits<InputIterator1>::value_type iType1;
    iType1 temp;
-   for(size_t iter = 0; iter < numElements; iter++)
+   for(int iter = 0; iter < numElements; iter++)
    {
                    temp = *(mapfirst + (int)iter);
                   *(result + (int)iter) = *(input + (int)temp);
@@ -73,7 +73,7 @@ void serial_gather_if(InputIterator1 mapfirst,
                       OutputIterator result)
 {
     //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
+   int numElements = static_cast< int >( std::distance( mapfirst, maplast ) );
    for(size_t iter = 0; iter < numElements; iter++)
    {
        if(stencil[(int)iter]== 1)
@@ -95,8 +95,8 @@ void serial_gather_if(InputIterator1 mapfirst,
                       BinaryPredicate pred)
 {
    //std::cout<<"Serial code path ... \n";
-   unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
-   for(unsigned int iter = 0; iter < numElements; iter++)
+   int numElements = static_cast< int >( std::distance( mapfirst, maplast ) );
+   for(int iter = 0; iter < numElements; iter++)
    {
         if(pred(*(stencil + (int)iter)))
              result[(int)iter] = input[mapfirst[(int)iter]];
@@ -128,14 +128,14 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<DVInputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
 
-       unsigned int szElements = static_cast< unsigned int >(std::distance( map_first, map_last));
-		const unsigned int leng =  szElements + GATHER_WAVEFRNT_SIZE - (szElements % GATHER_WAVEFRNT_SIZE);
+       int szElements = static_cast< int >(std::distance( map_first, map_last));
+		const int leng =  szElements + GATHER_WAVEFRNT_SIZE - (szElements % GATHER_WAVEFRNT_SIZE);
 		concurrency::extent< 1 > inputExtent(leng);
 		try
                 {
                     concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
                     {
-                        unsigned int globalId = idx[ 0 ];
+                        int globalId = idx[ 0 ];
                         if( globalId >= szElements)
                         return;
 
@@ -170,14 +170,14 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
         typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-        unsigned int szElements = static_cast< unsigned int >(std::distance( map_first, map_last));
+        int szElements = static_cast< int >(std::distance( map_first, map_last));
 		const unsigned int leng =  szElements + GATHER_WAVEFRNT_SIZE - (szElements % GATHER_WAVEFRNT_SIZE);
 		concurrency::extent< 1 > inputExtent(leng);
 		try
                 {
                     concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
                     {
-                        unsigned int globalId = idx[ 0 ];
+                        int globalId = idx[ 0 ];
 
                         if( globalId >= szElements)
                         return;
@@ -223,7 +223,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        unsigned int sz = static_cast< unsigned int >(std::distance( map_first, map_last));
+        int sz = static_cast< int >(std::distance( map_first, map_last));
         if (sz == 0)
             return;
 
@@ -290,7 +290,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        unsigned int sz = static_cast< unsigned int >(std::distance( map_first, map_last));
+        int sz = static_cast< int >(std::distance( map_first, map_last));
         if (sz == 0)
             return;
 
@@ -355,7 +355,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        unsigned int sz = static_cast<unsigned int> (std::distance( fancymapFirst, fancymapLast ));
+        int sz = static_cast<int> (std::distance( fancymapFirst, fancymapLast ));
         if (sz == 0)
             return;
 
@@ -424,7 +424,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits< DVInputIterator3 >::value_type iType3;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        unsigned int sz = static_cast<unsigned int >(std::distance( map_first, map_last ));
+        int sz = static_cast<int >(std::distance( map_first, map_last ));
         if( sz == 0 )
             return;
 
@@ -493,7 +493,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-        unsigned int sz = static_cast<unsigned int >(std::distance( map_first, map_last ));
+        int sz = static_cast<int >(std::distance( map_first, map_last ));
 
         if (sz == 0)
             return;
@@ -548,7 +548,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        unsigned int sz = static_cast<unsigned int>(std::distance( firstFancy, lastFancy ));
+        int sz = static_cast<int>(std::distance( firstFancy, lastFancy ));
         if (sz == 0)
             return;
 
@@ -604,7 +604,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        unsigned int sz = static_cast<unsigned int>(std::distance( map_first, map_last ));
+        int sz = static_cast<int>(std::distance( map_first, map_last ));
         if (sz == 0)
             return;
 
@@ -660,7 +660,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits< DVInputIterator >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        unsigned int sz = static_cast<unsigned int>(std::distance( map_first, map_last ));
+        int sz = static_cast<int>(std::distance( map_first, map_last ));
         if( sz == 0 )
             return;
 
@@ -718,7 +718,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits< DVInputIterator >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        unsigned int sz = static_cast<unsigned int>(std::distance( firstFancy, lastFancy ));
+        int sz = static_cast<int>(std::distance( firstFancy, lastFancy ));
         if( sz == 0 )
             return;
 
@@ -772,7 +772,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits< FancyInput >::value_type iType2;
         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
-        unsigned int sz = static_cast<unsigned int>(std::distance( mapfirst, maplast ));
+        int sz = static_cast<int>(std::distance( mapfirst, maplast ));
         if( sz == 0 )
             return;
 
@@ -827,7 +827,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<DVInputIterator>::value_type iType1;
         typedef typename std::iterator_traits<InputIterator>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        unsigned int sz = static_cast<unsigned int>(std::distance( map_first, map_last ));
+        int sz = static_cast<int>(std::distance( map_first, map_last ));
         if (sz == 0)
             return;
 
@@ -887,7 +887,7 @@ void serial_gather_if(InputIterator1 mapfirst,
         typedef typename std::iterator_traits<InputIterator>::value_type iType1;
         typedef typename std::iterator_traits<DVInputIterator>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-        unsigned int sz = static_cast<unsigned int>(std::distance( map_first, map_last ));
+        int sz = static_cast<int>(std::distance( map_first, map_last ));
         if (sz == 0)
             return;
 
