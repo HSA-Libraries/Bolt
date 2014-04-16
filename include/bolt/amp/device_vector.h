@@ -68,13 +68,7 @@ namespace amp
         static concurrency::array<T> getav() restrict(cpu)
         {
             static T type_default;
-            return concurrency::array<T>(1, &type_default);
-        }
-
-        // Create a null AV on Accelerator
-        static concurrency::array<T> getav() restrict(amp)
-        {
-            return concurrency::array<T>(0, nullptr);
+            return concurrency::array<T>(1);
         }
     };
 /*! \brief This defines the AMP version of a device_vector
@@ -309,8 +303,7 @@ public:
         bool equal( const iterator_base< OtherContainer >& rhs ) const
         {
             bool sameIndex = rhs.m_Index == m_Index;
-            bool sameContainer = (&m_Container == &rhs.m_Container );
-
+            bool sameContainer = &m_Container.m_devMemory[m_Index] == &rhs.m_Container.m_devMemory[rhs.m_Index];
             return ( sameIndex && sameContainer );
         }
 
@@ -420,8 +413,7 @@ private:
         bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const
         {
             bool sameIndex = lhs.m_Index == m_Index;
-            bool sameContainer = (&m_Container == &lhs.m_Container );
-
+			bool sameContainer = &m_Container.m_devMemory[m_Index] == &lhs.m_Container.m_devMemory[lhs.m_Index];
             return ( sameIndex && sameContainer );
         }
 
@@ -500,8 +492,7 @@ private:
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.
 	*   \param newSize The number of elements of the new device_vector
-    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
-    *   this is an output buffer
+    *   \param discard Boolean value to whether the container data will be discarded for read operation.
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
@@ -513,16 +504,18 @@ private:
     {
 		if( m_Size > 0 )
         {
-			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-            m_devMemory = tmp;
+				concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+				concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+				m_devMemory = tmp;
 		}
+		if(discard)
+			m_devMemory.discard_data();
     };
 
     /*! \brief A constructor that creates a new device_vector from device_vector specified by user.
     *   \param cont An device_vector object that has both .data() and .size() members
     */
-    device_vector( const device_vector &cont ): m_Size( cont.size( ) ), m_devMemory( create_empty_array_view<value_type>::getav() )
+	device_vector( const device_vector &cont ): m_Size( cont.size( ) ), m_devMemory( cont.m_devMemory )
     {
 		if( m_Size > 0 )
         {
@@ -562,7 +555,8 @@ private:
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.
     *   \param end An iterator pointing at the end of the range.
-    *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
+	*   \param discard Boolean value to whether the container data will be discarded for read operation.
+    *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
     template< typename InputIterator >
@@ -579,10 +573,12 @@ private:
 			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
             m_devMemory = tmp;
 		}
+		if(discard)
+			m_devMemory.discard_data();
 
     };
 
-    //destructor for device_vector
+	    //destructor for device_vector
     ~device_vector()
     {
     }
