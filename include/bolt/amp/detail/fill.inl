@@ -51,7 +51,7 @@ namespace detail {
 				concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
 				typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
-				const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
+				const int szElements =  static_cast< int >( std::distance( first, last ) );
 				const unsigned int leng =  szElements + FILL_WAVEFRONT_SIZE - (szElements % FILL_WAVEFRONT_SIZE);
 
 				concurrency::extent< 1 > inputExtent(leng);
@@ -62,7 +62,7 @@ namespace detail {
 					concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
 					{
 
-						unsigned int globalId = idx[ 0 ];
+						int globalId = idx[ 0 ];
 
 						if( globalId >= szElements)
 							 return;
@@ -103,7 +103,7 @@ namespace detail {
 
                 typedef typename  std::iterator_traits<ForwardIterator>::value_type Type;
 
-                unsigned int sz = static_cast< unsigned int >(last - first);
+                int sz = static_cast< int >(last - first);
                 if (sz < 1)
                     return;
 
@@ -141,7 +141,7 @@ namespace detail {
             fill_pick_iterator( bolt::amp::control &ctl,  const DVForwardIterator &first,
                 const DVForwardIterator &last,  const T & value)
             {
-				unsigned int sz = static_cast< unsigned int >(std::distance( first, last ));
+				int sz = static_cast< int >(std::distance( first, last ));
                 if( sz == 0 )
                     return;
 

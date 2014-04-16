@@ -52,7 +52,7 @@ namespace detail {
 
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
 
-                const int distVec = static_cast< unsigned int >( std::distance( first1, last1 ) );
+                const int distVec = static_cast< int >( std::distance( first1, last1 ) );
 
                 if( distVec == 0 )
                     return init;
@@ -81,7 +81,7 @@ namespace detail {
                                        std::random_access_iterator_tag )
             {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                unsigned int sz = static_cast<unsigned int>((last1 - first1));
+                int sz = static_cast<int>((last1 - first1));
                 if (sz == 0)
                     return init;
 
@@ -133,7 +133,7 @@ namespace detail {
                                          const OutputType& init, const BinaryFunction1&f1, const BinaryFunction2& f2,
                                          bolt::amp::device_vector_tag )
             {
-                 unsigned int sz = static_cast< unsigned int >(last1 - first1);
+                 int sz = static_cast< int >(last1 - first1);
                  if (sz == 0)
                     return init;
 
@@ -187,7 +187,7 @@ namespace detail {
                                        bolt::amp::fancy_iterator_tag )
             {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                unsigned int sz = static_cast< unsigned int >(last1 - first1);
+                int sz = static_cast< int >(last1 - first1);
                 if (sz == 0)
                     return init;
 

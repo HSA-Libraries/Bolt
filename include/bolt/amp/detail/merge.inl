@@ -94,8 +94,8 @@ namespace bolt {
                 typedef typename std::iterator_traits< DVInputIterator2 >::value_type iType2;
                 typedef typename std::iterator_traits< DVOutputIterator >::value_type rType;
                 
-				const unsigned int length1 = static_cast< unsigned int >(std::distance(first1, last1));
-				const unsigned int length2 = static_cast< unsigned int >(std::distance(first2, last2));
+				const int length1 = static_cast< int >(std::distance(first1, last1));
+				const int length2 = static_cast< int >(std::distance(first2, last2));
 
 				int wgSize = 64;
 				unsigned int leng = length1 > length2 ? length1 : length2;
@@ -107,7 +107,7 @@ namespace bolt {
 				concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
 				{
 					
-					unsigned int gx = idx[0];
+					int gx = idx[0];
 					int pos1, pos2;
 
 					if (gx < length1)

@@ -64,7 +64,7 @@ namespace bolt
                 typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
                 typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-                const unsigned int szElements =  static_cast< unsigned int >( std::distance( first1, last1 ) );
+                const int szElements =  static_cast< int >( std::distance( first1, last1 ) );
 
                 const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
 
@@ -75,7 +75,7 @@ namespace bolt
 
                     concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
                     {
-                        unsigned int globalId = idx[ 0 ];
+                        int globalId = idx[ 0 ];
 
                         if( globalId >= szElements)
                         return;
@@ -105,7 +105,7 @@ namespace bolt
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
 
-                const unsigned int szElements =  static_cast< unsigned int >( std::distance( first, last ) );
+                const int szElements =  static_cast< int >( std::distance( first, last ) );
                 concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
                 const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
@@ -117,7 +117,7 @@ namespace bolt
 
                     concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
                     {
-                        unsigned int globalId = idx[ 0 ];
+                        int globalId = idx[ 0 ];
 
                         if( globalId >= szElements)
                         return;

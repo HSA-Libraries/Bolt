@@ -50,7 +50,7 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
       typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
       typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
     
-      const unsigned int szElements = static_cast< unsigned int >( n );
+      const int szElements = static_cast< int >( n );
       const unsigned int leng =  szElements + COPY_WAVEFRONT_SIZE - (szElements % COPY_WAVEFRONT_SIZE);
 
 	 concurrency::extent< 1 > inputExtent(leng);
@@ -60,7 +60,7 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
 
          concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
          {
-             unsigned int globalId = idx[ 0 ];
+             int globalId = idx[ 0 ];
 
             if( globalId >= szElements)
                 return;

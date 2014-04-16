@@ -118,6 +118,41 @@ typedef HostMemory_UDDTestInt2 HostMemory_UDDTestIntFloat;
 // GatherIf tests
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+TEST( HostMemory_int, Normal )
+{
+    int n_map[10]     =  {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+    int n_input[10]   =  {0, 11, 22, 33, 44, 55, 66, 77, 88, 99};
+    int n_stencil[10] =  {2, 3, 1, 4, 5, 10, 6, 8, 7, 9};
+
+    std::vector<int> exp_result;
+    {
+        exp_result.push_back(0);exp_result.push_back(0);
+        exp_result.push_back(0);exp_result.push_back(0);
+        exp_result.push_back(0);exp_result.push_back(44);
+        exp_result.push_back(33);exp_result.push_back(22);
+        exp_result.push_back(11);exp_result.push_back(0);
+    }
+	struct greater_pred
+	{
+        bool operator () (int x) const restrict(cpu,amp)
+        {
+            return ( (x > 5)?1:0 );
+        }
+    };
+
+	greater_pred is_gt_5;
+    std::vector<int> result ( 10, 0 );
+    std::vector<int> input ( n_input, n_input + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
+    std::vector<int> stencil ( n_stencil, n_stencil + 10 );  
+    bolt::amp::gather_if( map.begin(), map.end(), stencil.begin(), input.begin(), result.begin(), is_gt_5 );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+
+    EXPECT_EQ(exp_result, result);
+}
+
+
+
 TEST( HostMemory_int, GatherIfPredicate )
 {
     int n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};

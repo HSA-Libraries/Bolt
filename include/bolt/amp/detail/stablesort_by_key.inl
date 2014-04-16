@@ -81,11 +81,11 @@ namespace detail
         typedef std_stable_sort<keyType, valType> KeyValuePair;
         typedef std_stable_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
 
-        unsigned int vecSize = static_cast< unsigned int >(std::distance( keys_first, keys_last ));
+        int vecSize = static_cast< int >(std::distance( keys_first, keys_last ));
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_stable_sort vector.
-        for (unsigned int i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             KeyValuePairVector[i].key   = *(keys_first + i);
             KeyValuePairVector[i].value = *(values_first + i);
@@ -93,7 +93,7 @@ namespace detail
         //Sort the std_stable_sort vector using std::stable_sort
         std::stable_sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
         //Extract the keys and values from the KeyValuePair and fill the respective iterators.
-        for (unsigned int i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
@@ -227,7 +227,7 @@ namespace detail
     {
 
 		concurrency::accelerator_view av = ctrl.getAccelerator().default_view;
-        unsigned int vecSize = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+        int vecSize = static_cast< int >( std::distance( keys_first, keys_last ) );
 
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
@@ -276,10 +276,10 @@ namespace detail
 				  ] ( concurrency::tiled_index< localRange > t_idx ) restrict(amp)
 				  {
 
-					   unsigned int gloId = t_idx.global[ 0 ] + index;
-					   unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+					   int gloId = t_idx.global[ 0 ] + index;
+					   int groId = t_idx.tile[ 0 ] + tile_index;
 					   unsigned int locId = t_idx.local[ 0 ];
-					   unsigned int wgSize = localRange;
+					   int wgSize = localRange;
 
 					   tile_static keyType key_lds[STABLESORT_BY_KEY_BUFFER_SIZE]; 
 					   tile_static keyType key_lds2[STABLESORT_BY_KEY_BUFFER_SIZE]; 
@@ -401,7 +401,7 @@ namespace detail
         {
 
              //  For each pass, the merge window doubles
-             unsigned srcLogicalBlockSize = static_cast< unsigned  >( localRange << (pass-1) );
+             int srcLogicalBlockSize = static_cast< int  >( localRange << (pass-1) );
 
              try
              {
@@ -418,7 +418,7 @@ namespace detail
 			      pass
                 ] ( concurrency::index< 1 > idx ) restrict(amp)
              {
-                  unsigned int gloID = idx[ 0 ];
+                  int gloID = idx[ 0 ];
 
                   //  Abort threads that are passed the end of the input vector
                   if( gloID >= vecSize )
@@ -434,11 +434,11 @@ namespace detail
                   //  An even block should search for an insertion point in the next odd block, 
                   //  and the odd block should look for an insertion point in the corresponding previous even block
                   unsigned int dstLogicalBlockSize = srcLogicalBlockSize<<1;
-                  unsigned int leftBlockIndex = gloID & ~(dstLogicalBlockSize - 1 );
+                  int leftBlockIndex = gloID & ~(dstLogicalBlockSize - 1 );
                   //printf("mergeTemplate: leftBlockIndex=%d\n", leftBlockIndex );
                   leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
                   leftBlockIndex = min( leftBlockIndex, vecSize );
-                  unsigned int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, vecSize );
+                  int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, vecSize );
                   
 	              //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
                   // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
@@ -578,7 +578,7 @@ namespace detail
     {
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
-        unsigned int vecSize = static_cast< unsigned int >(std::distance( keys_first, keys_last ));
+        int vecSize = static_cast< int >(std::distance( keys_first, keys_last ));
         if( vecSize < 2 )
             return;
 

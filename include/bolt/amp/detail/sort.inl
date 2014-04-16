@@ -300,7 +300,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 	typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type Values;
     const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
                          //local array of 16 elements in the histogram kernel.
-    unsigned int orig_szElements = static_cast<unsigned int>(std::distance(first, last));
+    int orig_szElements = static_cast<int>(std::distance(first, last));
 	const unsigned int localSize  = WG_SIZE;
 
 	unsigned int szElements = (unsigned int)orig_szElements;
@@ -313,7 +313,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
 	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<unsigned int>(orig_szElements), 0);
+    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<int>(orig_szElements), 0);
 	bool Asc_sort = 0;
 	if(comp(2,3))
        Asc_sort = 1;
@@ -337,7 +337,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< unsigned int, concurrency::array_view > dvHistogramBins(static_cast<unsigned int>(numGroups * RADICES), 0 );
+	device_vector< int, concurrency::array_view > dvHistogramBins(static_cast<int>(numGroups * RADICES), 0 );
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
@@ -855,13 +855,8 @@ void sort_pick_iterator( bolt::amp::control &ctl,
     // User defined Data types are not supported with device_vector. Hence we have a static assert here.
     // The code here should be in compliant with the routine following this routine.
     typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
-    unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
-    if(szElements > (1<<31))
-    {
-        throw std::exception( "AMP device_vector shall support only upto 2 power 31 elements" );
-        return;
-    }
-    if (szElements == 0 )
+    int szElements = static_cast< int >( std::distance( first, last ) );
+    if (szElements < 2)
         return;
     bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
 	if (runMode == bolt::amp::control::Automatic)
@@ -906,10 +901,8 @@ void sort_pick_iterator( bolt::amp::control &ctl,
                          const StrictWeakOrdering& comp, std::random_access_iterator_tag )
 {
     typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
-    unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
-    if(szElements > (1<<31))
-        throw std::exception( "AMP device vectors shall support only upto 2 power 31 elements" );
-    if (szElements == 0)
+    int szElements = static_cast< int >( std::distance( first, last ) );
+    if (szElements < 2)
         return;
 
     bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
