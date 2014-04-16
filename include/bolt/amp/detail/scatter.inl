@@ -111,7 +111,6 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
                              const DVOutputIterator& result,
                              const Predicate& pred )
     {
-
 		concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 		typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
 		typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;		
@@ -250,9 +249,9 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         else
         {
           // Map the input iterator to a device_vector
-		  device_vector< iType1, concurrency::array_view> dvInput( first1, last1, true, ctl );
-		  device_vector< iType2, concurrency::array_view> dvMap( map, sz, true, ctl );
-		  device_vector< iType3, concurrency::array_view> dvStencil( stencil, sz, true, ctl );
+		  device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+		  device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+		  device_vector< iType3, concurrency::array_view> dvStencil( stencil, sz, false, ctl );
 
           // Map the output iterator to a device_vector	  
 		  device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
@@ -319,8 +318,8 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, true, ctl );
-		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, true, ctl );
+		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
 
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
@@ -387,8 +386,8 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, true, ctl );
-		    device_vector< iType3, concurrency::array_view> dvStencil( stencil, sz, true, ctl );
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+		    device_vector< iType3, concurrency::array_view> dvStencil( stencil, sz, false, ctl );
 
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
@@ -536,8 +535,8 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         {
 			
           // Map the input iterator to a device_vector
-		  device_vector< iType1, concurrency::array_view> dvInput( first1, last1, true, ctl );
-		  device_vector< iType2, concurrency::array_view> dvMap( map, sz, true, ctl );
+		  device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+		  device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
 
           // Map the output iterator to a device_vector
 		  device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
@@ -597,7 +596,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
 		  
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, true, ctl );
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
 
@@ -656,7 +655,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         {			
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, true, ctl );
+		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
 
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
@@ -888,7 +887,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the map iterator to a device_vector
-		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, true, ctl );
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
             // Map the output iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
 
@@ -949,7 +948,7 @@ void gold_scatter_if_enqueue (InputIterator1 first1,
         {				
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, true, ctl );
+		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
             // Map the result iterator to a device_vector
 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
 
