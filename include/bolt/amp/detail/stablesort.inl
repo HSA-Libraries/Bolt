@@ -463,7 +463,7 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     }
     else
     {
-        device_vector< Type, concurrency::array_view > dvInputOutput(  first, last, true, ctl );
+        device_vector< Type, concurrency::array_view > dvInputOutput(  first, last, false, ctl );
 
         //Now call the actual AMP algorithm
         stablesort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp);

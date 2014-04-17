@@ -237,7 +237,7 @@ namespace bolt {
                 {
                         // Use host pointers memory since these arrays are only write once - no benefit to copying.
                         // Map the forward iterator to a device_vector
-					    device_vector< Type, concurrency::array_view> range( first, sz, true, ctl );
+					    device_vector< Type, concurrency::array_view> range( first, sz, false, ctl );
 
                         return binary_search_enqueue( ctl, range.begin( ), range.end( ), value, comp );
 

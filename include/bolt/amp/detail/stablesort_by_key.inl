@@ -555,8 +555,8 @@ namespace detail
         else
         {
 		   
-			device_vector< keyType, concurrency::array_view > dvKeys(   keys_first, keys_last, true, ctl );
-			device_vector< valType, concurrency::array_view > dvValues(  values_first, vecSize, true, ctl );
+			device_vector< keyType, concurrency::array_view > dvKeys(   keys_first, keys_last, false, ctl );
+			device_vector< valType, concurrency::array_view > dvValues(  values_first, vecSize, false, ctl );
 
             //Now call the actual AMP algorithm
             stablesort_by_key_enqueue( ctl, dvKeys.begin(), dvKeys.end(), dvValues.begin( ), comp);

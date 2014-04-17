@@ -114,8 +114,8 @@ namespace detail {
 
                     // Map the input iterator to a device_vector
 
-                    device_vector< iType, concurrency::array_view> dvInput( first1, last1, true, ctl);
-                    device_vector< iType, concurrency::array_view> dvInput2( first2, sz, true, ctl);
+                    device_vector< iType, concurrency::array_view> dvInput( first1, last1, false, ctl);
+                    device_vector< iType, concurrency::array_view> dvInput2( first2, sz, false, ctl);
 
                     return inner_product_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ),
                                                    init, f1, f2);

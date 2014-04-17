@@ -1074,7 +1074,5 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-    std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
     return retVal;
 }
