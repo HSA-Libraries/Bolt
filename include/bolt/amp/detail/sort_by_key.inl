@@ -1076,8 +1076,8 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		else 
 		{
             
-			device_vector< T_keys, concurrency::array_view > dvInputKeys(   keys_first, keys_last, true, ctl );
-			device_vector<  T_values, concurrency::array_view > dvInputValues(  values_first, szElements, true, ctl );
+			device_vector< T_keys, concurrency::array_view > dvInputKeys(   keys_first, keys_last, false, ctl );
+			device_vector<  T_values, concurrency::array_view > dvInputValues(  values_first, szElements, false, ctl );
 
             //Now call the actual AMP algorithm
             sort_by_key_enqueue(ctl,dvInputKeys.begin(),dvInputKeys.end(), dvInputValues.begin(), comp);
