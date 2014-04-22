@@ -61,7 +61,7 @@ namespace amp
 
 
     template <typename T>
-    class create_empty_array_view
+    class create_empty_array
     {
     public:
         // Create an AV on the CPU
@@ -115,7 +115,7 @@ public:
     class reference_base
     {
     public:
-        reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
+        reference_base( Container& rhs, size_type index ): m_Container( rhs, false ), m_Index( index )
         {}
 
         //  Automatic type conversion operator to turn the reference object into a value_type
@@ -163,7 +163,7 @@ public:
     class const_reference_base
     {
     public:
-        const_reference_base( const Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
+        const_reference_base( const Container& rhs, size_type index ): m_Container( rhs, false ), m_Index( index )
         {}
 
         //  Automatic type conversion operator to turn the reference object into a value_type
@@ -227,15 +227,17 @@ public:
     public:
 
         //  Basic constructor requires a reference to the container and a positional element
-        iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( static_cast<int>(index) )
+        iterator_base( Container& rhs, size_type index ): m_Container( rhs, false ), m_Index( static_cast<int>(index) )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
         template< typename OtherContainer >
         iterator_base( const iterator_base< OtherContainer >& rhs ):
-            m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
+            m_Container( rhs.m_Container, false ), m_Index( rhs.m_Index )
         {}
-
+        iterator_base( const iterator_base& rhs ):
+            m_Container( rhs.m_Container, false ), m_Index( rhs.m_Index )
+        {}
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
         iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
         {
@@ -335,15 +337,18 @@ private:
     public:
 
         //  Basic constructor requires a reference to the container and a positional element
-        reverse_iterator_base( Container& lhs, int index ): m_Container( lhs ), m_Index( static_cast<int>(index-1) )
+        reverse_iterator_base( Container& lhs, int index ): m_Container( lhs, false ), m_Index( static_cast<int>(index-1) )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
         template< typename OtherContainer >
         reverse_iterator_base( const reverse_iterator_base< OtherContainer >& lhs ):
-            m_Container( lhs.m_Container ), m_Index( lhs.m_Index-1 )
+            m_Container( lhs.m_Container, false ), m_Index( lhs.m_Index )
         {}
 
+		reverse_iterator_base( const reverse_iterator_base& lhs ):
+            m_Container( lhs.m_Container, false ), m_Index( lhs.m_Index )
+        {}
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
         reverse_iterator_base< Container >& operator= ( const reverse_iterator_base< Container >& lhs )
         {
@@ -456,7 +461,7 @@ private:
     *   confused with the size constructor below.
     */
     device_vector( control& ctl = control::getDefault( ) )
-        : m_Size( static_cast<int>(0) ), m_devMemory( create_empty_array_view<value_type>::getav() )
+        : m_Size( static_cast<int>(0) ), m_devMemory( create_empty_array<value_type>::getav() )
     { 
 		
 	}
@@ -471,7 +476,7 @@ private:
     */
     device_vector( size_type newSize, const value_type& initValue = value_type( ), bool init = true,
         control& ctl = control::getDefault( ) )
-        : m_Size( static_cast<int>(newSize) ), m_devMemory( create_empty_array_view<value_type>::getav() )
+        : m_Size( static_cast<int>(newSize) ), m_devMemory( create_empty_array<value_type>::getav() )
     {
         if( m_Size > 0 )
         {
@@ -497,37 +502,65 @@ private:
     *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
     template< typename InputIterator >
-    device_vector( const InputIterator begin, size_type newSize, bool discard = false, control& ctl = control::getDefault( ),
+    device_vector( const InputIterator begin, size_type newSize, bool discard = false, control& ctl = control::getDefault( ), 
                 typename std::enable_if< !std::is_integral< InputIterator >::value &&
                                     std::is_same< arrayview_type, container_type >::value>::type* = 0 )
-                                    : m_Size( static_cast<int>(newSize) ), m_devMemory( create_empty_array_view<value_type>::getav() )
+                                    : m_Size( static_cast<int>(newSize) ), m_devMemory( create_empty_array<value_type>::getav() )
     {
 		if( m_Size > 0 )
         {
-				concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-				concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-				m_devMemory = tmp;
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+			m_devMemory = tmp;
 		}
 		if(discard)
 			m_devMemory.discard_data();
     };
 
-    /*! \brief A constructor that creates a new device_vector from device_vector specified by user.
-    *   \param cont An device_vector object that has both .data() and .size() members
+
+	/*! \brief A constructor that creates a new device_vector using a range specified by the user.
+    *   \param begin An iterator pointing at the beginning of the range.
+	*   \param newSize The number of elements of the new device_vector
+    *   \param discard Boolean value to whether the container data will be discarded for read operation.
+    *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
+    *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
-	device_vector( const device_vector &cont ): m_Size( cont.size( ) ), m_devMemory( cont.m_devMemory )
+    template< typename InputIterator >
+    device_vector( const InputIterator begin, size_type newSize, bool discard = false, control& ctl = control::getDefault( ), 
+                typename std::enable_if< !std::is_integral< InputIterator >::value &&
+                                    std::is_same< array_type, container_type >::value>::type* = 0 )
+                                    : m_Size( static_cast<int>(newSize) ), m_devMemory( create_empty_array<value_type>::getav() )
     {
 		if( m_Size > 0 )
         {
-			concurrency::array_view<value_type> tmp = arrayview_type(cont.m_devMemory);
-			m_devMemory = tmp;
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			concurrency::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+			m_devMemory = arrayview_type( tmp );
+		}
+    };
+
+
+    /*! \brief A constructor that creates a new device_vector from device_vector specified by user.
+    *   \param cont An device_vector object that has both .data() and .size() members
+	*   \param copy Boolean value to decide whether new device_vector will be shallow copy or deep copy
+	*   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
+    */
+	template< typename T >
+	device_vector( const device_vector<T> &cont, bool copy = true,control& ctl = control::getDefault( ) ): m_Size( cont.size( ) ), m_devMemory( cont.m_devMemory)
+    {
+		if(!copy)
+			return;
+		if( m_Size > 0 )
+        {
+			concurrency::array<value_type> tmp = array_type( m_devMemory );
+            m_devMemory = arrayview_type( tmp );
 		}
     };
 	
     /*! \brief A constructor that creates a new device_vector using a pre-initialized array supplied by the user.
     *   \param cont An concurrency::array object.
     */
-    device_vector( arrayview_type &cont): m_devMemory( create_empty_array_view<value_type>::getav() )
+    device_vector( arrayview_type &cont): m_devMemory( create_empty_array<value_type>::getav() )
     {
 		m_Size =  cont.get_extent().size();
 		if( m_Size > 0 )
@@ -541,7 +574,7 @@ private:
    /*! \brief A constructor that creates a new device_vector using a pre-initialized array_view supplied by the user.
     *   \param cont An concurrency::array_view object.
     */
-    device_vector( array_type &cont): m_devMemory( create_empty_array_view<value_type>::getav() )
+    device_vector( array_type &cont): m_devMemory( create_empty_array<value_type>::getav() )
     {
 		m_Size =  cont.get_extent().size();
 		if( m_Size > 0 )
@@ -557,13 +590,13 @@ private:
     *   \param end An iterator pointing at the end of the range.
 	*   \param discard Boolean value to whether the container data will be discarded for read operation.
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
-    *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
+    *   \note concurrency::array_view specialization Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, const InputIterator end, bool discard = false, control& ctl = control::getDefault( ),
-        typename std::enable_if< !std::is_integral< InputIterator >::value &&
-                                    std::is_same< arrayview_type, container_type >::value>::type* = 0 )
-                                    : m_devMemory( create_empty_array_view<value_type>::getav() )
+        typename std::enable_if< std::is_same< arrayview_type, container_type >::value &&
+                                   !std::is_integral< InputIterator >::value>::type* = 0 )
+                                    : m_devMemory( create_empty_array<value_type>::getav() )
     {
         m_Size =  static_cast<int>(std::distance( begin, end ));
 
@@ -571,12 +604,37 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-            m_devMemory = tmp;
+	        m_devMemory = tmp;
 		}
 		if(discard)
 			m_devMemory.discard_data();
 
     };
+
+
+	/*! \brief A constructor that creates a new device_vector using a range specified by the user.
+    *   \param begin An iterator pointing at the beginning of the range.
+    *   \param end An iterator pointing at the end of the range.
+	*   \param discard Boolean value to whether the container data will be discarded for read operation.
+    *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
+    *   \note concurrency::array specializationIgnore the enable_if<> parameter; it prevents this constructor from being called with integral types.
+    */
+	template< typename InputIterator >
+    device_vector( const InputIterator begin, const InputIterator end, bool discard = false, control& ctl = control::getDefault( ),
+        typename std::enable_if< std::is_same< array_type, container_type >::value &&
+									!std::is_integral< InputIterator >::value>::type* = 0 )
+                                    : m_devMemory( create_empty_array<value_type>::getav() )
+    {
+        m_Size =  static_cast<int>(std::distance( begin, end ));
+
+		if( m_Size > 0 )
+        {
+			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+			concurrency::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
+	        m_devMemory = arrayview_type(tmp);
+		}
+    };
+
 
 	    //destructor for device_vector
     ~device_vector()
@@ -961,7 +1019,7 @@ private:
     */
     void clear( void )
     {   
-        m_devMemory = create_empty_array_view<value_type>::getav();
+        m_devMemory = create_empty_array<value_type>::getav();
         m_Size = 0;
     }
 
@@ -1245,7 +1303,7 @@ private:
     };
 
     int m_Size;
-    container_type m_devMemory;
+    concurrency::array_view<T, 1> m_devMemory;
 };
 
 }
