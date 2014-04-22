@@ -1,20 +1,20 @@
-############################################################################
+/***************************************************************************
 
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-############################################################################
+***************************************************************************/
 
 #include "common/stdafx.h"
 #include "bolt/amp/transform.h"
@@ -29,7 +29,6 @@
 #include "bolt/amp/iterator/permutation_iterator.h"
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/iterator/permutation_iterator.hpp>
-//Teststotestthecountingiterator
 
 TEST(simple1,counting)
 {
@@ -72,7 +71,6 @@ TEST(simple1,Serial_counting)
 }
 
 
-//INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, TransformArrayTest, UDDTests );
 TEST(AMPIterators, AVPermutation)
 {
     int __index = 1;
@@ -126,9 +124,7 @@ TEST(AMPIterators, PermutationPFE)
     std::iota(key, key+size, 0);
     std::fill(empty, empty+size, 0);
 
-    // Everyday 'am shufflin'
     std::random_shuffle ( key, key+size );
-
 
     bolt::amp::device_vector<int, concurrency::array_view> dve(elements, elements + size);
     bolt::amp::device_vector<int, concurrency::array_view> dvk(key, key + size);
@@ -149,10 +145,9 @@ TEST(AMPIterators, PermutationPFE)
     typedef bolt::amp::permutation_iterator< bolt::amp::device_vector<int>::iterator,
                                              bolt::amp::device_vector<int>::iterator> intvpi;
 
-    intvpi first, last, i;
-    first = bolt::amp::make_permutation_iterator(__kbegin, __ebegin);
+    intvpi first = bolt::amp::make_permutation_iterator(__kbegin, __ebegin);
     //i = first;
-    last = bolt::amp::make_permutation_iterator(__kend, __eend);
+    intvpi last = bolt::amp::make_permutation_iterator(__kend, __eend);
 
     bolt::amp::control ctl;
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
@@ -187,6 +182,7 @@ TEST(AMPIterators, PermutationPFE)
 
 }
 
+/* Warning 4996
 TEST(AMPIterators, PermutationGatherTest)
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -211,6 +207,8 @@ TEST(AMPIterators, PermutationGatherTest)
                           bolt::amp::identity<int>( ) );
     cmpArrays(exp_result, result);
 }
+
+*/
 
 #if 0
 TEST(AMPIterators, PermutationGatherTestStd)
