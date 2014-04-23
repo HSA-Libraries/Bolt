@@ -546,7 +546,7 @@ private:
 	*   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     */
 	template< typename T >
-	device_vector( const device_vector<T> &cont, bool copy = true,control& ctl = control::getDefault( ) ): m_Size( cont.size( ) ), m_devMemory( cont.m_devMemory)
+	device_vector( const device_vector<T, CONT> &cont, bool copy = true,control& ctl = control::getDefault( ) ): m_Size( cont.size( ) ), m_devMemory( cont.m_devMemory)
     {
 		if(!copy)
 			return;
@@ -631,7 +631,7 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-	        m_devMemory = arrayview_type(tmp);
+			m_devMemory = arrayview_type( tmp );
 		}
     };
 
