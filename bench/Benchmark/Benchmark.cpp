@@ -63,12 +63,14 @@
 
         //#define BOLT_PROFILER_ENABLED
         #define BOLT_BENCH_DEVICE_VECTOR_FLAGS CL_MEM_READ_WRITE,
+		#define CONTAINER
         #include "bolt/AsyncProfiler.h"
         #include "bolt/countof.h"
 
     #elif (BENCHMARK_CL_AMP ==  AMP_BENCH)
         #define BENCH_BEND amp
         #define BOLT_BENCH_DEVICE_VECTOR_FLAGS true,
+		#define CONTAINER ,concurrency::array
         #include "bolt/countof.h"
         #include "bolt/amp/functional.h"
         #include "bolt/amp/device_vector.h"
@@ -122,7 +124,7 @@
 const std::streamsize colWidth = 26;
 
 #ifndef DATA_TYPE   
-    #define DATA_TYPE unsigned int
+    #define DATA_TYPE float
 #endif
 
 #include "data_type.h"
@@ -138,7 +140,7 @@ const std::streamsize colWidth = 26;
 // function generator:
 #if (BOLT_BENCHMARK == 1)
     std::default_random_engine gen;
-    std::uniform_int_distribution<DATA_TYPE> distr(10,1<<30);
+    std::uniform_real_distribution<DATA_TYPE> distr(10,1<<30);
     DATA_TYPE RandomNumber() 
     {    
         DATA_TYPE dice_roll = (DATA_TYPE)distr(gen); // generates number in the range 10..1<<31
@@ -1010,12 +1012,12 @@ void executeFunction(
         else
         {
 #if (BOLT_BENCHMARK == 1)
-            bolt::BENCH_BEND::device_vector<DATA_TYPE> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
-            bolt::BENCH_BEND::device_vector<DATA_TYPE> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
-            bolt::BENCH_BEND::device_vector<DATA_TYPE> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
-            bolt::BENCH_BEND::device_vector<DATA_TYPE> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl); 
-            bolt::BENCH_BEND::device_vector<DATA_TYPE> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl); 
-            bolt::BENCH_BEND::device_vector<DATA_TYPE> bkeys(keys.begin(),keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE CONTAINER> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE CONTAINER> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE CONTAINER> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<DATA_TYPE CONTAINER> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl); 
+            bolt::BENCH_BEND::device_vector<DATA_TYPE CONTAINER> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl); 
+            bolt::BENCH_BEND::device_vector<DATA_TYPE CONTAINER> bkeys(keys.begin(),keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
             bolt::BENCH_BEND::device_vector<int> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,
@@ -1080,12 +1082,12 @@ void executeFunction(
         else
         {
 #if (BOLT_BENCHMARK == 1)
-            bolt::BENCH_BEND::device_vector<vec2> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec2> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec2> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec2> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec2> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl); 
-            bolt::BENCH_BEND::device_vector<vec2> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<vec2 CONTAINER> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec2 CONTAINER> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec2 CONTAINER> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec2 CONTAINER> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec2 CONTAINER> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl); 
+            bolt::BENCH_BEND::device_vector<vec2 CONTAINER> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
             bolt::BENCH_BEND::device_vector<int> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2,binput3, boutput, boutput_merge,
@@ -1149,12 +1151,12 @@ void executeFunction(
         else
         {
 #if (BOLT_BENCHMARK == 1)
-            bolt::BENCH_BEND::device_vector<vec4> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec4> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec4> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec4> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec4> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);					
-            bolt::BENCH_BEND::device_vector<vec4> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<vec4 CONTAINER> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec4 CONTAINER> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec4 CONTAINER> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec4 CONTAINER> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec4 CONTAINER> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);					
+            bolt::BENCH_BEND::device_vector<vec4 CONTAINER> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
             bolt::BENCH_BEND::device_vector<int> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,
@@ -1217,12 +1219,12 @@ void executeFunction(
         else
         {
 #if (BOLT_BENCHMARK == 1)
-            bolt::BENCH_BEND::device_vector<vec8> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec8> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec8> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec8> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
-            bolt::BENCH_BEND::device_vector<vec8> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);					
-            bolt::BENCH_BEND::device_vector<vec8> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
+            bolt::BENCH_BEND::device_vector<vec8 CONTAINER> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec8 CONTAINER> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec8 CONTAINER> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec8 CONTAINER> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);
+            bolt::BENCH_BEND::device_vector<vec8 CONTAINER> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS   ctrl);					
+            bolt::BENCH_BEND::device_vector<vec8 CONTAINER> bkeys(keys.begin(), keys.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
             bolt::BENCH_BEND::device_vector<int> bMap(Map.begin(),Map.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS  ctrl);
 
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,

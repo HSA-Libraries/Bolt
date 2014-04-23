@@ -25,9 +25,9 @@
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/transform_reduce.h"
-
 #endif
 
+#include "bolt/amp/iterator/iterator_traits.h"
 
 #define _T_REDUCE_WAVEFRONT_SIZE 256 
 
@@ -166,14 +166,15 @@ namespace bolt {
                   typename UnaryFunction,
                   typename oType,
                   typename BinaryFunction >
-        typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, oType >::type
+        oType
         transform_reduce_pick_iterator(
             control &c,
             const InputIterator& first,
             const InputIterator& last,
             const UnaryFunction& transform_op,
             const oType& init,
-            const BinaryFunction& reduce_op )
+            const BinaryFunction& reduce_op,
+			std::random_access_iterator_tag )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
             int szElements = static_cast< int >(last - first);
@@ -220,14 +221,15 @@ namespace bolt {
                   typename UnaryFunction,
                   typename oType,
                   typename BinaryFunction >
-        typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, oType >::type
+        oType 
         transform_reduce_pick_iterator(
             control &c,
             const DVInputIterator& first,
             const DVInputIterator& last,
             const UnaryFunction& transform_op,
             const oType& init,
-            const BinaryFunction& reduce_op )
+            const BinaryFunction& reduce_op,
+			bolt::amp::device_vector_tag )
         {
             typedef std::iterator_traits<DVInputIterator>::value_type iType;
             int szElements = static_cast< int >(last - first);
@@ -267,10 +269,62 @@ namespace bolt {
             }
             else
             {
-            return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );
+				 return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );
             }
         };
 
+
+		 // This template is called by the non-detail versions of transform_reduce, it already assumes
+        // random access iterators
+        // This is called strictly for any non-device_vector iterator
+        template< typename InputIterator,
+                  typename UnaryFunction,
+                  typename oType,
+                  typename BinaryFunction >
+        oType
+        transform_reduce_pick_iterator(
+            control &c,
+            const InputIterator& first,
+            const InputIterator& last,
+            const UnaryFunction& transform_op,
+            const oType& init,
+            const BinaryFunction& reduce_op,
+			bolt::amp::fancy_iterator_tag )
+        {
+            typedef std::iterator_traits<InputIterator>::value_type iType;
+            int szElements = static_cast< int >(last - first);
+            if (szElements == 0)
+                    return init;
+
+            bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+			if (runMode == bolt::amp::control::Automatic)
+			{
+				runMode = c.getDefaultPathToRun();
+			}
+
+            if (runMode == bolt::amp::control::SerialCpu)
+            {
+                //Create a temporary array to store the transform result;
+                //throw std::exception( "transform_reduce device_vector CPU device not implemented" );
+                std::vector<oType> output(szElements);
+                std::transform(first, last, output.begin(),transform_op);
+                return std::accumulate(output.begin(), output.end(), init, reduce_op);
+            }
+            else if (runMode == bolt::amp::control::MultiCoreCpu)
+            {
+#ifdef ENABLE_TBB
+
+                    return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
+#else
+                    throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built.");
+                    return init;
+#endif
+                 }
+            else
+            {
+				return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );
+            }
+        };
 
 		//  The following two functions disallow non-random access functions
         // Wrapper that uses default control class, iterator interface
@@ -304,7 +358,8 @@ namespace bolt {
                                                  const BinaryFunction& reduce_op,
                                                  std::random_access_iterator_tag )
         {
-            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op );
+            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, 
+													typename std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
 
@@ -324,7 +379,7 @@ namespace bolt {
                             BinaryFunction reduce_op )
         {
             return detail::transform_reduce_detect_random_access( ctl, first, last, transform_op, init, reduce_op,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
+              typename std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
         // Wrapper that generates default control class
@@ -340,7 +395,7 @@ namespace bolt {
         {
             return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op,
                                                                                                     init, reduce_op,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
   };// end of namespace amp

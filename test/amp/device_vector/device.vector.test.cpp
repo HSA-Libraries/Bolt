@@ -528,6 +528,21 @@ TEST( VectorReverseIterator, Size6AndValue7Dereference )
     EXPECT_EQ( 7, *(myIter + 5) );
 }
 
+TEST( VectorReverseIterator, Size6AndValue7DereferenceWithArray )
+{
+    bolt::BCKND::device_vector< int, concurrency::array > dV( 6ul, 7 );
+    EXPECT_EQ( 6, dV.size( ) );
+
+    bolt::BCKND::device_vector< int,  concurrency::array>::reverse_iterator myIter = dV.rbegin( );
+    EXPECT_EQ( 7, *(myIter + 0) );
+    EXPECT_EQ( 7, *(myIter + 1) );
+    EXPECT_EQ( 7, *(myIter + 2) );
+    EXPECT_EQ( 7, *(myIter + 3) );
+    EXPECT_EQ( 7, *(myIter + 4) );
+    EXPECT_EQ( 7, *(myIter + 5) );
+}
+
+
 //
 //TEST( VectorReverseIterator, Size6AndValue7OperatorValueType )
 //{
