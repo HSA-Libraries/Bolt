@@ -121,7 +121,7 @@ public:
         //  Automatic type conversion operator to turn the reference object into a value_type
         operator value_type( ) const
         {
-            arrayview_type av( *m_Container.m_devMemory );
+            arrayview_type av( m_Container.m_devMemory );
             value_type &result = av[static_cast< int >( m_Index )];
 
             return result;
@@ -169,7 +169,7 @@ public:
         //  Automatic type conversion operator to turn the reference object into a value_type
         operator value_type( ) const
         {
-            arrayview_type av( *m_Container.m_devMemory );
+            arrayview_type av( m_Container.m_devMemory );
             value_type &result = av[static_cast< int >( m_Index )];
 
             return result;
@@ -177,7 +177,7 @@ public:
 
         const_reference_base< const Container >& operator=( const value_type& rhs )
         {
-            arrayview_type av( *m_Container.m_devMemory );
+            arrayview_type av( m_Container.m_devMemory );
             av[static_cast< int >( m_Index )] = rhs;
 
             return *this;
