@@ -16,35 +16,29 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Test.Iterator.Transform.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
-                             TransformIteratorTest.cpp )
-set( clBolt.Test.Iterator.Transform.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+set( clBolt.Test.Iterator.Permutation.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                             PermutationIteratorTest.cpp )
+set( clBolt.Test.Iterator.Permutation.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
                                 ${BOLT_CL_TEST_DIR}/common/targetver.h 
-                                ${BOLT_INCLUDE_DIR}/bolt/cl/iterator/transform_iterator.h )
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/iterator/permutation_iterator.h )
 
-set( clBolt.Test.Iterator.Transform.Files ${clBolt.Test.Iterator.Transform.Source} ${clBolt.Test.Iterator.Transform.Headers} )
+set( clBolt.Test.Iterator.Permutation.Files ${clBolt.Test.Iterator.Permutation.Source} ${clBolt.Test.Iterator.Permutation.Headers} )
 
-# Set project specific compile and link options
-if( MSVC )
-set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
-                set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
-endif()
-
-add_executable( clBolt.Test.Iterator.Transform ${clBolt.Test.Iterator.Transform.Files} )
+add_executable( clBolt.Test.Iterator.Permutation ${clBolt.Test.Iterator.Permutation.Files} )
 
 if(BUILD_TBB)
-    target_link_libraries( clBolt.Test.Iterator.Transform clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+    target_link_libraries( clBolt.Test.Iterator.Permutation clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( clBolt.Test.Iterator.Transform clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+    target_link_libraries( clBolt.Test.Iterator.Permutation clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
 endif()
 
-set_target_properties( clBolt.Test.Iterator.Transform PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Test.Iterator.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( clBolt.Test.Iterator.Permutation PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.Iterator.Permutation PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET clBolt.Test.Iterator.Transform PROPERTY FOLDER "Test/OpenCL")
+set_property( TARGET clBolt.Test.Iterator.Permutation PROPERTY FOLDER "Test/OpenCL")
 
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Test.Iterator.Transform
+install( TARGETS clBolt.Test.Iterator.Permutation
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR}/import

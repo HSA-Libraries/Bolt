@@ -36,6 +36,8 @@
 #define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 0
 
+#define TEMPORARY_DISABLE_STD_DV_TEST_CASES 0
+
 BOLT_FUNCTOR( is_even,				  
 struct is_even{
     bool operator () (int x)
@@ -131,7 +133,6 @@ typedef HostMemory_UDDTestInt2 HostMemory_UDDTestIntFloat;
 ////////////////////////////////////////////
 ///////////scatter_if Google Test Cases ///////
 ////////////////////////////////////////////
-
 TEST( HostMemory_Int, Scatter_IfPredicate )
 {
     // VS2012 doesn't support initializer list
@@ -541,7 +542,7 @@ TEST( DeviceMemory_Int, MulticoreScatter_IfPredicate )
 }
 
 
-TEST_P(HostMemory_IntStdVector, Scatter_IfPredicate)
+TEST_P(HostMemory_IntStdVector, SerialScatter_IfPredicate)
 {
     std::vector<int> input( myStdVectSize,0);   
     std::vector<int> exp_result(myStdVectSize,0);    
@@ -588,7 +589,7 @@ TEST_P(HostMemory_IntStdVector, MulticoresScatter_IfPredicate)
     EXPECT_EQ(exp_result, result);
 }
 
-TEST_P( HostMemory_IntStdVector, Scatter_IfPredicate_Fancy_stencil )
+TEST_P( HostMemory_IntStdVector, SerialScatter_IfPredicate_Fancy_stencil )
 {
     std::vector<int> input( myStdVectSize,0); 
     std::vector<int> exp_result(myStdVectSize,0);    
@@ -635,7 +636,7 @@ TEST_P( HostMemory_IntStdVector, MulticoreScatter_IfPredicate_Fancy_stencil )
     EXPECT_EQ(exp_result, result);
 }
 
-TEST_P( HostMemory_IntStdVector, Scatter_IfPredicate_fancyInput )
+TEST_P( HostMemory_IntStdVector, SerialScatter_IfPredicate_fancyInput )
 {	
     bolt::cl::counting_iterator<int> input(0); 
     std::vector<int> exp_result(myStdVectSize,0);    
@@ -680,7 +681,7 @@ TEST_P( HostMemory_IntStdVector, MulticoreScatter_IfPredicate_fancyInput )
     EXPECT_EQ(exp_result, result);
 }
 
-TEST_P( DeviceMemory_IntBoltdVector, Scatter_IfPredicate )
+TEST_P( DeviceMemory_IntBoltdVector, SerialScatter_IfPredicate )
 {
 
     std::vector<int> n_map (myStdVectSize,0);	
@@ -1558,7 +1559,6 @@ TEST( DeviceMemory_Double, MulticoreScatter_IfPredicate )
     cmpArrays(exp_result, result);
 }
 
-#endif
 /* we don not have pick_iterator corresponding to that, so commented.
 
 TEST( DeviceMemory, Scatter_IfPredicate_Fancy_stencil )
@@ -2775,6 +2775,7 @@ TEST( DeviceMemory_Double, MulticoreScatter_If)
 }
 #endif
 
+#endif
 
 ////////////////////////////////////////////
 ///////////scatter Google Test Cases ///////
@@ -2854,6 +2855,7 @@ TEST( HostMemory_Int, MulticoreScatter )
 
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_Int, Scatter_deviceInput )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2877,6 +2879,7 @@ TEST( HostMemory_Int, Scatter_deviceInput )
     cmpArrays( exp_result, result );
 
 }
+
 TEST( HostMemory_Int, SerialScatter_deviceInput )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2903,6 +2906,7 @@ TEST( HostMemory_Int, SerialScatter_deviceInput )
     cmpArrays( exp_result, result );
 
 }
+
 TEST( HostMemory_Int, MulticoreScatter_deviceInput )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2953,6 +2957,8 @@ TEST( HostMemory_Int, Scatter_deviceMap )
 
 
 }
+
+
 TEST( HostMemory_Int, SerialScatter_deviceMap )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -3003,6 +3009,8 @@ TEST( HostMemory_Int, MulticoreScatter_deviceMap )
 
 
 }
+
+#endif
 
 TEST( HostMemory_Int, Scatter_fancyInput )
 {    	
@@ -3368,8 +3376,27 @@ TEST( DeviceMemory_Int, MulticoreScatter_Fancy_map )
 
 }
 
-
 TEST_P( HostMemory_IntStdVector, Scatter )
+{
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i] =  i + 2 * i;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+
+    bolt::cl::scatter(input.begin(), input.end(), map.begin(), exp_result.begin());
+    bolt::cl::scatter( input.begin(), input.end(), map.begin(),result.begin());
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P( HostMemory_IntStdVector, Serial_Scatter )
 {
     std::vector<int> input( myStdVectSize,0);   
     std::vector<int> exp_result(myStdVectSize,0);    
@@ -3424,6 +3451,24 @@ TEST_P( DeviceMemory_IntBoltdVector, Scatter_fancyInput )
         }
     std::random_shuffle( map.begin(), map.end() ); 
 
+    bolt::cl::scatter(input, input+myStdVectSize, map.begin(), exp_result.begin());
+    bolt::cl::scatter( input, input+myStdVectSize, map.begin(),result.begin());
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    cmpArrays( exp_result, result );
+}
+
+TEST_P( DeviceMemory_IntBoltdVector, Serial_Scatter_fancyInput )
+{ 	
+    bolt::cl::counting_iterator<int> input(0);
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -3432,6 +3477,7 @@ TEST_P( DeviceMemory_IntBoltdVector, Scatter_fancyInput )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     cmpArrays( exp_result, result );
 }
+
 TEST_P( DeviceMemory_IntBoltdVector, MulticoreScatter_fancyInput )
 { 	
     bolt::cl::counting_iterator<int> input(0);
@@ -3524,6 +3570,7 @@ TEST( HostMemory_Float, MulticoreScatter )
     EXPECT_EQ(exp_result, result);
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_Float, Scatter_deviceInput )
 {
     float n_input[10] =  {0.5f,1.5f,2.5f,3.5f,4.5f,5.5f,6.5f,7.5f,8.5f,9.5f};
@@ -3546,6 +3593,8 @@ TEST( HostMemory_Float, Scatter_deviceInput )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     cmpArrays( exp_result, result );
 }
+
+
 TEST( HostMemory_Float, SerialScatter_deviceInput )
 {
     float n_input[10] =  {0.5f,1.5f,2.5f,3.5f,4.5f,5.5f,6.5f,7.5f,8.5f,9.5f};
@@ -3596,7 +3645,9 @@ TEST( HostMemory_Float, MulticoreScatter_deviceInput )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     cmpArrays( exp_result, result );
 }
+#endif
 
+#if (TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_Float, Scatter_deviceMap )///////////////////////////////////////////////////
 {
     float n_input[10] =  {0.5f,1.5f,2.5f,3.5f,4.5f,5.5f,6.5f,7.5f,8.5f,9.5f};
@@ -3666,6 +3717,7 @@ TEST( HostMemory_Float, MulticoreScatter_deviceMap )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
+#endif
 
 TEST( HostMemory_Float, Scatter_fancyInput )
 {    	
@@ -4345,13 +4397,14 @@ TEST( HostMemoryRandomNo_Float, MulticoreScatter_comp_Boost )
     EXPECT_EQ(exp_result, result);
 }
 
+#if( TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 #if(TEST_DOUBLE == 1)
 TEST( HostMemory_Double, Scatter_com_Boost )
 {
     double n_input[10] =  {0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5};
     int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
     std::vector<double> exp_result(10,0.5);    
-    std::vector<double> result ( 10, 0.5 );
+    std::vector<double> result ( 10, 0.0 );
     std::vector<double> input ( n_input, n_input + 10 );
     std::vector<int> map ( n_map, n_map + 10 );	
 
@@ -4394,6 +4447,7 @@ TEST( HostMemory_Double, MulticoreScatter_com_Boost )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
+#endif
 
 TEST( HostMemoryRandomNo_Double, Scatter_com_Boost )
 {
@@ -4507,7 +4561,6 @@ TEST( HostMemoryRandomNo_Double, MulticoreScatter_com_Boost )
     EXPECT_EQ(exp_result, result);
 }
 #endif
-
 
 TEST( UDDTestInt2, SerialScatter_IfPredicate)
 {
@@ -4701,7 +4754,7 @@ TEST(UDDTestIntFloatDouble, MulticoreScatter_ifPredicate )
 
     cmpArrays( exp_result, result );
 }
-#endif
+
 
 TEST_P(HostMemory_UDDTestInt2, SerialScatter_IfPredicate)
 {
@@ -4800,6 +4853,7 @@ TEST_P(HostMemory_UDDTestIntFloat, MulticoreScatter_IfPredicate)
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
+#endif
 
 TEST(UDDTestInt2, Scatter )
 {
@@ -5095,6 +5149,25 @@ TEST(HostMemory_IntStdVector, OffsetScatterPredicate)
     std::vector<int> result ( 10, 0 );
     std::vector<int> map ( n_map, n_map +10 );
 
+    bolt::cl::scatter( input.begin()+5, input.end(), map.begin(), exp_result.begin() );
+    bolt::cl::scatter( input.begin()+5, input.end(), map.begin(), result.begin() );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+
+TEST(HostMemory_IntStdVector, SerialOffsetScatterPredicate)
+{
+
+    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10] =  {3,2,1,0,4,5,8,7,6,9};
+
+
+    std::vector<int> input( n_input, n_input+10 );   
+    std::vector<int> exp_result(10,0);
+    std::vector<int> result ( 10, 0 );
+    std::vector<int> map ( n_map, n_map +10 );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     bolt::cl::scatter( ctl, input.begin()+5, input.end(), map.begin(), exp_result.begin() );
@@ -5103,7 +5176,27 @@ TEST(HostMemory_IntStdVector, OffsetScatterPredicate)
     EXPECT_EQ(exp_result, result);
 }
 
-TEST(HostMemory_IntStdVector, OffsetScatterIfPredicate)
+TEST(HostMemory_IntStdVector, MultiCoreOffsetScatterPredicate)
+{
+
+    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10] =  {3,2,1,0,4,5,8,7,6,9};
+
+
+    std::vector<int> input( n_input, n_input+10 );   
+    std::vector<int> exp_result(10,0);
+    std::vector<int> result ( 10, 0 );
+    std::vector<int> map ( n_map, n_map +10 );
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    bolt::cl::scatter( ctl, input.begin()+5, input.end(), map.begin(), exp_result.begin() );
+    bolt::cl::scatter( input.begin()+5, input.end(), map.begin(), result.begin() );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST(HostMemory_IntStdVector, SerialOffsetScatterIfPredicate)
 {
 
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -5144,6 +5237,31 @@ TEST(HostMemory_IntStdVector, OffsetScatterPredicateMedium)
         input[i] =  i + 2 * i;
     }
 
+
+    bolt::cl::scatter( input.begin(), input.begin() + e_offset, map.begin(), exp_result.begin() );
+
+    bolt::cl::scatter( input.begin(), input.begin() + e_offset, map.begin(), result.begin() );
+
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST(HostMemory_IntStdVector, SerialOffsetScatterPredicateMedium)
+{
+    size_t myStdVectSize = 1024;
+    int s_offset = 27;
+    int e_offset = 515;
+    size_t distance = e_offset - s_offset;
+
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    for( int i=0; i < e_offset ; i++ )
+    {
+        map[i] = i;
+        input[i] =  i + 2 * i;
+    }
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -5154,7 +5272,34 @@ TEST(HostMemory_IntStdVector, OffsetScatterPredicateMedium)
     EXPECT_EQ(exp_result, result);
 }
 
-TEST(HostMemory_IntStdVector, OffsetScatterIfPredicateMedium)
+TEST(HostMemory_IntStdVector, MultiCoreOffsetScatterPredicateMedium)
+{
+    size_t myStdVectSize = 1024;
+    int s_offset = 27;
+    int e_offset = 515;
+    size_t distance = e_offset - s_offset;
+
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    for( int i=0; i < e_offset ; i++ )
+    {
+        map[i] = i;
+        input[i] =  i + 2 * i;
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::scatter( ctl, input.begin(), input.begin() + e_offset, map.begin(), exp_result.begin() );
+
+    bolt::cl::scatter( input.begin(), input.begin() + e_offset, map.begin(), result.begin() );
+
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST(HostMemory_IntStdVector, SerialOffsetScatterIfPredicateMedium)
 {
     size_t myStdVectSize = 512;
     int s_offset = 59;
@@ -5181,7 +5326,6 @@ TEST(HostMemory_IntStdVector, OffsetScatterIfPredicateMedium)
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
-
 
 
 

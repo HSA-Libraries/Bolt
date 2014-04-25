@@ -31,6 +31,7 @@
 #include <array>
 #define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 0
+#define TEMPORARY_DISABLE_STD_DV_TEST_CASES 0
 
 BOLT_FUNCTOR( is_even,
 struct is_even{
@@ -439,8 +440,29 @@ TEST( DeviceMemory_int, MulticoreGatherIfPredicate )
     cmpArrays(exp_result, result);
 }
 
-
 TEST_P(HostMemory_IntStdVector, Gather_IfPredicate)
+{
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i] =  i + 2 * i;
+            stencil[i] = i + 5 * 1;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    is_even iepred;
+     bolt::cl::gather_if( map.begin(), map.end(),  stencil.begin(), input.begin(), result.begin(), iepred );
+     bolt::cl::gather_if( map.begin(), map.end(),  stencil.begin(), input.begin(), exp_result.begin(), iepred );
+   // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_IntStdVector, SerialGather_IfPredicate)
 {
     std::vector<int> input( myStdVectSize,0);   
     std::vector<int> exp_result(myStdVectSize,0);    
@@ -505,6 +527,28 @@ TEST_P(HostMemory_IntStdVector, Gather_IfPredicate_Fancy_stencil)
 
     is_even iepred;
 
+     bolt::cl::gather_if(map.begin(), map.end(),  stencil_first, input.begin(), result.begin(), iepred );
+     bolt::cl::gather_if( map.begin(), map.end(),  stencil_first, input.begin(), exp_result.begin(), iepred );
+   // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_IntStdVector, SerialGather_IfPredicate_Fancy_stencil)
+{
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i] =  i + 2 * i;
+        }
+    std::random_shuffle( map.begin(), map.end() );
+    bolt::cl::counting_iterator<int> stencil_first(0);
+
+    is_even iepred;
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -552,6 +596,26 @@ TEST_P(HostMemory_IntStdVector, Gather_IfPredicate_Fancy_map)
     bolt::cl::counting_iterator<int> map(0); 
     is_even iepred;
 
+     bolt::cl::gather_if(map, map+myStdVectSize,  stencil.begin(), input.begin(), result.begin(), iepred );
+     bolt::cl::gather_if(  map, map+myStdVectSize,  stencil.begin(), input.begin(), exp_result.begin(), iepred );
+    //for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_IntStdVector, SerialGather_IfPredicate_Fancy_map)
+{
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            input[i] =  i + 2 * i;
+            stencil[i] = i + 5 * 1;
+        }
+    bolt::cl::counting_iterator<int> map(0); 
+    is_even iepred;
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -584,6 +648,35 @@ TEST_P(HostMemory_IntStdVector, MulticoreGather_IfPredicate_Fancy_map)
 }
 
 TEST_P(DeviceMemory_IntBoltdVector, Gather_IfPredicate)
+{
+    std::vector<int> h_input( myStdVectSize,0);   
+    std::vector<int> h_map (myStdVectSize,0);	
+    std::vector<int> h_stencil (myStdVectSize,0);
+
+    for( int i=0; i < myStdVectSize ; i++ )
+    {
+        h_map[i] = i;
+        h_input[i] =  i + 2 * i;
+        h_stencil[i] = i + 5 * 1;
+    }
+
+    bolt::cl::device_vector<int> input( h_input.begin(), h_input.end() );   
+    bolt::cl::device_vector<int> exp_result(myStdVectSize,0);    
+    bolt::cl::device_vector<int> result ( myStdVectSize, 0 );
+    bolt::cl::device_vector<int> map ( h_map.begin(), h_map.end() );	
+    bolt::cl::device_vector<int> stencil ( h_stencil.begin(), h_stencil.end() );	
+
+   // std::random_shuffle( map.begin(), map.end() ); 
+
+    is_even iepred;
+
+
+     bolt::cl::gather_if( map.begin(), map.end(),  stencil.begin(), input.begin(), result.begin(), iepred );
+     bolt::cl::gather_if( map.begin(), map.end(),  stencil.begin(), input.begin(), exp_result.begin(), iepred );
+    cmpArrays(exp_result, result);
+}
+
+TEST_P(DeviceMemory_IntBoltdVector, SerialGather_IfPredicate)
 {
     std::vector<int> h_input( myStdVectSize,0);   
     std::vector<int> h_map (myStdVectSize,0);	
@@ -1667,6 +1760,7 @@ TEST( HostMemory_int, MulticoreGather_Fancy_input )
     EXPECT_EQ(exp_result, result);
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES==1)
 TEST( HostMemory_int, Gather_device_Input )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -1739,6 +1833,7 @@ TEST( HostMemory_int, MulticoreGather_device_Input )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
+#endif
 
 TEST(DeviceMemory_Int, Gather )
 {
@@ -1956,6 +2051,7 @@ TEST(DeviceMemory_Int, MulticoreGather_Fancy_Input )
 
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( DeviceMemory_Int, Gather_StdInput_Stdresult )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2025,8 +2121,29 @@ TEST( DeviceMemory_Int, MulticoreGather_StdInput_Stdresult )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
      EXPECT_EQ(exp_result, result);
 }
+#endif
 
 TEST_P(HostMemory_IntStdVector, Gather)
+{
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i] =  i + 2 * i;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+     bolt::cl::gather(map.begin(), map.end(), input.begin(), result.begin());
+     bolt::cl::gather( map.begin(), map.end(),  input.begin(), exp_result.begin());
+   // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_IntStdVector, SerialGather)
 {
     std::vector<int> input( myStdVectSize,0);   
     std::vector<int> exp_result(myStdVectSize,0);    
@@ -2082,6 +2199,24 @@ TEST_P(HostMemory_IntStdVector, Gather_Fancy_map)
         }
     bolt::cl::counting_iterator<int> map(0);
 
+    bolt::cl::gather(map, map+myStdVectSize, input.begin(), result.begin());
+    bolt::cl::gather( map, map+myStdVectSize,  input.begin(), exp_result.begin());
+   // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_IntStdVector, SerialGather_Fancy_map)
+{
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            input[i] =  i + 2 * i;
+        }
+    bolt::cl::counting_iterator<int> map(0);
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -2123,6 +2258,26 @@ TEST_P(HostMemory_IntStdVector, Gather_Fancy_Input)
             map[i] = i;            
         }
     std::random_shuffle( map.begin(), map.end() ); 
+
+
+     bolt::cl::gather( map.begin(), map.end(), input, result.begin());
+     bolt::cl::gather( map.begin(), map.end(),  input, exp_result.begin());
+   // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_IntStdVector, SerialGather_Fancy_Input)
+{
+    bolt::cl::counting_iterator<int> input(0);
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;            
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -2153,6 +2308,28 @@ TEST_P(HostMemory_IntStdVector, MulticoreGather_Fancy_Input)
 }
 
 TEST_P(DeviceMemory_IntBoltdVector, Gather)
+{
+    std::vector<int> h_input( myStdVectSize,0);   
+    std::vector<int> h_map (myStdVectSize,0);	
+
+    for( int i=0; i < myStdVectSize ; i++ )
+    {
+        h_map[i] = i;
+        h_input[i] =  i + 2 * i;
+    }
+
+    bolt::cl::device_vector<int> input( h_input.begin(), h_input.end() );   
+    bolt::cl::device_vector<int> exp_result(myStdVectSize,0);    
+    bolt::cl::device_vector<int> result ( myStdVectSize, 0 );
+    bolt::cl::device_vector<int> map ( h_map.begin(), h_map.end() );	
+
+     bolt::cl::gather( map.begin(), map.end(), input.begin(), result.begin());
+     bolt::cl::gather( map.begin(), map.end(),  input.begin(), exp_result.begin());
+   // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
+     cmpArrays(exp_result, result);
+}
+
+TEST_P(DeviceMemory_IntBoltdVector, SerialGather)
 {
     std::vector<int> h_input( myStdVectSize,0);   
     std::vector<int> h_map (myStdVectSize,0);	
@@ -2412,6 +2589,7 @@ TEST( HostMemory_Float, MulticoreGather_Fancy_input )
     EXPECT_EQ(exp_result, result);
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES==1)
 TEST( HostMemory_Float, Gather_device_Input )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2484,6 +2662,8 @@ TEST( HostMemory_Float, MulticoreGather_device_Input )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
+
+#endif
 
 TEST(DeviceMemory_Float, Gather )
 {
@@ -2689,6 +2869,7 @@ TEST(DeviceMemory_Float, MulticoreGather_Fancy_Input )
     //cmpArrays( exp_result, result );
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES==1)
 TEST( DeviceMemory_Float, Gather_StdInput_Stdresult )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2758,7 +2939,7 @@ TEST( DeviceMemory_Float, MulticoreGather_StdInput_Stdresult )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
      EXPECT_EQ(exp_result, result);
 }
-
+#endif
 
 #if(TEST_DOUBLE == 1)
 TEST( HostMemory_Double, Gather )
@@ -2965,6 +3146,7 @@ TEST( HostMemory_Double, MulticoreGather_Fancy_input )
     EXPECT_EQ(exp_result, result);
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES==1)
 TEST( HostMemory_Double, Gather_device_Input )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -3034,6 +3216,7 @@ TEST( HostMemory_Double, MulticoreGather_device_Input )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
+#endif
 
 TEST(DeviceMemory_Double, Gather )
 {
@@ -3239,6 +3422,8 @@ TEST(DeviceMemory_Double, MulticoreGather_Fancy_Input )
     cmpArrays( exp_result, result );
 }
 
+#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
+
 TEST( DeviceMemory_Double, Gather_StdInput_Stdresult )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -3309,7 +3494,7 @@ TEST( DeviceMemory_Double, MulticoreGather_StdInput_Stdresult )
      EXPECT_EQ(exp_result, result);
 }
 #endif
-
+#endif
 
 TEST_P(HostMemory_UDDTestInt2, SerialGather_IfPredicate)
 {
@@ -3471,6 +3656,27 @@ TEST( HostMemory_int, OffsetGatherIfPredicate )
 
     bolt::cl::gather_if( map.begin(), map.begin()+5, stencil.begin()+2, input.begin(), result.begin(), iepred );
 
+    bolt::cl::gather_if(map.begin(), map.begin()+5, stencil.begin()+2, input.begin(), exp_result.begin(), iepred );
+
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST( HostMemory_int, SerialOffsetGatherIfPredicate )
+{
+    int n_map[10]     =  {4,3,1,2,0,5,6,7,8,9};
+    int n_input[10]   =  {9,8,7,6,5,4,3,2,1,0};
+    int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
+
+    std::vector<int> exp_result(10, -100);    
+    std::vector<int> result(10, -100 );
+    
+    std::vector<int> input ( n_input, n_input + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
+    std::vector<int> stencil ( n_stencil, n_stencil + 10 );    
+    is_even iepred;
+
+    bolt::cl::gather_if( map.begin(), map.begin()+5, stencil.begin()+2, input.begin(), result.begin(), iepred );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     bolt::cl::gather_if(ctl, map.begin(), map.begin()+5, stencil.begin()+2, input.begin(), exp_result.begin(), iepred );
@@ -3479,6 +3685,34 @@ TEST( HostMemory_int, OffsetGatherIfPredicate )
 }
 
 TEST( HostMemory_int, OffsetGatherIfPredicateMedium )
+{
+    size_t myStdVectSize = 1024;
+    int s_offset = 0;
+    int e_offset = 515;
+    size_t distance = e_offset - s_offset;
+
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);
+    std::vector<int> stencil (myStdVectSize,0);
+	for (size_t i = 0; i < distance; i++)
+    {
+        map[i] =(int) (s_offset + i);
+        input[i] =  (int)(i + 2 * i);
+        stencil[i] =  (int)(i + 5 * i);
+    }
+    std::random_shuffle( map.begin(), map.end() );   
+    is_even iepred;
+
+    bolt::cl::gather_if( map.begin(), map.begin()+e_offset, stencil.begin()+56, input.begin(), result.begin(), iepred );
+
+    bolt::cl::gather_if( map.begin(), map.begin()+e_offset, stencil.begin()+56, input.begin(), exp_result.begin(), iepred );
+
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST( HostMemory_int, SerialOffsetGatherIfPredicateMedium )
 {
     size_t myStdVectSize = 1024;
     int s_offset = 0;
@@ -3522,6 +3756,25 @@ TEST( HostMemory_int, OffsetGatherPredicate )
 
     bolt::cl::gather( map.begin(), map.begin()+5, input.begin(), result.begin() );
 
+    bolt::cl::gather( map.begin(), map.begin()+5, input.begin(), exp_result.begin() );
+
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST( HostMemory_int, SerialOffsetGatherPredicate )
+{
+    int n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
+    int n_input[10]   =  {9,8,7,6,5,4,3,2,1,0};
+    int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
+
+    std::vector<int> exp_result(10, -100);    
+    std::vector<int> result(10, -100 );
+    
+    std::vector<int> input ( n_input, n_input + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
+
+    bolt::cl::gather( map.begin(), map.begin()+5, input.begin(), result.begin() );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     bolt::cl::gather(ctl, map.begin(), map.begin()+5, input.begin(), exp_result.begin() );
@@ -3530,6 +3783,31 @@ TEST( HostMemory_int, OffsetGatherPredicate )
 }
 
 TEST( HostMemory_int, OffsetGatherPredicateMedium )
+{
+    size_t myStdVectSize = 1024;
+
+    int s_offset = 0;
+    int e_offset = 567;
+    size_t distance = e_offset - s_offset;
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+	for (size_t i = 0; i < distance; i++)
+    {
+        map[i] = (int)(s_offset + i);
+        input[i] = (int)( i + 2 * i);
+    }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    bolt::cl::gather( map.begin(), map.begin() + e_offset, input.begin(), result.begin() );
+
+    bolt::cl::gather( map.begin(), map.begin() + e_offset, input.begin(), exp_result.begin() );
+
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST( HostMemory_int, SerialOffsetGatherPredicateMedium )
 {
     size_t myStdVectSize = 1024;
 

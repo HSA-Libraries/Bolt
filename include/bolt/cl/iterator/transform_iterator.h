@@ -32,9 +32,6 @@
 #include <bolt/cl/device_vector.h>
 
 
-
-#include <type_traits>
-
 namespace bolt
 {
 namespace cl
