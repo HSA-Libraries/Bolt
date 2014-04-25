@@ -313,7 +313,8 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
 	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<int>(orig_szElements), 0);
+    concurrency::array<Values, 1 > dvSwapInputValues(static_cast<int>(orig_szElements), av);
+
 	bool Asc_sort = 0;
 	if(comp(2,3))
        Asc_sort = 1;
@@ -337,7 +338,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< int, concurrency::array_view > dvHistogramBins(static_cast<int>(numGroups * RADICES), 0 );
+	concurrency::array<int, 1> dvHistogramBins(static_cast<int>(numGroups * RADICES), av);
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();
@@ -348,8 +349,8 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		  concurrency::parallel_for_each( av, tileK0, 
 				[
 					first,
-					dvSwapInputValues,
-					dvHistogramBins,
+					&dvSwapInputValues,
+					&dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -429,7 +430,7 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		concurrency::tiled_extent< localSize > tileK1 = scaninputExtent.tile< localSize >();
 		concurrency::parallel_for_each( av, tileK1, 
 				[
-					dvHistogramBins,
+					&dvHistogramBins,
 					numGroups,
 					tileK1
 				] ( concurrency::tiled_index< localSize > t_idx ) restrict(amp)
@@ -473,8 +474,8 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		concurrency::parallel_for_each( av, tileK0, 
 				[
 					first,
-					dvSwapInputValues,
-					dvHistogramBins,
+					&dvSwapInputValues,
+					&dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,
@@ -657,8 +658,8 @@ void sort_enqueue_int_uint(bolt::amp::control &ctl,
 		concurrency::parallel_for_each( av, tileK0, 
 				[
 					first,
-					dvSwapInputValues,
-					dvHistogramBins,
+					&dvSwapInputValues,
+					&dvHistogramBins,
 					cdata,
 					swap,
 					Asc_sort,

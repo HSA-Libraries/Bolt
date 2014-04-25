@@ -22,8 +22,6 @@
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
-#define LENGTH_TEST 10
-
 #include <iostream>
 #include <fstream>
 
@@ -171,13 +169,7 @@ reduce_by_key_enqueue(
         sizeScanBuff += kernel0_WgSize;
     }
 
-    concurrency::array< int >  keySumArray( sizeScanBuff, av );
-    concurrency::array< voType >  preSumArray( sizeScanBuff, av );
-    concurrency::array< voType >  postSumArray( sizeScanBuff, av );
-    
 	concurrency::array< int >  tempArray( numElements, av );
-    device_vector<int> newKeyArray(tempArray);
-
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
@@ -190,7 +182,7 @@ reduce_by_key_enqueue(
 				keys_first,
 				binary_pred,
 				numElements,
-				newKeyArray,	
+				&tempArray,	
 				kernel0_WgSize
 			] ( concurrency::index< 1 > t_idx ) restrict(amp)
 	   {
@@ -207,12 +199,12 @@ reduce_by_key_enqueue(
 			  key = keys_first[ gloId ];
 			  prev_key = keys_first[ gloId - 1];
 			  if(binary_pred(key, prev_key))
-				newKeyArray[ gloId ] = 0;
+				tempArray[ gloId ] = 0;
 			  else
-				newKeyArray[ gloId ] = 1;
+				tempArray[ gloId ] = 1;
 			}
 			else{
-				newKeyArray[ gloId ] = 0;
+				tempArray[ gloId ] = 0;
 			}
     
 	   } );
@@ -223,7 +215,273 @@ reduce_by_key_enqueue(
         std::cout<< e.what() << std::endl;
         throw std::exception();
     }	
-    detail::scan_enqueue(ctl, newKeyArray.begin(), newKeyArray.end(), newKeyArray.begin(), 0, bolt::amp::plus< int >( ), true);
+   // detail::scan_enqueue(ctl, newKeyArray.begin(), newKeyArray.end(), newKeyArray.begin(), 0, bolt::amp::plus< int >( ), true);
+
+//scan kernel. All variables will be local to scope  except tempArray.
+{
+		bolt::amp::plus< int > binary_op;
+		int ScansizeInputBuff = sizeInputBuff;
+		unsigned int ScanmodWgSize = (ScansizeInputBuff & ((kernel0_WgSize*2)-1));
+		if( ScanmodWgSize )
+		{
+			ScansizeInputBuff &= ~ScanmodWgSize;
+			ScansizeInputBuff += (kernel0_WgSize*2);
+		}
+		int ScannumWorkGroupsK0 = static_cast< int >( ScansizeInputBuff / (kernel0_WgSize*2) );
+		//  Ceiling function to bump the size of the sum array to the next whole wavefront size
+		unsigned int sizeScanBuff = ScannumWorkGroupsK0;
+		ScanmodWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
+		if( ScanmodWgSize )
+		{
+			sizeScanBuff &= ~ScanmodWgSize;
+			sizeScanBuff += (kernel0_WgSize*2);
+		}
+
+		concurrency::array< int >  preSumArray( sizeScanBuff, av );
+		concurrency::array< int >  preSumArray1( sizeScanBuff, av );
+
+		const unsigned int tile_limit = 65535;
+		const unsigned int max_ext = (tile_limit*kernel0_WgSize);
+		unsigned int	   tempBuffsize = (ScansizeInputBuff/2); 
+		unsigned int	   iteration = (tempBuffsize-1)/max_ext; 
+
+		for(unsigned int i=0; i<=iteration; i++)
+		{
+			unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
+			concurrency::extent< 1 > inputExtent( extent_sz );
+			concurrency::tiled_extent< kernel0_WgSize > tileK0 = inputExtent.tile< kernel0_WgSize >();
+			unsigned int index = i*(tile_limit*kernel0_WgSize);
+			unsigned int tile_index = i*tile_limit;
+
+			  concurrency::parallel_for_each( av, tileK0, 
+					[
+						&tempArray,
+						numElements,
+						&preSumArray,
+						&preSumArray1,
+						binary_op,
+						index,
+						tile_index,
+						kernel0_WgSize
+					] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
+			  {
+					unsigned int gloId = t_idx.global[ 0 ] + index;
+					unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+					unsigned int locId = t_idx.local[ 0 ];
+					int wgSize = kernel0_WgSize;
+
+					tile_static int lds[ WAVESIZE*KERNEL02WAVES*2 ];
+
+					wgSize *=2;
+
+					int input_offset = (groId*wgSize)+locId;
+					if(input_offset < numElements)
+						lds[locId] = tempArray[input_offset];
+					if(input_offset+(wgSize/2) < numElements)
+						lds[locId+(wgSize/2)] = tempArray[ input_offset+(wgSize/2)];
+
+					unsigned int  offset = 1;
+					//  Computes a scan within a workgroup with two data per element
+					 for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
+					 {
+					   t_idx.barrier.wait();
+					   if (locId < start)
+					   {
+						  unsigned int temp1 = offset*(2*locId+1)-1;
+						  unsigned int temp2 = offset*(2*locId+2)-1;
+						  int y = lds[temp2];
+						  int y1 =lds[temp1];
+
+						  lds[temp2] = binary_op(y, y1);
+					   }
+					   offset *= 2;
+					 }
+					 t_idx.barrier.wait();
+					 if (locId == 0)
+					 {
+						preSumArray[ groId  ] = lds[wgSize -1];
+						preSumArray1[ groId  ] = lds[wgSize/2 -1];
+					 }
+			  } );
+
+			 tempBuffsize = tempBuffsize - max_ext;
+		}
+		int workPerThread = static_cast< int >( sizeScanBuff / kernel1_WgSize );
+		workPerThread = workPerThread ? workPerThread : 1;
+
+		concurrency::extent< 1 > globalSizeK1( kernel1_WgSize );
+		concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
+		concurrency::parallel_for_each( av, tileK1,
+			[
+				&preSumArray,
+				ScannumWorkGroupsK0,
+				workPerThread,
+				binary_op,
+				kernel1_WgSize
+			] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
+	  {
+			unsigned int gloId = t_idx.global[ 0 ];
+			int locId = t_idx.local[ 0 ];
+			int wgSize = kernel1_WgSize;
+			int mapId  = gloId * workPerThread;
+
+			tile_static int lds[ WAVESIZE*KERNEL02WAVES ];
+
+			// do offset of zero manually
+			int offset;
+			int workSum;
+			if (mapId < ScannumWorkGroupsK0)
+			{
+				// accumulate zeroth value manually
+				offset = 0;
+				workSum = preSumArray[mapId+offset];
+				//  Serial accumulation
+				for( offset = offset+1; offset < workPerThread; offset += 1 )
+				{
+					if (mapId+offset<ScannumWorkGroupsK0)
+					{
+						int y = preSumArray[mapId+offset];
+						workSum = binary_op( workSum, y );
+					}
+				}
+			}
+			t_idx.barrier.wait();
+			int scanSum = workSum;
+			offset = 1;
+			// load LDS with register sums
+			lds[ locId ] = workSum;
+
+			// scan in lds
+			for( offset = offset*1; offset < wgSize; offset *= 2 )
+			{
+				t_idx.barrier.wait();
+				if (mapId < ScannumWorkGroupsK0)
+				{
+					if (locId >= offset)
+					{
+						int y = lds[ locId - offset ];
+						scanSum = binary_op( scanSum, y );
+					}
+				}
+				t_idx.barrier.wait();
+				lds[ locId ] = scanSum;
+			} // for offset
+			t_idx.barrier.wait();
+			workSum = preSumArray[mapId];
+			if(locId > 0){
+				int y = lds[locId-1];
+				workSum = binary_op(workSum, y);
+				preSumArray[ mapId] = workSum;
+			 }
+		 
+			// write final scan from pre-scan and lds scan
+			for( offset = 1; offset < workPerThread; offset += 1 )
+			{
+				 t_idx.barrier.wait_with_global_memory_fence();
+				 if (mapId+offset < ScannumWorkGroupsK0 && locId > 0)
+				 {
+					int y  = preSumArray[ mapId + offset ] ;
+					int y1 = binary_op(y, workSum);
+					preSumArray[ mapId + offset ] = y1;
+					workSum = y1;
+
+				 } // thread in bounds
+				 else if(mapId+offset < ScannumWorkGroupsK0 ){
+				   int y  = preSumArray[ mapId + offset ] ;
+				   preSumArray[ mapId + offset ] = binary_op(y, workSum);
+				   workSum = preSumArray[ mapId + offset ];
+				}
+
+			} // for
+
+		} );
+		tempBuffsize = (ScansizeInputBuff); 
+		iteration = (tempBuffsize-1)/max_ext; 
+
+		for(unsigned int a=0; a<=iteration ; a++)
+		{
+			unsigned int extent_sz =  (tempBuffsize > max_ext) ? max_ext : tempBuffsize; 
+			concurrency::extent< 1 > inputExtent( extent_sz );
+			concurrency::tiled_extent< kernel2_WgSize > tileK2 = inputExtent.tile< kernel2_WgSize >();
+			unsigned int index = a*(tile_limit*kernel2_WgSize);
+			unsigned int tile_index = a*tile_limit;
+
+			concurrency::parallel_for_each( av, tileK2,
+					[
+						&tempArray,
+						&preSumArray,
+						&preSumArray1,
+						numElements,
+						binary_op,
+						index,
+						tile_index,
+						kernel2_WgSize
+					] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
+			  {
+					int gloId = t_idx.global[ 0 ] + index;
+					unsigned int groId = t_idx.tile[ 0 ] + tile_index;
+					int locId = t_idx.local[ 0 ];
+					int wgSize = kernel2_WgSize;
+
+					tile_static int lds[WAVESIZE*KERNEL02WAVES ];
+					int val;
+  
+					if (gloId < numElements){
+						  val = tempArray[gloId];
+						  lds[ locId ] = val;
+					}
+  
+	    			int scanResult = lds[locId];
+					int postBlockSum, newResult;
+					// accumulate prefix
+					int y, y1, sum;
+					if(locId == 0 && gloId < numElements)
+					{
+						if(groId > 0) {
+							if(groId % 2 == 0)
+							   postBlockSum = preSumArray[ groId/2 -1 ];
+							else if(groId == 1)
+							   postBlockSum = preSumArray1[0];
+							else {
+							   y = preSumArray[ groId/2 -1 ];
+							   y1 = preSumArray1[groId/2];
+							   postBlockSum = binary_op(y, y1);
+							}
+ 							newResult = binary_op( scanResult, postBlockSum );
+						}
+						else {
+						   newResult = scanResult;
+						}
+						lds[ locId ] = newResult;
+					} 
+					//  Computes a scan within a workgroup
+					sum = lds[ locId ];
+
+					for( int offset = 1; offset < wgSize; offset *= 2 )
+					{
+						t_idx.barrier.wait();
+						if (locId >= offset)
+						{
+							int y = lds[ locId - offset ];
+							sum = binary_op( sum, y );
+						}
+						t_idx.barrier.wait();
+						lds[ locId ] = sum;
+					}
+					 t_idx.barrier.wait();
+				//  Abort threads that are passed the end of the input vector
+					if (gloId >= numElements) return; 
+					tempArray[ gloId ] = sum;
+				} );
+				 tempBuffsize = tempBuffsize - max_ext;
+			}
+}
+//End of scan kernel........................
+
+
+	concurrency::array< int >  keySumArray( sizeScanBuff, av );
+    concurrency::array< voType >  preSumArray( sizeScanBuff, av );
+    concurrency::array< voType >  postSumArray( sizeScanBuff, av );
 
     /**********************************************************************************
      *  Kernel 1
@@ -252,7 +510,7 @@ reduce_by_key_enqueue(
 				unsigned int wg_offset = i* (MSVC_TILE_LIMIT);
 				concurrency::parallel_for_each( av, tileK1,
 					[
-						newKeyArray,
+						&tempArray,
 						values_first,
 						numElements,
 						&keySumArray,
@@ -276,7 +534,7 @@ reduce_by_key_enqueue(
 				voType val; 
 
 				if(gloId < numElements){
-				  key = newKeyArray[ gloId ];
+				  key = tempArray[ gloId ];
 				  val = values_first[ gloId ];
 				  ldsKeys[ locId ] =  key;
 				  ldsVals[ locId ] = val;
@@ -339,7 +597,7 @@ reduce_by_key_enqueue(
             &keySumArray,
             &postSumArray,
             &preSumArray,
-            numElements,
+            numWorkGroupsK0,
             binary_op,
             kernel1_WgSize,
             workPerThread
@@ -361,7 +619,7 @@ reduce_by_key_enqueue(
     int key;
     voType workSum;
 
-    if (mapId < numElements)
+    if (mapId < numWorkGroupsK0)
     {
         int prevKey;
 
@@ -376,7 +634,7 @@ reduce_by_key_enqueue(
         {
             prevKey = key;
             key =  keySumArray[ mapId+offset ];
-            if (mapId+offset<numElements )
+            if (mapId+offset<numWorkGroupsK0 )
             {
                 voType y = preSumArray[ mapId+offset ];
                 if ( key == prevKey )
@@ -402,7 +660,7 @@ reduce_by_key_enqueue(
     for( offset = offset*1; offset < wgSize; offset *= 2 )
     {
         t_idx.barrier.wait();
-        if (mapId < numElements)
+        if (mapId < numWorkGroupsK0)
         {
             if (locId >= offset  )
             {
@@ -428,7 +686,7 @@ reduce_by_key_enqueue(
     {
         t_idx.barrier.wait();
 
-        if (mapId < numElements && locId > 0)
+        if (mapId < numWorkGroupsK0 && locId > 0)
         {
             voType y = postSumArray[ mapId+offset ];
             int key1 =  keySumArray[ mapId+offset ]; 
@@ -482,7 +740,7 @@ reduce_by_key_enqueue(
 			keys_first,
 			keys_output,
 			values_output,
-            newKeyArray,
+            &tempArray,
             &keySumArray,
             &postSumArray,
             binary_pred,
@@ -506,7 +764,7 @@ reduce_by_key_enqueue(
 	voType val; 
 	if(gloId < numElements)
 	{
-		  key = newKeyArray[ gloId ];
+		  key = tempArray[ gloId ];
 		  val = values_first[ gloId ];
 		  ldsKeys[ locId ] =  key;
 		  ldsVals[ locId ] = val;
@@ -539,10 +797,10 @@ reduce_by_key_enqueue(
 
     // accumulate prefix
     int  key1 =  keySumArray[ groId-1 ];
-    int  key2 =  newKeyArray[ gloId ];
+    int  key2 =  tempArray[ gloId ];
     int  key3 = -1;
     if(gloId < numElements -1 )
-      key3 =  newKeyArray[ gloId + 1];
+      key3 =  tempArray[ gloId + 1];
     if (groId > 0 && key1 == key2 && key2 != key3)
     {
         voType scanResult = sum;
@@ -552,18 +810,18 @@ reduce_by_key_enqueue(
 
     }
 	unsigned int count_number_of_sections = 0;		
-    count_number_of_sections = newKeyArray[numElements-1] + 1;
-    if(gloId < (numElements-1) && newKeyArray[ gloId ] != newKeyArray[ gloId +1])
+    count_number_of_sections = tempArray[numElements-1] + 1;
+    if(gloId < (numElements-1) && tempArray[ gloId ] != tempArray[ gloId +1])
     {
-        keys_output [newKeyArray [ gloId ]] = keys_first[ gloId];
-        values_output[ newKeyArray [ gloId ]] = sum;
+        keys_output [tempArray [ gloId ]] = keys_first[ gloId];
+        values_output[ tempArray [ gloId ]] = sum;
     }
 
     if( gloId == (numElements-1) )
     {
         keys_output[ count_number_of_sections - 1 ] = keys_first[ gloId ]; //Copying the last key directly. Works either ways
         values_output[ count_number_of_sections - 1 ] = sum;
-        newKeyArray [ gloId ] = count_number_of_sections;
+        tempArray [ gloId ] = count_number_of_sections;
     }
 
   } );
@@ -577,9 +835,8 @@ reduce_by_key_enqueue(
         throw std::exception();
       }	
 	unsigned int count_number_of_sections = 0;
-    count_number_of_sections = newKeyArray[numElements-1];
+    count_number_of_sections = tempArray.section(numElements-1, 1)[0];
     return count_number_of_sections;
-
 }   //end of reduce_by_key_enqueue( )
 
 
