@@ -412,8 +412,6 @@ private:
             advance( 1 );
         }
 
-
-
         template< typename OtherContainer >
         bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const
         {
@@ -481,7 +479,7 @@ private:
         if( m_Size > 0 )
         {
 			concurrency::array<value_type> tmp = array_type( static_cast< int >( m_Size ), ctl.getAccelerator().default_view );
-            m_devMemory = arrayview_type( tmp );
+            m_devMemory = tmp.view_as(tmp.get_extent());
             if( init )
             {
                 arrayview_type m_devMemoryAV( m_devMemory );
@@ -511,7 +509,7 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-			m_devMemory = tmp;
+			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
 		if(discard)
 			m_devMemory.discard_data();
@@ -535,7 +533,7 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-			m_devMemory = arrayview_type( tmp );
+			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
     };
 
@@ -546,43 +544,31 @@ private:
 	*   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     */
 	template< typename T >
-	device_vector( const device_vector<T, CONT> &cont, bool copy = true,control& ctl = control::getDefault( ) ): m_Size( cont.size( ) ), m_devMemory( cont.m_devMemory)
+	device_vector( const device_vector<T, CONT> &cont, bool copy = true,control& ctl = control::getDefault( ) ): m_Size( cont.size( ) ),
+														m_devMemory( cont.m_devMemory.view_as(cont.m_devMemory.get_extent()))
     {
 		if(!copy)
 			return;
 		if( m_Size > 0 )
         {
 			concurrency::array<value_type> tmp = array_type( m_devMemory );
-            m_devMemory = arrayview_type( tmp );
+			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
     };
 	
     /*! \brief A constructor that creates a new device_vector using a pre-initialized array supplied by the user.
     *   \param cont An concurrency::array object.
     */
-    device_vector( arrayview_type &cont): m_devMemory( create_empty_array<value_type>::getav() )
+    device_vector( arrayview_type &cont): m_Size(cont.get_extent().size()), m_devMemory( cont.view_as(cont.get_extent()))
     {
-		m_Size =  cont.get_extent().size();
-		if( m_Size > 0 )
-        {
-			concurrency::array_view<value_type> tmp = arrayview_type(cont);
-			m_devMemory = tmp;
-		}
     };
 
 
    /*! \brief A constructor that creates a new device_vector using a pre-initialized array_view supplied by the user.
     *   \param cont An concurrency::array_view object.
     */
-    device_vector( array_type &cont): m_devMemory( create_empty_array<value_type>::getav() )
+	device_vector( array_type &cont): m_Size(cont.get_extent().size()), m_devMemory( cont.view_as(cont.get_extent()))
     {
-		m_Size =  cont.get_extent().size();
-		if( m_Size > 0 )
-        {
-			concurrency::array_view<value_type> tmp = arrayview_type(cont);
-			m_devMemory = tmp;
-		}
-		
     };
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -604,7 +590,7 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-	        m_devMemory = tmp;
+	        m_devMemory = tmp.view_as(tmp.get_extent());
 		}
 		if(discard)
 			m_devMemory.discard_data();
@@ -631,7 +617,7 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array<value_type> tmp = array_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-			m_devMemory = arrayview_type( tmp );
+			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
     };
 
