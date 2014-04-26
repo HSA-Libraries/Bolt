@@ -75,12 +75,18 @@ namespace cl
  *  \endcode
  * \sa http://www.sgi.com/tech/stl/partial_sum.html
  */
-template< typename InputIterator, typename OutputIterator >
-OutputIterator
-    inclusive_scan( control &ctl, InputIterator first, InputIterator last,
-    OutputIterator result, const std::string& user_code="" );
+template< typename InputIterator, 
+	      typename OutputIterator >
+OutputIterator 
+inclusive_scan( 
+		control &ctl, 
+		InputIterator first, 
+		InputIterator last,
+		OutputIterator result, 
+		const std::string& user_code="" );
 
-template< typename InputIterator, typename OutputIterator >
+template< typename InputIterator, 
+	      typename OutputIterator >
 OutputIterator
 inclusive_scan(
     InputIterator first,
@@ -116,9 +122,17 @@ inclusive_scan(
  *  \endcode
  * \sa http://www.sgi.com/tech/stl/partial_sum.html
  */
-template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-OutputIterator inclusive_scan( control &ctl, InputIterator first, InputIterator last,
-    OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
+template< typename InputIterator, 
+	     typename OutputIterator, 
+		 typename BinaryFunction >
+OutputIterator 
+inclusive_scan( 
+		control &ctl, 
+		InputIterator first, 
+		InputIterator last,
+		OutputIterator result,
+		BinaryFunction binary_op, 
+		const std::string& user_code="" );
 
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 OutputIterator

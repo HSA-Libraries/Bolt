@@ -652,7 +652,7 @@ reduce_by_key(
     l_Error = kernel0Event.wait( );
     V_OPENCL( l_Error, "post-kernel[0] failed wait" );
 
-    detail::scan_enqueue(ctl, offsetArrayVec.begin(), offsetArrayVec.end(), offsetArrayVec.begin(), 0, plus< int >( ), true);
+    bolt::cl::detail::cl::scan(ctl, offsetArrayVec.begin(), offsetArrayVec.end(), offsetArrayVec.begin(), 0, true, plus< int >( ), user_code);
 
     /**********************************************************************************
      *  Kernel 1

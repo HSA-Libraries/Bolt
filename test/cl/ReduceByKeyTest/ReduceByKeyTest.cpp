@@ -1426,7 +1426,7 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 
 TEST(reduce_by_key__bolt_Dev_vect, Basic_EPR377067){
 
-int size = 1048576; //2^20;
+int size = 10; ;
 std::vector<int> KeyIn(size);
 std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
@@ -1464,7 +1464,7 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 TEST(reduce_by_key__bolt_Dev_vect, SerialBasic_EPR377067){
 
-int size = 1048576; //2^20;
+int size = 10;
 std::vector<int> KeyIn(size);
 std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
@@ -1505,7 +1505,7 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 TEST(reduce_by_key__bolt_Dev_vect, MulticoreBasic_EPR377067){
 
-int size = 1048576; //2^20;
+int size = 10;
 std::vector<int> KeyIn(size);
 std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
