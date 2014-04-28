@@ -28,7 +28,12 @@
 * 
 *  Besides this following publications were referred: 
 *  1. "Parallel Scan For Stream Architectures"  
-*     Technical Report CS2009-14Department of Computer Science, University of Virginia. *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf*  2. "Revisiting Sorting for GPGPU Stream Architectures" *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
+*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
 *  3. The SHOC Benchmark Suite 
 *     https://github.com/vetter/shoc
 *
@@ -216,7 +221,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
                         const DVKeys& keys_last, const DVValues& values_first,
                         const StrictWeakOrdering& comp, const std::string& cl_code)
     {
-        stablesort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
+        bolt::cl::stablesort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
         return;
     }// END of sort_by_key_enqueue
 
