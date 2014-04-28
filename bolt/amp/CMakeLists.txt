@@ -62,6 +62,7 @@ set( ampBolt.Runtime.Headers.Iterator
 	${ampBolt.Include.Dir}/iterator/constant_iterator.h
 	${ampBolt.Include.Dir}/iterator/counting_iterator.h
 	${ampBolt.Include.Dir}/iterator/iterator_traits.h 
+  ${ampBolt.Include.Dir}/iterator/permutation_iterator.h
    )
     
 set( ampBolt.Runtime.Headers.Detail
