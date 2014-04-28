@@ -84,6 +84,13 @@ namespace amp {
             return result;
         }
 
+        const permutation_iterator< key_type, element_type > operator- ( const difference_type & n ) const restrict (cpu,amp)
+        {
+            permutation_iterator< key_type, element_type > result( *this );
+            result.advance( -n );
+            return result;
+        }
+
         const concurrency::array_view<int> & getBuffer( perm_iterator itr ) const
         {
             return *value;

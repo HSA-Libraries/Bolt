@@ -315,18 +315,18 @@ kernel void LocalMergeSortTemplate(
 		  val_lds[ locId ] = val;
 	}
     barrier( CLK_LOCAL_MEM_FENCE );
-	int end =  wgSize;
+	uint end =  wgSize;
 	if( (groId+1)*(wgSize) >= vecSize )
 	{
 		end = vecSize - (groId*wgSize);
 	}
 
-	size_t numMerges = 8;
-	size_t pass;
+	uint numMerges = 8;
+	uint pass;
 
     for( pass = 1; pass <= numMerges; ++pass )
 	{
-		size_t srcLogicalBlockSize = 1 << (pass-1);
+		uint srcLogicalBlockSize = 1 << (pass-1);
 	    if( gloId < vecSize)
 		{
   		    uint srcBlockNum = (locId) / srcLogicalBlockSize;
