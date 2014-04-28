@@ -48,7 +48,7 @@ namespace amp {
 
 
         // Default constructor
-         permutation_iterator():key_iterator(), element_iterator() {}
+         permutation_iterator():key_iterator(), element_iterator(), m_Index(0) {}
 
         //  Basic constructor requires a reference to the container and a positional element
         permutation_iterator( key_type ikey, element_type ivalue, const control& ctl = control::getDefault( ) ):
@@ -71,7 +71,7 @@ namespace amp {
             return *this;
         }
             
-        permutation_iterator< key_type, element_type >& operator+= ( const  difference_type & n )
+        permutation_iterator< key_type, element_type >& operator+= ( const  difference_type & n ) const restrict (cpu,amp)
         {
             advance( n );
             return *this;
@@ -109,7 +109,7 @@ namespace amp {
         template < typename, typename > friend class permutation_iterator;
 
         //  For a permutation_iterator, do nothing on an advance
-        void advance( difference_type n )
+        void advance( difference_type n ) restrict ( cpu, amp ) 
         {
             m_Index += n;
         }

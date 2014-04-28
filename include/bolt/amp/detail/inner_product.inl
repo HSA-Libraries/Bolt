@@ -44,6 +44,33 @@ namespace bolt {
 
 namespace detail {
 
+            namespace serial
+            {
+
+                template< typename InputIterator1,
+                          typename InputIterator2,
+                          typename OutputType,
+                          typename BinaryFunction1,
+                          typename BinaryFunction2>
+                OutputType inner_product( const InputIterator1& first1,
+                                          const InputIterator1& last1,
+                                          const InputIterator2& first2,
+                                          const OutputType& val,
+                                          const BinaryFunction1& f1,
+                                          const BinaryFunction2& f2 )
+                {
+                    size_t sz = (last1 - first1);
+                    if (sz == 0)
+                        return val;
+                    OutputType accumulator = val;
+                    for(int index=0; index < (int)(sz); index++)
+                    {
+                        accumulator = f1( accumulator, f2(*(first1+index), *(first2+index)) );
+                    }
+                    return accumulator;
+                }
+            }
+
             template< typename DVInputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
             OutputType inner_product_enqueue(bolt::amp::control &ctl, const DVInputIterator& first1,
                 const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init,
@@ -200,7 +227,7 @@ namespace detail {
                 if( runMode == bolt::amp::control::SerialCpu)
                 {
 
-                    return std::inner_product(first1, last1, first2, init, f1, f2);
+                    return serial::inner_product(first1, last1, first2, init, f1, f2);
                 }
                 else if(runMode == bolt::amp::control::MultiCoreCpu)
                 {

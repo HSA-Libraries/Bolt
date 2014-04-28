@@ -525,7 +525,7 @@ transform_scan_pick_iterator(
     if( runMode == bolt::amp::control::SerialCpu )
     {
 	   
-        std::transform(first, last, result, unary_op);
+        serial::unary_transform(first, last, result, unary_op);
         Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
         return result + numElements;
     }
@@ -697,7 +697,7 @@ transform_scan_pick_iterator(
     if( runMode == bolt::amp::control::SerialCpu )
     {
 	   
-        std::transform(first, last, result, unary_op);
+        serial::unary_transform(first, last, result, unary_op);
         Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
         return result + numElements;
     }

@@ -49,6 +49,38 @@ namespace bolt
     {
         namespace detail
         {
+            namespace serial
+            {
+
+                template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+                void binary_transform( const InputIterator1& first1, const InputIterator1& last1,
+                                    const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f)
+                {
+                    size_t sz = (last1 - first1);
+                    if (sz == 0)
+                        return;
+                    for(int index=0; index < (int)(sz); index++)
+                    {
+                        *(result + index) = f( *(first1+index), *(first2+index) );
+                    }
+                }
+
+                template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+                void unary_transform( Iterator& first, Iterator& last,
+                                OutputIterator& result, UnaryFunction& f )
+                {
+                    size_t sz = (last - first);
+                    if (sz == 0)
+                        return;
+                    for(int index=0; index < (int)(sz); index++)
+                    {
+                        *(result + index) = f( *(first+index) );
+                    }
+        
+                    return;
+                }
+            }
+
            
             template< typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction >
             void transform_enqueue( bolt::amp::control &ctl,
@@ -171,13 +203,7 @@ namespace bolt
                 else
                 {
                   // Use host pointers memory since these arrays are only read once - no benefit to copying.
-                  // Map the input iterator to a device_vector
-                  device_vector< iType2, concurrency::array_view > dvInput2(first2, sz, false, ctl);
-                  // Map the output iterator to a device_vector
-                  device_vector< oType, concurrency::array_view > dvOutput(result, sz, true, ctl);
-                  transform_enqueue(ctl, first1, last1, dvInput2.begin(), dvOutput.begin(), f);
-                  // This should immediately map/unmap the buffer
-                  dvOutput.data();
+                  transform_enqueue(ctl, first1, last1, first2, result, f);
                 }
               }
 
@@ -230,13 +256,7 @@ namespace bolt
                 else
                 {
                   // Use host pointers memory since these arrays are only read once - no benefit to copying.
-                  // Map the input iterator to a device_vector
-                  device_vector< iType1, concurrency::array_view > dvInput1(first1, last1, false, ctl);
-                  // Map the output iterator to a device_vector
-                  device_vector< oType, concurrency::array_view > dvOutput(result, sz, true, ctl);
-                  transform_enqueue(ctl, dvInput1.begin(), dvInput1.end(), first2, dvOutput.begin(), f);
-                  // This should immediately map/unmap the buffer
-                  dvOutput.data();
+                  transform_enqueue(ctl, first1, last1, first2, result, f);
                 }
               }
 
@@ -576,7 +596,7 @@ namespace bolt
               //  TBB does not have an equivalent for two input iterator std::transform
              if( (runMode == bolt::amp::control::SerialCpu) )
              {
-                std::transform( first, last, result, f );
+                serial::unary_transform( first, last, result, f );
                 return;
              }
              else if( (runMode == bolt::amp::control::MultiCoreCpu) )
