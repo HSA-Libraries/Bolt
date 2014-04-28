@@ -49,6 +49,8 @@
 #include "bolt/btbb/sort_by_key.h"
 #endif
 
+#include "bolt/cl/stablesort_by_key.h"
+
 #define BITONIC_SORT_WGSIZE 64
 #define DEBUG 1
 namespace bolt {
