@@ -252,7 +252,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
            std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
          )
                            >::type
-  sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
+    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
                         const DVKeys& keys_last, const DVValues& values_first,
                         const StrictWeakOrdering& comp, const std::string& cl_code)
     {
