@@ -29,6 +29,7 @@
 
 namespace bolt {
 namespace cl {
+
 namespace detail
 {
     template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
