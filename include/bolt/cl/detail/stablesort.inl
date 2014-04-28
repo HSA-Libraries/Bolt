@@ -26,6 +26,8 @@
 
 #define BOLT_CL_STABLESORT_CPU_THRESHOLD 256
 
+#include "bolt/cl/sort.h"
+
 namespace bolt {
 namespace cl {
 

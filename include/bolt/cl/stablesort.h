@@ -20,7 +20,6 @@
 #define BOLT_CL_STABLESORT_H
 
 #include "bolt/cl/device_vector.h"
-#include "bolt/cl/sort.h"
 #include "bolt/cl/copy.h"
 
 
