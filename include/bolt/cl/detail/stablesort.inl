@@ -125,7 +125,7 @@ stablesort_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code)
 {
-    ::bolt::cl::detail::sort_enqueue(ctl, first, last, comp, cl_code);
+    bolt::cl::detail::sort_enqueue(ctl, first, last, comp, cl_code);
     return;
 }
 

@@ -221,7 +221,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
                         const DVKeys& keys_last, const DVValues& values_first,
                         const StrictWeakOrdering& comp, const std::string& cl_code)
     {
-        bolt::cl::stablesort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
+        bolt::cl::detail::stablesort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
         return;
     }// END of sort_by_key_enqueue
 
