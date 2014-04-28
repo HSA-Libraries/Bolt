@@ -58,6 +58,40 @@ namespace cl {
 
 namespace detail {
  
+
+	 template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
+                         DVKeys keys_first, DVKeys keys_last,
+                         DVValues values_first,
+                         StrictWeakOrdering comp, const std::string& cl_code);
+
+	 template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           unsigned int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
+                         DVKeys keys_first, DVKeys keys_last,
+                         DVValues values_first,
+                         StrictWeakOrdering comp, const std::string& cl_code);
+
+  template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if<
+        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
+           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
+         )
+                           >::type
+    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
+                        const DVKeys& keys_last, const DVValues& values_first,
+                        const StrictWeakOrdering& comp, const std::string& cl_code);
+
+	
+
+
 enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
                      sort_by_key_valueValueType, sort_by_key_valueIterType,
                      sort_by_key_StrictWeakOrdering, sort_by_key_end };
@@ -212,14 +246,13 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         }
     }
 
-
-    template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+ template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
     typename std::enable_if<
         !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
            std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
          )
                            >::type
-    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
+  sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
                         const DVKeys& keys_last, const DVValues& values_first,
                         const StrictWeakOrdering& comp, const std::string& cl_code)
     {
