@@ -70,7 +70,8 @@ namespace bolt
 
                 const int szElements = static_cast< int >( std::distance( first, last ) );
 
-				int numTiles = 64*32;			/* Max no. of WG for Tahiti(32 compute Units) */
+				int max_ComputeUnits = 32;
+				int numTiles = max_ComputeUnits*32;			/* Max no. of WG for Tahiti(32 compute Units) and 32 is the tuning factor that gives good performance*/
 				int length = (REDUCE_WAVEFRONT_SIZE*numTiles);	
 				length = szElements < length ? szElements : length;
 				unsigned int residual = length % REDUCE_WAVEFRONT_SIZE;
@@ -79,9 +80,7 @@ namespace bolt
 				numTiles = static_cast< int >((szElements/REDUCE_WAVEFRONT_SIZE)>= numTiles?(numTiles):
 									(std::ceil( static_cast< float >( szElements ) / REDUCE_WAVEFRONT_SIZE) ));
 
-				iType *cpuPointerReduce = new iType[numTiles];
-				concurrency::array_view<iType, 1> result(numTiles, cpuPointerReduce);
-				result.discard_data();
+				concurrency::array<iType, 1> result(numTiles);
 
 				concurrency::extent< 1 > inputExtent(length);
                 concurrency::tiled_extent< REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< REDUCE_WAVEFRONT_SIZE >();
@@ -96,7 +95,7 @@ namespace bolt
                                                    [ first,
 													 szElements,
 													 length,
-                                                     result,
+                                                     &result,
                                                      binary_op ]
                                                    ( concurrency::tiled_index<REDUCE_WAVEFRONT_SIZE> t_idx ) restrict(amp)
                     {
@@ -152,8 +151,9 @@ namespace bolt
                     });
                     
 					iType acc = static_cast<iType>(init);
-					result.synchronize();
+					iType *cpuPointerReduce = new iType[numTiles];
 
+					concurrency::copy(result, cpuPointerReduce);
 					for(int i = 0; i < numTiles; ++i)
 					{
 						acc = binary_op(acc, cpuPointerReduce[i]);
