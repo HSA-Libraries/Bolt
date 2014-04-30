@@ -151,12 +151,12 @@ namespace bolt
                     });
                     
 					iType acc = static_cast<iType>(init);
-					iType *cpuPointerReduce = new iType[numTiles];
+					std::vector<iType> *cpuPointerReduce = new std::vector<iType>(numTiles);
 
-					concurrency::copy(result, cpuPointerReduce);
+					concurrency::copy(result, (*cpuPointerReduce).begin());
 					for(int i = 0; i < numTiles; ++i)
 					{
-						acc = binary_op(acc, cpuPointerReduce[i]);
+						acc = binary_op(acc, (*cpuPointerReduce)[i]);
 					}
 					delete cpuPointerReduce;
 					return acc;
