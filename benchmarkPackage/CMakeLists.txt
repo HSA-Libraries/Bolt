@@ -157,7 +157,7 @@ endif( )
 find_package( OpenCL REQUIRED )
 
 # Use our packaged version of Boost if not specified by the user
-message("RKSKVK   " $ENV{BOLT_ROOT})
+
 if( NOT BOOST_ROOT )
     set( BOOST_ROOT "$ENV{BOLT_ROOT}" )
 endif( )

@@ -23,7 +23,8 @@ set( Bolt.Bench.Benchmark.Files
   ${Bolt.Bench.Benchmark.Source}
   ${Bolt.Bench.Benchmark.Headers}
   )
-
+# Include headers files
+include_directories( ${BOLT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} )
 add_executable( Bolt.Bench.Benchmark ${Bolt.Bench.Benchmark.Files} )
 
 # Set project specific compile and link options
@@ -39,12 +40,11 @@ else()
 endif()    
 
 if(BUILD_TBB)
-    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime  ${Bolt_Link_Libs} ${TBB_LIBRARIES} )
+    target_link_libraries( Bolt.Bench.Benchmark ${BOLT_LIBRARIES} ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} ${Bolt_Link_Libs} ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( Bolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ${Bolt_Link_Libs} )
+    target_link_libraries( Bolt.Bench.Benchmark ${BOLT_LIBRARIES} ${Boost_LIBRARIES} ${OPENCL_LIBRARIES}  ${Bolt_Link_Libs} )
 endif()
 
-set_target_properties( Bolt.Bench.Benchmark PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( Bolt.Bench.Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 set_property( TARGET Bolt.Bench.Benchmark PROPERTY FOLDER "Benchmark/AMP-OpenCL")
