@@ -21,7 +21,7 @@
 #include "bolt/amp/iterator/iterator_traits.h"
 #include "bolt/amp/iterator/counting_iterator.h"
 
-/*! \file bolt/cl/iterator/permutation_iterator.h
+/*! \file bolt/amp/iterator/permutation_iterator.h
     \brief
 */
 
@@ -34,6 +34,55 @@ namespace amp {
       {   // identifying tag for random-access iterators
       };
 
+      /*! \addtogroup fancy_iterators
+       */
+
+      /*! \addtogroup AMP-PermutationIterator
+      *   \ingroup fancy_iterators
+      *   \{
+      */
+
+      /*! permutation_iterator permutes values in a range according to keys.
+       *
+       *
+       *
+       *  \details The following example demonstrates how to use a \p permutation_iterator.
+       *
+       *  \code
+       *  #include <bolt/amp/permutation_iterator.h>
+       *  #include <bolt/amp/transform.h>
+       *
+       *  ...
+       *
+       *  // Create device_vectors
+       *  bolt::amp::device_vector< int > values( 5 );
+       *  bolt::amp::device_vector< int > vecEmpty( 5, 0 );
+       *  bolt::amp::device_vector< int > vecDest( 5, 0 );
+       *  bolt::amp::device_vector< int > index( 5 );
+       *
+       *  // Fill values
+       *  values[ 0 ] = 10 ; values[ 1 ] = 15 ; values[ 2 ] = 20 ;
+       *  values[ 3 ] = 25 ; values[ 4 ] = 30 ;
+       *
+       *  // Fill permutation indices
+       *  index[ 0 ] = 3 ; index[ 1 ] = 2 ; index[ 2 ] = 4 ;
+       *  index[ 3 ] = 0 ; index[ 4 ] = 1 ;
+       *
+       *  bolt::amp::control ctrl = control::getDefault( );
+       *  ...
+       *  bolt::amp::transform( ctrl,
+       *                        bolt::amp::make_permutation_iterator( values.begin( ), index.begin( ) ),
+       *                        bolt::amp::make_permutation_iterator( values.end( ), index.end( ) ),
+       *                        vecEmpty.begin( ),
+       *                        vecDest.begin( ),
+       *                        bolt::amp::plus< int >( ) );
+       *
+       *  // Output:
+       *  // vecDest = { 25, 20, 30, 10, 15 }
+       *
+       *  \endcode
+       *
+       */
       template< typename key_type, typename element_type >
       class permutation_iterator: public std::iterator< permutation_iterator_tag, typename element_type, int>
       {
@@ -110,12 +159,9 @@ namespace amp {
         //  Public member variables
         difference_type m_Index;
 
-        //private:
-
         //  Used for templatized copy constructor and the templatized equal operator
         template < typename, typename > friend class permutation_iterator;
 
-        //  For a permutation_iterator, do nothing on an advance
         void advance( difference_type n ) restrict ( cpu, amp ) 
         {
             m_Index += n;
@@ -162,20 +208,19 @@ namespace amp {
         template< typename OtherKey, typename OtherValue >
         bool operator== ( const permutation_iterator< OtherKey, OtherValue >& rhs ) const
         {
-            bool sameIndex = true;//(rhs.m_initValue == m_initValue) && (rhs.m_Index == m_Index);
-
-            return sameIndex;
+          bool sameIter = (rhs.key_iterator == key_iterator) &&
+                          (rhs.element_iterator == element_iterator);
+          return sameIter;
         }
 
         template< typename OtherKey, typename OtherValue >
         bool operator!= ( const permutation_iterator< OtherKey, OtherValue >& rhs ) const
         {
-            bool sameIndex = true;//(rhs.m_initValue != m_initValue) || (rhs.m_Index != m_Index);
-
-            return sameIndex;
+          bool sameIter = (rhs.key_iterator != key_iterator) ||
+                          (rhs.element_iterator != element_iterator);
+          return sameIter;
         }
 
-        // Do we need this? Debug error
         template< typename OtherKey, typename OtherValue >
         bool operator< ( const permutation_iterator< OtherKey, OtherValue >& rhs ) const
         {

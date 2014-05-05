@@ -20,7 +20,7 @@
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 
-/*! \file bolt/cl/iterator/counting_iterator.h
+/*! \file bolt/amp/iterator/counting_iterator.h
     \brief Return Same Value or counting Value on dereferencing.
 */
 
@@ -45,7 +45,7 @@ namespace amp {
          *
          *
          *
-         *  \details The following demonstrates how to use a \p counting_iterator.
+         *  \details The following example demonstrates how to use a \p counting_iterator.
          *
          *  \code
          *  #include <bolt/amp/counting_iterator.h>
