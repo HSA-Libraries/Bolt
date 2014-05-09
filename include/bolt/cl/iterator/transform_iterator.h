@@ -225,7 +225,7 @@ namespace cl
             { \n
                 public:    \n
                     typedef int iterator_category;        \n
-                    typedef typename Iterator::value_type value_type; \n
+                    typedef typename UnaryFunc::result_type value_type; \n
                     typedef int difference_type; \n
                     typedef int size_type; \n
                     typedef value_type* pointer; \n
@@ -241,12 +241,13 @@ namespace cl
 
                     value_type operator[]( size_type threadID ) const \n
                     { \n
-                       return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                        typename Iterator::value_type tmp = m_Ptr[ m_StartIndex + threadID ]; \n
+                        return m_f(tmp);\n
                     } \n
 
                     value_type operator*( ) const \n
                     { \n
-                        return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                        return m_f(m_Ptr[ m_StartIndex ]); \n
                     } \n
 
                     size_type m_StartIndex; \n

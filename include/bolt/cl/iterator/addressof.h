@@ -23,7 +23,7 @@ namespace cl{
 
     template <typename UnaryFunction, typename Iterator>
     typename bolt::cl::transform_iterator<UnaryFunction, Iterator>::pointer 
-        addressof(typename bolt::cl::transform_iterator<UnaryFunction, Iterator> itr)
+        addressof(const typename bolt::cl::transform_iterator<UnaryFunction, Iterator> itr)
     {
         typedef typename bolt::cl::transform_iterator<UnaryFunction, Iterator>::pointer pointer;
         pointer ptr = itr.getPointer();

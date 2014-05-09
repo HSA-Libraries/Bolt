@@ -121,10 +121,10 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = static_cast<kType>( *(mapped_fst1_itr + i));
-						kType previousKey = static_cast<kType>(*(mapped_fst1_itr -1 + i));
+						kType previousKey = static_cast<kType>(*(mapped_fst1_itr + i -1 ));
 						// load value
 						oType currentValue = static_cast<iType>( *(mapped_fst2_itr +i )); // convertible
-						oType previousValue = static_cast<oType>( *(mapped_res_itr-1 + i));
+						oType previousValue = static_cast<oType>( *(mapped_res_itr + i -1 ));
 
 						// within segment
 						if (binary_pred(currentKey, previousKey))
@@ -147,11 +147,11 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = static_cast<kType>( *(mapped_fst1_itr + i));
-						kType previousKey = static_cast<kType>(*(mapped_fst1_itr -1 + i));
+						kType previousKey = static_cast<kType>(*(mapped_fst1_itr + i -1));
 
 						// load value
 						oType currentValue = temp; // convertible
-						oType previousValue = static_cast<oType>( *(mapped_res_itr -1 + i));
+						oType previousValue = static_cast<oType>( *(mapped_res_itr + i -1 ));
 
 						// within segment
 						if (binary_pred(currentKey,previousKey))
@@ -219,10 +219,10 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = static_cast<kType>(*(first1 + i));
-						kType previousKey = static_cast<kType>(*(first1 - 1 + i));
+						kType previousKey = static_cast<kType>(*(first1 + i - 1));
 						// load value
 						oType currentValue = static_cast<iType>(*(first2 + i)); // convertible
-						oType previousValue = static_cast<oType>(*(result - 1 + i));
+						oType previousValue = static_cast<oType>(*(result + i - 1));
 
 						// within segment
 						if (binary_pred(currentKey, previousKey))
@@ -248,11 +248,11 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = *(first1 + i);
-						kType previousKey = *(first1-1 + i);
+						kType previousKey = *(first1+ i -1 );
 
 						// load value
 						oType currentValue = temp; // convertible
-						oType previousValue = static_cast<oType>(*(result-1 + i));
+						oType previousValue = static_cast<oType>(*(result + i -1 ));
 
 						// within segment
 						if (binary_pred(currentKey,previousKey))
