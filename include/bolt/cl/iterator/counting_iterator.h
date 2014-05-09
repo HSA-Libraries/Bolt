@@ -111,11 +111,13 @@ namespace cl {
             {
             }
 
-            operator pointer() {
+            value_type* getPointer()
+            {
                 return &m_initValue;
             }
 
-            operator const pointer() const {
+            const value_type* getPointer() const
+            {
                 return &m_initValue;
             }
 
@@ -169,6 +171,13 @@ namespace cl {
                 return sizeof( Payload );
             }
 
+            int setKernelBuffers(int arg_num, ::cl::Kernel &kernel) const
+            {
+                    const ::cl::Buffer &buffer = getContainer().getBuffer();
+                    kernel.setArg(arg_num, buffer );
+                    arg_num++;
+                    return arg_num;
+            }
 
             difference_type distance_to( const counting_iterator< value_type >& rhs ) const
             {
@@ -225,6 +234,7 @@ namespace cl {
     static std::string deviceCountingIterator =
         std::string("#if !defined(BOLT_CL_COUNTING_ITERATOR) \n") +
         STRINGIFY_CODE(
+        #define BOLT_CL_COUNTING_ITERATOR \n
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class counting_iterator \n

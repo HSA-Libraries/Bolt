@@ -284,6 +284,14 @@ namespace cl
                     return m_Container;
                 }
 
+                int setKernelBuffers(int arg_num, ::cl::Kernel &kernel) const 
+                {
+                    const ::cl::Buffer &buffer = getContainer().getBuffer();
+                    kernel.setArg(arg_num, buffer );
+                    arg_num++;
+                    return arg_num;
+                }
+
                 //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
                 //  on the host
                 const Payload  gpuPayload( ) const
@@ -291,17 +299,17 @@ namespace cl
                     Payload payload = { m_Index, { 0, 0, 0 } };
                     return payload;
                 }
-
+                
                 //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be 
                 //  queried.  The bitness of the device determines the size of the pointer contained in the payload.  64bit pointers must
                 //  be 8 byte aligned, so 
                 const difference_type gpuPayloadSize( ) const
                 {
                     cl_int l_Error = CL_SUCCESS;
-		    ::cl::Device which_device;
-		   l_Error  = m_Container.m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
+		            ::cl::Device which_device;
+		            l_Error  = m_Container.m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
                    
-		  cl_uint deviceBits = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
+		            cl_uint deviceBits = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
 
                     //  Size of index and pointer
                     difference_type payloadSize = sizeof( difference_type ) + ( deviceBits >> 3 );
@@ -362,6 +370,7 @@ namespace cl
                 }
 
                 Container& m_Container;
+                
             };
 
             /*! \brief A reverse random access iterator in the classic sense
