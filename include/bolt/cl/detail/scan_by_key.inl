@@ -106,11 +106,11 @@ namespace detail
 				oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
 																					result_sz, NULL, NULL, &map_err);
 				auto mapped_fst1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-																first1, first1Ptr);
+																ctl, first1, first1Ptr);
 				auto mapped_fst2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-																first2, first2Ptr);
+																ctl, first2, first2Ptr);
 				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-																result, resultPtr);
+																ctl, result, resultPtr);
 
 				if(inclusive)
 				{					
@@ -321,11 +321,11 @@ namespace detail
 				oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
 																					result_sz, NULL, NULL, &map_err);
 				auto mapped_fst1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-																first1, first1Ptr);
+																ctl, first1, first1Ptr);
 				auto mapped_fst2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-																first2, first2Ptr);
-				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category() 
-																,result, resultPtr);
+																ctl, first2, first2Ptr);
+				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(),
+																ctl, result, resultPtr);
 				if(inclusive)
 					bolt::btbb::inclusive_scan_by_key(first1Ptr, first1Ptr + (int)sz, first2Ptr, result, binary_pred, binary_op );
 				else

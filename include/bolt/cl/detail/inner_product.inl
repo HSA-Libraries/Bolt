@@ -73,9 +73,9 @@ namespace serial{
                                                                           first2_sz, NULL, NULL, &map_err);
 
          auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-                                                        first1, first1Ptr);
+                                                        ctl, first1, first1Ptr);
          auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-                                                        first2, first2Ptr);
+                                                        ctl, first2, first2Ptr);
 
 		 OutputType output = init;
 
@@ -177,9 +177,9 @@ namespace btbb{
                                                                           first2_sz, NULL, NULL, &map_err);
 
          auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-                                                        first1, first1Ptr);
+                                                        ctl, first1, first1Ptr);
          auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-                                                        first2, first2Ptr);
+                                                        ctl, first2, first2Ptr);
 
          OutputType output = bolt::btbb::inner_product(  mapped_first1_itr, mapped_first1_itr + sz, mapped_first2_itr, init, f1, f2  );
 

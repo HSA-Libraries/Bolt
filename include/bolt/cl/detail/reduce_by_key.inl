@@ -187,16 +187,16 @@ reduce_by_key(
 
     auto mapped_keyfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_first, keyfirstPtr);
+                                                    ctl, keys_first, keyfirstPtr);
 	auto mapped_valfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator2>::
 	                                          iterator_category(), 
-                                                    values_first,valfirstPtr);
+                                                    ctl, values_first,valfirstPtr);
     auto mapped_keyresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_output, keyresultPtr);
+                                                    ctl, keys_output, keyresultPtr);
 	auto mapped_valresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator2>::
 	                                          iterator_category(), 
-                                                    values_output, valresultPtr);
+                                                    ctl, values_output, valresultPtr);
 
 	// do zeroeth element
     mapped_valresult_itr[0] = mapped_valfirst_itr[0];
@@ -337,16 +337,16 @@ reduce_by_key(
 
     auto mapped_keyfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_first, keyfirstPtr);
+                                                    ctl, keys_first, keyfirstPtr);
 	auto mapped_valfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator2>::
 	                                          iterator_category(), 
-                                                    values_first,valfirstPtr);
+                                                    ctl, values_first,valfirstPtr);
     auto mapped_keyresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_output, keyresultPtr);
+                                                    ctl, keys_output, keyresultPtr);
 	auto mapped_valresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator2>::
 	                                          iterator_category(), 
-                                                    values_output, valresultPtr);
+                                                    ctl, values_output, valresultPtr);
 
 	unsigned int count = bolt::btbb::reduce_by_key( mapped_keyfirst_itr,  mapped_keyfirst_itr + sz, mapped_valfirst_itr, 
 		mapped_keyresult_itr, mapped_valresult_itr, binary_pred, binary_op);

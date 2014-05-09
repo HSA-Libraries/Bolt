@@ -349,9 +349,9 @@ TEST( TransformIterator, FirstTest)
 
         square sq;
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                         sv_itr;
+        typedef std::vector< int >::iterator                                                         sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                                dv_itr;
-        typedef bolt::BCKND::transform_iterator< square, std::vector< int >::const_iterator>               sv_trf_itr;
+        typedef bolt::BCKND::transform_iterator< square, std::vector< int >::iterator>               sv_trf_itr;
         typedef bolt::BCKND::transform_iterator< square, bolt::BCKND::device_vector< int >::iterator>      dv_trf_itr;
     
         /*Create Iterators*/
@@ -439,13 +439,13 @@ TEST( TransformIterator, UnaryTransformRoutine)
 
         add_3 add3;
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>            sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -522,13 +522,13 @@ TEST( TransformIterator, BinaryTransformRoutine)
         add_4 add4;
         bolt::cl::plus<int> plus;
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>                  sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>                  sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -644,13 +644,13 @@ TEST( TransformIterator, InclusiveTransformScanRoutine)
 
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                   sv_itr;
+        typedef std::vector< int >::iterator                                                   sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                          dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>          sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>          sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>          sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>          sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -732,13 +732,13 @@ TEST( TransformIterator, ExclusiveTransformScanRoutine)
         int n = (int) 1 + rand()%10;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>                  sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>                  sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -820,13 +820,13 @@ TEST( TransformIterator, ReduceRoutine)
         add_4 add4;
         bolt::cl::plus<int> plus;
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                         sv_itr;
+        typedef std::vector< int >::iterator                                                         sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                                dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                      counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                      constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>                sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>                sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>       dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>                sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>                sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator>       dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -897,13 +897,13 @@ TEST( TransformIterator, TransformReduceRoutine)
 
         add_3 add3;
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>            sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -988,13 +988,13 @@ TEST( TransformIterator, CopyRoutine)
         add_3 add3;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                   sv_itr;
+        typedef std::vector< int >::iterator                                                   sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                          dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>          sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>          sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>          sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>          sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -1072,13 +1072,13 @@ TEST( TransformIterator, CountRoutine)
 
         add_3 add3;
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>            sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -1158,11 +1158,11 @@ TEST( TransformIterator, InnerProductRoutine)
         bolt::cl::minus<int> minus;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
        
         /*Create Iterators*/
@@ -1262,13 +1262,13 @@ TEST( TransformIterator, ScatterRoutine)
 		add_0 add0;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add4;
 		//typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_0, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;    
         /*Create Iterators*/
@@ -1429,15 +1429,15 @@ TEST( TransformIterator, ScatterRoutine)
 		add_0 add0;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_0, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;  
-		typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::const_iterator>            sv_trf_itr_add0;
+		typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add0;
         typedef bolt::BCKND::transform_iterator< add_0, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add0; 
 
         /*Create Iterators*/
@@ -1689,13 +1689,13 @@ TEST( TransformIterator, ScatterRoutine)
 		add_0 add0;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add4;
 		//typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_0, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;    
         /*Create Iterators*/
@@ -1844,15 +1844,15 @@ TEST( TransformIterator, ScatterRoutine)
 		add_0 add0;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                     sv_itr;
+        typedef std::vector< int >::iterator                                                     sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                            dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                  counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                  constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>            sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>            sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::const_iterator>            sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_0, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add4;  
-		typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::const_iterator>            sv_trf_itr_add0;
+		typedef bolt::BCKND::transform_iterator< add_0, std::vector< int >::iterator>            sv_trf_itr_add0;
         typedef bolt::BCKND::transform_iterator< add_0, bolt::BCKND::device_vector< int >::iterator>   dv_trf_itr_add0; 
 
         /*Create Iterators*/
@@ -2106,13 +2106,13 @@ TEST( TransformIterator, ReduceByKeyRoutine)
 
         gen_input gen;
 
-        typedef std::vector< int >::const_iterator                                                         sv_itr;
+        typedef std::vector< int >::iterator                                                         sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                                dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                      counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                      constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>                sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>                sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator>       dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>                sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>                sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator>       dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -2290,13 +2290,13 @@ TEST( TransformIterator, InclusiveScanRoutine)
         bolt::cl::plus<int> addI2;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                   sv_itr;
+        typedef std::vector< int >::iterator                                                   sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                          dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>          sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>          sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>          sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>          sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add4;    
         /*Create Iterators*/
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
@@ -2376,13 +2376,13 @@ TEST( TransformIterator, InclusiveScanbykeyRoutine)
         bolt::cl::plus<int> addI2;
 
         gen_input gen;
-        typedef std::vector< int >::const_iterator                                                   sv_itr;
+        typedef std::vector< int >::iterator                                                   sv_itr;
         typedef bolt::BCKND::device_vector< int >::iterator                                          dv_itr;
         typedef bolt::BCKND::counting_iterator< int >                                                counting_itr;
         typedef bolt::BCKND::constant_iterator< int >                                                constant_itr;
-        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::const_iterator>          sv_trf_itr_add3;
+        typedef bolt::BCKND::transform_iterator< add_3, std::vector< int >::iterator>          sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< add_3, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add3;
-        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::const_iterator>          sv_trf_itr_add4;
+        typedef bolt::BCKND::transform_iterator< add_4, std::vector< int >::iterator>          sv_trf_itr_add4;
         typedef bolt::BCKND::transform_iterator< add_4, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr_add4;    
         /*Create Iterators*/
 

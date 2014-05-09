@@ -69,7 +69,7 @@ namespace serial{
                   iType *inputPtr = (iType*)ctl.getCommandQueue().enqueueMapBuffer(inputBuffer, true, CL_MAP_READ, 0, 
                                                                                       input_sz, NULL, NULL, &map_err);
                   auto mapped_ip_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>
-					  ::iterator_category() ,first, inputPtr); 
+					                                            ::iterator_category() ,ctl, first, inputPtr); 
 				  //Create a temporary array to store the transform result;
 				  std::vector<oType> output_vector(n);
 
@@ -136,7 +136,7 @@ namespace btbb{
                   iType *inputPtr = (iType*)ctl.getCommandQueue().enqueueMapBuffer(inputBuffer, true, CL_MAP_READ, 0, 
                                                                                       input_sz, NULL, NULL, &map_err);
                   auto mapped_ip_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>
-					  ::iterator_category() ,first, inputPtr); 
+					                                          ::iterator_category(), ctl, first, inputPtr); 
 				  
 	              oType output = bolt::btbb::transform_reduce(mapped_ip_itr, mapped_ip_itr + n, transform_op,
 					  init, reduce_op);

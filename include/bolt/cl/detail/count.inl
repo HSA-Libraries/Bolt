@@ -79,8 +79,8 @@ namespace serial{
         cl_int map_err;
         iType *inputPtr = (iType*)ctl.getCommandQueue().enqueueMapBuffer(inputBuffer, true, CL_MAP_READ, 0, 
                                                                             input_sz, NULL, NULL, &map_err);
-        auto mapped_ip_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category() 
-                                                        ,first, inputPtr); 
+        auto mapped_ip_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(),
+                                                        ctl, first, inputPtr); 
 		
 
 	    std::iterator_traits<std::vector<int>::iterator>::difference_type output = std::count_if(mapped_ip_itr,
@@ -154,8 +154,8 @@ namespace btbb{
         cl_int map_err;
         iType *inputPtr = (iType*)ctl.getCommandQueue().enqueueMapBuffer(inputBuffer, true, CL_MAP_READ, 0, 
                                                                             input_sz, NULL, NULL, &map_err);
-        auto mapped_ip_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category() 
-                                                        ,first, inputPtr); 
+        auto mapped_ip_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
+                                                        ctl, first, inputPtr); 
 		
 
 	    std::iterator_traits<std::vector<int>::iterator>::difference_type output = bolt::btbb::count_if(mapped_ip_itr,
@@ -163,7 +163,7 @@ namespace btbb{
 		
 	    ::cl::Event unmap_event[1];
         ctl.getCommandQueue().enqueueUnmapMemObject(inputBuffer, inputPtr, NULL, &unmap_event[0] );
-        unmap_event[0].wait(); 		
+        unmap_event[0].wait();
 
 
 		return (rType)output;

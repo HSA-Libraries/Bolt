@@ -122,16 +122,16 @@ namespace cl
    { }
 
     
-        operator pointer() {
-            //return &(*bolt::cl::detail::transform_iterator_base<UnaryFunc, Iterator, Reference, Value>::type::base_reference()); 
+        value_type* getPointer()
+        {
             return &(*(this->base_reference())); 
-        } 
+        }    
 
-        operator const pointer() const { 
-            //return &(*bolt::cl::detail::transform_iterator_base<UnaryFunc, Iterator, Reference, Value>::type::base_reference()); 
+        const value_type* getPointer() const
+        {
             return &(*(this->base_reference())); 
-        } 
-    
+        }    
+
         UnaryFunc functor() const
         { return m_f; }
 
@@ -176,6 +176,12 @@ namespace cl
             return payloadSize;
         }
 
+        int setKernelBuffers(int arg_num, ::cl::Kernel &kernel) const
+        {
+            /*Next set the Argument Iterator*/
+            arg_num = this->base().setKernelBuffers(arg_num, kernel);
+            return arg_num;
+        }
   private:
     typename super_t::reference dereference() const
     { return m_f(*this->base()); }

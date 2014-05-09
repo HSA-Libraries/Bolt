@@ -107,11 +107,11 @@ gather(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   input, first2Ptr);
+                                                   ctl, input, first2Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	iType1 temp;
     for(int iter = 0; iter < sz; iter++)
@@ -203,13 +203,13 @@ gather_if(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   stencil, first2Ptr);
+                                                   ctl, stencil, first2Ptr);
 	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   input, first3Ptr);
+                                                   ctl, input, first3Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	for(int iter = 0; iter < sz; iter++)
     {
@@ -289,11 +289,11 @@ gather(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   input, first2Ptr);
+                                                   ctl, input, first2Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	bolt::btbb::gather(mapped_first1_itr, mapped_first1_itr + sz, mapped_first2_itr, mapped_result_itr);
 
@@ -375,13 +375,13 @@ gather_if(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   stencil, first2Ptr);
+                                                   ctl, stencil, first2Ptr);
 	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   input, first3Ptr);
+                                                   ctl, input, first3Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	bolt::btbb::gather_if(mapped_first1_itr, mapped_first1_itr + sz, mapped_first2_itr, mapped_first3_itr, mapped_result_itr, pred);
 

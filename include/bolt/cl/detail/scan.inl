@@ -117,9 +117,9 @@ namespace detail
 				oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
 																					result_sz, NULL, NULL, &map_err);
 				auto mapped_fst_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-																first, firstPtr);
-				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category() 
-																,result, resultPtr);
+																ctl, first, firstPtr);
+				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
+																ctl, result, resultPtr);
 
 				oType  sum, temp;
 				if(inclusive)
@@ -256,9 +256,9 @@ namespace detail
 				oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
 																					result_sz, NULL, NULL, &map_err);
 				auto mapped_fst_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-																first, firstPtr);
-				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category() 
-																,result, resultPtr);
+																ctl, first, firstPtr);
+				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(),
+																ctl, result, resultPtr);
 
 				
 				if(inclusive)

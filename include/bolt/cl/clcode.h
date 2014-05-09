@@ -314,6 +314,44 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
 #endif
 
 /*!
+ * \brief This macro specializes a template permutation iterator with a new type using the template definition of a previously 
+ * defined iterator type
+ * \detail This is a convenience macro to specialize an iterator for a new type, using the generic template 
+ * definition from a previosly defined iterator
+ * \param CONTAINER A template template parameter, such as std::vector without the type specified
+ * \param OLDTYPE A type that has already been registered with the container template definition
+ * \param NEWTYPE A new type to register with the template definition
+ */
+#if defined(WIN32)
+#define BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( ELEMENT_ITERATOR, INDEX_ITERATOR) \
+            BOLT_CREATE_TYPENAME( bolt::cl::permutation_iterator< ELEMENT_ITERATOR, INDEX_ITERATOR > );\
+            template<> struct ClCode< bolt::cl::permutation_iterator< ELEMENT_ITERATOR, INDEX_ITERATOR > > {	static std::vector< std::string > dependencies;\
+                                        static void addDependency(std::string s) { dependencies.push_back(s); }; \
+                                        static std::string getDependingCodeString() { \
+                                            std::string c;\
+                                            for (std::vector< std::string >::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
+                                            return c; \
+                                        };\
+                                        static std::string getCodeString() { return ClCode<ELEMENT_ITERATOR>::get() + ClCode<INDEX_ITERATOR>::get() + bolt::cl::devicePermutationIteratorTemplate; }; \
+                                        static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
+                                        __declspec( selectany ) std::vector< std::string > ClCode< bolt::cl::permutation_iterator< ELEMENT_ITERATOR, INDEX_ITERATOR > >::dependencies; 
+#else
+#define BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( ELEMENT_ITERATOR, INDEX_ITERATOR) \
+            BOLT_CREATE_TYPENAME( bolt::cl::permutation_iterator< ELEMENT_ITERATOR, INDEX_ITERATOR > );\
+            template<> struct ClCode< bolt::cl::permutation_iterator< ELEMENT_ITERATOR, INDEX_ITERATOR > > {	static std::vector< std::string > dependencies;\
+                                        static void addDependency(std::string s) { dependencies.push_back(s); }; \
+                                        static std::string getDependingCodeString() { \
+                                            std::string c;\
+                                            for (std::vector< std::string >::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
+                                            return c; \
+                                        };\
+                                        static std::string getCodeString() { return ClCode<ELEMENT_ITERATOR>::get() + ClCode<INDEX_ITERATOR>::get() + bolt::cl::devicePermutationIteratorTemplate; }; \
+                                        static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
+                                        __attribute__((weak))  std::vector< std::string > ClCode< bolt::cl::permutation_iterator< ELEMENT_ITERATOR, INDEX_ITERATOR > >::dependencies; 
+#endif
+
+
+/*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate
  * the code string with the specified class T.
  * \param Type A fully specified type name
@@ -521,3 +559,4 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
 #define BOLT_ADD_DEPENDENCY( Type, DependingType ) ClCode<Type>::addDependency(ClCode<DependingType>::get());
 
 #endif
+

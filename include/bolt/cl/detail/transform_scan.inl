@@ -105,9 +105,9 @@ namespace serial{
         oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                             result_sz, NULL, NULL, &map_err);
         auto mapped_fst_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-                                                        first, firstPtr);
-        auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category() 
-                                                        ,result, resultPtr);
+                                                        ctl, first, firstPtr);
+        auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
+                                                        ctl, result, resultPtr);
 
 
 		oType  sum, temp;
@@ -261,10 +261,10 @@ namespace btbb{
                                                                             result_sz, NULL, NULL, &map_err);
         auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::
 			                                            iterator_category(), 
-                                                        first, firstPtr);
+                                                        ctl, first, firstPtr);
         auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::
 			                                            iterator_category(), 
-                                                        result, resultPtr);
+                                                        ctl, result, resultPtr);
         bolt::btbb::transform(mapped_first_itr, mapped_first_itr + (int)sz, mapped_result_itr, unary_op);
 
 		if(inclusive)
