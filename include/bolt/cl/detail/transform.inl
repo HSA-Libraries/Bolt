@@ -364,11 +364,11 @@ namespace cl{
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name("+name( 0 )+"Instantiated)))\n"
                 "kernel void "+name(0)+"(\n"
-                + kps.getInputIteratorString(std::iterator_traits<InputIterator1>::iterator_category(), 
+                + kps.getInputIteratorString(typename std::iterator_traits<InputIterator1>::iterator_category(), 
                                          binaryTransformKernels[transform_DVInputIterator1], 1 )
-                + kps.getInputIteratorString(std::iterator_traits<InputIterator2>::iterator_category(), 
+                + kps.getInputIteratorString(typename std::iterator_traits<InputIterator2>::iterator_category(), 
                                          binaryTransformKernels[transform_DVInputIterator2], 2 )
-                + kps.getOutputIteratorString(std::iterator_traits<OutputIterator>::iterator_category(), 
+                + kps.getOutputIteratorString(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                           binaryTransformKernels[transform_DVOutputIteratorB] )
                 + "const uint length,\n"
                 "global " + binaryTransformKernels[transform_BinaryFunction] + "* userFunctor);\n\n"
@@ -376,11 +376,11 @@ namespace cl{
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name("+name(1)+"Instantiated)))\n"
                 "kernel void "+name(1)+"(\n"
-                + kps.getInputIteratorString(std::iterator_traits<InputIterator1>::iterator_category(), 
+                + kps.getInputIteratorString(typename std::iterator_traits<InputIterator1>::iterator_category(), 
                                          binaryTransformKernels[transform_DVInputIterator1], 1)
-                + kps.getInputIteratorString(std::iterator_traits<InputIterator2>::iterator_category(), 
+                + kps.getInputIteratorString(typename std::iterator_traits<InputIterator2>::iterator_category(), 
                                          binaryTransformKernels[transform_DVInputIterator2], 2)
-                + kps.getOutputIteratorString(std::iterator_traits<OutputIterator>::iterator_category(), 
+                + kps.getOutputIteratorString(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                           binaryTransformKernels[transform_DVOutputIteratorB])
                 + "const uint length,\n"
                 "global " + binaryTransformKernels[transform_BinaryFunction] + "* userFunctor);\n\n";
@@ -396,12 +396,12 @@ namespace cl{
                 "kernel \n"
                 "void transformNoBoundsCheckTemplate( \n"
                 "    global typename iIterType1::value_type* in1_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator1>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType1::index_type* in1_ptr_1, \n";
                 return_string += 
                 "    iIterType1 in1_iter,\n"
                 "    global typename iIterType2::value_type* in2_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator2>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType2::index_type* in2_ptr_1, \n";
                 return_string += 
                 "    iIterType2 in2_iter,\n"
@@ -412,12 +412,12 @@ namespace cl{
                 "{\n"
                 "\n";
 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator1>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "in1_iter.init( in1_ptr_0, in1_ptr_1 );\n";
                 else
                     return_string += "in1_iter.init( in1_ptr_0);\n";
 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator2>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "in2_iter.init( in2_ptr_0, in2_ptr_1 );\n";
                 else
                     return_string += "in2_iter.init( in2_ptr_0);\n";
@@ -439,12 +439,12 @@ namespace cl{
                 "kernel \n"
                 "void transformTemplate( \n"
                 "    global typename iIterType1::value_type* in1_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator1>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType1::index_type* in1_ptr_1, \n";
                 return_string += 
                 "    iIterType1 in1_iter,\n"
                 "    global typename iIterType2::value_type* in2_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator2>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType2::index_type* in2_ptr_1, \n";
                 return_string += 
                 "    iIterType2 in2_iter,\n"
@@ -455,12 +455,12 @@ namespace cl{
                 "{\n"
                 "\n";
 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator1>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "in1_iter.init( in1_ptr_0, in1_ptr_1 );\n";
                 else
                     return_string += "in1_iter.init( in1_ptr_0);\n";
 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator2>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "in2_iter.init( in2_ptr_0, in2_ptr_1 );\n";
                 else
                     return_string += "in2_iter.init( in2_ptr_0);\n";
@@ -496,9 +496,9 @@ namespace cl{
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name("+name( 0 )+"Instantiated)))\n"
                 "kernel void unaryTransformTemplate(\n"
-                + kps.getInputIteratorString(std::iterator_traits<InputIterator>::iterator_category(), 
+                + kps.getInputIteratorString(typename std::iterator_traits<InputIterator>::iterator_category(), 
                                          unaryTransformKernels[transform_DVInputIterator], 1 )
-                + kps.getOutputIteratorString(std::iterator_traits<OutputIterator>::iterator_category(), 
+                + kps.getOutputIteratorString(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                           unaryTransformKernels[transform_DVOutputIteratorU] )
                 + "const uint length,\n"
                 "global " + unaryTransformKernels[transform_UnaryFunction] + "* userFunctor);\n\n"
@@ -506,9 +506,9 @@ namespace cl{
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name("+name(1)+"Instantiated)))\n"
                 "kernel void unaryTransformNoBoundsCheckTemplate(\n"
-                + kps.getInputIteratorString(std::iterator_traits<InputIterator>::iterator_category(), 
+                + kps.getInputIteratorString(typename std::iterator_traits<InputIterator>::iterator_category(), 
                                          unaryTransformKernels[transform_DVInputIterator], 1)
-                + kps.getOutputIteratorString(std::iterator_traits<OutputIterator>::iterator_category(), 
+                + kps.getOutputIteratorString(typename std::iterator_traits<OutputIterator>::iterator_category(), 
                                           unaryTransformKernels[transform_DVOutputIteratorU])
                 + "const uint length,\n"
                 "global " +unaryTransformKernels[transform_UnaryFunction] + "* userFunctor);\n\n";
@@ -523,7 +523,7 @@ namespace cl{
                 "kernel \n"
                 "void unaryTransformNoBoundsCheckTemplate( \n"
                 "    global typename iIterType::value_type* in0_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType::index_type* in0_ptr_1, \n";
                 return_string += 
                 "    iIterType A_iter,\n"
@@ -534,7 +534,7 @@ namespace cl{
                 "{\n"
                 "\n";
 
-                if( std::is_same<typename bolt::cl::iterator_traits<typename InputIterator>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "A_iter.init( in0_ptr_0, in0_ptr_1 );\n";
                 else
                     return_string += "A_iter.init( in0_ptr_0);\n";
@@ -554,7 +554,7 @@ namespace cl{
                 "kernel \n"
                 "void unaryTransformTemplate( \n"
                 "    global typename iIterType::value_type* in0_ptr_0, \n"; 
-                if( std::is_same<typename std::iterator_traits<typename InputIterator>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename std::iterator_traits<InputIterator>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType::index_type* in0_ptr_1, \n";
                 return_string += 
                 "    iIterType A_iter,\n"
@@ -564,7 +564,7 @@ namespace cl{
                 "    global unary_function* userFunctor)\n"
                 "{\n"
                 "\n";
-                if(std::is_same<typename std::iterator_traits<typename InputIterator>::iterator_category, bolt::cl::permutation_iterator_tag>::value == true)
+                if(std::is_same<typename std::iterator_traits<InputIterator>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "A_iter.init( in0_ptr_0, in0_ptr_1 );\n";
                 else
                     return_string += "A_iter.init( in0_ptr_0);\n";

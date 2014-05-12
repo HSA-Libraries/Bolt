@@ -81,12 +81,12 @@ public:
     : super_t(r.base()), m_elt_iter(r.m_elt_iter)
     {}
 
-    typename index_type* getIndex_pointer ()
+    index_type* getIndex_pointer ()
     {
         return &(*(this->base_reference())); 
     }
 
-    typename value_type* getElement_pointer ()
+    value_type* getElement_pointer ()
     {
         return &(*(this->m_elt_iter)); 
     }
@@ -130,15 +130,7 @@ public:
         return arg_num;
     }
 
-    void set_index_cl_mem(::cl::Buffer &index_cl_mem)
-    {
-        m_index_cl_mem = index_cl_mem;
-    }
 
-    void set_element_cl_mem(::cl::Buffer &element_cl_mem)
-    {
-        m_elt_cl_mem = element_cl_mem;
-    }
 private:
     typename super_t::reference dereference() const
         { return *(m_elt_iter + *this->base()); }

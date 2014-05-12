@@ -120,7 +120,7 @@ namespace cl{
 
     template <typename Iterator, typename T>
     const permutation_iterator<typename Iterator::value_type*, typename Iterator::index_type*>
-    create_mapped_iterator(bolt::cl::permutation_iterator_tag, bolt::cl::control &ctl,  Iterator &itr, typename T* ptr)
+    create_mapped_iterator(bolt::cl::permutation_iterator_tag, bolt::cl::control &ctl, Iterator &itr, T* ptr)
     {
         typedef typename Iterator::value_type value_type;
         typedef typename Iterator::index_type index_type;
@@ -136,7 +136,7 @@ namespace cl{
         return bolt::cl::make_permutation_iterator (mapped_elementPtr, i_ptr);
     }
 
-    template <typename Iterator, typename T>
+    /*template <typename Iterator, typename T>
     void release_mapped_iterator(bolt::cl::permutation_iterator_tag, bolt::cl::control &ctl, Iterator &itr)
     {
         typedef typename Iterator::value_type value_type;
@@ -144,7 +144,7 @@ namespace cl{
         value_type * element_ptr = elementBuffer.getInfo<CL_MEM_HOST_PTR>();
         ctl.getCommandQueue().enqueueUnmapMemObject(elementBuffer, element_ptr, NULL, );
         return;
-    }
+    }*/
 
 }} //namespace bolt::cl
 
