@@ -21,7 +21,7 @@
 
 #if !defined( BOLT_AMP_REDUCE_INL )
 #define BOLT_AMP_REDUCE_INL
-#define REDUCE_WAVEFRONT_SIZE 512 //64
+#define REDUCE_WAVEFRONT_SIZE 256 //64
 #define _REDUCE_STEP(_LENGTH, _IDX, _W) \
 if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
 	iType mine = scratch[_IDX]; \
@@ -127,7 +127,6 @@ namespace bolt
 
 						unsigned int tail = szElements - (t_idx.tile[0] * REDUCE_WAVEFRONT_SIZE);
 
-						_REDUCE_STEP(tail, tileIndex, 256);
 						_REDUCE_STEP(tail, tileIndex, 128);
 						_REDUCE_STEP(tail, tileIndex, 64);
 						_REDUCE_STEP(tail, tileIndex, 32);

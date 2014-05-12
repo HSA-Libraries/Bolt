@@ -91,7 +91,7 @@ namespace bolt {
                       OutputIterator result );
 
        /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter_if copies
          * the corresponding \p input_first to result[ map [ i ] ] if stencil[ i - first ] is
          * \p true.
          *
@@ -147,7 +147,7 @@ namespace bolt {
                          OutputIterator result);
 
        /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter_if copies
          * the corresponding \p input_first to result[ map [ i ] ] if pred (stencil[ i - first ])
          * is \p true.
          *

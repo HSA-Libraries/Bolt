@@ -51,37 +51,21 @@ namespace bolt {
                 const DVInputIterator& last,
                 const Predicate& predicate)
             {
-				typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
-
-				//Now create a staging array ; May support zero-copy in the future?!
-				concurrency::accelerator cpuAccelerator = concurrency::
-					accelerator(concurrency::accelerator::cpu_accelerator);
-				concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
-
-
+				typedef typename std::iterator_traits< DVInputIterator >::value_type iType;				
 				const int szElements = static_cast< int >(std::distance(first, last));
 
-
-				int length = (COUNT_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+				int max_ComputeUnits = 32;
+				int numTiles = max_ComputeUnits*32;	/* Max no. of WG for Tahiti(32 compute Units) and 32 is the tuning factor that gives good performance*/
+				int length = (COUNT_WAVEFRONT_SIZE * numTiles);
 				length = szElements < length ? szElements : length;
-				int residual = length % COUNT_WAVEFRONT_SIZE;
+				unsigned int residual = length % COUNT_WAVEFRONT_SIZE;
 				length = residual ? (length + COUNT_WAVEFRONT_SIZE - residual): length ;
-				int numTiles = (length / COUNT_WAVEFRONT_SIZE);
-
-				concurrency::array< unsigned int, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
-					cpuAcceleratorView);
-
-				concurrency::array_view<unsigned int, 1> result(resultArray);
-
+				numTiles = static_cast< int >((szElements/COUNT_WAVEFRONT_SIZE)>= numTiles?(numTiles):
+									(std::ceil( static_cast< float >( szElements ) / COUNT_WAVEFRONT_SIZE) ));
+				
+				concurrency::array<unsigned int, 1> result(numTiles);
 				concurrency::extent< 1 > inputExtent(length);
 				concurrency::tiled_extent< COUNT_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< COUNT_WAVEFRONT_SIZE >();
-
-				// Algorithm is different from cl::reduce. We launch worksize = number of elements here.
-				// AMP doesn't have APIs to get CU capacity. Launchable size is great though.
-
-
-                // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
-                // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
 
                 try
                 {
@@ -90,7 +74,7 @@ namespace bolt {
                                                    [ first,
                                                      szElements,
 													 length,
-                                                     result,
+                                                     &result,
                                                      predicate ]
 					(concurrency::tiled_index<COUNT_WAVEFRONT_SIZE> t_idx) restrict(amp)
                     {
@@ -156,15 +140,14 @@ namespace bolt {
 
                     });
 
-
-					unsigned int *cpuPointerReduce = result.data();
-					unsigned int count = cpuPointerReduce[0];
+					std::vector<unsigned int> *cpuPointerReduce = new std::vector<unsigned int>(numTiles);
+					concurrency::copy(result, (*cpuPointerReduce).begin());                  
+					unsigned int count = (*cpuPointerReduce)[0];
 					for (int i = 1; i < numTiles; ++i)
-                    {
-
-                       count +=  cpuPointerReduce[i];
-
+					{
+                       count +=  (*cpuPointerReduce)[i];
                     }
+					delete cpuPointerReduce;
 
                     return count;
                 }
