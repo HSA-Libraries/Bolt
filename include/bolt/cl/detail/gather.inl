@@ -133,7 +133,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        std::random_access_iterator_tag
@@ -145,7 +145,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 
    unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
@@ -161,7 +161,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        bolt::cl::device_vector_tag
@@ -173,7 +173,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 	typename InputIterator1::difference_type sz = (maplast - mapfirst);
     if (sz == 0)
@@ -310,7 +310,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        std::random_access_iterator_tag
@@ -322,7 +322,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 
     bolt::btbb::gather_if(mapfirst, maplast, stencil, input, result, pred);
@@ -333,7 +333,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        bolt::cl::device_vector_tag
@@ -345,7 +345,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 	typename InputIterator1::difference_type sz = (maplast - mapfirst);
     if (sz == 0)
@@ -872,7 +872,7 @@ public:
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
 	typename std::enable_if< 
                !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
                              std::input_iterator_tag 
@@ -887,7 +887,7 @@ public:
                const InputIterator2& stencil,
                const InputIterator3& input,
                const OutputIterator& result,
-               const BinaryPredicate& pred,
+               const Predicate& pred,
                const std::string& user_code )
     {
         
@@ -940,7 +940,7 @@ public:
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
 	typename std::enable_if< 
                (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
                              std::input_iterator_tag 
@@ -955,7 +955,7 @@ public:
                                          const InputIterator2& stencil,
                                          const InputIterator3& input,
                                          const OutputIterator& result,
-                                         const BinaryPredicate& pred,
+                                         const Predicate& pred,
                                          const std::string& user_code )
     {
         //static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
@@ -1154,14 +1154,14 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 void gather_if( bolt::cl::control& ctl,
                 InputIterator1 map_first,
                 InputIterator1 map_last,
                 InputIterator2 stencil,
                 InputIterator3 input,
                 OutputIterator result,
-                BinaryPredicate pred,
+                Predicate pred,
                 const std::string& user_code )
 {
     detail::gather_if( ctl,
@@ -1178,13 +1178,13 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 void gather_if(  InputIterator1 map_first,
                  InputIterator1 map_last,
                  InputIterator2 stencil,
                  InputIterator3 input,
                  OutputIterator result,
-                 BinaryPredicate pred,
+                 Predicate pred,
                  const std::string& user_code )
 {
     gather_if( control::getDefault( ),

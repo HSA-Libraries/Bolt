@@ -195,26 +195,26 @@ namespace bolt {
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
+                  typename Predicate >
         void scatter_if( bolt::amp::control &ctl,
                          InputIterator1 first1,
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred);
+                         Predicate pred);
 
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
+                  typename Predicate >
         void scatter_if( InputIterator1 first1,
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred);
+                         Predicate pred);
 
 
         /*!   \}  */

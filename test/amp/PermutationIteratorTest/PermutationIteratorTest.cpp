@@ -20,12 +20,14 @@
 
 #include "bolt/amp/copy.h"
 #include "bolt/amp/count.h"
+#include "bolt/amp/gather.h"
 #include "bolt/amp/inner_product.h"
 #include "bolt/amp/transform.h"
 #include "bolt/amp/reduce.h"
 #include "bolt/amp/reduce_by_key.h"
 #include "bolt/amp/scan.h"
 #include "bolt/amp/scan_by_key.h"
+#include "bolt/amp/scatter.h"
 #include "bolt/amp/transform_reduce.h"
 #include "bolt/amp/transform_scan.h"
 
@@ -296,15 +298,6 @@ TEST(AMPIterators, PermutationPFE)
 
     bolt::amp::control ctl;
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-
-    //amp_stl_algorithms::array_view_iterator<int> x = first[0];
-    int x = first[0];
-    //int x = __kbegin[0];
-    //int x = first.key_iterator[0];
-    //int x = __ebegin[__kbegin[0]];
-    std::cout<<x;
-
-
     auto dumpAV = dumpV.begin().getContainer().getBuffer();
 
     concurrency::extent< 1 > inputExtent( size );
@@ -316,14 +309,6 @@ TEST(AMPIterators, PermutationPFE)
        
     });
     dumpAV.synchronize();
-
-    //cmpArrays(dve,dumpV);
-    
-    //std::cout<<"index"<<"     element"<<"       output"<<std::endl;
-    //for ( int i = 0 ; i < size ; i++ )
-    //{
-    //    std::cout<<dvk[i]<<"     "<<dve[i]<<"       "<<dumpAV[i]<<std::endl;
-    //}
 
 }
 
@@ -512,42 +497,40 @@ TEST(AMPIterators, PermutationCopyTest)
 //  Inner Product tests
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//TEST(AMPIterators, PermutationInnerProductTest)
-//{
-//    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
-//    int n_input2[10] =  {5,10,15,20,25,30,35,40,45,50};
-//    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
-//    std::vector<int> result ( 10, 0 );
-//    std::vector<int> input ( n_input, n_input + 10 );
-//    std::vector<int> input2 ( n_input2, n_input2 + 10 );
-//    std::vector<int> map ( n_map, n_map + 10 );
-//
-//
-//    bolt::amp::device_vector<int> dinput(input.begin(), input.end());
-//    bolt::amp::device_vector<int> dinput2(input2.begin(), input2.end());
-//    bolt::amp::device_vector<int> dmap(map.begin(), map.end());
-//
-//    std::copy( boost::make_permutation_iterator( input2.begin( ), map.begin( ) ),
-//               boost::make_permutation_iterator( input2.end( ), map.end( ) ),
-//               result.begin( ) );
-//
-//    int exp_out = std::inner_product( boost::make_permutation_iterator( input.begin( ), map.begin( ) ),
-//                                      boost::make_permutation_iterator( input.end( ), map.end( ) ),
-//                                      result.begin( ),
-//                                      int( 5 ),
-//                                      std::plus<int>( ),
-//                                      std::plus<int>( ) );
-//
-//    bolt::amp::control c;
-//    c.setForceRunMode(bolt::amp::control::SerialCpu);
-//    int out = bolt::amp::inner_product( c, bolt::amp::make_permutation_iterator( dinput.begin( ), dmap.begin( ) ),
-//                                        bolt::amp::make_permutation_iterator( dinput.end( ), dmap.end( ) ),
-//                                        bolt::amp::make_permutation_iterator( dinput2.begin( ), dmap.begin( ) ),
-//                                        int( 5 ),
-//                                        bolt::amp::plus<int>( ),
-//                                        bolt::amp::plus<int>( ) );
-//    EXPECT_EQ(exp_out, out);
-//}
+TEST(AMPIterators, PermutationInnerProductTest)
+{
+    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
+    int n_input2[10] =  {5,10,15,20,25,30,35,40,45,50};
+    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
+    std::vector<int> result ( 10, 0 );
+    std::vector<int> input ( n_input, n_input + 10 );
+    std::vector<int> input2 ( n_input2, n_input2 + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
+
+
+    bolt::amp::device_vector<int> dinput(input.begin(), input.end());
+    bolt::amp::device_vector<int> dinput2(input2.begin(), input2.end());
+    bolt::amp::device_vector<int> dmap(map.begin(), map.end());
+
+    std::copy( boost::make_permutation_iterator( input2.begin( ), map.begin( ) ),
+               boost::make_permutation_iterator( input2.end( ), map.end( ) ),
+               result.begin( ) );
+
+    int exp_out = std::inner_product( boost::make_permutation_iterator( input.begin( ), map.begin( ) ),
+                                      boost::make_permutation_iterator( input.end( ), map.end( ) ),
+                                      result.begin( ),
+                                      int( 5 ),
+                                      std::plus<int>( ),
+                                      std::plus<int>( ) );
+
+    int out = bolt::amp::inner_product( bolt::amp::make_permutation_iterator( dinput.begin( ), dmap.begin( ) ),
+                                        bolt::amp::make_permutation_iterator( dinput.end( ), dmap.end( ) ),
+                                        bolt::amp::make_permutation_iterator( dinput2.begin( ), dmap.begin( ) ),
+                                        int( 5 ),
+                                        bolt::amp::plus<int>( ),
+                                        bolt::amp::plus<int>( ) );
+    EXPECT_EQ(exp_out, out);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Max_element tests
@@ -736,58 +719,314 @@ struct InRange {
 };
 
 
-//TEST(AMPIterators, PermutationCountTest)
-//{
-//    std::vector<int> input(10);
-//    std::vector<int> map(10);
-//
-//    for ( int i=0, j=9 ; i < 10; i++, j--) {
-//        input[ i ] = ( i + 1 );
-//        map[ i ]  = ( j );
-//    };
-//
-//
-//    bolt::amp::device_vector<int> dinput( input.begin( ), input.end( ) );
-//    bolt::amp::device_vector<int> dmap( map.begin( ), map.end( ) );
-//    //  4996 expected
-//    //int stdCount = std::count_if (
-//    //                              boost::make_permutation_iterator( input.begin( ), map.begin( ) ),
-//    //                              boost::make_permutation_iterator( input.end( ), map.end( ) ),
-//    //                              InRange<float>( 6.0f, 10.0f )
-//    //                              );
-//    //int boltCount = bolt::amp::count_if (
-//    //                                     bolt::amp::make_permutation_iterator( dinput.begin( ), dmap.begin( ) ),
-//    //                                     bolt::amp::make_permutation_iterator( dinput.end( ), dmap.end( ) ),
-//    //                                     InRange<float>( 6, 10 )
-//    //                                     );
-//
-//    //EXPECT_EQ (stdCount, boltCount);
-//
-//    //auto stdCount = std::count_if (
-//    //                              input.begin( ),
-//    //                              input.end( )  ,
-//    //                              InRange<int>( 6, 10 )
-//    //                              );
-//    //auto boltCount = bolt::amp::count_if (
-//    //                                     bolt::amp::make_permutation_iterator( dinput.begin( ), dmap.begin( ) ),
-//    //                                     bolt::amp::make_permutation_iterator( dinput.end( ), dmap.end( ) ),
-//    //                                     InRange<int>( 6, 10 )
-//    //                                     );
-//
-//    typedef bolt::amp::permutation_iterator<bolt::amp::device_vector<int>::iterator,
-//                                    bolt::amp::device_vector<int>::iterator> pit;
-//    pit __pi = bolt::amp::make_permutation_iterator( dinput.begin( ), dmap.begin( ) );
-//   for (int i=0; i<10; i++)
-//   {
-//       //std::cout<<dinput[i]<<"     "<<dmap[i]<<"         "<<*__pi<<std::endl;
-//       //__pi++;
-//       std::cout<<dinput[i]<<"     "<<dmap[i]<<"         "<<__pi[i]<<std::endl;
-//   }
-//
-//
-//    //EXPECT_EQ (stdCount, boltCount);
-//
-//}
+TEST(AMPIterators, PermutationCountTest)
+{
+    std::vector<int> input(10);
+    std::vector<int> map(10);
+
+    for ( int i=0, j=9 ; i < 10; i++, j--) {
+        input[ i ] = ( i + 1 );
+        map[ i ]  = ( j );
+    };
+
+
+    bolt::amp::device_vector<int> dinput( input.begin( ), input.end( ) );
+    bolt::amp::device_vector<int> dmap( map.begin( ), map.end( ) );
+    //  4996 expected
+    //int stdCount = std::count_if (
+    //                              boost::make_permutation_iterator( input.begin( ), map.begin( ) ),
+    //                              boost::make_permutation_iterator( input.end( ), map.end( ) ),
+    //                              InRange<float>( 6.0f, 10.0f )
+    //                              );
+    //int boltCount = bolt::amp::count_if (
+    //                                     bolt::amp::make_permutation_iterator( dinput.begin( ), dmap.begin( ) ),
+    //                                     bolt::amp::make_permutation_iterator( dinput.end( ), dmap.end( ) ),
+    //                                     InRange<float>( 6, 10 )
+    //                                     );
+
+    //EXPECT_EQ (stdCount, boltCount);
+
+    auto stdCount = std::count_if (
+                                  input.begin( ),
+                                  input.end( )  ,
+                                  InRange<int>( 6, 10 )
+                                  );
+    auto boltCount = bolt::amp::count_if (
+                                         bolt::amp::make_permutation_iterator( dinput.begin( ), dmap.begin( ) ),
+                                         bolt::amp::make_permutation_iterator( dinput.end( ), dmap.end( ) ),
+                                         InRange<int>( 6, 10 )
+                                         );
+
+    EXPECT_EQ (stdCount, boltCount);
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  Sanity tests
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+TEST(sanity_AMPIterators1, AVPermutation)
+{
+  int __index = 1;
+  const unsigned int size = 2000;
+
+  typedef int etype;
+  etype elements[size];
+  etype empty[size];
+
+  size_t view_size = size;
+
+  std::fill(elements, elements+size, 100);
+  std::fill(empty, empty+size, 0);
+
+  bolt::amp::device_vector<int, concurrency::array_view> resultV(elements, elements + size);
+  bolt::amp::device_vector<int, concurrency::array_view> dumpV(empty, empty + size);
+  auto dvbegin = resultV.begin();
+  auto dvend = resultV.end();
+  auto dumpbegin = dumpV.begin().getContainer().getBuffer();
+
+  bolt::amp::control ctl;
+  concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+
+  concurrency::extent< 1 > inputExtent( size );
+  concurrency::parallel_for_each(av, inputExtent, [=](concurrency::index<1> idx)restrict(amp)
+  {
+    dumpbegin[idx[0]] = dvbegin[idx[0]];
+
+  });
+  dumpbegin.synchronize();
+
+  for (int i=0; i<size;i++)
+  {
+    EXPECT_EQ(resultV[i],dumpV[i]);
+
+  }
+}
+
+
+TEST(sanity_AMPIterators2, PermutationPFE)
+{
+
+  const unsigned int size = 10;
+
+  typedef int etype;
+  etype elements[size];
+  etype key[size];
+  etype empty[size];
+
+  size_t view_size = size;
+
+  std::iota(elements, elements+size, 1000);
+  std::iota(key, key+size, 0);
+  std::fill(empty, empty+size, 0);
+
+  std::random_shuffle ( key, key+size );
+
+  bolt::amp::device_vector<int, concurrency::array_view> dve(elements, elements + size);
+  bolt::amp::device_vector<int, concurrency::array_view> dvk(key, key + size);
+  bolt::amp::device_vector<int, concurrency::array_view> dumpV(empty, empty + size);
+
+  auto dvebegin = dve.begin();
+  auto dveend = dve.end();
+
+  auto dvkbegin = dvk.begin();
+  auto dvkend = dvk.end();
+
+  auto __ebegin =  dvebegin;
+  auto __eend =  dveend;
+
+  auto __kbegin =  dvkbegin;
+  auto __kend =    dvkend;
+
+  typedef bolt::amp::permutation_iterator< bolt::amp::device_vector<int>::iterator,
+                                           bolt::amp::device_vector<int>::iterator> intvpi;
+
+  intvpi first = bolt::amp::make_permutation_iterator(__ebegin, __kbegin  );
+  //i = first;
+  intvpi last = bolt::amp::make_permutation_iterator(__eend,__kend );
+
+  bolt::amp::control ctl;
+  concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+  auto dumpAV = dumpV.begin().getContainer().getBuffer();
+
+  concurrency::extent< 1 > inputExtent( size );
+  concurrency::parallel_for_each(av, inputExtent, [=](concurrency::index<1> idx)restrict(amp)
+  {
+    int gidx = idx[0];
+    dumpAV[gidx] = first[gidx];
+  });
+  dumpAV.synchronize();
+
+  for (int i=0; i<size;i++)
+  {
+    EXPECT_EQ(first[i],dumpV[i]);
+  }
+}
+
+
+TEST(sanity_permutation_gather, Permutation_GatherTest)
+{
+  const unsigned int size = 10;
+
+  int n_input[size];
+  int n_map[size];
+
+  std::iota(n_input, n_input+size, 1000);
+  std::iota(n_map, n_map+size, 0);
+  std::random_shuffle ( n_map, n_map+size );
+
+  std::vector<int> exp_result(size);
+  std::vector<int> result (size);
+  std::vector<int> input ( n_input, n_input + size );
+  std::vector<int> map ( n_map, n_map + size );
+
+  bolt::amp::device_vector<int> dresult(size);
+  bolt::amp::device_vector<int> dinput(n_input, n_input+size);
+  bolt::amp::device_vector<int> dmap(n_map, n_map+size);
+
+  typedef bolt::amp::permutation_iterator< bolt::amp::device_vector<int>::iterator,
+                                           bolt::amp::device_vector<int>::iterator> intvpi;
+
+  auto __dinputbg = dinput.begin();
+  auto __dmapbg = dmap.begin();
+
+  auto __dinpute = dinput.end();
+  auto __dmape = dmap.end();
+
+  intvpi first = bolt::amp::make_permutation_iterator(__dinputbg, __dmapbg);
+  intvpi last = bolt::amp::make_permutation_iterator(__dinpute, __dmape);
+
+  bolt::amp::transform( first,last,dresult.begin(),bolt::amp::identity<int>() );
+
+  bolt::amp::gather(map.begin(), map.end(), input.begin(), result.begin());
+  std::transform(result.begin(), result.end(), exp_result.begin(), std::identity<int>());
+
+  for (int i=0; i<size;i++)
+  {
+    EXPECT_EQ(dresult[i],result[i]);
+  }
+}
+
+
+
+TEST(sanity_AMPIterators, PermutationReduceTest)
+{
+  const unsigned int size = 5;
+
+  typedef int etype;
+  etype n_input[size];
+  etype n_map[size];
+
+  size_t view_size = size;
+
+  std::iota(n_input, n_input+size, 1000);
+  std::iota(n_map, n_map+size, 0);
+
+  std::random_shuffle ( n_map, n_map+size );
+
+  std::vector<int> input ( n_input, n_input + size);
+  std::vector<int> map ( n_map, n_map + size );
+
+  bolt::amp::device_vector<int> dinput(n_input, n_input+size);
+  bolt::amp::device_vector<int> dmap(n_map, n_map+size);
+
+  //printing the device vector elements with iter3 iter4
+  bolt::amp::device_vector<int>::iterator iter3=dinput.begin();
+  bolt::amp::device_vector<int>::iterator iter4=dmap.begin();
+
+  //calling the bolt api
+
+  typedef bolt::amp::permutation_iterator< bolt::amp::device_vector<int>::iterator,
+                                           bolt::amp::device_vector<int>::iterator> intvpi;
+
+  intvpi first = bolt::amp::make_permutation_iterator(dinput.begin(), dmap.begin() );
+  intvpi last = bolt::amp::make_permutation_iterator(dinput.end(), dmap.end() );
+
+  int bolt_out =  bolt::amp::reduce( first,last,int(0),bolt::amp::plus<int>( ) );
+
+  int std_out = std::accumulate( boost::make_permutation_iterator( input.begin(), map.begin() ),
+                               boost::make_permutation_iterator( input.end(), map.end() ), int(0), std::plus<int>( ) );
+
+  EXPECT_EQ(bolt_out,std_out);
+}
+
+TEST(sanity_boost, PermutationIterator_with_boost_amp)
+{
+  int i = 0;
+  static const int element_range_size = 10;
+  static const int index_size = 4;
+
+  //boost code
+
+  typedef std::vector< int > element_range_type;
+  typedef std::vector< int > index_type;
+
+  element_range_type elements( element_range_size );
+
+  for(element_range_type::iterator el_it = elements.begin() ; el_it != elements.end() ; ++el_it)
+  *el_it = static_cast<int>(std::distance(elements.begin(), el_it));
+
+  std::cout << "The original range is : ";
+  std::copy( elements.begin(), elements.end(), std::ostream_iterator< int >( std::cout, " " ) );
+  std::cout << "\n";
+
+  index_type indices( index_size );
+
+  for(index_type::iterator i_it = indices.begin() ; i_it != indices.end() ; ++i_it )
+    *i_it = static_cast<int>(element_range_size - index_size + std::distance(indices.begin(), i_it));
+  std::reverse( indices.begin(), indices.end() );
+
+  std::cout << "The re-indexing scheme is : ";
+  std::copy( indices.begin(), indices.end(), std::ostream_iterator< int >( std::cout, " " ) );
+  std::cout << "\n";
+
+  typedef boost::permutation_iterator< element_range_type::iterator, index_type::iterator > permutation_type;
+
+  permutation_type begin = boost::make_permutation_iterator( elements.begin(), indices.begin() );
+  permutation_type end = boost::make_permutation_iterator( elements.end(), indices.end() );
+
+  //bolt
+  typedef bolt::amp::device_vector< int > bolt_element_range_type;
+  typedef bolt::amp::device_vector< int > bolt_index_type;
+
+  bolt_element_range_type bolt_elements( element_range_size );
+  bolt_element_range_type::iterator bolt_el_it = bolt_elements.begin();
+
+  for(bolt_el_it = bolt_elements.begin(); bolt_el_it != bolt_elements.end() ; ++bolt_el_it)
+  *bolt_el_it = static_cast<int>(std::distance(bolt_elements.begin(), bolt_el_it));
+
+  std::cout << "The bolt-original range is : ";
+  std::copy( bolt_elements.begin(), bolt_elements.end(), std::ostream_iterator< int >( std::cout, " " ) );
+  std::cout << "\n";
+
+  bolt_index_type bolt_indices( index_size );
+  bolt_index_type::iterator bolt_i_it = bolt_indices.begin();
+
+  for(bolt_i_it = bolt_indices.begin(); bolt_i_it != bolt_indices.end() ; ++bolt_i_it )
+    *bolt_i_it = static_cast<int>(element_range_size - index_size + std::distance(bolt_indices.begin(), bolt_i_it));
+
+  std::reverse( bolt_indices.begin(), bolt_indices.end() );
+
+  std::cout << "The bolt re-indexing scheme is : ";
+  std::copy( bolt_indices.begin(), bolt_indices.end(), std::ostream_iterator< int >( std::cout, " " ) );
+  std::cout << "\n";
+
+  typedef bolt::amp::permutation_iterator< bolt_element_range_type::iterator, bolt_index_type::iterator > permutation_type_bolt;
+
+  permutation_type_bolt begin_bolt = bolt::amp::make_permutation_iterator( bolt_elements.begin(), bolt_indices.begin() );
+  permutation_type_bolt end_bolt = bolt::amp::make_permutation_iterator( bolt_elements.end(), bolt_indices.end() );
+
+
+  // bolt- boost comparsion
+
+  std::cout << "The permutated range for boost is : ";
+  std::copy( begin, end, std::ostream_iterator< int >( std::cout, " " ) );
+  std::cout << "\n";
+
+  std::cout << "The permutated range for bolt amp is : ";
+  std::copy( begin_bolt, end_bolt, std::ostream_iterator< int >( std::cout, " " ) );
+  std::cout << "\n";
+}
+
 
 int main(int argc, char* argv[])
 {
