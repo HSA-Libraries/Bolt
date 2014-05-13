@@ -715,7 +715,7 @@ reduce_by_key(
      *********************************************************************************/
     typename DVInputIterator1::Payload keys_first1_payload = keys_first.gpuPayload( );
     typename DVOutputIterator1::Payload keys_output_payload = keys_output.gpuPayload( );
-    typename DVOutputIterator2::Payload  value_first1_payload = values_first.gpuPayload( );
+    typename DVInputIterator2::Payload  value_first1_payload = values_first.gpuPayload( );
     typename DVOutputIterator2::Payload values_output_payload = values_output.gpuPayload( );
 
     V_OPENCL( kernels[3].setArg( 0, keys_first.base().getContainer().getBuffer()),			 "Error setArg kernels[ 3 ]" ); // Input buffer
