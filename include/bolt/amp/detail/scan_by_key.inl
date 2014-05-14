@@ -89,10 +89,10 @@ Serial_inclusive_scan_by_key(
     {
         // load keys
         kType currentKey  = *(firstKey+i);
-        kType previousKey = *(firstKey-1 + i);
+        kType previousKey = *(firstKey + i -1);
         // load value
         oType currentValue = *(values+i); // convertible
-        oType previousValue = *(result-1+i);
+        oType previousValue = *(result + i - 1);
 
         // within segment
         if (binary_pred(currentKey, previousKey))
@@ -136,11 +136,11 @@ Serial_exclusive_scan_by_key(
     {
         // load keys
         kType currentKey  = *(firstKey + i);
-        kType previousKey = *(firstKey-1 + i);
+        kType previousKey = *(firstKey + i - 1);
 
         // load value
         oType currentValue = temp; // convertible
-        oType previousValue = *(result-1 + i);
+        oType previousValue = *(result + i - 1);
 
         // within segment
         if (binary_pred(currentKey,previousKey))
