@@ -77,7 +77,8 @@ else()
 endif()
 
 if(WIN32)
- set( BoltLibName "clBolt.runtime.${myMSVCVer}") 
+ set( BoltLibName "clBolt.runtime.${myMSVCVer}")
+ set( BoltAmpLibName "ampBolt.runtime.${myMSVCVer}") 
  set( LIB_EXT "lib")    
 else()
  set( BoltLibName "libclBolt.runtime.${myMSVCVer}")
@@ -88,6 +89,7 @@ endif()
 list( FIND BOLT_FIND_COMPONENTS CL find_CL )
 if( NOT find_CL EQUAL -1 )
     set( BOLT_LIBNAME_BASE ${BoltLibName} )
+	set( BOLTAMP_LIBNAME_BASE ${BoltAmpLibName} )
 endif( )
 
 if( NOT find_CL EQUAL -1 )
@@ -100,7 +102,18 @@ if( NOT find_CL EQUAL -1 )
         DOC "BOLT static library path"
         PATH_SUFFIXES lib
     )
-    mark_as_advanced( BOLT_LIBRARY_STATIC_RELEASE )
+	if( BUILD_ampBolt )
+	 find_library( BOLTAMP_LIBRARY_STATIC_RELEASE
+        NAMES ${BOLTAMP_LIBNAME_BASE}.${LIB_EXT}
+        HINTS
+            ${BOLT_ROOT}
+            ENV BOLT_ROOT
+        DOC "BOLT static library path"
+        PATH_SUFFIXES lib
+    )
+	
+	endif()
+    mark_as_advanced( BOLT_LIBRARY_STATIC_RELEASE BOLTAMP_LIBRARY_STATIC_RELEASE)
 
     # Find and set the location of main BOLT static lib file
     find_library( BOLT_LIBRARY_STATIC_DEBUG
@@ -111,17 +124,29 @@ if( NOT find_CL EQUAL -1 )
         DOC "BOLT static library path"
         PATH_SUFFIXES lib
     )
-    mark_as_advanced( BOLT_LIBRARY_STATIC_DEBUG )
+	if( BUILD_ampBolt )
+	find_library( BOLTAMP_LIBRARY_STATIC_DEBUG
+        NAMES ${BOLTAMP_LIBNAME_BASE}.debug.${LIB_EXT}
+        HINTS
+            ${BOLT_ROOT}
+            ENV BOLT_ROOT
+        DOC "BOLT static library path"
+        PATH_SUFFIXES lib
+    )
+	endif()
+	
+    mark_as_advanced( BOLT_LIBRARY_STATIC_DEBUG BOLTAMP_LIBRARY_STATIC_DEBUG )
     
     if( BOLT_LIBRARY_STATIC_RELEASE )
-        set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} )
+        set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} optimized ${BOLTAMP_LIBRARY_STATIC_RELEASE})
     else( )
         set( BOLT_LIBRARY_STATIC "" )
         message( "${BOLT_LIBNAME_BASE}.${LIB_EXT}: Release static bolt library not found" )
+		message( "${BOLTAMP_LIBNAME_BASE}.${LIB_EXT}: Release static bolt library not found" )
     endif( )
 
     if( BOLT_LIBRARY_STATIC_DEBUG )
-        set( BOLT_LIBRARY_STATIC ${BOLT_LIBRARY_STATIC} debug ${BOLT_LIBRARY_STATIC_DEBUG} )
+        set( BOLT_LIBRARY_STATIC ${BOLT_LIBRARY_STATIC} debug ${BOLT_LIBRARY_STATIC_DEBUG} ${BOLTAMP_LIBRARY_STATIC_DEBUG})
     else( )
         message( "${BOLT_LIBNAME_BASE}.debug.${LIB_EXT}: Debug static bolt library not found" )
     endif( )
