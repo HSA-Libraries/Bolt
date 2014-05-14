@@ -226,15 +226,13 @@ namespace cl
                 public:    \n
                     typedef int iterator_category;        \n
                     typedef typename UnaryFunc::result_type value_type; \n
-                    typedef int difference_type; \n
+                    typedef typename Iterator::value_type element_type; \n
                     typedef int size_type; \n
-                    typedef value_type* pointer; \n
-                    typedef value_type& reference; \n
     
                     transform_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                     {} \n
     
-                    void init( global value_type* ptr )\n
+                    void init( global element_type* ptr )\n
                     { \n
                         m_Ptr = ptr; \n
                     } \n
@@ -247,11 +245,12 @@ namespace cl
 
                     value_type operator*( ) const \n
                     { \n
-                        return m_f(m_Ptr[ m_StartIndex ]); \n
+                        typename Iterator::value_type tmp = m_Ptr[ m_StartIndex + threadID ]; \n
+                        return m_f( tmp ); \n
                     } \n
 
                     size_type m_StartIndex; \n
-                    global value_type* m_Ptr; \n
+                    global element_type* m_Ptr; \n
                     UnaryFunc          m_f; \n
             }; \n
             } } \n
