@@ -206,6 +206,8 @@ sort_enqueue(control &ctl,
     int szElements = static_cast<int>(std::distance(first, last));
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+    if (computeUnits > 32 )
+        computeUnits = 32;
     cl_int l_Error = CL_SUCCESS;
 
     //static std::vector< ::cl::Kernel > radixSortUintKernels;
@@ -420,6 +422,8 @@ sort_enqueue(control &ctl,
     int szElements = static_cast<int>(std::distance(first, last));
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+    if (computeUnits > 32 )
+        computeUnits = 32;
     cl_int l_Error = CL_SUCCESS;
 
     //static std::vector< ::cl::Kernel > radixSortUintKernels;
