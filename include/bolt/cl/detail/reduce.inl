@@ -91,7 +91,7 @@ namespace serial{
 
 } // end of namespace serial
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 	template<typename T, typename InputIterator, typename BinaryFunction>
@@ -151,6 +151,7 @@ namespace btbb{
 		return output;
     }
 } // end of namespace btbb
+#endif
 
 namespace cl{
     enum ReduceTypes {reduce_iValueType, reduce_iIterType, reduce_BinaryFunction,reduce_resType, reduce_end };

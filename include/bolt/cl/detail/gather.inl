@@ -231,7 +231,7 @@ gather_if(bolt::cl::control &ctl,
 }// end of namespace serial
 
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 template< typename InputIterator1,
@@ -397,7 +397,7 @@ gather_if(bolt::cl::control &ctl,
 }
 
 }// end of namespace btbb
-
+#endif
 namespace cl{
 ////////////////////////////////////////////////////////////////////
 // GatherIf KTS

@@ -223,7 +223,7 @@ scatter_if( bolt::cl::control &ctl,
 
 } // end of serial namespace
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 template<typename InputIterator1,
@@ -389,6 +389,7 @@ scatter_if( bolt::cl::control &ctl,
 
 
 }// end of btbb namespace
+#endif
 
 ////////////////////////////////////////////////////////////////////
 // ScatterIf KTS

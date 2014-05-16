@@ -107,7 +107,7 @@ namespace serial{
 } // end of serial
 
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 	
@@ -166,7 +166,7 @@ namespace btbb{
     }
 
 }//end of namespace btbb 
-
+#endif
 
 namespace cl{
 

@@ -113,7 +113,7 @@ namespace serial{
 } // end of namespace serial
 
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 	template<typename InputIterator, typename Predicate>
@@ -187,7 +187,7 @@ namespace btbb{
 
 
 }// end of namespace btbb
-
+#endif
 
 namespace cl{
     enum CountTypes {count_iValueType, count_iIterType, count_predicate, count_end };

@@ -147,7 +147,7 @@ namespace serial{
 
 }// end of namespace serial
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
     template< typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
@@ -215,6 +215,7 @@ namespace btbb{
 
 
 }// end of namespace btbb
+#endif
 
 namespace cl{
 
