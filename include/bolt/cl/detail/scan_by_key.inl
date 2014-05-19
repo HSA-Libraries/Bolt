@@ -273,6 +273,7 @@ namespace detail
 			}
 
 		}
+#ifdef ENABLE_TBB
 	namespace btbb{
 		template<
 				typename InputIterator1,
@@ -373,6 +374,8 @@ namespace detail
 					return;
 				}
 	}
+#endif
+
 	namespace cl{
 		enum scanByKeyTypes  {scanByKey_kType, scanByKey_kIterType, scanByKey_vType, scanByKey_iIterType, scanByKey_oType, scanByKey_oIterType,
                 scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction, scanbykey_end};

@@ -249,7 +249,7 @@ reduce_by_key(
 
 } // end of namespace serial
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 
@@ -363,7 +363,7 @@ reduce_by_key(
 }
 
 }//end of namespace btbb
-
+#endif
 
 namespace cl{
     enum Reduce_By_Key_Types {  e_kType, e_kIterType,

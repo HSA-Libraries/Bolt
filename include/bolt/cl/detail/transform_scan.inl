@@ -215,6 +215,7 @@ namespace serial{
 
 } // end of serial namespace
 
+#ifdef ENABLE_TBB
 namespace btbb{
 
 	template
@@ -316,7 +317,7 @@ namespace btbb{
 
 
 }  // end of btbb namespace 
-
+#endif
 
 namespace cl{
     enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType,

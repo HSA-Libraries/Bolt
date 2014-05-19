@@ -172,6 +172,7 @@ namespace serial{
     }
 }
 
+#ifdef ENABLE_TBB
 namespace btbb{
 
     template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
@@ -292,7 +293,7 @@ namespace btbb{
         return;
     }
 }
-
+#endif
 namespace cl{
 
     enum TransformTypes {transform_iType1, transform_DVInputIterator1, transform_iType2, transform_DVInputIterator2,
