@@ -116,17 +116,16 @@ namespace serial{
 		if(inclusive)
 		{
 		  *mapped_res_itr = static_cast<oType>(unary_op(*mapped_fst_itr) );
-          sum =  mapped_res_itr[0]; //mapped_first_itr[0];
+          sum =  *mapped_res_itr; 
         }
         else 
 		{
- 
-		   temp =  static_cast<oType>( unary_op( mapped_fst_itr[0] ) );
-		   mapped_res_itr[0] = static_cast<oType>( init );
-		   sum = binary_op( mapped_res_itr[0], temp);
+		   temp =  static_cast<oType>( unary_op( *(mapped_fst_itr) ));
+		   *mapped_res_itr = static_cast<oType>( init );
+		   sum = binary_op( *mapped_res_itr, temp);
         }
 
-        for ( unsigned int index= 1; index<sz; index++)
+        for ( unsigned int index= 1; index<sz; ++index)
         {
           oType currentValue =  static_cast<oType>( unary_op( *(mapped_fst_itr+index) ) ); 
           if (inclusive)
@@ -185,7 +184,7 @@ namespace serial{
 		if(inclusive)
 		{
           *result = static_cast<oType>(unary_op( *first ) ); // assign value
-          sum = *first;
+          sum = *result;
         }
         else 
 		{

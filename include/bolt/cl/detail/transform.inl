@@ -315,34 +315,34 @@ namespace cl{
         public:
             std::string getInputIteratorString(bolt::cl::permutation_iterator_tag, const ::std::string& itrStr, int itr_num ) const 
             {
-                return "global " + itrStr  + "::value_type* in" + toString(itr_num) + "_ptr_0,\n"
+                return "global " + itrStr  + "::base_type* in" + toString(itr_num) + "_ptr_0,\n"
                        "global " + itrStr  + "::index_type* in" + toString(itr_num) + "_ptr_1,\n"
                        + itrStr + " input" + toString(itr_num) + "_iter,\n";
             }
             std::string getInputIteratorString(bolt::cl::counting_iterator_tag, const ::std::string& itrStr, int itr_num ) const 
             {
-                return "global " + itrStr  + "::value_type* in" + toString(itr_num) + "_ptr_0,\n"
+                return "global " + itrStr  + "::base_type* in" + toString(itr_num) + "_ptr_0,\n"
                        + itrStr + " input" + toString(itr_num) + "_iter,\n";
             }
             std::string getInputIteratorString(bolt::cl::constant_iterator_tag, const ::std::string& itrStr, int itr_num )       const  
             {
-                return "global " + itrStr  + "::value_type* in" + toString(itr_num) + "_ptr_0,\n"
+                return "global " + itrStr  + "::base_type* in" + toString(itr_num) + "_ptr_0,\n"
                        + itrStr + " input" + toString(itr_num) + "_iter,\n";
             }
             std::string getInputIteratorString(bolt::cl::device_vector_tag, const ::std::string& itrStr, int itr_num ) const 
             {
-                return "global " + itrStr  + "::value_type* in" + toString(itr_num) + "_ptr_0,\n"
+                return "global " + itrStr  + "::base_type* in" + toString(itr_num) + "_ptr_0,\n"
                        + itrStr + " input" + toString(itr_num) + "_iter,\n";
             }
             std::string getInputIteratorString(bolt::cl::transform_iterator_tag, const ::std::string& itrStr, int itr_num ) const 
             {
-                return "global " + itrStr  + "::value_type* in" + toString(itr_num) + "_ptr_0,\n"
+                return "global " + itrStr  + "::base_type* in" + toString(itr_num) + "_ptr_0,\n"
                        + itrStr + " input" + toString(itr_num) + "_iter,\n";    
             }
 
             std::string getOutputIteratorString(bolt::cl::device_vector_tag, const ::std::string& itrStr ) const 
             {
-                return "global " + itrStr  + "::value_type* out_ptr_0,\n"
+                return "global " + itrStr  + "::base_type* out_ptr_0,\n"
                        + itrStr + " output_iter,\n";    
             }
     };
@@ -396,17 +396,17 @@ namespace cl{
                 "template <typename iIterType1, typename iIterType2, typename oIterType, typename unary_function > \n"
                 "kernel \n"
                 "void transformNoBoundsCheckTemplate( \n"
-                "    global typename iIterType1::value_type* in1_ptr_0, \n"; 
+                "    global typename iIterType1::base_type* in1_ptr_0, \n"; 
                 if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType1::index_type* in1_ptr_1, \n";
                 return_string += 
                 "    iIterType1 in1_iter,\n"
-                "    global typename iIterType2::value_type* in2_ptr_0, \n"; 
+                "    global typename iIterType2::base_type* in2_ptr_0, \n"; 
                 if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType2::index_type* in2_ptr_1, \n";
                 return_string += 
                 "    iIterType2 in2_iter,\n"
-                "    global typename oIterType::value_type* out_ptr_0,\n"
+                "    global typename oIterType::base_type* out_ptr_0,\n"
                 "    oIterType Z_iter,\n"
 			    "    const uint length,\n"
                 "    global unary_function* userFunctor)\n"
@@ -439,17 +439,17 @@ namespace cl{
                 "template <typename iIterType1, typename iIterType2, typename oIterType, typename unary_function > \n"
                 "kernel \n"
                 "void transformTemplate( \n"
-                "    global typename iIterType1::value_type* in1_ptr_0, \n"; 
+                "    global typename iIterType1::base_type* in1_ptr_0, \n"; 
                 if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType1::index_type* in1_ptr_1, \n";
                 return_string += 
                 "    iIterType1 in1_iter,\n"
-                "    global typename iIterType2::value_type* in2_ptr_0, \n"; 
+                "    global typename iIterType2::base_type* in2_ptr_0, \n"; 
                 if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType2::index_type* in2_ptr_1, \n";
                 return_string += 
                 "    iIterType2 in2_iter,\n"
-                "    global typename oIterType::value_type* out_ptr_0,\n"
+                "    global typename oIterType::base_type* out_ptr_0,\n"
                 "    oIterType Z_iter,\n"
 			    "    const uint length,\n"
                 "    global unary_function* userFunctor)\n"
@@ -523,12 +523,12 @@ namespace cl{
                 "template <typename iIterType, typename oIterType, typename unary_function > \n"
                 "kernel \n"
                 "void unaryTransformNoBoundsCheckTemplate( \n"
-                "    global typename iIterType::value_type* in0_ptr_0, \n"; 
+                "    global typename iIterType::base_type* in0_ptr_0, \n"; 
                 if( std::is_same<typename bolt::cl::iterator_traits<InputIterator>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType::index_type* in0_ptr_1, \n";
                 return_string += 
                 "    iIterType A_iter,\n"
-                "    global typename oIterType::value_type* out_ptr_0,\n"
+                "    global typename oIterType::base_type* out_ptr_0,\n"
                 "    oIterType Z_iter,\n"
 			    "    const uint length,\n"
                 "    global unary_function* userFunctor)\n"
@@ -554,12 +554,12 @@ namespace cl{
                 "template <typename iIterType, typename oIterType, typename unary_function > \n"
                 "kernel \n"
                 "void unaryTransformTemplate( \n"
-                "    global typename iIterType::value_type* in0_ptr_0, \n"; 
+                "    global typename iIterType::base_type* in0_ptr_0, \n"; 
                 if( std::is_same<typename std::iterator_traits<InputIterator>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType::index_type* in0_ptr_1, \n";
                 return_string += 
                 "    iIterType A_iter,\n"
-                "    global typename oIterType::value_type* out_ptr_0,\n"
+                "    global typename oIterType::base_type* out_ptr_0,\n"
                 "    oIterType Z_iter,\n"
 			    "    const uint length,\n"
                 "    global unary_function* userFunctor)\n"
