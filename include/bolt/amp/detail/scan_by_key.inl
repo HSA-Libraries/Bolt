@@ -21,11 +21,10 @@
 #define SCANBYKEY_WAVESIZE 64
 #define SCANBYKEY_TILE_MAX 65535
 
-
+#include "bolt/amp/iterator/iterator_traits.h"
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/scan_by_key.h"
-#include "bolt/amp/iterator/iterator_traits.h"
 #endif
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
