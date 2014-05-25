@@ -893,18 +893,18 @@ typename std::enable_if<
                            >::type
 reduce_by_key(
     control &ctl,
-    const InputIterator1  keys_first,
-    const InputIterator1  keys_last,
-    const InputIterator2  values_first,
-    const OutputIterator1  keys_output,
-    const OutputIterator2  values_output,
-    const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op,
+    InputIterator1  keys_first,
+    InputIterator1  keys_last,
+    InputIterator2  values_first,
+    OutputIterator1  keys_output,
+    OutputIterator2  values_output,
+    BinaryPredicate binary_pred,
+    BinaryFunction binary_op,
     const std::string& user_code)
 {
 
-	typename InputIterator1::difference_type numElements = bolt::cl::distance(keys_first, keys_last);
-    //int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
+    typename std::iterator_traits<InputIterator1>::difference_type numElements = bolt::cl::distance(keys_first, keys_last);
+
     if( (numElements == 1) || (numElements == 0) )
         return bolt::cl::make_pair( keys_output+(int)numElements, values_output+(int)numElements );// keys_last, values_first+numElements );
 
@@ -966,13 +966,13 @@ typename std::enable_if<
                            >::type
 reduce_by_key(
     control &ctl,
-    const InputIterator1  keys_first,
-    const InputIterator1  keys_last,
-    const InputIterator2  values_first,
-    const OutputIterator1  keys_output,
-    const OutputIterator2  values_output,
-    const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op,
+    InputIterator1  keys_first,
+    InputIterator1  keys_last,
+    InputIterator2  values_first,
+    OutputIterator1  keys_output,
+    OutputIterator2  values_output,
+    BinaryPredicate binary_pred,
+    BinaryFunction binary_op,
     const std::string& user_code)
 {
     //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data

@@ -5425,6 +5425,23 @@ TEST (transform_iterator, BUG400103){
 	}
 }
 
+TEST (transform_iterator, BUG400294){
+ const int N = 7;
+  int A[N] = {1, 3, 3, 3, 2, 2, 1}; // input keys
+  int B[N] = {9, 8, 7, 6, 5, 4, 3}; // input values
+  int C[N];                         // output keys
+  int D[N];                         // output values
+
+  bolt::cl::pair<int*,int*> new_end;
+  bolt::cl::equal_to<int> binary_pred;
+  bolt::cl::plus<int> binary_op;
+
+  //new_end = bolt::cl::reduce_by_key(A, A + N, B, C, D, binary_pred, binary_op);
+  bolt::cl::reduce_by_key(A, A + N, B, C, D, binary_pred, binary_op);
+  
+  int C_exp[N] = {1, 3, 2, 1};
+  int D_exp[N] = {9, 21, 9, 3};
+}
 
 /* /brief List of possible tests
  * Two input transform with first input a constant iterator
