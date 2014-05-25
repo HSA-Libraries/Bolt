@@ -755,7 +755,7 @@ aProfiler.setArchitecture(strDeviceName);
         if( numElements == 0 )
             return;
 	    
-	    typedef typename InputIterator::pointer pointer;
+	    typedef typename std::iterator_traits< InputIterator >::pointer pointer;
             
         pointer first_pointer = bolt::cl::addressof(first) ;
 	    
