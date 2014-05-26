@@ -41,6 +41,25 @@ namespace amp
 {
 namespace detail
 {
+
+ namespace serial
+ {
+
+   template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+    void unary_transform( Iterator& first, Iterator& last,
+                    OutputIterator& result, UnaryFunction& f )
+    {
+        size_t sz = (last - first);
+        if (sz == 0)
+            return;
+        for(int index=0; index < (int)(sz); index++)
+        {
+            *(result + index) = f( *(first+index) );
+        }
+        return;
+    }
+ }
+
 /*!
 *   \internal
 *   \addtogroup detail
