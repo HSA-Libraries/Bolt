@@ -24,6 +24,7 @@
 #include <type_traits>
 #include <bolt/cl/scan_by_key.h>
 #include "bolt/cl/bolt.h"
+#include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/distance.h"
 #include "bolt/cl/iterator/iterator_traits.h"
