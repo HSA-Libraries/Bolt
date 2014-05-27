@@ -79,7 +79,7 @@ namespace serial{
 
 		 OutputType output = init;
 
-		 std::vector<iType> result(sz);
+		 std::vector<OutputType> result(sz);
          for(int index=0; index < (int)(sz); index++)
          {
              result[index] = (OutputType)  f2( *(first1+index), *(first2+index) );	
@@ -109,7 +109,7 @@ namespace serial{
 		OutputType res = init;
 
 		size_t sz = (last1 - first1);
-		std::vector<iType> result(sz);
+		std::vector<OutputType> result(sz);
         for(int index=0; index < (int)(sz); index++)
         {
             result[index] = (OutputType)  f2( *(first1+index), *(first2+index) );	
@@ -132,7 +132,7 @@ namespace serial{
 		OutputType res = init;
 
 		size_t sz = (last1 - first1);
-		std::vector<iType> result(sz);
+		std::vector<OutputType> result(sz);
         for(int index=0; index < (int)(sz); index++)
         {
             result[index] = (OutputType) f2( *(first1+index), *(first2+index) );	
@@ -263,7 +263,7 @@ namespace cl{
         if( distVec == 0 )
             return init;
 
-        device_vector< iType > tempDV( distVec, iType(), CL_MEM_READ_WRITE, false, ctl );
+        device_vector< OutputType > tempDV( distVec, OutputType() , CL_MEM_READ_WRITE, false, ctl );
         detail::cl::binary_transform( ctl, first1, last1, first2, tempDV.begin(), f2,cl_code);
         return detail::reduce( ctl, tempDV.begin(), tempDV.end(), init, f1, cl_code);
     };

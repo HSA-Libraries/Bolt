@@ -2474,8 +2474,6 @@ TEST( TransformIterator, InnerProductUDDRoutine)
 		std::vector< UDD > sv_trf_begin2_copy( sv_trf_begin2, sv_trf_end2);
 		std::vector< int> tsv_trf_begin2_copy( tsv_trf_begin2, tsv_trf_end2);
 
-#if 0
-        //This test case is failing because the 
 		{/*Test case when both inputs are trf Iterators with UDD returning int*/
 		    bolt::cl::multiplies<int> mul_int;
 		    bolt::cl::plus<int> plus_int;
@@ -2489,7 +2487,6 @@ TEST( TransformIterator, InnerProductUDDRoutine)
             EXPECT_EQ( expected_result, sv_result );
             EXPECT_EQ( expected_result, dv_result );
         }
-#endif 
         {/*Test case when both inputs are trf Iterators*/
             UDD sv_result = bolt::cl::inner_product(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, init, plus, mul);
             UDD dv_result = bolt::cl::inner_product(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, init, plus, mul);
@@ -5527,6 +5524,77 @@ TEST ( transform_iterator, BUG400110)
 	}
 }
 
+TEST (transform_iterator, BUG400109){
+
+    int length =  1<<8;
+    
+	std::vector< UDD_trans > svInVec1( length );
+	std::vector< UDD_trans > svInVec2( length );
+	
+	std::vector< int > svOutVec( length );
+	std::vector< int > stlOut(length);
+
+    
+							 
+	bolt::cl::device_vector< int > dvOutVec1( length );
+	bolt::cl::device_vector< int > dvOutVec2( length );
+
+	add_UDD add1;
+	UDD_trans gen_udd(0) ;
+	int init = 0;
+
+	// ADD
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end1   (svInVec1.end(),   add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin2 (svInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end2   (svInVec2.end(),   add1) ;
+								 
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin2 (svInVec2.begin(), add1) ;
+								  
+	
+	global_id = 0;
+	std::generate(svInVec1.begin(), svInVec1.end(), gen_udd);
+
+	global_id = 0;
+	std::generate(svInVec2.begin(), svInVec2.end(), rand);
+
+	global_id = 0;
+	bolt::cl::device_vector< UDD_trans > dvInVec1( svInVec1.begin(), svInVec1.end());
+
+	global_id = 0;
+	bolt::cl::device_vector< UDD_trans > dvInVec2( svInVec2.begin(), svInVec2.end() );
+
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator> 	    dv_trf_begin1 (dvInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>	    dv_trf_end1   (dvInVec1.end(),   add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	t_sv_trf_begin3 (dvInVec1.begin(), add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	dv_trf_begin2 (dvInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>		dv_trf_end2   (dvInVec2.end(),   add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	t_sv_trf_begin4 (dvInVec2.begin(), add1) ;
+
+	bolt::cl::plus<int> pls;
+	bolt::cl::minus<int> mi;
+
+	t_sv_trf_begin1 = sv_trf_begin1 ;
+	t_sv_trf_begin2 = sv_trf_begin2 ;
+	t_sv_trf_begin3 = dv_trf_begin1 ;
+	t_sv_trf_begin4 = dv_trf_begin2 ;
+
+	global_id = 0;
+		
+	
+	int sv_result = bolt::cl::inner_product(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, init, pls, mi);
+    int dv_result = bolt::cl::inner_product(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, init, pls, mi);
+	
+	std::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec.begin(), mi);
+    int expected_result = std::accumulate(svOutVec.begin(), svOutVec.end(), init, pls);
+
+	EXPECT_EQ( sv_result, expected_result );
+    EXPECT_EQ( dv_result, expected_result);
+			       
+}
 /* /brief List of possible tests
  * Two input transform with first input a constant iterator
  * One input transform with a constant iterator
