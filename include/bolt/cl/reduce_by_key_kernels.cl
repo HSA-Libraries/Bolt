@@ -41,7 +41,7 @@ __kernel void OffsetCalculation(
 
 	 if (gloId >= vecSize) return;
 
-    kType key, prev_key;
+    typename kIterType::value_type key, prev_key;
 
     if(gloId > 0){
       key = keys[ gloId ];
@@ -69,10 +69,10 @@ __kernel void perBlockScanByKey(
     vIterType vals,
     const uint vecSize,
     local int *ldsKeys,
-    local vType *ldsVals,
+    local typename vIterType::value_type *ldsVals,
     global BinaryFunction *binaryFunct,
     global int   *keyBuffer,
-    global vType *valBuffer)
+    global typename vIterType::value_type *valBuffer)
 {
 
     vals.init( ivals );
@@ -84,7 +84,7 @@ __kernel void perBlockScanByKey(
 
     // if exclusive, load gloId=0 w/ init, and all others shifted-1
     int key;
-    vType val;
+    typename vIterType::value_type val;
 
     if(gloId < vecSize){
       key = keys[ gloId ];
@@ -94,14 +94,14 @@ __kernel void perBlockScanByKey(
     }
     // Computes a scan within a workgroup
     // updates vals in lds but not keys
-    vType sum = val;
+    typename vIterType::value_type sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         int key2 = ldsKeys[locId - offset];
         if (locId >= offset && key == key2)
         {
-            vType y = ldsVals[ locId - offset ];
+            typename vIterType::value_type y = ldsVals[ locId - offset ];
             sum = (*binaryFunct)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -146,7 +146,7 @@ __kernel void intraBlockInclusiveScanByKey(
     // do offset of zero manually
     uint offset;
     int key;
-    vType workSum;
+    vType  workSum;
 
     if (mapId < vecSize)
     {
@@ -165,7 +165,7 @@ __kernel void intraBlockInclusiveScanByKey(
             key = keySumArray[ mapId+offset ];
             if (mapId+offset<vecSize )
             {
-                vType y = preSumArray[ mapId+offset ];
+                vType  y = preSumArray[ mapId+offset ];
                 if ( key == prevKey )
                 {
                     workSum = (*binaryFunct)( workSum, y );
@@ -217,12 +217,12 @@ __kernel void intraBlockInclusiveScanByKey(
 
         if (mapId < vecSize && locId > 0)
         {
-            vType y = postSumArray[ mapId+offset ];
+            vType  y = postSumArray[ mapId+offset ];
             int key1 = keySumArray[ mapId+offset ]; // change me
             int key2 = ldsKeys[ locId-1 ];
             if ( key1 == key2 )
             {
-                vType y2 = ldsVals[locId-1];
+                vType  y2 = ldsVals[locId-1];
                 y = (*binaryFunct)( y, y2 );
             }
             postSumArray[ mapId+offset ] = y;
@@ -250,15 +250,15 @@ __kernel void keyValueMapping(
     kIterType keys,
     global koType *ikeys_output,
     koIterType keys_output,
-	global vType *ivals, //input values
+	global vType  *ivals, //input values
     vIterType vals,
     global voType *ivals_output,
     voIterType vals_output,
 	local int *ldsKeys,
-    local vType *ldsVals,
+    local typename vIterType::value_type  *ldsVals,
 	global int *newkeys,
 	global int *keySumArray, //InputBuffer
-    global vType *postSumArray, //InputBuffer
+    global typename vIterType::value_type *postSumArray, //InputBuffer
     const uint vecSize,
 	global BinaryFunction *binaryFunct   )
 {
@@ -274,7 +274,7 @@ __kernel void keyValueMapping(
 
     // if exclusive, load gloId=0 w/ init, and all others shifted-1
     int key;
-    vType val;
+    typename vIterType::value_type  val;
 
     if(gloId < vecSize){
       key = newkeys[ gloId ];
@@ -284,14 +284,14 @@ __kernel void keyValueMapping(
     }
     // Computes a scan within a workgroup
     // updates vals in lds but not keys
-    vType sum = val;
+        typename vIterType::value_type  sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         int key2 = ldsKeys[locId - offset];
         if (locId >= offset && key == key2)
         {
-            vType y = ldsVals[ locId - offset ];
+                typename vIterType::value_type  y = ldsVals[ locId - offset ];
             sum = (*binaryFunct)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -310,9 +310,9 @@ __kernel void keyValueMapping(
       key3 =  newkeys[ gloId + 1];
     if (groId > 0 && key1 == key2 && key2 != key3)
     {
-        vType scanResult = sum;
-        vType postBlockSum = postSumArray[ groId-1 ];
-        vType newResult = (*binaryFunct)( scanResult, postBlockSum );
+        typename vIterType::value_type  scanResult = sum;
+        typename vIterType::value_type  postBlockSum = postSumArray[ groId-1 ];
+        typename vIterType::value_type  newResult = (*binaryFunct)( scanResult, postBlockSum );
         sum = newResult;
 
     }

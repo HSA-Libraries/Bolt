@@ -1449,6 +1449,34 @@ TEST(SwitchDevices, IncAddInt2)
 #endif
 
 
+TEST (sanity_transform_exclusive_scan_epr400104, simple){
+	bolt::amp::square<int> sqInt;
+	bolt::amp::plus<int> plInt;
+
+	int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10};
+	int outToMatch[10] = { 0, 1, 5, 14, 30, 55, 91, 140, 204, 285};
+
+	bolt::amp::transform_exclusive_scan( a, a+10, a, sqInt, 0, plInt );
+
+	for (int i = 0 ; i < 10; i++){
+		EXPECT_EQ(outToMatch[i], a[i])<<std::endl;
+	}
+}
+
+
+TEST (sanity_transform_inclusive_scan_epr400104, intEle){
+	bolt::amp::square<int> sqInt;
+	bolt::amp::plus<int> plInt;
+	int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10};
+	int b[10] = {1, 5, 14, 30, 55, 91, 140, 204, 285, 385};
+
+	bolt::amp::transform_inclusive_scan( a, a+10, a, sqInt, plInt );
+
+	for (int i = 0 ; i < 10 ; ++i){
+		EXPECT_EQ(b[i], a[i])<<std::endl;
+	}
+}
+
 
 
 int _tmain(int argc, _TCHAR* argv[])

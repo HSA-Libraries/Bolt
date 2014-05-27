@@ -242,6 +242,7 @@ namespace cl {
         public: \n
             typedef int iterator_category;      // device code does not understand std:: tags \n
             typedef T value_type; \n
+            typedef T base_type; \n
             typedef size_t difference_type; \n
             typedef size_t size_type; \n
             typedef T* pointer; \n

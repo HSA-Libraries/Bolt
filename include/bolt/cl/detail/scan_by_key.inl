@@ -24,6 +24,7 @@
 #include <type_traits>
 #include <bolt/cl/scan_by_key.h>
 #include "bolt/cl/bolt.h"
+#include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/distance.h"
 #include "bolt/cl/iterator/iterator_traits.h"
@@ -273,6 +274,7 @@ namespace detail
 			}
 
 		}
+#ifdef ENABLE_TBB
 	namespace btbb{
 		template<
 				typename InputIterator1,
@@ -373,6 +375,8 @@ namespace detail
 					return;
 				}
 	}
+#endif
+
 	namespace cl{
 		enum scanByKeyTypes  {scanByKey_kType, scanByKey_kIterType, scanByKey_vType, scanByKey_iIterType, scanByKey_oType, scanByKey_oIterType,
                 scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction, scanbykey_end};

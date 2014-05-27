@@ -231,7 +231,7 @@ gather_if(bolt::cl::control &ctl,
 }// end of namespace serial
 
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 template< typename InputIterator1,
@@ -397,7 +397,7 @@ gather_if(bolt::cl::control &ctl,
 }
 
 }// end of namespace btbb
-
+#endif
 namespace cl{
 ////////////////////////////////////////////////////////////////////
 // GatherIf KTS
@@ -647,9 +647,9 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator3::pointer pointer;
-        typedef typename InputIterator1::pointer map_pointer;
-		typedef typename InputIterator2::pointer ip_pointer;
+	    typedef typename std::iterator_traits<InputIterator3>::pointer pointer;
+        typedef typename std::iterator_traits<InputIterator1>::pointer map_pointer;
+		typedef typename std::iterator_traits<InputIterator2>::pointer ip_pointer;
         pointer input_pointer = bolt::cl::addressof(input) ;
 	    map_pointer map_pointer1 = bolt::cl::addressof(map_first) ;
 		ip_pointer stencil_pointer = bolt::cl::addressof(stencil) ;
@@ -836,8 +836,8 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator1::pointer map_pointer;
-        typedef typename InputIterator2::pointer pointer;
+	    typedef typename std::iterator_traits<InputIterator1>::pointer map_pointer;
+        typedef typename std::iterator_traits<InputIterator2>::pointer pointer;
         map_pointer map_pointer1 = bolt::cl::addressof(map_first) ;
 	    pointer first_pointer = bolt::cl::addressof(input) ;
 	    

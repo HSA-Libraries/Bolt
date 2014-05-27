@@ -223,7 +223,7 @@ scatter_if( bolt::cl::control &ctl,
 
 } // end of serial namespace
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 template<typename InputIterator1,
@@ -389,6 +389,7 @@ scatter_if( bolt::cl::control &ctl,
 
 
 }// end of btbb namespace
+#endif
 
 ////////////////////////////////////////////////////////////////////
 // ScatterIf KTS
@@ -758,9 +759,9 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator1::pointer pointer;
-        typedef typename MapIterator::pointer map_pointer;
-		typedef typename InputIterator3::pointer ip_pointer;
+	    typedef typename std::iterator_traits<InputIterator1>::pointer pointer;
+        typedef typename std::iterator_traits<MapIterator>::pointer map_pointer;
+		typedef typename std::iterator_traits<InputIterator3>::pointer ip_pointer;
         pointer first_pointer = bolt::cl::addressof(first1) ;
 	    map_pointer map_pointer1 = bolt::cl::addressof(map) ;
 		ip_pointer stencil_pointer = bolt::cl::addressof(stencil) ;
@@ -824,8 +825,8 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator::pointer pointer;
-        typedef typename MapIterator::pointer map_pointer;
+	    typedef typename std::iterator_traits<InputIterator>::pointer pointer;
+        typedef typename std::iterator_traits<MapIterator>::pointer map_pointer;
         pointer first_pointer = bolt::cl::addressof(first1) ;
 	    map_pointer map_pointer1 = bolt::cl::addressof(map) ;
 	    

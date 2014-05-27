@@ -217,6 +217,7 @@ namespace detail
 		
 			}
 	}
+#ifdef ENABLE_TBB
 	namespace btbb{
 	template<
 			typename InputIterator,
@@ -304,6 +305,8 @@ namespace detail
 	
 			}
 	}
+#endif
+
 	namespace cl{
 		enum scanTypes {scan_iValueType, scan_iIterType, scan_oValueType, scan_oIterType, scan_initType,
 						scan_BinaryFunction, scan_end };

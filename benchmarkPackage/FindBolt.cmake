@@ -138,7 +138,7 @@ if( NOT find_CL EQUAL -1 )
     mark_as_advanced( BOLT_LIBRARY_STATIC_DEBUG BOLTAMP_LIBRARY_STATIC_DEBUG )
     
     if( BOLT_LIBRARY_STATIC_RELEASE )
-        set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} optimized ${BOLTAMP_LIBRARY_STATIC_RELEASE})
+        set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} ${BOLTAMP_LIBRARY_STATIC_RELEASE})
     else( )
         set( BOLT_LIBRARY_STATIC "" )
         message( "${BOLT_LIBNAME_BASE}.${LIB_EXT}: Release static bolt library not found" )
