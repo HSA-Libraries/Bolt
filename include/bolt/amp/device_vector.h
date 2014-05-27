@@ -226,6 +226,9 @@ public:
     {
     public:
 
+        iterator_base( ): m_Container( create_empty_array< value_type >::getav( ) ), m_Index( 0 )
+        {}
+
         //  Basic constructor requires a reference to the container and a positional element
         iterator_base( Container& rhs, size_type index ): m_Container( rhs, false ), m_Index( static_cast<int>(index) )
         {}
@@ -335,6 +338,9 @@ private:
         value_type, std::random_access_iterator_tag, typename device_vector::reference >
     {
     public:
+
+        reverse_iterator_base( ): m_Container( create_empty_array< value_type >::getav( ) ), m_Index( 0 )
+        {}
 
         //  Basic constructor requires a reference to the container and a positional element
         reverse_iterator_base( Container& lhs, int index ): m_Container( lhs, false ), m_Index( static_cast<int>(index-1) )
