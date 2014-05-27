@@ -28,6 +28,7 @@
 #include <type_traits>
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/device_vector.h"
+#include "bolt/amp/transform.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 #include <amp.h>
 
@@ -41,25 +42,6 @@ namespace amp
 {
 namespace detail
 {
-
- namespace serial
- {
-
-   template<typename Iterator, typename OutputIterator, typename UnaryFunction>
-    void unary_transform( Iterator& first, Iterator& last,
-                    OutputIterator& result, UnaryFunction& f )
-    {
-        size_t sz = (last - first);
-        if (sz == 0)
-            return;
-        for(int index=0; index < (int)(sz); index++)
-        {
-            *(result + index) = f( *(first+index) );
-        }
-        return;
-    }
- }
-
 /*!
 *   \internal
 *   \addtogroup detail
