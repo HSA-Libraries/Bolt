@@ -98,8 +98,8 @@ reduce_by_key( ::bolt::cl::control &ctl,
     for ( InputIterator1 key = (keys_first+1); key != keys_last; key++)
     {
         // load keys
-        kType currentKey  = *(key);
-        kType previousKey = *(key-1);
+        //kType currentKey  = *(key);
+        //kType previousKey = *(key-1);
 
         // load value
         voType currentValue = *values_first;
@@ -107,11 +107,11 @@ reduce_by_key( ::bolt::cl::control &ctl,
 
         previousValue = *values_output;
         // within segment
-        if (binary_pred(currentKey, previousKey))
+        if (binary_pred(*(key), *(key-1)))
         {
             voType r = binary_op( previousValue, currentValue);
             *values_output = r;
-            *keys_output = currentKey;
+            *keys_output = *(key);
 
         }
         else // new segment
@@ -119,7 +119,7 @@ reduce_by_key( ::bolt::cl::control &ctl,
             values_output++;
             keys_output++;
             *values_output = currentValue;
-            *keys_output = currentKey;
+            *keys_output = *(key);
             count++; //To count the number of elements in the output array
         }
         values_first++;
@@ -208,8 +208,8 @@ reduce_by_key(
     for ( unsigned int i = 1; i < sz; i++)
     {
         // load keys
-        kType currentKey  = mapped_keyfirst_itr[i];
-        kType previousKey = mapped_keyfirst_itr[i-1];
+        //kType currentKey  = mapped_keyfirst_itr[i];
+        //kType previousKey = mapped_keyfirst_itr[i-1];
 
         // load value
         voType currentValue = mapped_valfirst_itr[vi];
@@ -217,11 +217,11 @@ reduce_by_key(
 
         previousValue = mapped_valresult_itr[vo];
         // within segment
-        if (binary_pred(currentKey, previousKey))
+        if (binary_pred(mapped_keyfirst_itr[i], mapped_keyfirst_itr[i-1]))
         {
             voType r = binary_op( previousValue, currentValue);
             mapped_valresult_itr[vo] = r;
-            mapped_keyresult_itr[ko] = currentKey;
+            mapped_keyresult_itr[ko] = mapped_keyfirst_itr[i];
 
         }
         else // new segment
@@ -229,7 +229,7 @@ reduce_by_key(
 			vo++;
 			ko++;
             mapped_valresult_itr[vo] = currentValue;
-            mapped_keyresult_itr[ko] = currentKey;
+            mapped_keyresult_itr[ko] = mapped_keyfirst_itr[i];
             count++; //To count the number of elements in the output array
         }
 		vi++;
@@ -421,10 +421,10 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             + typeNames[e_vIterType] + " vals,\n"
             "const uint vecSize,\n"
             "local int * ldsKeys,\n"
-            "local "  + typeNames[e_vType] + "* ldsVals,\n"
+            "local "  + typeNames[e_vIterType] + "::value_type * ldsVals,\n"
             "global " + typeNames[e_BinaryFunction]  + "* binaryFunct,\n"
             "global int * keyBuffer,\n"
-            "global " + typeNames[e_vType] + "* valBuffer\n"
+            "global " + typeNames[e_vIterType] + "::value_type * valBuffer\n"
             ");\n\n"
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -432,11 +432,11 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
             "global int * keySumArray,\n"
-            "global " + typeNames[e_vType] + "* preSumArray,\n"
-            "global " + typeNames[e_vType] + "* postSumArray,\n"
+            "global " + typeNames[e_vIterType] + "::value_type * preSumArray,\n"
+            "global " + typeNames[e_vIterType] + "::value_type * postSumArray,\n"
             "const uint vecSize,\n"
             "local int * ldsKeys,\n"
-            "local "  + typeNames[e_vType] + "* ldsVals,\n"
+            "local " + typeNames[e_vIterType] + "::value_type * ldsVals,\n"
             "const uint workPerThread,\n"
             "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n"
@@ -454,10 +454,10 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_voType] + "*ivals_output,\n"
 			+ typeNames[e_voIterType] + " vals_output,\n"
 			"local int * ldsKeys,\n"
-            "local "  + typeNames[e_vType] + "* ldsVals,\n"
+            "local " + typeNames[e_vIterType] + "::value_type * ldsVals,\n"
             "global int *newkeys,\n"
 			"global int * keySumArray,\n"
-            "global " + typeNames[e_vType] + "* postSumArray,\n"
+            "global " + typeNames[e_vIterType] + "::value_type * postSumArray,\n"
             "const uint vecSize, \n"
 			"global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n";

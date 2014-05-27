@@ -5374,40 +5374,27 @@ TEST(transform_iterator, BUG400107)
 	t_sv_trf_begin2 = sv_trf_begin2 ;
 
 
-	/*for (int i=0; i<length;  i++ )
-	{
-		std::cout << "Val " << svInVec[i].i << "     "  << *t_sv_trf_begin1++ <<"   " << *t_sv_trf_begin2++ << "\n" ;
-	
-	}*/
-		bolt::cl::control ctrl = bolt::cl::control::getDefault();
-	
-		global_id = 0;
+	bolt::cl::control ctrl = bolt::cl::control::getDefault();
+	global_id = 0;
 		
 
-	 bolt::cl::transform_inclusive_scan(	  sv_trf_begin1, sv_trf_end1,  svOutVec.begin(), neg, pls);
-	 bolt::cl::transform_inclusive_scan(ctrl, sv_trf_begin2, sv_trf_end2,  svOutVec1.begin(), neg, pls);
+	bolt::cl::transform_inclusive_scan(	  sv_trf_begin1, sv_trf_end1,  svOutVec.begin(), neg, pls);
+	bolt::cl::transform_inclusive_scan(ctrl, sv_trf_begin2, sv_trf_end2,  svOutVec1.begin(), neg, pls);
 	
+	//STD_TRANSFORM_SCAN
+	std::transform(sv_trf_begin1, sv_trf_end1, stlOut.begin(), std::negate<int>());
+	std::partial_sum(stlOut.begin(), stlOut.end(), stlOut.begin(), std::plus<int>());
 
-
-	  //STD_TRANSFORM_SCAN
-		std::transform(sv_trf_begin1, sv_trf_end1, stlOut.begin(), std::negate<int>());
-	  std::partial_sum(stlOut.begin(), stlOut.end(), stlOut.begin(), std::plus<int>());
-
-
-	  for (int i=0; i<length;  i++ )
+	for (int i=0; i<length;  i++ )
 	{
-//		std::cout << "Val " << svInVec[i].i << "     " << *t_sv_trf_begin1++ <<"   " << *t_sv_trf_begin2++ <<  "Out VAL ---> " << svOutVec[i] <<"  " << svOutVec1[i] << "  " << stlOut[i] << "\n" ;
-	
 		std::cout << "Val " << svInVec[i].i << "     "  << *t_sv_trf_begin1++ <<"   " << *t_sv_trf_begin2++ <<  "Out VAL ---> " << "  " << svOutVec[i] <<"   " << stlOut[i] << "\n" ;
-
 	} 
 	  
-	   for(int i =0; i< length; i++)
-       {
-          EXPECT_EQ( svOutVec[i], stlOut[i] );
-          EXPECT_EQ( svOutVec1[i], stlOut[i] );
-			       
-	   }
+	for(int i =0; i< length; i++)
+    {
+        EXPECT_EQ( svOutVec[i], stlOut[i] );
+        EXPECT_EQ( svOutVec1[i], stlOut[i] );
+	}
 	  
 }
 
@@ -5441,6 +5428,103 @@ TEST (transform_iterator, BUG400294){
   
   int C_exp[N] = {1, 3, 2, 1};
   int D_exp[N] = {9, 21, 9, 3};
+}
+
+TEST ( transform_iterator, BUG400110)
+{
+//	int length =  1<<20;
+	int length =  5;
+    
+	std::vector< UDD_trans > svInVec1( length );
+	std::vector< UDD_trans > svInVec2( length );
+
+	std::vector< int > svOutVec1( length );
+	std::vector< int > svOutVec2(length);
+				 
+	std::vector< int > stlOut1( length );
+	std::vector< int > stlOut2( length );
+
+    bolt::cl::device_vector< UDD_trans > dvInVec1( length );
+    bolt::cl::device_vector< UDD_trans > dvInVec2( length );
+							 
+	bolt::cl::device_vector< int > dvOutVec1( length );
+	bolt::cl::device_vector< int > dvOutVec2( length );
+
+	add_UDD add1;
+	UDD_trans gen_udd(0) ;
+	
+	// ADD
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end1   (svInVec1.end(),   add1) ;
+	
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin2 (svInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end2   (svInVec2.end(),   add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  sv_trf_begin3 (dvInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>	sv_trf_end3   (dvInVec1.end(),   add1) ;
+	
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  sv_trf_begin4 (dvInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>	sv_trf_end4   (dvInVec2.end(),   add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin2 (svInVec2.begin(), add1) ;
+	
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  t_sv_trf_begin3 (dvInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  t_sv_trf_begin4 (dvInVec2.begin(), add1) ;
+
+
+	global_id = 0;
+	std::generate(svInVec1.begin(), svInVec1.end(), gen_udd);
+
+	global_id = 0;
+	std::generate(svInVec2.begin(), svInVec2.end(), gen_udd);
+	
+	global_id = 0;
+	bolt::cl::generate(dvInVec1.begin(), dvInVec1.end(), gen_udd);
+
+	global_id = 0;
+	bolt::cl::generate(dvInVec2.begin(), dvInVec2.end(), gen_udd);
+
+	//bolt::cl::square<int> sq;
+	bolt::cl::plus<int> pls;
+	//bolt::cl::minus<int> mi;
+	//bolt::cl::negate<int> neg;
+	 bolt::cl::equal_to<int> eql;
+
+	t_sv_trf_begin1 = sv_trf_begin1 ;
+	t_sv_trf_begin2 = sv_trf_begin2 ;
+
+	t_sv_trf_begin3 = sv_trf_begin3 ;
+	t_sv_trf_begin4 = sv_trf_begin4 ;
+
+	std::vector< UDD_trans > testInput1( svInVec1.begin(), svInVec1.end() );
+    std::vector< int > testInput_int1( length );
+	std::vector< UDD_trans > testInput2( svInVec2.begin(), svInVec2.end() );
+    std::vector< int > testInput_int2( length );
+	for(int i=0; i<length; i++)
+	{
+		testInput_int1[i] = testInput1[i].i + 3;
+		testInput_int2[i] = testInput2[i].i + 3;
+	}
+
+	bolt::cl::control ctrl = bolt::cl::control::getDefault();
+	global_id = 0;
+	
+    bolt::cl::reduce_by_key(		sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec1.begin(), svOutVec2.begin(), eql, pls);
+    bolt::cl::reduce_by_key(ctrl, sv_trf_begin3, sv_trf_end3, sv_trf_begin4, dvOutVec1.begin(), dvOutVec2.begin(), eql, pls);
+
+	//STD_REDUCED
+	unsigned int n= Serial_reduce_by_key<int, int, int, int, bolt::cl::plus< int >> (&testInput_int1[0], &testInput_int2[0], &stlOut1[0], &stlOut2[0], pls, length);
+
+	for(int i =0; i< length; i++)
+    {
+        EXPECT_EQ( svOutVec1[i], stlOut1[i] );
+        EXPECT_EQ( svOutVec2[i], stlOut2[i] );
+        EXPECT_EQ( dvOutVec1[i], stlOut1[i] );
+        EXPECT_EQ( dvOutVec2[i], stlOut2[i] );	
+        EXPECT_EQ( svOutVec1[i], dvOutVec1[i] );
+        EXPECT_EQ( svOutVec2[i], dvOutVec2[i] );
+	}
 }
 
 /* /brief List of possible tests
