@@ -23,7 +23,7 @@
 
 int _tmain( int argc, _TCHAR* argv[ ] )
 {
-    size_t length = 1024;
+    int length = 1024;
     //Create device_vector and initialize it to 1
     std::cout << "\nScan EXAMPLE \n";
     bolt::cl::device_vector< int > boltInput( length, 1 );
