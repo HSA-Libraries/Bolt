@@ -504,6 +504,58 @@ Serial_reduce_by_key(
 
 }
 
+template<
+    typename kType,
+    typename vType,
+    typename oType,
+    typename BinaryFunction>
+oType*
+Serial_inclusive_scan_by_key(
+    kType *firstKey,
+    unsigned int  num,
+    vType* values,
+    oType* result,
+    BinaryFunction binary_op)
+{
+    if(num < 1)
+         return result;
+  
+    result[0] = values[0]; // assign value
+ 
+         unsigned int v=0, r=0;
+         // scan oneth element and beyond
+    for ( unsigned int key= 1; key<num; key++)
+    {
+        // move on to next element
+                 v++;
+                 r++;
+ 
+                  // load keys
+        kType currentKey  = firstKey[key];
+        kType previousKey = firstKey[key-1];
+ 
+                 // load value
+        oType currentValue = values[v]; // convertible
+        oType previousValue = result[r-1];
+ 
+                  // within segment
+        if (currentKey == previousKey)
+        {
+            //std::cout << "continuing segment" << std::endl;
+            oType res = binary_op( previousValue, currentValue);
+            result[r] = res;
+        }
+        else // new segment
+        {
+            result[r] = currentValue;
+        }
+ 
+    }
+ 
+    return result;
+}
+
+
 template<typename InputIterator1,
          typename InputIterator2,
          typename OutputIterator>
@@ -625,7 +677,7 @@ TEST( TransformIterator, FirstTest)
         global_id = 0; // Reset the global id counter
     }
 }
-
+#if 0
 TEST( TransformIterator, UDDTest)
 {
     {
@@ -4915,6 +4967,7 @@ TEST( TransformIterator, InclusiveScanbykeyRoutine)
         global_id = 0; // Reset the global id counter
     }
 }
+#endif
 
 TEST( TransformIterator, UDDInclusiveScanRoutine)
 {  
@@ -4968,14 +5021,16 @@ TEST( TransformIterator, UDDInclusiveScanRoutine)
         constant_itr const_itr_begin(temp);
 		constant_itr const_itr_end = const_itr_begin + length;
 		
-#if 0
+#if 1
         //TODO - 
 		{/*Test case when input is trf Iterato and UDD is returning an intr*/
 		    bolt::cl::plus<int> addI2_int;
             bolt::cl::inclusive_scan(tsv_trf_begin1, tsv_trf_end1, tsvOutVec.begin(), addI2_int);
             bolt::cl::inclusive_scan(tdv_trf_begin1, tdv_trf_end1, tdvOutVec.begin(), addI2_int);
             /*Compute expected results*/
-            std::partial_sum(tsv_trf_begin1, tsv_trf_end1, tstlOut.begin(), addI2_int);
+			bolt::cl::control ctl = bolt::cl::control::getDefault( );
+			ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+			bolt::cl::inclusive_scan(ctl, tsv_trf_begin1, tsv_trf_end1, tstlOut.begin(), addI2_int);
             /*Check the results*/
             cmpArrays(tsvOutVec, tstlOut, length);
             cmpArrays(tdvOutVec, tstlOut, length);
@@ -5032,6 +5087,7 @@ TEST( TransformIterator, UDDInclusiveScanRoutine)
         global_id = 0; // Reset the global id counter
 }
 
+
 TEST( TransformIterator, UDDInclusiveScanbykeyRoutine)
 {
     {
@@ -5039,7 +5095,9 @@ TEST( TransformIterator, UDDInclusiveScanbykeyRoutine)
         std::vector< UDD > svIn1Vec( length );
         std::vector< UDD > svIn2Vec( length );
         std::vector< UDD > svOutVec( length );
+        std::vector< int > svOutVec_int( length );
         std::vector< UDD > stlOut( length );
+        std::vector< int > stlOut_int( length );
 
         /*Generate inputs*/
         gen_input_udd gen;
@@ -5048,36 +5106,38 @@ TEST( TransformIterator, UDDInclusiveScanbykeyRoutine)
         global_id = 0;
 
         /*Create Iterators*/
-			UDD Zero;
-			Zero.i=0, Zero.f=0.0f; 
+                          UDD Zero;
+                          Zero.i=0, Zero.f=0.0f; 
 
-			int segmentLength = 0;
-			int segmentIndex = 0;
-			std::vector<UDD> key(1);
-			key[0] = Zero;
+                          int segmentLength = 0;
+                          int segmentIndex = 0;
+                          std::vector<UDD> key(1);
+                          key[0] = Zero;
 
-			for (int i = 0; i < length; i++)
-			{
-				// start over, i.e., begin assigning new key
-				if (segmentIndex == segmentLength)
-				{
-					segmentLength++;
-					segmentIndex = 0;
-					key[0] = key[0]+1 ; 
-				}
-				svIn1Vec[i] = key[0];
-				segmentIndex++;
-			}
+                          for (int i = 0; i < length; i++)
+                          {
+                                   // start over, i.e., begin assigning new key
+                                   if (segmentIndex == segmentLength)
+                                   {
+                                            segmentLength++;
+                                            segmentIndex = 0;
+                                            key[0] = key[0]+1 ; 
+                                   }
+                                   svIn1Vec[i] = key[0];
+                                   segmentIndex++;
+                          }
 
         bolt::BCKND::device_vector< UDD > dvIn1Vec( svIn1Vec.begin(), svIn1Vec.end() );
-		bolt::BCKND::device_vector< UDD > dvIn2Vec( svIn2Vec.begin(), svIn2Vec.end() );
+        bolt::BCKND::device_vector< UDD > dvIn2Vec( svIn2Vec.begin(), svIn2Vec.end() );
         bolt::BCKND::device_vector< UDD > dvOutVec( length );
+        bolt::BCKND::device_vector< int > dvOutVec_int( length );
 
         UDDadd_3 add3;
-		bolt::cl::equal_to<UDD> equal_to;
+        bolt::cl::equal_to<UDD> equal_to;
         bolt::cl::plus<UDD> addI2;
+                 //bolt::cl::plus<int> addI2_int;
 
-		squareUDD_result_int sq_int;
+                 squareUDD_result_int sq_int;
 
         typedef std::vector< UDD >::const_iterator                                                   sv_itr;
         typedef bolt::BCKND::device_vector< UDD >::iterator                                          dv_itr;
@@ -5086,105 +5146,94 @@ TEST( TransformIterator, UDDInclusiveScanbykeyRoutine)
         typedef bolt::BCKND::transform_iterator< UDDadd_3, std::vector< UDD >::const_iterator>          sv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< UDDadd_3, bolt::BCKND::device_vector< UDD >::iterator> dv_trf_itr_add3;
 
-		typedef bolt::BCKND::transform_iterator< squareUDD_result_int, std::vector< UDD >::const_iterator>          tsv_trf_itr_add3;
+                  typedef bolt::BCKND::transform_iterator< squareUDD_result_int, std::vector< UDD >::const_iterator>          tsv_trf_itr_add3;
         typedef bolt::BCKND::transform_iterator< squareUDD_result_int, bolt::BCKND::device_vector< UDD >::iterator> tdv_trf_itr_add3;
 
-
-
-
+ 
+ 
         sv_trf_itr_add3 sv_trf_begin1 (svIn1Vec.begin(), add3), sv_trf_end1 (svIn1Vec.end(), add3);
-		sv_trf_itr_add3 sv_trf_begin2 (svIn2Vec.begin(), add3), sv_trf_end2 (svIn2Vec.end(), add3);
+                  sv_trf_itr_add3 sv_trf_begin2 (svIn2Vec.begin(), add3), sv_trf_end2 (svIn2Vec.end(), add3);
         dv_trf_itr_add3 dv_trf_begin1 (dvIn1Vec.begin(), add3), dv_trf_end1 (dvIn1Vec.end(), add3);
         dv_trf_itr_add3 dv_trf_begin2 (dvIn2Vec.begin(), add3), dv_trf_end2 (dvIn2Vec.end(), add3);
 
-		tsv_trf_itr_add3 tsv_trf_begin1 (svIn1Vec.begin(), sq_int), tsv_trf_end1 (svIn1Vec.end(), sq_int);
-		tdv_trf_itr_add3 tdv_trf_begin1 (dvIn1Vec.begin(), sq_int), tdv_trf_end1 (dvIn1Vec.end(), sq_int);
-		tsv_trf_itr_add3 tsv_trf_begin2 (svIn2Vec.begin(), sq_int), tsv_trf_end2 (svIn2Vec.end(), sq_int);
-		tdv_trf_itr_add3 tdv_trf_begin2 (dvIn2Vec.begin(), sq_int), tdv_trf_end2 (dvIn2Vec.end(), sq_int);
+                  tsv_trf_itr_add3 tsv_trf_begin1 (svIn1Vec.begin(), sq_int), tsv_trf_end1 (svIn1Vec.end(), sq_int);
+                  tdv_trf_itr_add3 tdv_trf_begin1 (dvIn1Vec.begin(), sq_int), tdv_trf_end1 (dvIn1Vec.end(), sq_int);
+                  tsv_trf_itr_add3 tsv_trf_begin2 (svIn2Vec.begin(), sq_int), tsv_trf_end2 (svIn2Vec.end(), sq_int);
+                  tdv_trf_itr_add3 tdv_trf_begin2 (dvIn2Vec.begin(), sq_int), tdv_trf_end2 (dvIn2Vec.end(), sq_int);
 
-		UDD temp;
-		temp.i=1, temp.f=2.5f;
+                 UDD temp;
+                 temp.i=1, temp.f=2.5f;
 
-		UDD init;
-		init.i=0, init.f=0.0f;
+                 UDD init;
+                 init.i=0, init.f=0.0f;
 
         counting_itr count_itr_begin(init);
         counting_itr count_itr_end = count_itr_begin + length;
         constant_itr const_itr_begin(temp);
         constant_itr const_itr_end = const_itr_begin + length;
 
+                 std::vector<int> tinput1(tsv_trf_begin1, tsv_trf_end1);
+                 std::vector<int> tinput2(tsv_trf_begin2, tsv_trf_end2);
 
-#if 0
-		{/*Test case when inputs are trf Iterators and return type of UDD is int*/
-    		bolt::cl::equal_to<int> equal_to_int;
+                 std::vector<UDD> input1(sv_trf_begin1, sv_trf_end1);
+                 std::vector<UDD> input2(sv_trf_begin2, sv_trf_end2);
+
+#if 1
+        {/*Test case when inputs are trf Iterators and return type of UDD is int*/
+            bolt::cl::equal_to<int> equal_to_int;
             bolt::cl::plus<int> addI2_int;
-            bolt::cl::inclusive_scan_by_key(tsv_trf_begin1, tsv_trf_end1, tsv_trf_begin2, svOutVec.begin(), equal_to_int, addI2_int);
-            bolt::cl::inclusive_scan_by_key(tdv_trf_begin1, tdv_trf_end1, tdv_trf_begin2, dvOutVec.begin(), equal_to_int, addI2_int);
+            bolt::cl::inclusive_scan_by_key(tsv_trf_begin1, tsv_trf_end1, tsv_trf_begin2, svOutVec_int.begin(), equal_to_int, addI2_int);
+            bolt::cl::inclusive_scan_by_key(tdv_trf_begin1, tdv_trf_end1, tdv_trf_begin2, dvOutVec_int.begin(), equal_to_int, addI2_int);
             /*Compute expected results*/
 
-            bolt::cl::inclusive_scan_by_key(tsv_trf_begin1, tsv_trf_end1, tsv_trf_begin2, stlOut.begin(), equal_to_int, addI2_int);
+            Serial_inclusive_scan_by_key<int, int, int,  bolt::cl::plus< int >>(&tinput1[0], length, &tinput2[0], &stlOut_int[0], addI2_int );
             /*Check the results*/
-            cmpArrays(svOutVec, stlOut, length);
-            cmpArrays(dvOutVec, stlOut, length);
+            cmpArrays(stlOut_int, svOutVec_int, length);
+            cmpArrays(stlOut_int, dvOutVec_int, length);
         }
 #endif
         {/*Test case when inputs are trf Iterator*/
             bolt::cl::inclusive_scan_by_key(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec.begin(), equal_to, addI2);
             bolt::cl::inclusive_scan_by_key(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, dvOutVec.begin(), equal_to, addI2);
             /*Compute expected results*/
-			bolt::cl::control ctl = bolt::cl::control::getDefault( );
-			//ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
-
-            bolt::cl::inclusive_scan_by_key(ctl, sv_trf_begin1, sv_trf_end1, sv_trf_begin2, stlOut.begin(), equal_to, addI2);
+                          Serial_inclusive_scan_by_key<UDD, UDD, UDD,  bolt::cl::plus< UDD >>(&input1[0], length, &input2[0], &stlOut[0], addI2 );
             /*Check the results*/
-            cmpArrays(svOutVec, stlOut, length);
-            cmpArrays(dvOutVec, stlOut, length);
+            cmpArrays(stlOut, svOutVec, length);
+            cmpArrays(stlOut, dvOutVec, length);
         }
         {/*Test case when inputs are randomAccessIterator */
             bolt::cl::inclusive_scan_by_key(svIn1Vec.begin(), svIn1Vec.end(), svIn2Vec.begin(), svOutVec.begin(), equal_to, addI2);
             bolt::cl::inclusive_scan_by_key(dvIn1Vec.begin(), dvIn1Vec.end(), dvIn2Vec.begin(), dvOutVec.begin(), equal_to, addI2);
             /*Compute expected results*/
-			bolt::cl::control ctl = bolt::cl::control::getDefault( );
-			//ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
-
-            bolt::cl::inclusive_scan_by_key(ctl, svIn1Vec.begin(), svIn1Vec.end(),  svIn2Vec.begin(), stlOut.begin(), equal_to, addI2);
+                          Serial_inclusive_scan_by_key<UDD, UDD, UDD,  bolt::cl::plus< UDD >>(&svIn1Vec[0], length, &svIn2Vec[0], &stlOut[0], addI2 );
             /*Check the results*/
-            cmpArrays(svOutVec, stlOut, length);
-            cmpArrays(dvOutVec, stlOut, length);
+            cmpArrays(stlOut, svOutVec, length);
+            cmpArrays(stlOut, dvOutVec, length);
         }
         {/*Test case when value input is a constant iterator while key input is stil randomAccessIterator  */
             bolt::cl::inclusive_scan_by_key(svIn1Vec.begin(), svIn1Vec.end(), const_itr_begin, svOutVec.begin(), equal_to, addI2);
             bolt::cl::inclusive_scan_by_key(dvIn1Vec.begin(), dvIn1Vec.end(), const_itr_begin, dvOutVec.begin(), equal_to, addI2);
             /*Compute expected results*/
             std::vector<UDD> const_vector(const_itr_begin, const_itr_end);
-
-			bolt::cl::control ctl = bolt::cl::control::getDefault( );
-			//ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
-
-            bolt::cl::inclusive_scan_by_key(ctl, svIn1Vec.begin(), svIn1Vec.end(), const_vector.begin(), stlOut.begin(), equal_to, addI2);
+            Serial_inclusive_scan_by_key<UDD, UDD, UDD,  bolt::cl::plus< UDD >>(&svIn1Vec[0], length, &const_vector[0], &stlOut[0], addI2 );                
             /*Check the results*/
-            cmpArrays(svOutVec, stlOut, length);
-            cmpArrays(dvOutVec, stlOut, length);
+            cmpArrays(stlOut, svOutVec, length);
+            cmpArrays(stlOut, dvOutVec, length);
         }
         {/*Test case when input is a counting iterator */
             bolt::cl::inclusive_scan_by_key(svIn1Vec.begin(), svIn1Vec.end(), count_itr_begin, svOutVec.begin(), equal_to, addI2);
             bolt::cl::inclusive_scan_by_key(dvIn1Vec.begin(), dvIn1Vec.end(), count_itr_begin, dvOutVec.begin(), equal_to, addI2);
             /*Compute expected results*/
-            /*std::vector<int> count_vector(length);
-            for (int index=0;index<length;index++)
-                count_vector[index] = index;*/
-			std::vector<UDD> count_vector(count_itr_begin , count_itr_end);
-			bolt::cl::control ctl = bolt::cl::control::getDefault( );
-			//ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
-
-            bolt::cl::inclusive_scan_by_key(ctl, svIn1Vec.begin(), svIn1Vec.end(), count_vector.begin(), stlOut.begin(), equal_to, addI2);
+                          std::vector<UDD> count_vector(count_itr_begin , count_itr_end);
+                      Serial_inclusive_scan_by_key<UDD, UDD, UDD,  bolt::cl::plus< UDD >>(&svIn1Vec[0], length, &count_vector[0], &stlOut[0], addI2 );      
             /*Check the results*/
-            cmpArrays(svOutVec, stlOut, length);
-            cmpArrays(dvOutVec, stlOut, length);
+            cmpArrays(stlOut, svOutVec, length);
+            cmpArrays(stlOut, dvOutVec, length);
         }
         global_id = 0; // Reset the global id counter
     }
 }
+
 
 //BUGS
 

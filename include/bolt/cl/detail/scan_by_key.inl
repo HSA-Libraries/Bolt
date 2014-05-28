@@ -116,19 +116,16 @@ namespace detail
 				if(inclusive)
 				{					
 					// do zeroeth element
-					*mapped_res_itr = static_cast<iType>(*mapped_fst2_itr); // assign value
+					*mapped_res_itr = (*mapped_fst2_itr); // assign value
 					// scan oneth element and beyond
 					for ( unsigned int i=1; i< sz;  i++)
 					{
-						// load keys
-						kType currentKey  = static_cast<kType>( *(mapped_fst1_itr + i));
-						kType previousKey = static_cast<kType>(*(mapped_fst1_itr + i -1 ));
 						// load value
-						oType currentValue = static_cast<iType>( *(mapped_fst2_itr +i )); // convertible
-						oType previousValue = static_cast<oType>( *(mapped_res_itr + i -1 ));
+						oType currentValue = *(mapped_fst2_itr +i ); 
+						oType previousValue = *(mapped_res_itr + i -1 );
 
 						// within segment
-						if (binary_pred(currentKey, previousKey))
+						if (binary_pred(*(mapped_fst1_itr + i), *(mapped_fst1_itr + i -1 )))
 						{
 							oType r = binary_op( previousValue, currentValue);
 							*(mapped_res_itr + i) = r;
@@ -141,29 +138,25 @@ namespace detail
 				}
 				else
 				{
-					oType temp = static_cast<iType>(*mapped_fst2_itr);
+					oType temp = *mapped_fst2_itr;
 					*mapped_res_itr = static_cast<oType>( init );
 					// scan oneth element and beyond
 					for ( unsigned int i= 1; i<sz; i++)
 					{
-						// load keys
-						kType currentKey  = static_cast<kType>( *(mapped_fst1_itr + i));
-						kType previousKey = static_cast<kType>(*(mapped_fst1_itr + i -1));
-
 						// load value
 						oType currentValue = temp; // convertible
 						oType previousValue = static_cast<oType>( *(mapped_res_itr + i -1 ));
 
 						// within segment
-						if (binary_pred(currentKey,previousKey))
+						if (binary_pred(*(mapped_fst1_itr + i), *(mapped_fst1_itr + i -1)))
 						{
-							temp = static_cast<iType>(*(mapped_fst2_itr + i));
+							temp = *(mapped_fst2_itr + i);
 							oType r = binary_op( previousValue, currentValue);
 							*(mapped_res_itr + i) = r;
 						}
 						else // new segment
 						{
-							 temp = static_cast<iType>(*(mapped_fst2_itr + i));
+							 temp = *(mapped_fst2_itr + i);
 							*(mapped_res_itr + i) =  static_cast<oType>(init);
 						}
 				
@@ -214,19 +207,16 @@ namespace detail
 				if(inclusive)
 				{
 					// do zeroeth element
-					*result = static_cast<iType>(*first2); // assign value
+					*result = *first2; // assign value
 					// scan oneth element and beyond
 					for ( unsigned int i=1; i< sz;  i++)
 					{
-						// load keys
-						kType currentKey  = static_cast<kType>(*(first1 + i));
-						kType previousKey = static_cast<kType>(*(first1 + i - 1));
 						// load value
-						oType currentValue = static_cast<iType>(*(first2 + i)); // convertible
-						oType previousValue = static_cast<oType>(*(result + i - 1));
+						oType currentValue = *(first2 + i); // convertible
+						oType previousValue = *(result + i - 1);
 
 						// within segment
-						if (binary_pred(currentKey, previousKey))
+						if (binary_pred(*(first1 + i), *(first1 + i - 1)))
 						{
 							oType r = binary_op( previousValue, currentValue);
 							*(result+i) = r;
@@ -242,23 +232,19 @@ namespace detail
 				{
 					// do zeroeth element
 					//*result = *values; // assign value
-					oType temp = static_cast<iType>(*first2);
+					oType temp = *first2;
 					*result = static_cast<oType>(init);
 					// scan oneth element and beyond
 					for ( unsigned int i= 1; i<sz; i++)
 					{
-						// load keys
-						kType currentKey  = *(first1 + i);
-						kType previousKey = *(first1+ i -1 );
-
 						// load value
 						oType currentValue = temp; // convertible
 						oType previousValue = static_cast<oType>(*(result + i -1 ));
 
 						// within segment
-						if (binary_pred(currentKey,previousKey))
+						if (binary_pred(*(first1 + i), *(first1+ i -1 )))
 						{
-							temp = static_cast<iType>(*(first2 + i));
+							temp = *(first2 + i);
 							oType r = binary_op( previousValue, currentValue);
 							*(result + i) = r;
 						}
@@ -408,13 +394,13 @@ namespace detail
 					""        + typeNames[scanByKey_iIterType] + " vals_iter,\n"
 					""        + typeNames[scanByKey_initType] + " init,\n"
 					"const uint vecSize,\n"
-					"local "  + typeNames[scanByKey_kType] + "* ldsKeys,\n"
-					"local "  + typeNames[scanByKey_oType] + "* ldsVals,\n"
+					"local "  + typeNames[scanByKey_kIterType] + "::value_type * ldsKeys,\n"
+					"local "  + typeNames[scanByKey_iIterType] + "::value_type * ldsVals,\n"
 					"global " + typeNames[scanByKey_BinaryPredicate] + "* binaryPred,\n"
 					"global " + typeNames[scanByKey_BinaryFunction]  + "* binaryFunct,\n"
-					"global " + typeNames[scanByKey_kType] + "* keyBuffer,\n"
-					"global " + typeNames[scanByKey_oType] + "* valBuffer,\n"
-					"global " + typeNames[scanByKey_oType] + "* valBuffer1,\n"
+					"global " + typeNames[scanByKey_kIterType] + "::value_type * keyBuffer,\n"
+					"global " + typeNames[scanByKey_iIterType] + "::value_type * valBuffer,\n"
+					"global " + typeNames[scanByKey_iIterType] + "::value_type * valBuffer1,\n"
 					"int exclusive\n"
 					");\n\n"
 
@@ -423,11 +409,11 @@ namespace detail
 					"template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
 					"__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
 					"__kernel void " + name(1) + "(\n"
-					"global " + typeNames[scanByKey_kType] + "* keySumArray,\n"
-					"global " + typeNames[scanByKey_oType] + "* preSumArray,\n"
+					"global " + typeNames[scanByKey_kIterType] + "::value_type * keySumArray,\n"
+					"global " + typeNames[scanByKey_iIterType] + "::value_type * preSumArray,\n"
 					"const uint vecSize,\n"
-					"local "  + typeNames[scanByKey_kType] + "* ldsKeys,\n"
-					"local "  + typeNames[scanByKey_oType] + "* ldsVals,\n"
+					"local "  + typeNames[scanByKey_kIterType] + "::value_type * ldsKeys,\n"
+					"local "  + typeNames[scanByKey_iIterType] + "::value_type * ldsVals,\n"
 					"const uint workPerThread,\n"
 					"global " + typeNames[scanByKey_BinaryPredicate] + "* binaryPred,\n"
 					"global " + typeNames[scanByKey_BinaryFunction] + "* binaryFunct\n"
@@ -438,16 +424,16 @@ namespace detail
 					"template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
 					"__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
 					"__kernel void " + name(2) + "(\n"
-					"global " + typeNames[scanByKey_oType] + "* preSumArray,\n"
-					"global " + typeNames[scanByKey_oType] + "* preSumArray1,\n"
+					"global " + typeNames[scanByKey_iIterType] + "::value_type * preSumArray,\n"
+					"global " + typeNames[scanByKey_iIterType] + "::value_type * preSumArray1,\n"
 					"global " + typeNames[scanByKey_kType] + "* keys,\n"
 					""        + typeNames[scanByKey_kIterType] + " keys_iter,\n"
 					"global " + typeNames[scanByKey_vType] + "* vals,\n"
 					""        + typeNames[scanByKey_iIterType] + " vals_iter,\n"
 					"global " + typeNames[scanByKey_oType] + "* output,\n"
 					""        + typeNames[scanByKey_oIterType] + " output_iter,\n"
-					"local "  + typeNames[scanByKey_kType] + "* ldsKeys,\n"
-					"local "  + typeNames[scanByKey_oType] + "* ldsVals,\n"
+					"local "  + typeNames[scanByKey_kIterType] + "::value_type * ldsKeys,\n"
+					"local "  + typeNames[scanByKey_iIterType] + "::value_type * ldsVals,\n"
 					"const uint vecSize,\n"
 					"global " + typeNames[scanByKey_BinaryPredicate] + "* binaryPred,\n"
 					"global " + typeNames[scanByKey_BinaryFunction] + "* binaryFunct,\n"
