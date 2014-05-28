@@ -223,7 +223,7 @@ TEST(sanity_merge_amp_ArrWithDiffTypes, WithInt){
 
 	std::sort(InArr1, InArr1 + arraySize);
 	std::sort(InArr2, InArr2 + arraySize);
-	std::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize));
+	std::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize1));
 
 	bolt::amp::sort(InArr1, InArr1 + arraySize);
 	bolt::amp::sort(InArr2, InArr2 + arraySize);
@@ -267,7 +267,7 @@ TEST(sanity_merge_amp_ArrWithDiffTypes1, WithFloats){
 	//copying float array as a whole to all there types of arrays :) 
 	std::sort(InFloatArr1, InFloatArr1 + arraySize);
 	std::sort(InFloatArr2, InFloatArr2 + arraySize);
-	std::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize));
+	std::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize1));
 
 	bolt::amp::sort(InFloatArr1, InFloatArr1 + arraySize);
 	bolt::amp::sort(InFloatArr2, InFloatArr2 + arraySize);
@@ -308,7 +308,7 @@ TEST(sanity_merge_amp_ArrWithDiffTypes2, WithDouble){
 	//copying double array as a whole to all there types of arrays :) 
 	std::sort(InDoubleArr1, InDoubleArr1 + arraySize);
 	std::sort(InDoubleArr2, InDoubleArr2 + arraySize);
-	std::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize));
+	std::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, stdext::make_checked_array_iterator(outArr1,arraySize1));
 
 	std::sort(InDoubleArr1, InDoubleArr1 + arraySize);
 	std::sort(InDoubleArr2, InDoubleArr2 + arraySize);

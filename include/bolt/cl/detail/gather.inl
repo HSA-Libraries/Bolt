@@ -107,11 +107,11 @@ gather(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   input, first2Ptr);
+                                                   ctl, input, first2Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	iType1 temp;
     for(int iter = 0; iter < sz; iter++)
@@ -133,7 +133,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        std::random_access_iterator_tag
@@ -145,7 +145,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 
    unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
@@ -161,7 +161,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        bolt::cl::device_vector_tag
@@ -173,7 +173,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 	typename InputIterator1::difference_type sz = (maplast - mapfirst);
     if (sz == 0)
@@ -203,13 +203,13 @@ gather_if(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   stencil, first2Ptr);
+                                                   ctl, stencil, first2Ptr);
 	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   input, first3Ptr);
+                                                   ctl, input, first3Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	for(int iter = 0; iter < sz; iter++)
     {
@@ -231,7 +231,7 @@ gather_if(bolt::cl::control &ctl,
 }// end of namespace serial
 
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 template< typename InputIterator1,
@@ -289,11 +289,11 @@ gather(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   input, first2Ptr);
+                                                   ctl, input, first2Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	bolt::btbb::gather(mapped_first1_itr, mapped_first1_itr + sz, mapped_first2_itr, mapped_result_itr);
 
@@ -310,7 +310,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        std::random_access_iterator_tag
@@ -322,7 +322,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 
     bolt::btbb::gather_if(mapfirst, maplast, stencil, input, result, pred);
@@ -333,7 +333,7 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 typename std::enable_if< 
                std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
                                        bolt::cl::device_vector_tag
@@ -345,7 +345,7 @@ gather_if(bolt::cl::control &ctl,
           InputIterator2 stencil,
           InputIterator3 input,
           OutputIterator result,
-          BinaryPredicate pred)
+          Predicate pred)
 {
 	typename InputIterator1::difference_type sz = (maplast - mapfirst);
     if (sz == 0)
@@ -375,13 +375,13 @@ gather_if(bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   mapfirst, first1Ptr);
+                                                   ctl, mapfirst, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   stencil, first2Ptr);
+                                                   ctl, stencil, first2Ptr);
 	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   input, first3Ptr);
+                                                   ctl, input, first3Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	bolt::btbb::gather_if(mapped_first1_itr, mapped_first1_itr + sz, mapped_first2_itr, mapped_first3_itr, mapped_result_itr, pred);
 
@@ -397,7 +397,7 @@ gather_if(bolt::cl::control &ctl,
 }
 
 }// end of namespace btbb
-
+#endif
 namespace cl{
 ////////////////////////////////////////////////////////////////////
 // GatherIf KTS
@@ -647,9 +647,9 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator3::pointer pointer;
-        typedef typename InputIterator1::pointer map_pointer;
-		typedef typename InputIterator2::pointer ip_pointer;
+	    typedef typename std::iterator_traits<InputIterator3>::pointer pointer;
+        typedef typename std::iterator_traits<InputIterator1>::pointer map_pointer;
+		typedef typename std::iterator_traits<InputIterator2>::pointer ip_pointer;
         pointer input_pointer = bolt::cl::addressof(input) ;
 	    map_pointer map_pointer1 = bolt::cl::addressof(map_first) ;
 		ip_pointer stencil_pointer = bolt::cl::addressof(stencil) ;
@@ -836,8 +836,8 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator1::pointer map_pointer;
-        typedef typename InputIterator2::pointer pointer;
+	    typedef typename std::iterator_traits<InputIterator1>::pointer map_pointer;
+        typedef typename std::iterator_traits<InputIterator2>::pointer pointer;
         map_pointer map_pointer1 = bolt::cl::addressof(map_first) ;
 	    pointer first_pointer = bolt::cl::addressof(input) ;
 	    
@@ -872,7 +872,7 @@ public:
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
 	typename std::enable_if< 
                !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
                              std::input_iterator_tag 
@@ -887,7 +887,7 @@ public:
                const InputIterator2& stencil,
                const InputIterator3& input,
                const OutputIterator& result,
-               const BinaryPredicate& pred,
+               const Predicate& pred,
                const std::string& user_code )
     {
         
@@ -940,7 +940,7 @@ public:
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
 	typename std::enable_if< 
                (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
                              std::input_iterator_tag 
@@ -955,7 +955,7 @@ public:
                                          const InputIterator2& stencil,
                                          const InputIterator3& input,
                                          const OutputIterator& result,
-                                         const BinaryPredicate& pred,
+                                         const Predicate& pred,
                                          const std::string& user_code )
     {
         //static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
@@ -1154,14 +1154,14 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 void gather_if( bolt::cl::control& ctl,
                 InputIterator1 map_first,
                 InputIterator1 map_last,
                 InputIterator2 stencil,
                 InputIterator3 input,
                 OutputIterator result,
-                BinaryPredicate pred,
+                Predicate pred,
                 const std::string& user_code )
 {
     detail::gather_if( ctl,
@@ -1178,13 +1178,13 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 void gather_if(  InputIterator1 map_first,
                  InputIterator1 map_last,
                  InputIterator2 stencil,
                  InputIterator3 input,
                  OutputIterator result,
-                 BinaryPredicate pred,
+                 Predicate pred,
                  const std::string& user_code )
 {
     gather_if( control::getDefault( ),

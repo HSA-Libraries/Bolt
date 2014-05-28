@@ -33,16 +33,10 @@ set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
                 set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
 endif()
 
-if( BUILD_ampBolt )
-    set( Bolt_Link_Libs ampBolt.Runtime )
-else()
-    set( Bolt_Link_Libs  "" )
-endif()    
-
 if(BUILD_TBB)
-    target_link_libraries( Bolt.Bench.Benchmark ${BOLT_LIBRARIES} ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} ${Bolt_Link_Libs} ${TBB_LIBRARIES} )
+    target_link_libraries( Bolt.Bench.Benchmark ${BOLT_LIBRARIES} ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( Bolt.Bench.Benchmark ${BOLT_LIBRARIES} ${Boost_LIBRARIES} ${OPENCL_LIBRARIES}  ${Bolt_Link_Libs} )
+    target_link_libraries( Bolt.Bench.Benchmark ${BOLT_LIBRARIES} ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} )
 endif()
 
 set_target_properties( Bolt.Bench.Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

@@ -51,7 +51,7 @@ kernel void reduceTemplate(
     // length into a length related to the number of workgroups
     while (gx < length)
     {
-        iTypePtr element = input_iter[gx];
+        typename iTypeIter::value_type element = input_iter[gx];
         accumulator = (*userFunctor)(accumulator, element);
         gx += get_global_size(0);
     }

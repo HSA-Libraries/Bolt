@@ -161,6 +161,13 @@
 <td align="center">YES</td>
 </tr>
 <tr>
+<td align="center">permutation_iterator</td>
+<td align="center">YES<sup><b>1</b></sup></td>
+<td align="center">YES<sup><b>2</b></sup></td>
+<td align="center">YES<sup><b>3</b></sup></td>
+<td align="center">YES<sup><b>3</b></sup></td>
+</tr>
+<tr>
 <td align="center">reduce</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
@@ -224,6 +231,13 @@
 <td align="center">YES</td>
 </tr>
 <tr>
+<td align="center">transform_iterator</td>
+<td align="center">YES</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
 <td align="center">transform_reduce</td>
 <td align="center">YES</td>
 <td align="center">YES</td>
@@ -276,4 +290,9 @@
 
 
 </table>
+
+\subsection Limitations
+1 - Works with device_vector iterators, and transform routine only <br>
+2 - Works only with device_vector iterators <br>
+3 - Supported on C++ AMP path, but not on OpenCL path. Slower performance expected <br>
 */

@@ -54,27 +54,23 @@ namespace bolt {
                                         const BinaryFunction& binary_op )
         {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
-
-                //Now create a staging array ; May support zero-copy in the future?!
-                concurrency::accelerator cpuAccelerator = concurrency::
-                                                        accelerator(concurrency::accelerator::cpu_accelerator);
-                concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
-
-
                 const int szElements = static_cast< int >( std::distance( first, last ) );
 
 
-				int length = (_T_REDUCE_WAVEFRONT_SIZE * 65535);	/* limit by MS c++ amp */
+
+
+				int max_ComputeUnits = 32;
+				int numTiles = max_ComputeUnits*32;	/* Max no. of WG for Tahiti(32 compute Units) and 32 is the tuning factor that gives good performance*/
+				int length = (_T_REDUCE_WAVEFRONT_SIZE * numTiles);
 				length = szElements < length ? szElements : length;
 				unsigned int residual = length % _T_REDUCE_WAVEFRONT_SIZE;
 				length = residual ? (length + _T_REDUCE_WAVEFRONT_SIZE - residual): length ;
-				unsigned int numTiles = (length / _T_REDUCE_WAVEFRONT_SIZE);
-
-				concurrency::array< iType, 1 > resultArray(numTiles, ctl.getAccelerator().default_view,
-                                                                                        cpuAcceleratorView);
-                concurrency::array_view<iType, 1> result ( resultArray );
+				numTiles = static_cast< int >((szElements/_T_REDUCE_WAVEFRONT_SIZE)>= numTiles?(numTiles):
+									(std::ceil( static_cast< float >( szElements ) / _T_REDUCE_WAVEFRONT_SIZE) ));
+				
+				concurrency::array<iType, 1> result(numTiles);
 				concurrency::extent< 1 > inputExtent(length);
-                concurrency::tiled_extent< _T_REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< _T_REDUCE_WAVEFRONT_SIZE >();
+				concurrency::tiled_extent< _T_REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< _T_REDUCE_WAVEFRONT_SIZE >();
 
                 // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
                 // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
@@ -87,7 +83,7 @@ namespace bolt {
                                                     szElements,
                                                     length,
                                                     transform_op,
-                                                    result,
+                                                    &result,
                                                     binary_op ]
                                                    ( concurrency::tiled_index<_T_REDUCE_WAVEFRONT_SIZE> t_idx ) restrict(amp)
                     {
@@ -140,13 +136,16 @@ namespace bolt {
                       }
 
                     });
-                    
+                     
 					iType acc = static_cast<iType>(init);
-					iType *cpuPointerReduce =  result.data();
-					for(unsigned int i = 0; i < numTiles; ++i)
+					std::vector<iType> *cpuPointerReduce = new std::vector<iType>(numTiles);
+					concurrency::copy(result, (*cpuPointerReduce).begin());
+					for(int i = 0; i < numTiles; ++i)
 					{
-						acc = binary_op(acc, cpuPointerReduce[i]);
+						acc = binary_op(acc, (*cpuPointerReduce)[i]);
 					}
+					delete cpuPointerReduce;
+
 					return acc;
                 }
                 catch(std::exception &e)

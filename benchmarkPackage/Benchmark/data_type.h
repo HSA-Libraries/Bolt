@@ -2,7 +2,6 @@ using namespace std;
 /******************************************************************************
  *  User Defined Data Types - vec2,4,8
  *****************************************************************************/
-
 #if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
    BOLT_FUNCTOR(vec2,
@@ -36,12 +35,13 @@ using namespace std;
             l_equal = ( b == rhs.b ) ? l_equal : false;
             return l_equal;
         }
-      friend ostream& operator<<(ostream& os, const vec2& dt);
+     // friend ostream& operator<<(ostream& os, const vec2& dt);
     };
   );
     BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
     BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
     BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec2 );
+    //BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, DATA_TYPE, vec2 );
 
     BOLT_FUNCTOR(vec4,
     struct vec4
@@ -80,12 +80,16 @@ using namespace std;
         l_equal = ( d == rhs.d ) ? l_equal : false;
         return l_equal;
         }
-        friend ostream& operator<<(ostream& os, const vec4& dt);
+        //friend ostream& operator<<(ostream& os, const vec4& dt);
     };
     );
     BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec4 >::iterator );
     BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
     BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec4 );
+    ///*BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
+    //BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );*/
+    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec4 );
+    //BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, DATA_TYPE, vec4 );
 
 
     BOLT_FUNCTOR(vec8,
@@ -139,7 +143,7 @@ using namespace std;
         l_equal = ( h == rhs.h ) ? l_equal : false;
         return l_equal;
         }
-        friend ostream& operator<<(ostream& os, const vec8& dt);
+        //friend ostream& operator<<(ostream& os, const vec8& dt);
     };
     );
         BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec8 >::iterator );
@@ -500,9 +504,7 @@ using namespace std;
         return l_result;
         };
     };
-    
-
-    
+        
     struct vec4plus
     {
         vec4 operator()(const vec4 &lhs, const vec4 &rhs) const restrict(cpu,amp)
@@ -576,6 +578,162 @@ using namespace std;
         };
 }; 
 #endif
+
+
+    /******************************************************************************
+ *  User Defined Binary Functions - DATA_TYPE mult Only for thrust usage
+ *****************************************************************************/
+#if (BOLT_BENCHMARK == 0)
+    struct vec1mult
+        {
+                    __host__ __device__
+            DATA_TYPE operator()(const DATA_TYPE &lhs, const DATA_TYPE &rhs) const
+            {
+            DATA_TYPE l_result;
+            l_result = lhs * rhs;
+            return l_result;
+            };
+        }; 
+#endif
+/******************************************************************************
+ *  User Defined Binary Functions - vec2,4,8plus
+ *****************************************************************************/
+#if (BOLT_BENCHMARK == 1)
+
+#if BENCHMARK_CL_AMP == CL_BENCH
+    BOLT_FUNCTOR(vec2mult,
+    struct vec2mult
+    {
+        vec2 operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
+        vec2 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        return l_result;
+        };
+    };
+    );
+
+    BOLT_FUNCTOR(vec4mult,
+    struct vec4mult
+    {
+        vec4 operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
+        vec4 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        l_result.c = lhs.c*rhs.c;
+        l_result.d = lhs.d*rhs.d;
+        return l_result;
+        };
+    }; 
+    );
+    BOLT_FUNCTOR(vec8mult,
+    struct vec8mult
+    {
+        vec8 operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
+        vec8 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        l_result.c = lhs.c*rhs.c;
+        l_result.d = lhs.d*rhs.d;
+        l_result.e = lhs.e*rhs.e;
+        l_result.f = lhs.f*rhs.f;
+        l_result.g = lhs.g*rhs.g;
+        l_result.h = lhs.h*rhs.h;
+        return l_result;
+        };
+    };
+    );
+#elif BENCHMARK_CL_AMP == AMP_BENCH
+   struct vec2mult
+    {
+        vec2 operator()(const vec2 &lhs, const vec2 &rhs) const restrict(cpu,amp)
+        {
+        vec2 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        return l_result;
+        };
+    };
+    
+
+    
+    struct vec4mult
+    {
+        vec4 operator()(const vec4 &lhs, const vec4 &rhs) const restrict(cpu,amp)
+        {
+        vec4 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        l_result.c = lhs.c*rhs.c;
+        l_result.d = lhs.d*rhs.d;
+        return l_result;
+        };
+    }; 
+
+    struct vec8mult
+    {
+        vec8 operator()(const vec8 &lhs, const vec8 &rhs) const restrict(cpu,amp)
+        {
+        vec8 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        l_result.c = lhs.c*rhs.c;
+        l_result.d = lhs.d*rhs.d;
+        l_result.e = lhs.e*rhs.e;
+        l_result.f = lhs.f*rhs.f;
+        l_result.g = lhs.g*rhs.g;
+        l_result.h = lhs.h*rhs.h;
+        return l_result;
+        };
+    };
+#endif
+#else
+    struct vec2mult
+    {
+        __host__ __device__
+        vec2 operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
+        vec2 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        return l_result;
+        }
+    }; 
+    struct vec4mult
+    {
+        __host__ __device__
+        vec4 operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
+        vec4 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        l_result.c = lhs.c*rhs.c;
+        l_result.d = lhs.d*rhs.d;
+        return l_result;
+        };
+    }; 
+    struct vec8mult
+    {
+        __host__ __device__
+        vec8 operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
+        vec8 l_result;
+        l_result.a = lhs.a*rhs.a;
+        l_result.b = lhs.b*rhs.b;
+        l_result.c = lhs.c*rhs.c;
+        l_result.d = lhs.d*rhs.d;
+        l_result.e = lhs.e*rhs.e;
+        l_result.f = lhs.f*rhs.f;
+        l_result.g = lhs.g*rhs.g;
+        l_result.h = lhs.h*rhs.h;
+        return l_result;
+        };
+}; 
+#endif
+
 
 /******************************************************************************
  *  User Defined Unary Functions-  DATA_TYPE square for thrust usage
@@ -851,9 +1009,10 @@ using namespace std;
     {
         bool operator()(const vec2 &lhs, const vec2 &rhs) const
         {
-        if (lhs.a < rhs.a) return true;
-        if (lhs.b < rhs.b) return true;
-        return false;
+        bool l_value;
+        l_value =  (lhs.a < rhs.a)?true:false;
+        l_value =  (lhs.b < rhs.b)?true:false;
+        return l_value;
         };
     };
     );
@@ -972,22 +1131,24 @@ using namespace std;
  *****************************************************************************/
 #if (BOLT_BENCHMARK == 1)
 #if BENCHMARK_CL_AMP == CL_BENCH
-    BOLT_FUNCTOR(intgen,
-    struct intgen
-    {
+	
+	BOLT_FUNCTOR(intgen,
+	struct intgen
+	{ 
         DATA_TYPE operator()() const
         {
-        DATA_TYPE v = 1;
+        DATA_TYPE v =  4;
         return v;
         };
-    };
-    );
+	};
+	);
+
     BOLT_FUNCTOR(vec2gen,
     struct vec2gen
     {
         vec2 operator()() const
         {
-        vec2 v = { 2, 3 };
+        vec2 v = { 4, 5 };
         return v;
         };
     }; 
@@ -1019,7 +1180,7 @@ using namespace std;
     {
         DATA_TYPE operator()() const restrict(cpu,amp)
         {
-        DATA_TYPE v = 1;
+        DATA_TYPE v = 4;
         return v;
         };
     };
@@ -1027,7 +1188,7 @@ using namespace std;
     {
         vec2 operator()() const restrict(cpu,amp)
         {
-        vec2 v = { 2, 3 };
+        vec2 v = { 4, 5 };
         return v;
         };
     }; 
@@ -1143,3 +1304,14 @@ using namespace std;
             segmentIndex++;
         }
     }
+
+#if (BOLT_BENCHMARK == 1)
+#if BENCHMARK_CL_AMP == AMP_BENCH
+    void Amp_GPU_wait(bolt::amp::control& ctrl)
+    {
+        bolt::amp::control::e_RunMode runMode = ctrl.getForceRunMode( );
+        if( runMode == bolt::amp::control::Gpu)
+            ctrl.getAccelerator().default_view.wait();
+    }
+#endif
+#endif

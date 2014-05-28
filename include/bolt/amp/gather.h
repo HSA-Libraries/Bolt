@@ -92,7 +92,7 @@ namespace bolt {
 
 
        /*! \brief This version of \p gather_if copies elements from a source array to a destination range according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
+         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather_if copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is
          * \p true.
          *
@@ -146,7 +146,7 @@ namespace bolt {
                          OutputIterator result);
 
        /*! \brief This version of \p gather_if copies elements from a source array to a destination range according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
+         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather_if copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ])
          * is \p true.
          *

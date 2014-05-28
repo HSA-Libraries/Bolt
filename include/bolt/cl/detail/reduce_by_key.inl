@@ -98,8 +98,8 @@ reduce_by_key( ::bolt::cl::control &ctl,
     for ( InputIterator1 key = (keys_first+1); key != keys_last; key++)
     {
         // load keys
-        kType currentKey  = *(key);
-        kType previousKey = *(key-1);
+        //kType currentKey  = *(key);
+        //kType previousKey = *(key-1);
 
         // load value
         voType currentValue = *values_first;
@@ -107,11 +107,11 @@ reduce_by_key( ::bolt::cl::control &ctl,
 
         previousValue = *values_output;
         // within segment
-        if (binary_pred(currentKey, previousKey))
+        if (binary_pred(*(key), *(key-1)))
         {
             voType r = binary_op( previousValue, currentValue);
             *values_output = r;
-            *keys_output = currentKey;
+            *keys_output = *(key);
 
         }
         else // new segment
@@ -119,7 +119,7 @@ reduce_by_key( ::bolt::cl::control &ctl,
             values_output++;
             keys_output++;
             *values_output = currentValue;
-            *keys_output = currentKey;
+            *keys_output = *(key);
             count++; //To count the number of elements in the output array
         }
         values_first++;
@@ -187,16 +187,16 @@ reduce_by_key(
 
     auto mapped_keyfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_first, keyfirstPtr);
+                                                    ctl, keys_first, keyfirstPtr);
 	auto mapped_valfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator2>::
 	                                          iterator_category(), 
-                                                    values_first,valfirstPtr);
+                                                    ctl, values_first,valfirstPtr);
     auto mapped_keyresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_output, keyresultPtr);
+                                                    ctl, keys_output, keyresultPtr);
 	auto mapped_valresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator2>::
 	                                          iterator_category(), 
-                                                    values_output, valresultPtr);
+                                                    ctl, values_output, valresultPtr);
 
 	// do zeroeth element
     mapped_valresult_itr[0] = mapped_valfirst_itr[0];
@@ -208,8 +208,8 @@ reduce_by_key(
     for ( unsigned int i = 1; i < sz; i++)
     {
         // load keys
-        kType currentKey  = mapped_keyfirst_itr[i];
-        kType previousKey = mapped_keyfirst_itr[i-1];
+        //kType currentKey  = mapped_keyfirst_itr[i];
+        //kType previousKey = mapped_keyfirst_itr[i-1];
 
         // load value
         voType currentValue = mapped_valfirst_itr[vi];
@@ -217,11 +217,11 @@ reduce_by_key(
 
         previousValue = mapped_valresult_itr[vo];
         // within segment
-        if (binary_pred(currentKey, previousKey))
+        if (binary_pred(mapped_keyfirst_itr[i], mapped_keyfirst_itr[i-1]))
         {
             voType r = binary_op( previousValue, currentValue);
             mapped_valresult_itr[vo] = r;
-            mapped_keyresult_itr[ko] = currentKey;
+            mapped_keyresult_itr[ko] = mapped_keyfirst_itr[i];
 
         }
         else // new segment
@@ -229,7 +229,7 @@ reduce_by_key(
 			vo++;
 			ko++;
             mapped_valresult_itr[vo] = currentValue;
-            mapped_keyresult_itr[ko] = currentKey;
+            mapped_keyresult_itr[ko] = mapped_keyfirst_itr[i];
             count++; //To count the number of elements in the output array
         }
 		vi++;
@@ -249,7 +249,7 @@ reduce_by_key(
 
 } // end of namespace serial
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 
@@ -337,16 +337,16 @@ reduce_by_key(
 
     auto mapped_keyfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_first, keyfirstPtr);
+                                                    ctl, keys_first, keyfirstPtr);
 	auto mapped_valfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator2>::
 	                                          iterator_category(), 
-                                                    values_first,valfirstPtr);
+                                                    ctl, values_first,valfirstPtr);
     auto mapped_keyresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator1>::
 	                                          iterator_category(), 
-                                                    keys_output, keyresultPtr);
+                                                    ctl, keys_output, keyresultPtr);
 	auto mapped_valresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator2>::
 	                                          iterator_category(), 
-                                                    values_output, valresultPtr);
+                                                    ctl, values_output, valresultPtr);
 
 	unsigned int count = bolt::btbb::reduce_by_key( mapped_keyfirst_itr,  mapped_keyfirst_itr + sz, mapped_valfirst_itr, 
 		mapped_keyresult_itr, mapped_valresult_itr, binary_pred, binary_op);
@@ -363,7 +363,7 @@ reduce_by_key(
 }
 
 }//end of namespace btbb
-
+#endif
 
 namespace cl{
     enum Reduce_By_Key_Types {  e_kType, e_kIterType,
@@ -395,7 +395,6 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 		addKernelName("OffsetCalculation");
         addKernelName("perBlockScanByKey");
         addKernelName("intraBlockInclusiveScanByKey");
-        addKernelName("perBlockAdditionByKey");
         addKernelName("keyValueMapping");
     }
 
@@ -408,10 +407,9 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[e_kType] + "* ikeys,\n"
             + typeNames[e_kIterType] + " keys,\n"
-            "global int * output2,\n"
+            "global int *tempArray,\n"
             "const uint vecSize,\n"
-            "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
-            "global " + typeNames[e_BinaryFunction]  + "* binaryFunct\n"
+            "global " + typeNames[e_BinaryPredicate] + "* binaryPred\n"
             ");\n\n"
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -421,13 +419,12 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global int *keys,\n"
             "global " + typeNames[e_vType] + "* ivals,\n"
             + typeNames[e_vIterType] + " vals,\n"
-            "global " + typeNames[e_voType] + "* output,\n"
             "const uint vecSize,\n"
             "local int * ldsKeys,\n"
-            "local "  + typeNames[e_voType] + "* ldsVals,\n"
+            "local "  + typeNames[e_vIterType] + "::value_type * ldsVals,\n"
             "global " + typeNames[e_BinaryFunction]  + "* binaryFunct,\n"
             "global int * keyBuffer,\n"
-            "global " + typeNames[e_voType] + "* valBuffer\n"
+            "global " + typeNames[e_vIterType] + "::value_type * valBuffer\n"
             ");\n\n"
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -435,42 +432,34 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
             "global int * keySumArray,\n"
-            "global " + typeNames[e_voType] + "* preSumArray,\n"
-            "global " + typeNames[e_voType] + "* postSumArray,\n"
+            "global " + typeNames[e_vIterType] + "::value_type * preSumArray,\n"
+            "global " + typeNames[e_vIterType] + "::value_type * postSumArray,\n"
             "const uint vecSize,\n"
             "local int * ldsKeys,\n"
-            "local "  + typeNames[e_voType] + "* ldsVals,\n"
+            "local " + typeNames[e_vIterType] + "::value_type * ldsVals,\n"
             "const uint workPerThread,\n"
             "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n"
 
-
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
-            "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
-            "__kernel void " + name(3) + "(\n"
-            "global int * keySumArray,\n"
-            "global " + typeNames[e_voType] + "* postSumArray,\n"
-            "global int *keys,\n"
-            "global " + typeNames[e_voType] + "* output,\n"
-            "const uint vecSize,\n"
-            "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
-            ");\n\n"
-
-            "// Dynamic specialization of generic template definition, using user supplied types\n"
-            "template __attribute__((mangled_name(" + name(4) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
-            "__kernel void " + name(4) + "(\n"
+            "__kernel void " + name(3) + "(\n"
             "global " + typeNames[e_kType] + "*ikeys,\n"
             + typeNames[e_kIterType] + " keys,\n"
             "global " + typeNames[e_koType] + "*ikeys_output,\n"
             + typeNames[e_koIterType] + " keys_output,\n"
+			"global " + typeNames[e_vType] + "* ivals,\n"
+            + typeNames[e_vIterType] + " vals,\n"
             "global " + typeNames[e_voType] + "*ivals_output,\n"
-            + typeNames[e_voIterType] + " vals_output,\n"
-            "global int *offsetArray,\n"
-            "global " + typeNames[e_voType] + "*offsetValArray,\n"
-            "const uint vecSize,\n"
-            "int numSections\n"
+			+ typeNames[e_voIterType] + " vals_output,\n"
+			"local int * ldsKeys,\n"
+            "local " + typeNames[e_vIterType] + "::value_type * ldsVals,\n"
+            "global int *newkeys,\n"
+			"global int * keySumArray,\n"
+            "global " + typeNames[e_vIterType] + "::value_type * postSumArray,\n"
+            "const uint vecSize, \n"
+			"global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n";
 
         return templateSpecializationString;
@@ -572,7 +561,7 @@ reduce_by_key(
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
     // for profiling
-    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent, kernel3Event, kernel4Event;
+    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent, kernel3Event;
 
     // Set up shape of launch grid and buffers:
     int computeUnits     = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
@@ -608,14 +597,9 @@ reduce_by_key(
     control::buffPointer binaryFunctionBuffer = ctl.acquireBuffer( sizeof( aligned_binary_op ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_op );
 
-    control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( int ) );
-    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
-    control::buffPointer offsetValArray  = ctl.acquireBuffer( numElements *sizeof( voType ) );
 
-
-    device_vector< int > offsetArrayVec( numElements, 0, CL_MEM_READ_WRITE, false, ctl);
-    ::cl::Buffer offsetArray = offsetArrayVec.begin( ).base().getContainer().getBuffer();
+    device_vector< int > tempArray( numElements, 0, CL_MEM_READ_WRITE, false, ctl);
+    ::cl::Buffer tempArrayVec = tempArray.begin( ).base().getContainer().getBuffer();
 
 
 
@@ -627,10 +611,9 @@ reduce_by_key(
     {
     V_OPENCL( kernels[0].setArg( 0, keys_first.base().getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
     V_OPENCL( kernels[0].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload ), "Error setArg kernels[ 0 ]" );
-    V_OPENCL( kernels[0].setArg( 2, offsetArray ), "Error setArg kernels[ 0 ]" ); // Output keys
+    V_OPENCL( kernels[0].setArg( 2, tempArrayVec ), "Error setArg kernels[ 0 ]" ); // Output keys
     V_OPENCL( kernels[0].setArg( 3, numElements ), "Error setArg kernels[ 0 ]" ); // vecSize
     V_OPENCL( kernels[0].setArg( 4, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 5, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
 
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
@@ -652,7 +635,13 @@ reduce_by_key(
     l_Error = kernel0Event.wait( );
     V_OPENCL( l_Error, "post-kernel[0] failed wait" );
 
-    bolt::cl::detail::cl::scan(ctl, offsetArrayVec.begin(), offsetArrayVec.end(), offsetArrayVec.begin(), 0, true, plus< int >( ), user_code);
+
+    bolt::cl::detail::cl::scan(ctl, tempArray.begin(), tempArray.end(), tempArray.begin(), 0, true, plus< int >( ), user_code);
+
+    control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( int ) );
+    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+
 
     /**********************************************************************************
      *  Kernel 1
@@ -663,16 +652,15 @@ reduce_by_key(
     {
     ldsKeySize   = static_cast< cl_uint >( kernel0_WgSize * sizeof( int ) );
     ldsValueSize = static_cast< cl_uint >( kernel0_WgSize * sizeof( voType ) );
-    V_OPENCL( kernels[1].setArg( 0, offsetArray), "Error setArg kernels[ 1 ]" ); // Input keys
+    V_OPENCL( kernels[1].setArg( 0, tempArrayVec), "Error setArg kernels[ 1 ]" ); // Input keys
     V_OPENCL( kernels[1].setArg( 1, values_first.base().getContainer().getBuffer()),"Error setArg kernels[ 1 ]" ); // Input values
     V_OPENCL( kernels[1].setArg( 2, values_first.gpuPayloadSize( ),&values_first_payload ), "Error setArg kernels[ 1 ]" ); // Input values
-    V_OPENCL( kernels[1].setArg( 3, *offsetValArray ), "Error setArg kernels[ 1 ]" ); // Output values
-    V_OPENCL( kernels[1].setArg( 4, numElements ), "Error setArg kernels[ 1 ]" ); // vecSize
-    V_OPENCL( kernels[1].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 6, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 7, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 8, *keySumArray ),         "Error setArg kernels[ 1 ]" ); // Output per block sum
-    V_OPENCL( kernels[1].setArg( 9, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Output per block sum
+    V_OPENCL( kernels[1].setArg( 3, numElements ), "Error setArg kernels[ 1 ]" ); // vecSize
+    V_OPENCL( kernels[1].setArg( 4, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 5, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 6, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 7, *keySumArray ),         "Error setArg kernels[ 1 ]" ); // Output per block sum
+    V_OPENCL( kernels[1].setArg( 8, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Output per block sum
 
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[1],
@@ -690,7 +678,6 @@ reduce_by_key(
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;
     }
-
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
@@ -723,42 +710,29 @@ reduce_by_key(
         std::cerr << "Error String: " << e.what() << std::endl;
     }
 
-#if ENABLE_PRINTS
-    //delete this code -start
-    bolt::cl::wait(ctl, kernel0Event);
-    bolt::cl::wait(ctl, kernel1Event);
-    ::cl::Event l_mapEvent_k1;
-    voType *post_sum_k1= (voType*)ctl.commandQueue().enqueueMapBuffer( *postSumArray,
-                                                                    false,
-                                                                    CL_MAP_READ,
-                                                                    0,
-                                                                    sizeof(voType)*sizeScanBuff,
-                                                                    NULL,
-                                                                    &l_mapEvent_k1,
-                                                                    &l_Error );
-    V_OPENCL( l_Error, "Error calling map on the result buffer" );
-    std::cout<<"Myval-------------------------starts"<<std::endl;
-    std::ofstream postsum("postsum.txt");
-    for(unsigned int i = 0; i < sizeScanBuff ; i++)
-    {
-        postsum<<post_sum_k1[i]<<std::endl;
-    }
-    postsum.close();
-    std::cout<<"Myval-------------------------ends"<<std::endl;
-    bolt::cl::wait(ctl, l_mapEvent_k1);
-    //delete this code -end
-
-#endif
-
     /**********************************************************************************
      *  Kernel 3
      *********************************************************************************/
-    V_OPENCL( kernels[3].setArg( 0, *keySumArray ),         "Error setArg kernels[ 3 ]" ); // Input buffer
-    V_OPENCL( kernels[3].setArg( 1, *postSumArray ),        "Error setArg kernels[ 3 ]" ); // Input buffer
-    V_OPENCL( kernels[3].setArg( 2, offsetArray), "Error setArg kernels[ 3 ]" ); // Input keys
-    V_OPENCL( kernels[3].setArg( 3, *offsetValArray),   "Error setArg kernels[ 3 ]" ); // Output buffer
-    V_OPENCL( kernels[3].setArg( 4, numElements ),          "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[3].setArg( 5, *binaryFunctionBuffer ),"Error setArg kernels[ 3 ]" ); // User provided functor
+    typename DVInputIterator1::Payload keys_first1_payload = keys_first.gpuPayload( );
+    typename DVOutputIterator1::Payload keys_output_payload = keys_output.gpuPayload( );
+    typename DVInputIterator2::Payload  value_first1_payload = values_first.gpuPayload( );
+    typename DVOutputIterator2::Payload values_output_payload = values_output.gpuPayload( );
+
+    V_OPENCL( kernels[3].setArg( 0, keys_first.base().getContainer().getBuffer()),			 "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first1_payload),	 "Error setArg kernels[ 3 ]" );
+    V_OPENCL( kernels[3].setArg( 2, keys_output.getContainer().getBuffer() ),				 "Error setArg kernels[ 3 ]" ); // Output buffer
+    V_OPENCL( kernels[3].setArg( 3, keys_output.gpuPayloadSize( ),&keys_output_payload ),	 "Error setArg kernels[ 3 ]" );
+	V_OPENCL( kernels[3].setArg( 4, values_first.base().getContainer().getBuffer()),		 "Error setArg kernels[ 3 ]" ); // Input values
+    V_OPENCL( kernels[3].setArg( 5, values_first.gpuPayloadSize( ),&value_first1_payload ),  "Error setArg kernels[ 3 ]" ); // Input values
+    V_OPENCL( kernels[3].setArg( 6, values_output.getContainer().getBuffer()),				 "Error setArg kernels[ 3 ]" ); // Output buffer
+    V_OPENCL( kernels[3].setArg( 7, values_output.gpuPayloadSize( ),&values_output_payload ),"Error setArg kernels[ 3 ]" );
+	V_OPENCL( kernels[3].setArg( 8, ldsKeySize, NULL ),										 "Error setArg kernels[ 3 ]" ); // Scratch buffer
+    V_OPENCL( kernels[3].setArg( 9, ldsValueSize, NULL ),									 "Error setArg kernels[ 3 ]" ); // Scratch buffer
+    V_OPENCL( kernels[3].setArg( 10, tempArrayVec),											 "Error setArg kernels[ 3 ]" ); // Input keys
+	V_OPENCL( kernels[3].setArg( 11, *keySumArray ),										 "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 12, *postSumArray ),										 "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 13, numElements ),											 "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[3].setArg( 14, *binaryFunctionBuffer),								 "Error setArg kernels[ 3 ]" ); // User provided functor
 
     try
     {
@@ -766,90 +740,9 @@ reduce_by_key(
         kernels[3],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),
-        ::cl::NDRange( kernel2_WgSize ),
-        NULL,
-        &kernel2Event );
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[3]" );
-    }
-    catch( const ::cl::Error& e)
-    {
-        std::cerr << "::cl::enqueueNDRangeKernel( 3 ) in bolt::cl::reduce_by_key_enqueue()" << std::endl;
-        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
-        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
-        std::cerr << "Error String: " << e.what() << std::endl;
-    }
-
-
-#if ENABLE_PRINTS
-    //delete this code -start
-    ::cl::Event l_mapEvent2;
-    voType *v_result = (voType*)ctl.commandQueue().enqueueMapBuffer( *offsetValArray,
-                                                                    false,
-                                                                    CL_MAP_READ,
-                                                                    0,
-                                                                    sizeof(voType)*numElements,
-                                                                    NULL,
-                                                                    &l_mapEvent2,
-                                                                    &l_Error );
-    V_OPENCL( l_Error, "Error calling map on the result buffer" );
-    std::cout<<"Myval-------------------------starts"<<std::endl;
-    std::ofstream val_result("offsetValArray.txt");
-    val_result<<numElements<<std::endl;
-    for(unsigned int i = 0; i < LENGTH_TEST ; i++)
-    {
-        val_result<<v_result[i]<<std::endl;
-    }
-    val_result.close();
-    std::cout<<"Myval-------------------------ends"<<std::endl;
-    bolt::cl::wait(ctl, l_mapEvent2);
-    //delete this code -end
-    std::ofstream result_b4_ser("result_b4_ser.txt");
-    for(unsigned int i = 0; i < LENGTH_TEST ; i++)
-    {
-        result_b4_ser<<h_result[i]<<std::endl;
-    }
-    result_b4_ser.close();
-#endif
-
-
-#if ENABLE_PRINTS
-    std::cout<<count_number_of_sections<<std::endl;
-    std::ofstream result_file("offsetArray.txt");
-    for(unsigned int i = 0; i < LENGTH_TEST ; i++)
-    {
-        result_file<<h_result[i]<<std::endl;
-    }
-    result_file.close();
-
-#endif
-    unsigned int count_number_of_sections = 0;
-    /**********************************************************************************
-     *  Kernel 4
-     *********************************************************************************/
-    typename DVInputIterator1::Payload keys_first1_payload = keys_first.gpuPayload( );
-    typename DVOutputIterator1::Payload keys_output_payload = keys_output.gpuPayload( );
-    typename DVOutputIterator2::Payload values_output_payload = values_output.gpuPayload( );
-
-    V_OPENCL( kernels[4].setArg( 0, keys_first.base().getContainer().getBuffer()),    "Error setArg kernels[ 4 ]" ); // Input buffer
-    V_OPENCL( kernels[4].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first1_payload), "Error setArg kernels[ 4 ]" );
-    V_OPENCL( kernels[4].setArg( 2, keys_output.getContainer().getBuffer() ),  "Error setArg kernels[ 4 ]" ); // Output buffer
-    V_OPENCL( kernels[4].setArg( 3, keys_output.gpuPayloadSize( ),&keys_output_payload ), "Error setArg kernels[ 4 ]" );
-    V_OPENCL( kernels[4].setArg( 4, values_output.getContainer().getBuffer()), "Error setArg kernels[ 4 ]" ); // Output buffer
-    V_OPENCL( kernels[4].setArg( 5, values_output.gpuPayloadSize( ),&values_output_payload ), "Error setArg kernels[ 4 ]" );
-    V_OPENCL( kernels[4].setArg( 6, offsetArray),                "Error setArg kernels[ 4 ]" ); // Input buffer
-    V_OPENCL( kernels[4].setArg( 7, *offsetValArray),             "Error setArg kernels[ 4 ]"  );
-    V_OPENCL( kernels[4].setArg( 8, numElements ),             "Error setArg kernels[ 4 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[4].setArg( 9, count_number_of_sections), "Error setArg kernels[ 4 ]" ); // Size of scratch buffer
-
-    try
-    {
-    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
-        kernels[4],
-        ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
         ::cl::NDRange( kernel0_WgSize ),
         NULL,
-        &kernel4Event );
+        &kernel3Event );
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[3]" );
     }
     catch( const ::cl::Error& e)
@@ -860,11 +753,11 @@ reduce_by_key(
         std::cerr << "Error String: " << e.what() << std::endl;
     }
     // wait for results
-    l_Error = kernel4Event.wait( );
+    l_Error = kernel3Event.wait( );
     V_OPENCL( l_Error, "post-kernel[3] failed wait" );
 
     ::cl::Event l_mapEvent;
-    int *h_result = (int*)ctl.getCommandQueue().enqueueMapBuffer( offsetArray,
+    int *h_result = (int*)ctl.getCommandQueue().enqueueMapBuffer( tempArrayVec,
                                                                     false,
                                                                     CL_MAP_READ | CL_MAP_WRITE,
                                                                     (numElements-1)*sizeof(int),
@@ -876,8 +769,8 @@ reduce_by_key(
 
     bolt::cl::wait(ctl, l_mapEvent);
 
-
-    count_number_of_sections = *(h_result);
+    unsigned int count_number_of_sections = *(h_result);
+	
 
 
 
@@ -1000,18 +893,18 @@ typename std::enable_if<
                            >::type
 reduce_by_key(
     control &ctl,
-    const InputIterator1  keys_first,
-    const InputIterator1  keys_last,
-    const InputIterator2  values_first,
-    const OutputIterator1  keys_output,
-    const OutputIterator2  values_output,
-    const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op,
+    InputIterator1  keys_first,
+    InputIterator1  keys_last,
+    InputIterator2  values_first,
+    OutputIterator1  keys_output,
+    OutputIterator2  values_output,
+    BinaryPredicate binary_pred,
+    BinaryFunction binary_op,
     const std::string& user_code)
 {
 
-	typename InputIterator1::difference_type numElements = bolt::cl::distance(keys_first, keys_last);
-    //int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
+    typename std::iterator_traits<InputIterator1>::difference_type numElements = bolt::cl::distance(keys_first, keys_last);
+
     if( (numElements == 1) || (numElements == 0) )
         return bolt::cl::make_pair( keys_output+(int)numElements, values_output+(int)numElements );// keys_last, values_first+numElements );
 
@@ -1073,13 +966,13 @@ typename std::enable_if<
                            >::type
 reduce_by_key(
     control &ctl,
-    const InputIterator1  keys_first,
-    const InputIterator1  keys_last,
-    const InputIterator2  values_first,
-    const OutputIterator1  keys_output,
-    const OutputIterator2  values_output,
-    const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op,
+    InputIterator1  keys_first,
+    InputIterator1  keys_last,
+    InputIterator2  values_first,
+    OutputIterator1  keys_output,
+    OutputIterator2  values_output,
+    BinaryPredicate binary_pred,
+    BinaryFunction binary_op,
     const std::string& user_code)
 {
     //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data

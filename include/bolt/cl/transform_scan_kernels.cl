@@ -48,19 +48,19 @@ __kernel void perBlockTransformScan(
 
    // load input into shared memory
     if(input_offset < vecSize){
-          iValueType inVal = input_iter[input_offset];
+          typename iIterType::value_type  inVal = input_iter[input_offset];
           val = (*unaryOp)(inVal);
           lds[locId] = val;
      }
      if(input_offset + (wgSize/2) < vecSize){
-        iValueType inVal = input_iter[ input_offset + (wgSize/2)];
+        typename iIterType::value_type inVal = input_iter[ input_offset + (wgSize/2)];
         val = (*unaryOp)(inVal);
         lds[locId+(wgSize/2)] = val;
      }
     // Exclusive case
     if(exclusive && gloId == 0)
 	{
-	    iValueType start_val = input_iter[0];
+	    typename iIterType::value_type start_val = input_iter[0];
 		val = (*unaryOp)(start_val); 
 		lds[locId] = (*binaryOp)(identity, val);
     }
@@ -210,7 +210,7 @@ __kernel void perBlockAddition(
        {
           if (gloId > 0)
           { // thread>0
-              iValueType inVal = input_iter[gloId-1];
+              typename iIterType::value_type  inVal = input_iter[gloId-1];
               val = (*unaryOp)(inVal);
               lds[ locId ] = val;
           }
@@ -222,7 +222,7 @@ __kernel void perBlockAddition(
        }
        else
        {
-          iValueType inVal = input_iter[gloId];
+          typename iIterType::value_type  inVal = input_iter[gloId];
           val = (*unaryOp)(inVal);
           lds[ locId ] = val;
        }

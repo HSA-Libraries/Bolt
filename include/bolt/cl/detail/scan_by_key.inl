@@ -24,6 +24,7 @@
 #include <type_traits>
 #include <bolt/cl/scan_by_key.h>
 #include "bolt/cl/bolt.h"
+#include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/distance.h"
 #include "bolt/cl/iterator/iterator_traits.h"
@@ -106,11 +107,11 @@ namespace detail
 				oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
 																					result_sz, NULL, NULL, &map_err);
 				auto mapped_fst1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-																first1, first1Ptr);
+																ctl, first1, first1Ptr);
 				auto mapped_fst2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-																first2, first2Ptr);
+																ctl, first2, first2Ptr);
 				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-																result, resultPtr);
+																ctl, result, resultPtr);
 
 				if(inclusive)
 				{					
@@ -121,10 +122,10 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = static_cast<kType>( *(mapped_fst1_itr + i));
-						kType previousKey = static_cast<kType>(*(mapped_fst1_itr -1 + i));
+						kType previousKey = static_cast<kType>(*(mapped_fst1_itr + i -1 ));
 						// load value
 						oType currentValue = static_cast<iType>( *(mapped_fst2_itr +i )); // convertible
-						oType previousValue = static_cast<oType>( *(mapped_res_itr-1 + i));
+						oType previousValue = static_cast<oType>( *(mapped_res_itr + i -1 ));
 
 						// within segment
 						if (binary_pred(currentKey, previousKey))
@@ -147,11 +148,11 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = static_cast<kType>( *(mapped_fst1_itr + i));
-						kType previousKey = static_cast<kType>(*(mapped_fst1_itr -1 + i));
+						kType previousKey = static_cast<kType>(*(mapped_fst1_itr + i -1));
 
 						// load value
 						oType currentValue = temp; // convertible
-						oType previousValue = static_cast<oType>( *(mapped_res_itr -1 + i));
+						oType previousValue = static_cast<oType>( *(mapped_res_itr + i -1 ));
 
 						// within segment
 						if (binary_pred(currentKey,previousKey))
@@ -219,10 +220,10 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = static_cast<kType>(*(first1 + i));
-						kType previousKey = static_cast<kType>(*(first1 - 1 + i));
+						kType previousKey = static_cast<kType>(*(first1 + i - 1));
 						// load value
 						oType currentValue = static_cast<iType>(*(first2 + i)); // convertible
-						oType previousValue = static_cast<oType>(*(result - 1 + i));
+						oType previousValue = static_cast<oType>(*(result + i - 1));
 
 						// within segment
 						if (binary_pred(currentKey, previousKey))
@@ -248,11 +249,11 @@ namespace detail
 					{
 						// load keys
 						kType currentKey  = *(first1 + i);
-						kType previousKey = *(first1-1 + i);
+						kType previousKey = *(first1+ i -1 );
 
 						// load value
 						oType currentValue = temp; // convertible
-						oType previousValue = static_cast<oType>(*(result-1 + i));
+						oType previousValue = static_cast<oType>(*(result + i -1 ));
 
 						// within segment
 						if (binary_pred(currentKey,previousKey))
@@ -273,6 +274,7 @@ namespace detail
 			}
 
 		}
+#ifdef ENABLE_TBB
 	namespace btbb{
 		template<
 				typename InputIterator1,
@@ -321,15 +323,15 @@ namespace detail
 				oType *resultPtr = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
 																					result_sz, NULL, NULL, &map_err);
 				auto mapped_fst1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-																first1, first1Ptr);
+																ctl, first1, first1Ptr);
 				auto mapped_fst2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-																first2, first2Ptr);
-				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category() 
-																,result, resultPtr);
+																ctl, first2, first2Ptr);
+				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(),
+																ctl, result, resultPtr);
 				if(inclusive)
-					bolt::btbb::inclusive_scan_by_key(first1Ptr, first1Ptr + (int)sz, first2Ptr, result, binary_pred, binary_op );
+					bolt::btbb::inclusive_scan_by_key(mapped_fst1_itr, mapped_fst1_itr + (int)sz, mapped_fst2_itr, mapped_res_itr, binary_pred, binary_op );
 				else
-					bolt::btbb::exclusive_scan_by_key(first1Ptr, first1Ptr + (int)sz, first2Ptr, result, init, binary_pred, binary_op );
+					bolt::btbb::exclusive_scan_by_key(mapped_fst1_itr, mapped_fst1_itr + (int)sz, mapped_fst2_itr, mapped_res_itr, init, binary_pred, binary_op );
 				
 				::cl::Event unmap_event[3];
 				ctl.getCommandQueue().enqueueUnmapMemObject(first1Buffer, first1Ptr, NULL, &unmap_event[0] );
@@ -373,6 +375,8 @@ namespace detail
 					return;
 				}
 	}
+#endif
+
 	namespace cl{
 		enum scanByKeyTypes  {scanByKey_kType, scanByKey_kIterType, scanByKey_vType, scanByKey_iIterType, scanByKey_oType, scanByKey_oIterType,
                 scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction, scanbykey_end};

@@ -21,10 +21,13 @@
 #include <bolt/unicode.h>
 #include <bolt/miniDump.h>
 #include <gtest/gtest.h>
+#include <bolt/amp/fill.h>
+#include "test_common.h"
 ///////////////////////////////////////////////////////////////////////////////////////
 //CL and AMP device_vector tests are integrated.To use AMP tests change AMP_TESTS to 1
 ///////////////////////////////////////////////////////////////////////////////////////
 //#define AMP_TESTS 0
+
 
 #if AMP_TESTS
     #include <bolt/amp/functional.h>
@@ -40,100 +43,6 @@
 
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Below are helper routines to compare the results of two arrays for googletest
-//  They return an assertion object that googletest knows how to track
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  The following cmpArrays verify the correctness of std::vectors's
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -317,7 +226,7 @@ TEST( Constructor, ContainerIteratorEmpty )
     bolt::BCKND::device_vector< int >::iterator itBegin = dV.begin( );
     bolt::BCKND::device_vector< int >::iterator itEnd = dV.end( );
 
-    //EXPECT_TRUE( itBegin == itEnd );
+    EXPECT_TRUE( itBegin == itEnd );
     EXPECT_TRUE( dV.empty() );
 }
 
@@ -543,21 +452,21 @@ TEST( VectorReverseIterator, Size6AndValue7DereferenceWithArray )
 }
 
 
-//
-//TEST( VectorReverseIterator, Size6AndValue7OperatorValueType )
-//{
-//    bolt::BCKND::device_vector< int > dV( 6, 7 );
-//    EXPECT_EQ( 6, dV.size( ) );
-//
-//    bolt::BCKND::device_vector< int >::reverse_iterator myIter = dV.rbegin( );
-//
-//    EXPECT_EQ(  myIter[ 0 ],7 );
-//    EXPECT_EQ(  myIter[ 1 ],7 );
-//    EXPECT_EQ(  myIter[ 2 ],7 );
-//    EXPECT_EQ(  myIter[ 3 ],7 );
-//    EXPECT_EQ(  myIter[ 4 ],7 );
-//    EXPECT_EQ(  myIter[ 5 ],7 );
-//}
+
+TEST( VectorReverseIterator, Size6AndValue7OperatorValueType )
+{
+    bolt::BCKND::device_vector< int > dV( 6, 7 );
+    EXPECT_EQ( 6, dV.size( ) );
+
+    bolt::BCKND::device_vector< int >::reverse_iterator myIter = dV.rbegin( );
+
+    EXPECT_EQ(  myIter[ 0 ],7 );
+    EXPECT_EQ(  myIter[ 1 ],7 );
+    EXPECT_EQ(  myIter[ 2 ],7 );
+    EXPECT_EQ(  myIter[ 3 ],7 );
+    EXPECT_EQ(  myIter[ 4 ],7 );
+    EXPECT_EQ(  myIter[ 5 ],7 );
+}
 
 TEST( VectorReverseIterator, ArithmeticAndEqual )
 {
@@ -627,20 +536,20 @@ TEST( VectorReference, OperatorValueType )
     EXPECT_EQ( readBack[ 4 ], dV[ 4 ] );
 }
 
-//TEST( VectorIterator, Size6AndValue7OperatorValueType )
-//{
-//    bolt::BCKND::device_vector< int > dV( 6, 7 );
-//    EXPECT_EQ( 6, dV.size( ) );
-//
-//    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
-//
-//    EXPECT_EQ(  myIter[ 0 ],7 );
-//    EXPECT_EQ(  myIter[ 1 ],7 );
-//    EXPECT_EQ(  myIter[ 2 ],7 );
-//    EXPECT_EQ(  myIter[ 3 ],7 );
-//    EXPECT_EQ(  myIter[ 4 ],7 );
-//    EXPECT_EQ(  myIter[ 5 ],7 );
-//}
+TEST( VectorIterator, Size6AndValue7OperatorValueType )
+{
+    bolt::BCKND::device_vector< int > dV( 6, 7 );
+    EXPECT_EQ( 6, dV.size( ) );
+
+    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
+
+    EXPECT_EQ(  myIter[ 0 ],7 );
+    EXPECT_EQ(  myIter[ 1 ],7 );
+    EXPECT_EQ(  myIter[ 2 ],7 );
+    EXPECT_EQ(  myIter[ 3 ],7 );
+    EXPECT_EQ(  myIter[ 4 ],7 );
+    EXPECT_EQ(  myIter[ 5 ],7 );
+}
 
 TEST( VectorIterator, Size6AndValue7Dereference )
 {
@@ -951,80 +860,72 @@ TEST( Vector, DataRoutine )
 // ARRAY_VIEW TEST CASES
 //////////////////////////////////////////////////////////////////////////////////
 
-//// This test case should throw compilation errors
-//// You cannot call reserve() and shrink_to_fit()
-//// using array_view as the container.
-////
-//TEST( Vector, ShrinkToFitView)
-//{
-//  std::vector< int > x( 100 );
-//  bolt::BCKND::device_vector< int , concurrency::array_view > dV( x );
-//	EXPECT_EQ(dV.size(),dV.capacity());
-//	dV.reserve(200);
-//	EXPECT_EQ(200,dV.capacity());
-//	dV.shrink_to_fit();
-//	EXPECT_EQ(dV.size(),dV.capacity());
-//#if 0
-//	//Just like that.
-//	for(int i=0; i<(2<<21);i+=(2<<3)){
-//		dV.reserve(i);
-//		dV.shrink_to_fit();
-//		EXPECT_EQ(dV.size(),dV.capacity());
-//	}
-//
-//#endif
-//}
+TEST( Vector, ShrinkToFitView)
+{
+  std::vector< int > x( 100 );
+  bolt::BCKND::device_vector< int , concurrency::array_view > dV( x.begin(), 100 );
+	EXPECT_EQ(dV.size(),dV.capacity());
+	dV.reserve(200);
+	EXPECT_EQ(200,dV.capacity());
+	dV.shrink_to_fit();
+	EXPECT_EQ(dV.size(),dV.capacity());
+#if 0
+	//Just like that.
+	for(int i=0; i<(2<<21);i+=(2<<3)){
+		dV.reserve(i);
+		dV.shrink_to_fit();
+		EXPECT_EQ(dV.size(),dV.capacity());
+	}
 
-//// This test case should throw compilation errors
-//// You cannot call resize() using array_view as the container.
-////
-//TEST( Vector, ResizeView )
-//{
-//    std::vector< float > x( 100 );
-//    bolt::BCKND::device_vector< float , concurrency::array_view> dV( x );
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    std::vector< float > sV( 10 );
-//    for(int i=0; i<10; i++)
-//    {
-//        sV[i] = (float)i;
-//    }
-//
-//    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
-//    EXPECT_EQ( 10, dV.size( ) );
-//    dV.resize(7);
-//    EXPECT_EQ( 7, dV.size( ) );
-//    for(int i=0; i<7; i++)
-//    {
-//        EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
-//    }
-//    dV.resize(15, 7);
-//    EXPECT_EQ( 15, dV.size( ) );
-//    for(int i=0; i<15; i++)
-//    {
-//        if(i<7)
-//            EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
-//        else
-//            EXPECT_FLOAT_EQ( 7.0f, dV[ i ] );
-//    }
-//}
+#endif
+}
 
-//// This test case should throw compilation errors
-//// You cannot call insert() using array_view as the container.
-////
-//TEST( Vector, InsertFloatRangeEmptyView )
-//{
-//  bolt::amp::device_vector< float , concurrency::array_view > dV;
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    dV.insert( dV.cbegin( ), 5, 7.0f );
-//    EXPECT_EQ( 5, dV.size( ) );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 0 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 1 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 2 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 3 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 4 ] );
-//}
+
+TEST( Vector, ResizeView )
+{
+    std::vector< float > x( 100 );
+    bolt::BCKND::device_vector< float , concurrency::array_view> dV( x.begin(), 0 );
+    EXPECT_EQ( 0, dV.size( ) );
+
+    std::vector< float > sV( 10 );
+    for(int i=0; i<10; i++)
+    {
+        sV[i] = (float)i;
+    }
+
+    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
+    EXPECT_EQ( 10, dV.size( ) );
+    dV.resize(7);
+    EXPECT_EQ( 7, dV.size( ) );
+    for(int i=0; i<7; i++)
+    {
+        EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
+    }
+    dV.resize(15, 7);
+    EXPECT_EQ( 15, dV.size( ) );
+    for(int i=0; i<15; i++)
+    {
+        if(i<7)
+            EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
+        else
+            EXPECT_FLOAT_EQ( 7.0f, dV[ i ] );
+    }
+}
+
+
+TEST( Vector, InsertFloatRangeEmptyView )
+{
+  bolt::amp::device_vector< float , concurrency::array_view > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    dV.insert( dV.cbegin( ), 5, 7.0f );
+    EXPECT_EQ( 5, dV.size( ) );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 0 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 1 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 2 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 3 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 4 ] );
+}
 
 TEST( Vector, DataReadView )
 {
@@ -1098,25 +999,6 @@ TEST( Vector, ClearView )
     dV.clear( );
     EXPECT_EQ( 0, dV.size( ) );
 }
-
-//TEST( Vector, EraseEntireRange )
-//{
-//    bolt::BCKND::device_vector< int > dV( 5 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    bolt::BCKND::device_vector< int >::iterator myBegin = dV.begin( );
-//    bolt::BCKND::device_vector< int >::iterator myEnd = dV.end( );
-//
-//    bolt::BCKND::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
-//    EXPECT_EQ( 0, dV.size( ) );
-//}
-
 
 TEST( Vector, DataRoutineView )
 {
@@ -1220,6 +1102,419 @@ TEST( VectorIterator, BackFront )
     EXPECT_EQ( stdV.front(), dV.front( ) );
     EXPECT_EQ( stdV.back(),  dV.back( ) );
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test fill() calls used in device_vector i.e. device_vector( ... ), resize( ), assign( )
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct DUMMY
+{
+    float a;
+    float b;
+    float c;
+
+  bool operator == (const DUMMY &lhs) const restrict(amp, cpu)
+  {
+    if(lhs.a == a && lhs.b == b && lhs.c == c) return true;
+    else return false;
+  }
+
+  void operator = (const DUMMY &rhs) restrict(amp, cpu)
+  {
+    a = rhs.a;
+    b = rhs.b;
+    c = rhs.c;
+  }
+
+
+};
+
+
+struct Int_3
+{
+    int a;
+    int b;
+    int c;
+
+  bool operator == (const Int_3 &lhs) const restrict(amp, cpu)
+  {
+    if(lhs.a == a && lhs.b == b && lhs.c == c) return true;
+    else return false;
+  }
+
+  void operator = (const Int_3 &rhs) restrict(amp, cpu)
+  {
+    a = rhs.a;
+    b = rhs.b;
+    c = rhs.c;
+  }
+
+
+};
+
+#define  CL_M_PI_4_F        0.78539818525314f
+#define  CL_M_PI_F          3.14159274101257f
+#define  CL_M_LOG10E_F      0.43429449200630f
+#define  CL_M_LOG2E_F       1.44269502162933f
+
+TEST(DeviceVectorFill, AssignFltUDD)
+{
+
+  DUMMY init;
+  init.a = init.b = init.c = CL_M_PI_4_F;
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  bolt::BCKND::device_vector<DUMMY> dv(72,init);
+  std::vector<DUMMY> hv(72, init);
+
+  dv.assign(1024, glut);
+  hv.assign(1024, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, AssignFltUDDEmpty)
+{
+
+  DUMMY init;
+  init.a = init.b = init.c = CL_M_PI_4_F;
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  bolt::BCKND::device_vector<DUMMY> dv;
+  std::vector<DUMMY> hv;
+
+  dv.assign(1023, glut);
+  hv.assign(1023, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, AssignFlt)
+{
+
+  float init;
+  init = CL_M_PI_4_F;
+
+  float glut;
+  glut = CL_M_PI_F;
+
+  bolt::BCKND::device_vector<float> dv(72,init);
+  std::vector<float> hv(72, init);
+
+  dv.assign(1024, glut);
+  hv.assign(1024, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, AssignFltEmpty)
+{
+
+  float init;
+  init = CL_M_PI_4_F;
+
+  float glut;
+  glut = CL_M_PI_F;
+
+  bolt::BCKND::device_vector<float> dv;
+  std::vector<float> hv;
+
+  dv.assign(1023, glut);
+  hv.assign(1023, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, device_vector_constructor)
+{
+
+  DUMMY init;
+  init.a = init.b = init.c = FLT_EPSILON;
+
+  bolt::BCKND::device_vector<DUMMY> dvec( 1024, init );
+  std::vector<DUMMY> hvec( 1024, init );
+
+  cmpArrays( hvec, dvec );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeEmptyVector)
+{
+
+  bolt::BCKND::device_vector<DUMMY> dv;
+  std::vector<DUMMY> hv;
+  dv.resize(1000);
+  hv.resize(1000);
+
+  EXPECT_EQ( hv.size(), dv.size() );
+
+
+}
+
+
+TEST(DeviceVectorFill, ResizeEmptyVectorUDDWithValues)
+{
+  DUMMY init;
+  init.a = init.b = init.c = FLT_EPSILON;
+
+  bolt::BCKND::device_vector<DUMMY> dv;
+  std::vector<DUMMY> hv;
+
+  dv.resize(1000,init);
+  hv.resize(1000,init);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeEmptyVectorFltWithValues)
+{
+  float init;
+  init = FLT_EPSILON;
+
+  bolt::BCKND::device_vector<float> dv;
+  std::vector<float> hv;
+
+  dv.resize(1000,init);
+  hv.resize(1000,init);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, Resize)
+{
+
+  bolt::BCKND::device_vector<DUMMY> dv(10);
+  std::vector<DUMMY> hv(10);
+
+  dv.resize(1000); 
+  hv.resize(1000);
+
+  EXPECT_EQ( hv.size(), dv.size() );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeFloatUDDWithValues)
+{
+  DUMMY init;
+  init.a = init.b = init.c = CL_M_PI_4_F;
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  bolt::BCKND::device_vector<DUMMY> dv(72,init);
+  std::vector<DUMMY> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeFloatWithValues)
+{
+  float init;
+  init =  CL_M_PI_4_F;
+
+  float glut;
+  glut =  CL_M_PI_F;
+
+  bolt::BCKND::device_vector<float> dv(72,init);
+  std::vector<float> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+
+TEST(DeviceVectorFill, ResizeWithIntUDDValues)
+{
+  Int_3 init;
+  init.a = init.b = init.c = 10;
+
+  Int_3 glut;
+  glut.a = 23;
+  glut.b = 23;
+  glut.c = 23;
+
+  bolt::BCKND::device_vector<Int_3> dv(72,init);
+  std::vector<Int_3> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  {
+    bolt::BCKND::device_vector< Int_3 >::pointer tst =  dv.data( );
+    std::vector<Int_3> hvt(1024);
+
+    for(unsigned int i = 0; i < 1024 ; i++ ) 
+      hvt[i] = tst[i];
+
+  }
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeWithIntValues)
+{
+  int init;
+  init = 10;
+
+  int glut;
+  glut = 23;
+
+  bolt::BCKND::device_vector<int> dv(72,init);
+  std::vector<int> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class FillUDDFltVector: public ::testing::TestWithParam< int >
+{
+    
+
+public:
+
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    FillUDDFltVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+      DUMMY init_pi;
+      init_pi.a = init_pi.b = init_pi.c = CL_M_PI_F; 
+      std::fill(stdInput.begin(), stdInput.end(), init_pi);
+      bolt::BCKND::fill(boltInput.begin(), boltInput.end(), init_pi);
+    }
+
+protected:
+    std::vector< DUMMY > stdInput;
+    bolt::BCKND::device_vector< DUMMY > boltInput;
+};
+
+
+
+TEST_P(FillUDDFltVector, VariableSizeResizeWithValues)
+{
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  boltInput.resize(1024, glut);
+  stdInput.resize(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+
+}
+
+TEST_P(FillUDDFltVector, VariableAssignFlt)
+{
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  boltInput.assign(1024, glut);
+  stdInput.assign(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+}
+
+
+INSTANTIATE_TEST_CASE_P( VariableSizeResizeWithValues, FillUDDFltVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( VariableAssignFlt, FillUDDFltVector, ::testing::Range( 0, 1048576, 4096 ) );
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class FillUDDIntVector: public ::testing::TestWithParam< int >
+{
+    
+
+public:
+
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    FillUDDIntVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+      Int_3 init_;
+      init_.a = init_.b = init_.c = 33; 
+      std::fill(stdInput.begin(), stdInput.end(), init_);
+      bolt::BCKND::fill(boltInput.begin(), boltInput.end(), init_);
+    }
+
+protected:
+    std::vector< Int_3 > stdInput;
+    bolt::BCKND::device_vector< Int_3  > boltInput;
+};
+
+TEST_P(FillUDDIntVector, VariableSizeResizeWithValues)
+{
+
+  Int_3 glut;
+  glut.a =9115123;
+  glut.b =9117123;
+  glut.c =112123;
+
+  boltInput.resize(1024, glut);
+  stdInput.resize(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+
+}
+
+TEST_P(FillUDDIntVector, VariableAssignInt)
+{
+
+  Int_3 glut;
+  glut.a =9115123;
+  glut.b =9117123;
+  glut.c =112123;
+
+  boltInput.assign(1024, glut);
+  stdInput.assign(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+
+}
+
+INSTANTIATE_TEST_CASE_P( VariableSizeResizeWithValues, FillUDDIntVector, ::testing::Range( 0, 1048576, 4096 ) );
 
 int _tmain(int argc, _TCHAR* argv[])
 {

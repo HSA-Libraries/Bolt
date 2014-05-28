@@ -122,16 +122,16 @@ namespace cl
    { }
 
     
-        operator pointer() {
-            //return &(*bolt::cl::detail::transform_iterator_base<UnaryFunc, Iterator, Reference, Value>::type::base_reference()); 
+        value_type* getPointer()
+        {
             return &(*(this->base_reference())); 
-        } 
+        }    
 
-        operator const pointer() const { 
-            //return &(*bolt::cl::detail::transform_iterator_base<UnaryFunc, Iterator, Reference, Value>::type::base_reference()); 
+        const value_type* getPointer() const
+        {
             return &(*(this->base_reference())); 
-        } 
-    
+        }    
+
         UnaryFunc functor() const
         { return m_f; }
 
@@ -176,6 +176,12 @@ namespace cl
             return payloadSize;
         }
 
+        int setKernelBuffers(int arg_num, ::cl::Kernel &kernel) const
+        {
+            /*Next set the Argument Iterator*/
+            arg_num = this->base().setKernelBuffers(arg_num, kernel);
+            return arg_num;
+        }
   private:
     typename super_t::reference dereference() const
     { return m_f(*this->base()); }
@@ -219,32 +225,32 @@ namespace cl
             { \n
                 public:    \n
                     typedef int iterator_category;        \n
-                    typedef typename Iterator::value_type value_type; \n
-                    typedef int difference_type; \n
+                    typedef typename UnaryFunc::result_type value_type; \n
+                    typedef typename Iterator::value_type base_type; \n
                     typedef int size_type; \n
-                    typedef value_type* pointer; \n
-                    typedef value_type& reference; \n
     
-                    transform_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
+                    transform_iterator( size_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                     {} \n
     
-                    void init( global value_type* ptr )\n
+                    void init( global base_type* ptr )\n
                     { \n
                         m_Ptr = ptr; \n
                     } \n
 
                     value_type operator[]( size_type threadID ) const \n
                     { \n
-                       return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                        base_type tmp = m_Ptr[ m_StartIndex + threadID ]; \n
+                        return m_f(tmp);\n
                     } \n
 
                     value_type operator*( ) const \n
                     { \n
-                        return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                        base_type tmp = m_Ptr[ m_StartIndex + threadID ]; \n
+                        return m_f( tmp ); \n
                     } \n
 
                     size_type m_StartIndex; \n
-                    global value_type* m_Ptr; \n
+                    global base_type* m_Ptr; \n
                     UnaryFunc          m_f; \n
             }; \n
             } } \n

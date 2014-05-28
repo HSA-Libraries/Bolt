@@ -85,14 +85,14 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 
 void serial_gather_if(InputIterator1 mapfirst,
                       InputIterator1 maplast,
                       InputIterator2 stencil,
                       InputIterator3 input,
                       OutputIterator result,
-                      BinaryPredicate pred)
+                      Predicate pred)
 {
    //std::cout<<"Serial code path ... \n";
    int numElements = static_cast< int >( std::distance( mapfirst, maplast ) );
@@ -207,14 +207,14 @@ void serial_gather_if(InputIterator1 mapfirst,
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
     void gather_if_pick_iterator( bolt::amp::control &ctl,
                                   const InputIterator1& map_first,
                                   const InputIterator1& map_last,
                                   const InputIterator2& stencil,
                                   const InputIterator3& input,
                                   const OutputIterator& result,
-                                  const BinaryPredicate& pred,
+                                  const Predicate& pred,
                                   std::random_access_iterator_tag,
                                   std::random_access_iterator_tag,
                                   std::random_access_iterator_tag )
@@ -273,14 +273,14 @@ void serial_gather_if(InputIterator1 mapfirst,
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
     void gather_if_pick_iterator( bolt::amp::control &ctl,
                                   const InputIterator1& map_first,
                                   const InputIterator1& map_last,
                                   const InputIterator2& stencilFancyIter,
                                   const InputIterator3& input,
                                   const OutputIterator& result,
-                                  const BinaryPredicate& pred,
+                                  const Predicate& pred,
                                   std::random_access_iterator_tag,
                                   bolt::amp::fancy_iterator_tag,
                                   std::random_access_iterator_tag
@@ -338,14 +338,14 @@ void serial_gather_if(InputIterator1 mapfirst,
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
     void gather_if_pick_iterator( bolt::amp::control &ctl,
                                   const InputIterator1& fancymapFirst,
                                   const InputIterator1& fancymapLast,
                                   const InputIterator2& stencil,
                                   const InputIterator3& input,
                                   const OutputIterator& result,
-                                  const BinaryPredicate& pred,
+                                  const Predicate& pred,
                                   bolt::amp::fancy_iterator_tag,
                                   std::random_access_iterator_tag,
                                   std::random_access_iterator_tag )
@@ -406,14 +406,14 @@ void serial_gather_if(InputIterator1 mapfirst,
               typename DVInputIterator2,
               typename DVInputIterator3,
               typename DVOutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
     void gather_if_pick_iterator( bolt::amp::control &ctl,
                                   const DVInputIterator1& map_first,
                                   const DVInputIterator1& map_last,
                                   const DVInputIterator2& stencil,
                                   const DVInputIterator3& input,
                                   const DVOutputIterator& result,
-                                  const BinaryPredicate& pred,
+                                  const Predicate& pred,
                                   bolt::amp::device_vector_tag,
                                   bolt::amp::device_vector_tag,
                                   bolt::amp::device_vector_tag )
@@ -944,14 +944,14 @@ void serial_gather_if(InputIterator1 mapfirst,
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
     void gather_if_detect_random_access( bolt::amp::control& ctl,
                                          const InputIterator1& map_first,
                                          const InputIterator1& map_last,
                                          const InputIterator2& stencil,
                                          const InputIterator3& input,
                                          const OutputIterator& result,
-                                         const BinaryPredicate& pred,
+                                         const Predicate& pred,
                                          std::random_access_iterator_tag,
                                          std::random_access_iterator_tag,
                                          std::random_access_iterator_tag )
@@ -974,14 +974,14 @@ void serial_gather_if(InputIterator1 mapfirst,
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-              typename BinaryPredicate >
+              typename Predicate >
     void gather_if_detect_random_access( bolt::amp::control& ctl,
                                          const InputIterator1& map_first,
                                          const InputIterator1& map_last,
                                          const InputIterator2& stencil,
                                          const InputIterator3& input,
                                          const OutputIterator& result,
-                                         const BinaryPredicate& pred,
+                                         const Predicate& pred,
                                          std::input_iterator_tag,
                                          std::input_iterator_tag,
                                          std::input_iterator_tag )
@@ -1122,14 +1122,14 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 void gather_if( bolt::amp::control& ctl,
                 InputIterator1 map_first,
                 InputIterator1 map_last,
                 InputIterator2 stencil,
                 InputIterator3 input,
                 OutputIterator result,
-                BinaryPredicate pred )
+                Predicate pred )
 {
     detail::gather_if_detect_random_access( ctl,
                                             map_first,
@@ -1147,13 +1147,13 @@ template< typename InputIterator1,
           typename InputIterator2,
           typename InputIterator3,
           typename OutputIterator,
-          typename BinaryPredicate >
+          typename Predicate >
 void gather_if(  InputIterator1 map_first,
                  InputIterator1 map_last,
                  InputIterator2 stencil,
                  InputIterator3 input,
                  OutputIterator result,
-                 BinaryPredicate pred)
+                 Predicate pred)
 {
     detail::gather_if_detect_random_access( control::getDefault( ),
                                             map_first,

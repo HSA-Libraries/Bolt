@@ -157,6 +157,26 @@ namespace cl
                     return *this;
                 }
 
+                //This specialization is needed for linux Only. 
+                //EPR - 398791
+                reference_base< Container >& operator=( reference_base< Container >& rhs )
+                {
+                    
+                    cl_int l_Error = CL_SUCCESS;
+                    value_type value = static_cast<value_type>(rhs);
+                    naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer(
+                    m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_Index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" ); 
+
+                    *result = value;
+
+                    ::cl::Event unmapEvent;
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result, NULL, &unmapEvent ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+
+                    return *this;
+                }
+
                 /*! \brief A get accessor function to return the encapsulated device_vector.
                 */
                 Container& getContainer( ) const
@@ -284,6 +304,14 @@ namespace cl
                     return m_Container;
                 }
 
+                int setKernelBuffers(int arg_num, ::cl::Kernel &kernel) const 
+                {
+                    const ::cl::Buffer &buffer = getContainer().getBuffer();
+                    kernel.setArg(arg_num, buffer );
+                    arg_num++;
+                    return arg_num;
+                }
+
                 //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
                 //  on the host
                 const Payload  gpuPayload( ) const
@@ -291,17 +319,17 @@ namespace cl
                     Payload payload = { m_Index, { 0, 0, 0 } };
                     return payload;
                 }
-
+                
                 //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be 
                 //  queried.  The bitness of the device determines the size of the pointer contained in the payload.  64bit pointers must
                 //  be 8 byte aligned, so 
                 const difference_type gpuPayloadSize( ) const
                 {
                     cl_int l_Error = CL_SUCCESS;
-		    ::cl::Device which_device;
-		   l_Error  = m_Container.m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
+		            ::cl::Device which_device;
+		            l_Error  = m_Container.m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
                    
-		  cl_uint deviceBits = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
+		            cl_uint deviceBits = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
 
                     //  Size of index and pointer
                     difference_type payloadSize = sizeof( difference_type ) + ( deviceBits >> 3 );
@@ -362,6 +390,7 @@ namespace cl
                 }
 
                 Container& m_Container;
+                
             };
 
             /*! \brief A reverse random access iterator in the classic sense
@@ -1756,6 +1785,7 @@ namespace cl
             public:
                 typedef int iterator_category;      // device code does not understand std:: tags  \n
                 typedef T value_type; \n
+                typedef T base_type; \n
                 typedef int difference_type; \n
                 typedef int size_type; \n
                 typedef T* pointer; \n

@@ -80,11 +80,11 @@ scatter (bolt::cl::control &ctl, InputIterator1 first1,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   first1, first1Ptr);
+                                                   ctl, first1, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   map, first2Ptr);
+                                                   ctl, map, first2Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	for (int iter = 0; iter<(int)sz; iter++)
                 *(mapped_result_itr +*(mapped_first2_itr + iter)) = (oType) *(mapped_first1_itr + iter);
@@ -167,13 +167,13 @@ scatter_if( bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   first1, first1Ptr);
+                                                   ctl, first1, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   map, first2Ptr);
+                                                   ctl, map, first2Ptr);
 	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   stencil, first3Ptr);
+                                                   ctl, stencil, first3Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	for(int iter = 0; iter< (int)sz; iter++)
     {
@@ -223,7 +223,7 @@ scatter_if( bolt::cl::control &ctl,
 
 } // end of serial namespace
 
-
+#ifdef ENABLE_TBB
 namespace btbb{
 
 template<typename InputIterator1,
@@ -262,11 +262,11 @@ scatter (bolt::cl::control &ctl, InputIterator1 first1,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   first1, first1Ptr);
+                                                   ctl, first1, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   map, first2Ptr);
+                                                   ctl, map, first2Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	bolt::btbb::scatter(mapped_first1_itr, mapped_first1_itr + sz, mapped_first2_itr, mapped_result_itr);
 
@@ -342,13 +342,13 @@ scatter_if( bolt::cl::control &ctl,
     oType *resultPtr  = (oType*)ctl.getCommandQueue().enqueueMapBuffer(resultBuffer, true, CL_MAP_WRITE, 0, 
                                                                      result_sz, NULL, NULL, &map_err);
     auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   first1, first1Ptr);
+                                                   ctl, first1, first1Ptr);
     auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   map, first2Ptr);
+                                                   ctl, map, first2Ptr);
 	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   stencil, first3Ptr);
+                                                   ctl, stencil, first3Ptr);
     auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   result, resultPtr);
+                                                   ctl, result, resultPtr);
 
 	bolt::btbb::scatter_if(mapped_first1_itr, mapped_first1_itr + sz, mapped_first2_itr, mapped_first3_itr, mapped_result_itr, pred);
 
@@ -389,6 +389,7 @@ scatter_if( bolt::cl::control &ctl,
 
 
 }// end of btbb namespace
+#endif
 
 ////////////////////////////////////////////////////////////////////
 // ScatterIf KTS
@@ -758,9 +759,9 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator1::pointer pointer;
-        typedef typename MapIterator::pointer map_pointer;
-		typedef typename InputIterator3::pointer ip_pointer;
+	    typedef typename std::iterator_traits<InputIterator1>::pointer pointer;
+        typedef typename std::iterator_traits<MapIterator>::pointer map_pointer;
+		typedef typename std::iterator_traits<InputIterator3>::pointer ip_pointer;
         pointer first_pointer = bolt::cl::addressof(first1) ;
 	    map_pointer map_pointer1 = bolt::cl::addressof(map) ;
 		ip_pointer stencil_pointer = bolt::cl::addressof(stencil) ;
@@ -824,8 +825,8 @@ public:
 
 		
 	    // Map the input iterator to a device_vector
-	    typedef typename InputIterator::pointer pointer;
-        typedef typename MapIterator::pointer map_pointer;
+	    typedef typename std::iterator_traits<InputIterator>::pointer pointer;
+        typedef typename std::iterator_traits<MapIterator>::pointer map_pointer;
         pointer first_pointer = bolt::cl::addressof(first1) ;
 	    map_pointer map_pointer1 = bolt::cl::addressof(map) ;
 	    

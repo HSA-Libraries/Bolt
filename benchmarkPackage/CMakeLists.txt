@@ -47,8 +47,11 @@ if( MSVC_IDE )
     set( Bolt_BUILD64 ${CMAKE_CL_64} )
 #    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
 else()
-    option( Bolt_BUILD64 "Build a 64-bit product" ON )
+#    option( Bolt_BUILD64 "Build a 64-bit product" ON )
+ set( CMAKE_BUILD_TYPE ${BOLT_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )   
 endif()
+ message( STATUS "64bit build :" ${Bolt_BUILD64} )
+ message( STATUS "Build Type R/D:" ${CMAKE_BUILD_TYPE} )
 
 # Modify the global find property to help us find libraries like Boost in the correct paths for 64-bit
 # Essentially, find_library calls will look for /lib64 instead of /lib; works for windows and linux
@@ -60,6 +63,15 @@ else()
     message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
 endif()
 
+# Various options below on configuring the build, and how to generate the solution files
+
+if ( MSVC )
+    set(Bolt_ampDefault OFF)
+else ()
+    set(Bolt_ampDefault OFF)
+endif() 
+option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP"  ${Bolt_ampDefault})
+option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
 # Currently, linux has a problem outputing both narrow and wide characters,
 # which happens in our client because openCL only supports narrow characters
 if( WIN32 )
@@ -92,6 +104,7 @@ elseif( (C_COMPILER_NAME STREQUAL "gcc") OR (CMAKE_COMPILER_IS_GNUCXX GREATER 0)
     if( Bolt_BUILD64 )
         set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
+        set( CMAKE_EXE_LINKER_FLAGS " -m64 ${CMAKE_EXE_LINKER_FLAGS}" )
         set( CMAKE_SHARED_LINKER_FLAGS "-lpthread -m64 ${CMAKE_SHARED_LINKER_FLAGS}" )
     else( )
         set( CMAKE_CXX_FLAGS "-m32 -msse2  ${CMAKE_CXX_FLAGS}" )
@@ -118,6 +131,26 @@ message( STATUS "CMAKE_CXX_COMPILER release flags: " ${CMAKE_CXX_FLAGS_RELEASE} 
 message( STATUS "CMAKE_CXX_COMPILER relwithdebinfo flags: " ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
 message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
 
+# Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
+if( Bolt_BUILD64 )
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64" )
+    set( INCLUDE_DIR include )
+    set( BIN_DIR bin64 )
+    set( LIB_DIR lib64 )
+else( )
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32" )
+    set( INCLUDE_DIR include )
+    set( BIN_DIR bin )
+    set( LIB_DIR lib )
+endif( )
+
+# Build AMP library (only header files for now)
+if( BUILD_ampBolt )
+    if( MSVC_VERSION VERSION_LESS 1700 )
+        message( FATAL_ERROR "Visual Studio 11 or higher is required because Bolt uses AMP C++ features" )
+    endif( )
+endif( )
+    
 
 option( BUILD_TBB "Create a solution that will work with TBB" OFF )
 
@@ -139,18 +172,6 @@ if( BUILD_TBB )
         #list( APPEND Bolt.Dependencies TBB )
         #list( APPEND Bolt.Cmake.Args -DBUILD_TBB=TRUE )
     endif( )
-endif( )
-
-
-# Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
-if( Bolt_BUILD64 )
-    set( INCLUDE_DIR include )
-    set( BIN_DIR bin64 )
-    set( LIB_DIR lib64 )
-else( )
-    set( INCLUDE_DIR include )
-    set( BIN_DIR bin )
-    set( LIB_DIR lib )
 endif( )
 
 # This will define OPENCL_FOUND

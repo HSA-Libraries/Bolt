@@ -27,11 +27,14 @@
 
 //#include <iterator>
 #include <type_traits>
-
+#include <tuple>
+#include <bolt/cl/bolt.h>
+#include <bolt/cl/device_vector.h>
 #include <bolt/cl/iterator/iterator_adaptor.h>
 #include <bolt/cl/iterator/iterator_facade.h>
 #include <bolt/cl/iterator/iterator_traits.h>
-#include <bolt/cl/device_vector.h>
+#include <bolt/cl/iterator/constant_iterator.h>
+#include <bolt/cl/iterator/counting_iterator.h>
 
 
 namespace bolt {
@@ -46,29 +49,87 @@ class permutation_iterator
   : public iterator_adaptor< 
              permutation_iterator<ElementIterator, IndexIterator>
            , IndexIterator, typename bolt::cl::iterator_traits<ElementIterator>::value_type
-           , use_default, typename bolt::cl::iterator_traits<ElementIterator>::reference>
+           , use_default, typename bolt::cl::iterator_traits<ElementIterator>::reference
+           , std::ptrdiff_t>
 {
   typedef iterator_adaptor< 
             permutation_iterator<ElementIterator, IndexIterator>
           , IndexIterator, typename bolt::cl::iterator_traits<ElementIterator>::value_type
-          , use_default, typename bolt::cl::iterator_traits<ElementIterator>::reference> super_t;
+          , use_default, typename bolt::cl::iterator_traits<ElementIterator>::reference
+          , std::ptrdiff_t> super_t;
 
   friend class iterator_core_access;
 
 public:
-  permutation_iterator() : m_elt_iter() {}
+    typedef std::ptrdiff_t                                           difference_type;
+    typedef typename bolt::cl::iterator_traits<ElementIterator>::value_type     value_type;
+    typedef typename bolt::cl::iterator_traits<ElementIterator>::value_type *   pointer;
+    typedef typename bolt::cl::iterator_traits<ElementIterator>::value_type     index_type;
+    typedef permutation_iterator_tag                                 iterator_category;
+    typedef std::tuple<value_type *, index_type *>                   tuple;
+    permutation_iterator() : m_elt_iter() {}
 
-  explicit permutation_iterator(ElementIterator x, IndexIterator y) 
+    explicit permutation_iterator(ElementIterator x, IndexIterator y) 
       : super_t(y), m_elt_iter(x) {}
 
-  template<class OtherElementIterator, class OtherIndexIterator>
-  permutation_iterator(
+    template<class OtherElementIterator, class OtherIndexIterator>
+    permutation_iterator(
       permutation_iterator<OtherElementIterator, OtherIndexIterator> const& r
       , typename enable_if_convertible<OtherElementIterator, ElementIterator>::type* = 0
       , typename enable_if_convertible<OtherIndexIterator, IndexIterator>::type* = 0
       )
     : super_t(r.base()), m_elt_iter(r.m_elt_iter)
-  {}
+    {}
+
+    index_type* getIndex_pointer ()
+    {
+        return &(*(this->base_reference())); 
+    }
+
+    value_type* getElement_pointer ()
+    {
+        return &(*(this->m_elt_iter)); 
+    }
+
+    struct Payload
+    {
+        int m_Index;
+        int m_ElementPtr[ 3 ];  //Holds pointer to Element Iterator
+        int m_IndexPtr[ 3 ];    //Holds pointer to Index Iterator 
+    };
+
+    const Payload  gpuPayload( ) const
+    {
+        Payload payload = { 0/*m_Index*/, { 0, 0, 0 }, { 0, 0, 0 } };
+        return payload;
+    }
+
+    const difference_type gpuPayloadSize( ) const
+    {
+        cl_int l_Error = CL_SUCCESS;
+        //::cl::Device which_device;
+        //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
+        //TODO - fix the device bits 
+        cl_uint deviceBits = 32;// = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
+        //  Size of index and pointer
+        difference_type payloadSize = sizeof( int ) + 2*( deviceBits >> 3 );
+
+        //  64bit devices need to add padding for 8 byte aligned pointer
+        if( deviceBits == 64 )
+            payloadSize += 8;
+
+        return payloadSize;
+    }
+
+    int setKernelBuffers(int arg_num, ::cl::Kernel &kernel) const
+    {
+        /*First set the element Iterator*/
+        arg_num = m_elt_iter.setKernelBuffers(arg_num, kernel);
+        /*Next set the Argument Iterator*/
+        arg_num = this->base().setKernelBuffers(arg_num, kernel);
+        return arg_num;
+    }
+
 
 private:
     typename super_t::reference dereference() const
@@ -90,6 +151,10 @@ make_permutation_iterator( ElementIterator e, IndexIterator i )
 
    //  This string represents the device side definition of the Transform Iterator template
     static std::string devicePermutationIteratorTemplate = 
+
+        bolt::cl::deviceVectorIteratorTemplate +
+        bolt::cl::deviceConstantIterator +
+        bolt::cl::deviceCountingIterator +
         std::string("#if !defined(BOLT_CL_PERMUTATION_ITERATOR) \n") +
         STRINGIFY_CODE(
             #define BOLT_CL_PERMUTATION_ITERATOR \n
@@ -109,14 +174,15 @@ make_permutation_iterator( ElementIterator e, IndexIterator i )
                     permutation_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                     {} \n
     
-                    void init( global value_type* ptr )\n
+                    void init( global value_type* element_ptr, global index_type* index_ptr )\n
                     { \n
-                        m_Ptr = ptr; \n
+                        m_ElementPtr = element_ptr; \n
+                        m_IndexPtr   = index_ptr; \n
                     } \n
 
                     value_type operator[]( size_type threadID ) const \n
                     { \n
-                       return m_f(m_Ptr[ m_StartIndex + threadID ]); \n
+                       return m_ElementPtr[ m_IndexPtr[ m_StartIndex + threadID ] ]; \n
                     } \n
 
                     value_type operator*( ) const \n

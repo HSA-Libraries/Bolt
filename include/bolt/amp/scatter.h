@@ -91,7 +91,7 @@ namespace bolt {
                       OutputIterator result );
 
        /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter_if copies
          * the corresponding \p input_first to result[ map [ i ] ] if stencil[ i - first ] is
          * \p true.
          *
@@ -147,7 +147,7 @@ namespace bolt {
                          OutputIterator result);
 
        /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter_if copies
          * the corresponding \p input_first to result[ map [ i ] ] if pred (stencil[ i - first ])
          * is \p true.
          *
@@ -195,26 +195,26 @@ namespace bolt {
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
+                  typename Predicate >
         void scatter_if( bolt::amp::control &ctl,
                          InputIterator1 first1,
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred);
+                         Predicate pred);
 
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
+                  typename Predicate >
         void scatter_if( InputIterator1 first1,
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred);
+                         Predicate pred);
 
 
         /*!   \}  */

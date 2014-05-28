@@ -127,8 +127,6 @@ const std::streamsize colWidth = 26;
     #define DATA_TYPE float
 #endif
 
-#include "data_type.h"
-
 #if (BOLT_BENCHMARK == 1)
     #if BENCHMARK_CL_AMP == CL_BENCH
         BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,unsigned int);
@@ -303,6 +301,7 @@ using namespace std;
  *****************************************************************************/
 DATA_TYPE v1init = {1};
 DATA_TYPE v1iden = {0};
+#include "data_type.h"
 vec2 v2init = { 1, 1 };
 vec2 v2iden = { 0, 0 };
 vec4 v4init = { 1, 1, 1, 1 };
