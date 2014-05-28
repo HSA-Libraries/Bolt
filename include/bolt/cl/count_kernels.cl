@@ -34,6 +34,7 @@ kernel void count_Template(
 )
 {
     int gx = get_global_id (0);
+    predicate_function functor = * userFunctor;
     bool stat;
     int count=0;
     //  Abort threads that are passed the end of the input vector
@@ -51,7 +52,7 @@ kernel void count_Template(
     while (gx < length)
     {
         accumulator = input_iter[gx];
-        stat =  (*userFunctor)(accumulator);        
+        stat =  functor(accumulator);        
         count=  stat?++count:count;
         gx += get_global_size(0);
     }

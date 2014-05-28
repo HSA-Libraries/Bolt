@@ -761,8 +761,8 @@ namespace cl{
         typedef typename std::iterator_traits<InputIterator2>::value_type  iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
        
-        typedef typename InputIterator1::pointer pointer1;
-        typedef typename InputIterator2::pointer pointer2;
+        typedef typename std::iterator_traits<InputIterator1>::pointer pointer1;
+        typedef typename std::iterator_traits<InputIterator2>::pointer pointer2;
         
         pointer1 first_pointer1 = bolt::cl::addressof(first1) ;
         pointer2 first_pointer2 = bolt::cl::addressof(first2) ;

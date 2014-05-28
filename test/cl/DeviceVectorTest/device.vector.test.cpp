@@ -1333,7 +1333,19 @@ TEST_P(FillUDDIntVector, VariableAssignInt)
 
 INSTANTIATE_TEST_CASE_P( VariableSizeResizeWithValues, FillUDDIntVector, ::testing::Range( 0, 1048576, 4096 ) );
 
+TEST(BUG, BUG398791)
+{
+    int length = 100;
+    bolt::cl::device_vector<int> dv1(length);
+    bolt::cl::device_vector<int> dv2(length);
 
+    for(int i=0; i<length; i++)
+    {
+        dv1[i] = i;
+        dv2[i] = dv1[i];
+        EXPECT_EQ( dv2[i], i );
+    }
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

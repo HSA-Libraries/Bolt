@@ -157,6 +157,26 @@ namespace cl
                     return *this;
                 }
 
+                //This specialization is needed for linux Only. 
+                //EPR - 398791
+                reference_base< Container >& operator=( reference_base< Container >& rhs )
+                {
+                    
+                    cl_int l_Error = CL_SUCCESS;
+                    value_type value = static_cast<value_type>(rhs);
+                    naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer(
+                    m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_Index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" ); 
+
+                    *result = value;
+
+                    ::cl::Event unmapEvent;
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result, NULL, &unmapEvent ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+
+                    return *this;
+                }
+
                 /*! \brief A get accessor function to return the encapsulated device_vector.
                 */
                 Container& getContainer( ) const

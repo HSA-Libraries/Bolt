@@ -24,6 +24,7 @@
 #include <type_traits>
 #include <bolt/cl/scan_by_key.h>
 #include "bolt/cl/bolt.h"
+#include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/distance.h"
 #include "bolt/cl/iterator/iterator_traits.h"
@@ -328,9 +329,9 @@ namespace detail
 				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(),
 																ctl, result, resultPtr);
 				if(inclusive)
-					bolt::btbb::inclusive_scan_by_key(first1Ptr, first1Ptr + (int)sz, first2Ptr, result, binary_pred, binary_op );
+					bolt::btbb::inclusive_scan_by_key(mapped_fst1_itr, mapped_fst1_itr + (int)sz, mapped_fst2_itr, mapped_res_itr, binary_pred, binary_op );
 				else
-					bolt::btbb::exclusive_scan_by_key(first1Ptr, first1Ptr + (int)sz, first2Ptr, result, init, binary_pred, binary_op );
+					bolt::btbb::exclusive_scan_by_key(mapped_fst1_itr, mapped_fst1_itr + (int)sz, mapped_fst2_itr, mapped_res_itr, init, binary_pred, binary_op );
 				
 				::cl::Event unmap_event[3];
 				ctl.getCommandQueue().enqueueUnmapMemObject(first1Buffer, first1Ptr, NULL, &unmap_event[0] );

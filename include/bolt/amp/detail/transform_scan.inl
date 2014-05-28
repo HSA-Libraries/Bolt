@@ -28,6 +28,7 @@
 #include <type_traits>
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/device_vector.h"
+#include "bolt/amp/transform.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 #include <amp.h>
 

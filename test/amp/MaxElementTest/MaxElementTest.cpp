@@ -1378,6 +1378,29 @@ void simpleReduce_TestSerial(int aSize)
 //    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
 //}
 
+TEST(sanityEPR400293, Loops){
+
+    int size = 10;
+    std::vector<int> intStdVect (size);
+    bolt::amp::device_vector<int> intBoltVect (size);
+
+    for (int i = 0 ; i < size; i++)
+    {
+      intBoltVect[i] = (int)std::rand()%65535;
+      intStdVect[i] = intBoltVect[i];
+    }
+
+    std::vector<int>::iterator std_min_ele;
+    bolt::amp::device_vector<int>::iterator bolt_min_ele;
+
+    for (int i = 0 ; i < size; i++)
+    {
+      std_min_ele = std::max_element (intStdVect.begin(), intStdVect.end());
+      bolt_min_ele = bolt::amp::max_element(intBoltVect.begin(), intBoltVect.end());
+    }
+
+    EXPECT_EQ( std_min_ele[0], bolt_min_ele[0] );
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

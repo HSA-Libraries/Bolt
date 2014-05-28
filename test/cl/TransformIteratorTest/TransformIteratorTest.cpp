@@ -2474,8 +2474,6 @@ TEST( TransformIterator, InnerProductUDDRoutine)
 		std::vector< UDD > sv_trf_begin2_copy( sv_trf_begin2, sv_trf_end2);
 		std::vector< int> tsv_trf_begin2_copy( tsv_trf_begin2, tsv_trf_end2);
 
-#if 0
-        //This test case is failing because the 
 		{/*Test case when both inputs are trf Iterators with UDD returning int*/
 		    bolt::cl::multiplies<int> mul_int;
 		    bolt::cl::plus<int> plus_int;
@@ -2489,7 +2487,6 @@ TEST( TransformIterator, InnerProductUDDRoutine)
             EXPECT_EQ( expected_result, sv_result );
             EXPECT_EQ( expected_result, dv_result );
         }
-#endif 
         {/*Test case when both inputs are trf Iterators*/
             UDD sv_result = bolt::cl::inner_product(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, init, plus, mul);
             UDD dv_result = bolt::cl::inner_product(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, init, plus, mul);
@@ -5189,49 +5186,49 @@ TEST( TransformIterator, UDDInclusiveScanbykeyRoutine)
     }
 }
 
-//BUG 399572
+//BUGS
 
 BOLT_FUNCTOR(UDD_trans,
 struct UDD_trans
 {
     int		i	;
     float	f	;
-
-	UDD_trans ()
+	UDD_trans ()  
 		{
-		};
+		}; 
 
-	UDD_trans (int val1)
+	UDD_trans (int val1)  
 		{
 			i =  val1 ;
+		
+		}; 
 
-		};
-	UDD_trans operator() ()  const
-		{
+	UDD_trans operator() ()  const 
+		{ 
 			UDD_trans temp ;
 			int a = 0;
-		//	temp.i =  get_global_id(0);
-            temp.f = 0.0f;
 			temp.i =  a++;
-
 			return temp ;
-			//return get_global_id(0);
+			//return get_global_id(0); 
 		}
-
+    
 };
 );
-
 
 BOLT_FUNCTOR(add_UDD,
-struct add_UDD
-{
+  struct add_UDD
+    {
         int operator() (const UDD_trans x)  const { return x.i + 3; }
-       typedef int result_type;
-};
-);
+        typedef int result_type;
+    };
+  );
+//  int global_id;
 
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD_trans);
+
 BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add_UDD, UDD_trans);
+
+
 
 
 TEST (TransformIterator, BUG399572)
@@ -5328,6 +5325,276 @@ TEST (TransformIterator, BUG399572)
 
 }
 
+
+
+TEST(transform_iterator, BUG400107)
+{
+//	int length =  1<<20;
+	int length =  5;
+    
+	std::vector< UDD_trans > svInVec( length );
+	std::vector< int > svOutVec( length );
+	std::vector< int > stlOut(length);
+
+    bolt::cl::device_vector< UDD_trans > svInVec1( length );
+    bolt::cl::device_vector< UDD_trans > svInVec2( length );
+
+	bolt::cl::device_vector< int > svOutVec1( length );
+	bolt::cl::device_vector< int > svOutVec2( length );
+
+	add_UDD add1;
+	UDD_trans gen_udd(0) ;
+
+	// ADD
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin1 (svInVec.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end1   (svInVec.end(),   add1) ;
+																			 
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	sv_trf_begin2 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>		sv_trf_end2   (svInVec1.end(),   add1) ;
+	
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  			t_sv_trf_begin1 (svInVec.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	t_sv_trf_begin2 (svInVec1.begin(), add1) ;
+
+
+	global_id = 0;
+	std::generate(svInVec.begin(), svInVec.end(), gen_udd);
+
+	global_id = 0;
+	bolt::cl::generate(svInVec1.begin(), svInVec1.end(), gen_udd);
+
+	//bolt::cl::square<int> sq;
+	bolt::cl::plus<int> pls;
+	//bolt::cl::minus<int> mi;
+	bolt::cl::negate<int> neg;
+
+	t_sv_trf_begin1 = sv_trf_begin1 ;
+	t_sv_trf_begin2 = sv_trf_begin2 ;
+
+
+	bolt::cl::control ctrl = bolt::cl::control::getDefault();
+	global_id = 0;
+		
+
+	bolt::cl::transform_inclusive_scan(	  sv_trf_begin1, sv_trf_end1,  svOutVec.begin(), neg, pls);
+	bolt::cl::transform_inclusive_scan(ctrl, sv_trf_begin2, sv_trf_end2,  svOutVec1.begin(), neg, pls);
+	
+	//STD_TRANSFORM_SCAN
+	std::transform(sv_trf_begin1, sv_trf_end1, stlOut.begin(), std::negate<int>());
+	std::partial_sum(stlOut.begin(), stlOut.end(), stlOut.begin(), std::plus<int>());
+
+	for (int i=0; i<length;  i++ )
+	{
+		std::cout << "Val " << svInVec[i].i << "     "  << *t_sv_trf_begin1++ <<"   " << *t_sv_trf_begin2++ <<  "Out VAL ---> " << "  " << svOutVec[i] <<"   " << stlOut[i] << "\n" ;
+	} 
+	  
+	for(int i =0; i< length; i++)
+    {
+        EXPECT_EQ( svOutVec[i], stlOut[i] );
+        EXPECT_EQ( svOutVec1[i], stlOut[i] );
+	}
+	  
+}
+
+
+TEST (transform_iterator, BUG400103){
+	bolt::cl::square<int> sqInt; 
+	bolt::cl::plus<int> plInt; 
+	int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10}; 
+	int b[10] = {1, 5, 14, 30, 55, 91, 140, 204, 285, 385};
+	
+	bolt::cl::transform_inclusive_scan( a, a+10, a, sqInt, plInt ); 
+
+	for (int i = 0 ; i < 10 ; ++i){
+		EXPECT_EQ(b[i], a[i])<<std::endl;
+	}
+}
+
+TEST (transform_iterator, BUG400294){
+ const int N = 7;
+  int A[N] = {1, 3, 3, 3, 2, 2, 1}; // input keys
+  int B[N] = {9, 8, 7, 6, 5, 4, 3}; // input values
+  int C[N];                         // output keys
+  int D[N];                         // output values
+
+  bolt::cl::pair<int*,int*> new_end;
+  bolt::cl::equal_to<int> binary_pred;
+  bolt::cl::plus<int> binary_op;
+
+  //new_end = bolt::cl::reduce_by_key(A, A + N, B, C, D, binary_pred, binary_op);
+  bolt::cl::reduce_by_key(A, A + N, B, C, D, binary_pred, binary_op);
+  
+  int C_exp[N] = {1, 3, 2, 1};
+  int D_exp[N] = {9, 21, 9, 3};
+}
+
+TEST ( transform_iterator, BUG400110)
+{
+//	int length =  1<<20;
+	int length =  5;
+    
+	std::vector< UDD_trans > svInVec1( length );
+	std::vector< UDD_trans > svInVec2( length );
+
+	std::vector< int > svOutVec1( length );
+	std::vector< int > svOutVec2(length);
+				 
+	std::vector< int > stlOut1( length );
+	std::vector< int > stlOut2( length );
+
+    bolt::cl::device_vector< UDD_trans > dvInVec1( length );
+    bolt::cl::device_vector< UDD_trans > dvInVec2( length );
+							 
+	bolt::cl::device_vector< int > dvOutVec1( length );
+	bolt::cl::device_vector< int > dvOutVec2( length );
+
+	add_UDD add1;
+	UDD_trans gen_udd(0) ;
+	
+	// ADD
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end1   (svInVec1.end(),   add1) ;
+	
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin2 (svInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end2   (svInVec2.end(),   add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  sv_trf_begin3 (dvInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>	sv_trf_end3   (dvInVec1.end(),   add1) ;
+	
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  sv_trf_begin4 (dvInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>	sv_trf_end4   (dvInVec2.end(),   add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin2 (svInVec2.begin(), add1) ;
+	
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  t_sv_trf_begin3 (dvInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  t_sv_trf_begin4 (dvInVec2.begin(), add1) ;
+
+
+	global_id = 0;
+	std::generate(svInVec1.begin(), svInVec1.end(), gen_udd);
+
+	global_id = 0;
+	std::generate(svInVec2.begin(), svInVec2.end(), gen_udd);
+	
+	global_id = 0;
+	bolt::cl::generate(dvInVec1.begin(), dvInVec1.end(), gen_udd);
+
+	global_id = 0;
+	bolt::cl::generate(dvInVec2.begin(), dvInVec2.end(), gen_udd);
+
+	//bolt::cl::square<int> sq;
+	bolt::cl::plus<int> pls;
+	//bolt::cl::minus<int> mi;
+	//bolt::cl::negate<int> neg;
+	 bolt::cl::equal_to<int> eql;
+
+	t_sv_trf_begin1 = sv_trf_begin1 ;
+	t_sv_trf_begin2 = sv_trf_begin2 ;
+
+	t_sv_trf_begin3 = sv_trf_begin3 ;
+	t_sv_trf_begin4 = sv_trf_begin4 ;
+
+	std::vector< UDD_trans > testInput1( svInVec1.begin(), svInVec1.end() );
+    std::vector< int > testInput_int1( length );
+	std::vector< UDD_trans > testInput2( svInVec2.begin(), svInVec2.end() );
+    std::vector< int > testInput_int2( length );
+	for(int i=0; i<length; i++)
+	{
+		testInput_int1[i] = testInput1[i].i + 3;
+		testInput_int2[i] = testInput2[i].i + 3;
+	}
+
+	bolt::cl::control ctrl = bolt::cl::control::getDefault();
+	global_id = 0;
+	
+    bolt::cl::reduce_by_key(		sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec1.begin(), svOutVec2.begin(), eql, pls);
+    bolt::cl::reduce_by_key(ctrl, sv_trf_begin3, sv_trf_end3, sv_trf_begin4, dvOutVec1.begin(), dvOutVec2.begin(), eql, pls);
+
+	//STD_REDUCED
+	unsigned int n= Serial_reduce_by_key<int, int, int, int, bolt::cl::plus< int >> (&testInput_int1[0], &testInput_int2[0], &stlOut1[0], &stlOut2[0], pls, length);
+
+	for(int i =0; i< length; i++)
+    {
+        EXPECT_EQ( svOutVec1[i], stlOut1[i] );
+        EXPECT_EQ( svOutVec2[i], stlOut2[i] );
+        EXPECT_EQ( dvOutVec1[i], stlOut1[i] );
+        EXPECT_EQ( dvOutVec2[i], stlOut2[i] );	
+        EXPECT_EQ( svOutVec1[i], dvOutVec1[i] );
+        EXPECT_EQ( svOutVec2[i], dvOutVec2[i] );
+	}
+}
+
+TEST (transform_iterator, BUG400109){
+
+    int length =  1<<8;
+    
+	std::vector< UDD_trans > svInVec1( length );
+	std::vector< UDD_trans > svInVec2( length );
+	
+	std::vector< int > svOutVec( length );
+	std::vector< int > stlOut(length);
+
+    
+							 
+	bolt::cl::device_vector< int > dvOutVec1( length );
+	bolt::cl::device_vector< int > dvOutVec2( length );
+
+	add_UDD add1;
+	UDD_trans gen_udd(0) ;
+	int init = 0;
+
+	// ADD
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end1   (svInVec1.end(),   add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		sv_trf_begin2 (svInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>		sv_trf_end2   (svInVec2.end(),   add1) ;
+								 
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin1 (svInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::const_iterator>  		t_sv_trf_begin2 (svInVec2.begin(), add1) ;
+								  
+	
+	global_id = 0;
+	std::generate(svInVec1.begin(), svInVec1.end(), gen_udd);
+
+	global_id = 0;
+	std::generate(svInVec2.begin(), svInVec2.end(), rand);
+
+	global_id = 0;
+	bolt::cl::device_vector< UDD_trans > dvInVec1( svInVec1.begin(), svInVec1.end());
+
+	global_id = 0;
+	bolt::cl::device_vector< UDD_trans > dvInVec2( svInVec2.begin(), svInVec2.end() );
+
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator> 	    dv_trf_begin1 (dvInVec1.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>	    dv_trf_end1   (dvInVec1.end(),   add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	t_sv_trf_begin3 (dvInVec1.begin(), add1) ;
+
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	dv_trf_begin2 (dvInVec2.begin(), add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>		dv_trf_end2   (dvInVec2.end(),   add1) ;
+	bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  	t_sv_trf_begin4 (dvInVec2.begin(), add1) ;
+
+	bolt::cl::plus<int> pls;
+	bolt::cl::minus<int> mi;
+
+	t_sv_trf_begin1 = sv_trf_begin1 ;
+	t_sv_trf_begin2 = sv_trf_begin2 ;
+	t_sv_trf_begin3 = dv_trf_begin1 ;
+	t_sv_trf_begin4 = dv_trf_begin2 ;
+
+	global_id = 0;
+		
+	
+	int sv_result = bolt::cl::inner_product(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, init, pls, mi);
+    int dv_result = bolt::cl::inner_product(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, init, pls, mi);
+	
+	std::transform(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec.begin(), mi);
+    int expected_result = std::accumulate(svOutVec.begin(), svOutVec.end(), init, pls);
+
+	EXPECT_EQ( sv_result, expected_result );
+    EXPECT_EQ( dv_result, expected_result);
+			       
+}
 /* /brief List of possible tests
  * Two input transform with first input a constant iterator
  * One input transform with a constant iterator
