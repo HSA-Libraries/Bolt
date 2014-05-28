@@ -157,7 +157,7 @@ inclusive_scan_by_key(
 	BinaryFunction  binary_funct)
 	{
 		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-		typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
+		typedef typename std::iterator_traits< OutputIterator >::value_type oType;
 
 		//tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
 
@@ -167,8 +167,8 @@ inclusive_scan_by_key(
 	    //Explicitly setting the number of threads to spawn
         tbb::task_scheduler_init((int) concurentThreadsSupported);
 
-		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,vType> tbbkey_scan((InputIterator1 &)first1,
-			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, true, vType());
+		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,oType> tbbkey_scan((InputIterator1 &)first1,
+			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, true, oType());
 		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 )), 6250), tbbkey_scan, tbb::simple_partitioner());
 
 		return result + numElements;
