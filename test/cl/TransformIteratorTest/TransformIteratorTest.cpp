@@ -677,7 +677,7 @@ TEST( TransformIterator, FirstTest)
         global_id = 0; // Reset the global id counter
     }
 }
-#if 0
+
 TEST( TransformIterator, UDDTest)
 {
     {
@@ -4556,10 +4556,7 @@ TEST( TransformIterator, ReduceByKeyUDDRoutine)
 
 		squareUDD_result_int sq_int;
 		cubeUDD_result_int cb_int;
-#if 0
-		bolt::cl::equal_to<int> binary_predictor_int;
-        bolt::cl::plus<int> binary_operator_int;
-#endif
+
 		std::vector< int > stlOut1_int( length );
 		std::vector< int > stlOut2_int( length );
 
@@ -4624,20 +4621,7 @@ TEST( TransformIterator, ReduceByKeyUDDRoutine)
 		std::vector< UDD > constVector(const_itr_begin, const_itr_end);
 		std::vector< UDD > countVector(count_itr_begin, count_itr_end);
 	
-#if 0	
-        {/*Test case when inputs are trf Iterators and return type of UDD is int*/
-            auto sv_result = bolt::cl::reduce_by_key(tsv_trf_begin1, tsv_trf_end1, tsv_trf_begin2, svOutVec1.begin(), svOutVec2.begin(), binary_predictor_int, binary_operator_int);
-            auto dv_result = bolt::cl::reduce_by_key(tdv_trf_begin1, tdv_trf_end1, tdv_trf_begin2, dvOutVec1.begin(), dvOutVec2.begin(), binary_predictor_int, binary_operator_int);
-            /*Compute expected results*/
-            unsigned int n= Serial_reduce_by_key<int, int, int, int, bolt::cl::plus< int >> (&ttestInput1[0], &ttestInput2[0], &stlOut1_int[0], &stlOut2_int[0], binary_operator_int, length);
-            /*Check the results*/
-            cmpArrays(svOutVec1, stlOut1_int, length);
-			cmpArrays(svOutVec2, stlOut2_int, length);
-            cmpArrays(dvOutVec1, stlOut1_int, length);
-			cmpArrays(dvOutVec2, stlOut2_int, length);
-        }
-#endif
-
+        //UDD returning int test cases is written below: BUG400110
         {/*Test case when inputs are trf Iterators*/
             auto sv_result = bolt::cl::reduce_by_key(sv_trf_begin1, sv_trf_end1, sv_trf_begin2, svOutVec1.begin(), svOutVec2.begin(), binary_predictor, binary_operator);
             auto dv_result = bolt::cl::reduce_by_key(dv_trf_begin1, dv_trf_end1, dv_trf_begin2, dvOutVec1.begin(), dvOutVec2.begin(), binary_predictor, binary_operator);
@@ -4967,7 +4951,7 @@ TEST( TransformIterator, InclusiveScanbykeyRoutine)
         global_id = 0; // Reset the global id counter
     }
 }
-#endif
+
 
 TEST( TransformIterator, UDDInclusiveScanRoutine)
 {  

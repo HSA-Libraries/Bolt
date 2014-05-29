@@ -397,12 +397,12 @@ namespace cl{
                 "kernel \n"
                 "void transformNoBoundsCheckTemplate( \n"
                 "    global typename iIterType1::base_type* in1_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType1::index_type* in1_ptr_1, \n";
                 return_string += 
                 "    iIterType1 in1_iter,\n"
                 "    global typename iIterType2::base_type* in2_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType2::index_type* in2_ptr_1, \n";
                 return_string += 
                 "    iIterType2 in2_iter,\n"
@@ -413,12 +413,12 @@ namespace cl{
                 "{\n"
                 "\n";
 
-                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "in1_iter.init( in1_ptr_0, in1_ptr_1 );\n";
                 else
                     return_string += "in1_iter.init( in1_ptr_0);\n";
 
-                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator2>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "in2_iter.init( in2_ptr_0, in2_ptr_1 );\n";
                 else
                     return_string += "in2_iter.init( in2_ptr_0);\n";
@@ -440,7 +440,7 @@ namespace cl{
                 "kernel \n"
                 "void transformTemplate( \n"
                 "    global typename iIterType1::base_type* in1_ptr_0, \n"; 
-                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category(), typename bolt::cl::permutation_iterator_tag>::value == true)
+                if( std::is_same<typename bolt::cl::iterator_traits<InputIterator1>::iterator_category, typename bolt::cl::permutation_iterator_tag>::value == true)
                     return_string += "    global typename iIterType1::index_type* in1_ptr_1, \n";
                 return_string += 
                 "    iIterType1 in1_iter,\n"
