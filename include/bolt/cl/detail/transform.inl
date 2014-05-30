@@ -51,7 +51,7 @@ namespace serial{
     binary_transform( ::bolt::cl::control &ctl, const InputIterator1& first1, const InputIterator1& last1,
                       const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f)
     {
-            typename InputIterator1::difference_type sz = (last1 - first1);
+            typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
             if (sz == 0)
                 return;
             typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
@@ -183,7 +183,7 @@ namespace btbb{
     binary_transform( ::bolt::cl::control &ctl, const InputIterator1& first1, const InputIterator1& last1,
                const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f)
     {
-        typename InputIterator1::difference_type sz = (last1 - first1);
+        typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
         if (sz == 0)
             return;
         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
@@ -598,7 +598,7 @@ namespace cl{
         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-        typename InputIterator1::difference_type distVec = last1 - first1;
+        typename std::iterator_traits<InputIterator1>::difference_type distVec = last1 - first1;
         if( distVec == 0 )
             return;
 
@@ -800,7 +800,7 @@ namespace cl{
     unary_transform( ::bolt::cl::control &ctl, const InputIterator& first, const InputIterator& last,
     const OutputIterator& result, const UnaryFunction& f, const std::string& user_code)
     {
-        typename InputIterator::difference_type sz = bolt::cl::distance(first, last);
+        typename std::iterator_traits<InputIterator>::difference_type sz = bolt::cl::distance(first, last);
         if (sz == 0)
             return;
         typedef typename std::iterator_traits<InputIterator>::value_type  iType;
@@ -989,7 +989,7 @@ namespace cl{
                      const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f,
                      const std::string& user_code)
     {
-        typename InputIterator1::difference_type sz = bolt::cl::distance(first1, last1 );
+        typename std::iterator_traits<InputIterator1>::difference_type sz = bolt::cl::distance(first1, last1 );
         if (sz == 0)
             return;
 
@@ -1077,7 +1077,7 @@ namespace cl{
          InputIterator& last,  OutputIterator& result,  UnaryFunction& f,
         const std::string& user_code)
     {
-        typename InputIterator::difference_type sz = bolt::cl::distance(first, last );
+        typename std::iterator_traits<InputIterator>::difference_type sz = bolt::cl::distance(first, last );
         if (sz == 0)
             return;
 

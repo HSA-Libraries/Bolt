@@ -57,7 +57,7 @@ scatter (bolt::cl::control &ctl, InputIterator1 first1,
          InputIterator2 map,
          OutputIterator result)
 {
-    typename InputIterator1::difference_type sz = (last1 - first1);
+    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
     if (sz == 0)
         return;
     typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
@@ -139,7 +139,7 @@ scatter_if( bolt::cl::control &ctl,
             OutputIterator result,
             Predicate pred)
 {
-    typename InputIterator1::difference_type sz = (last1 - first1);
+    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
     if (sz == 0)
         return;
     typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
@@ -239,7 +239,7 @@ scatter (bolt::cl::control &ctl, InputIterator1 first1,
               InputIterator2 map,
               OutputIterator result)
 {
-    typename InputIterator1::difference_type sz = (last1 - first1);
+    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
     if (sz == 0)
         return;
     typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
@@ -314,7 +314,7 @@ scatter_if( bolt::cl::control &ctl,
             OutputIterator result,
             Predicate pred)
 {
-    typename InputIterator1::difference_type sz = (last1 - first1);
+    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
     if (sz == 0)
         return;
     typedef typename std::iterator_traits<InputIterator1>::value_type iType1;

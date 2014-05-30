@@ -53,7 +53,7 @@ namespace serial{
 		bolt::cl::device_vector_tag)
     {
 
-         typename InputIterator::difference_type sz = (last1 - first1);
+         typename std::iterator_traits<InputIterator>::difference_type sz = (last1 - first1);
 
          typedef typename std::iterator_traits<InputIterator>::value_type iType;
 
@@ -157,7 +157,7 @@ namespace btbb{
 		bolt::cl::device_vector_tag)
     {
 
-         typename InputIterator::difference_type sz = (last1 - first1);
+         typename std::iterator_traits<InputIterator>::difference_type sz = (last1 - first1);
 
          typedef typename std::iterator_traits<InputIterator>::value_type iType;
 

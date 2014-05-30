@@ -5455,7 +5455,7 @@ TEST (transform_iterator, BUG400294){
 
   //new_end = bolt::cl::reduce_by_key(A, A + N, B, C, D, binary_pred, binary_op);
   bolt::cl::reduce_by_key(A, A + N, B, C, D, binary_pred, binary_op);
-  
+  bolt::cl::transform(A, A + N, B, C, binary_op);
   int C_exp[N] = {1, 3, 2, 1};
   int D_exp[N] = {9, 21, 9, 3};
 }
