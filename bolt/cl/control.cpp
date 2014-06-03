@@ -462,7 +462,7 @@ namespace cl
 
         descBufferKey myDesc = { myContext, flags , host_ptr };
         mapBufferType::iterator itLowerBound = mapBuffer.find( myDesc );
-        if( itLowerBound == mapBuffer.end( ) )
+        if( itLowerBound == mapBuffer.end( ) || host_ptr != NULL )
         {
             ::cl::Buffer tmp( myContext, flags, reqSize, const_cast< void*>( host_ptr ) );
             descBufferValue myValue = { reqSize, true, tmp };
