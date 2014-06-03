@@ -47,9 +47,9 @@ namespace detail {
 namespace serial{
 
     template< typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl, const InputIterator& first1,
-        const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-        const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& cl_code, 
+    OutputType inner_product(bolt::cl::control &ctl, InputIterator& first1,
+        InputIterator& last1, InputIterator& first2, OutputType& init,
+        BinaryFunction1& f1, BinaryFunction2& f2, const std::string& cl_code, 
 		bolt::cl::device_vector_tag)
     {
 
@@ -100,9 +100,9 @@ namespace serial{
     }
 
 	template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+    OutputType inner_product(bolt::cl::control &ctl,  InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::fancy_iterator_tag )
     {
 		typedef typename std::iterator_traits<InputIterator>::value_type iType;
@@ -123,9 +123,9 @@ namespace serial{
 
 
 	template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+    OutputType inner_product(bolt::cl::control &ctl,  InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code,
                 std::random_access_iterator_tag )
     {	
 		typedef typename std::iterator_traits<InputIterator>::value_type iType;
@@ -151,9 +151,9 @@ namespace serial{
 namespace btbb{
 
     template< typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl, const InputIterator& first1,
-        const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-        const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& cl_code, 
+    OutputType inner_product(bolt::cl::control &ctl, InputIterator& first1,
+        InputIterator& last1, InputIterator& first2, OutputType& init,
+        BinaryFunction1& f1, BinaryFunction2& f2, const std::string& cl_code, 
 		bolt::cl::device_vector_tag)
     {
 
@@ -194,9 +194,9 @@ namespace btbb{
     }
 
 	template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+    OutputType inner_product(bolt::cl::control &ctl,  InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::fancy_iterator_tag )
     {
 		return  bolt::btbb::inner_product(  first1, last1, first2, init, f1, f2  );
@@ -204,9 +204,9 @@ namespace btbb{
 
 
 	template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+    OutputType inner_product(bolt::cl::control &ctl,  InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code,
                 std::random_access_iterator_tag )
     {
 		
@@ -250,9 +250,9 @@ namespace cl{
 
 
     template< typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl, const InputIterator& first1,
-        const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-        const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& cl_code, 
+    OutputType inner_product(bolt::cl::control &ctl, InputIterator& first1,
+        InputIterator& last1, InputIterator& first2, OutputType& init,
+        BinaryFunction1& f1, BinaryFunction2& f2, const std::string& cl_code, 
 		bolt::cl::device_vector_tag)
     {
 
@@ -271,9 +271,9 @@ namespace cl{
 
 
     template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+    OutputType inner_product(bolt::cl::control &ctl,  InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code,
                 std::random_access_iterator_tag )
     {
 		
@@ -304,9 +304,9 @@ namespace cl{
 	}
 
  template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-    OutputType inner_product(bolt::cl::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+    OutputType inner_product(bolt::cl::control &ctl,  InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::fancy_iterator_tag )
     {
 		return inner_product( ctl, first1, last1, first2, init, f1, f2, user_code, typename bolt::cl::memory_system<InputIterator>::type()  );
@@ -323,9 +323,9 @@ namespace cl{
                          std::input_iterator_tag 
                        >::value), OutputType
                        >::type
-    inner_product( bolt::cl::control& ctl, const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code )
+    inner_product( bolt::cl::control& ctl, InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code )
     {
         typedef typename std::iterator_traits<InputIterator>::value_type iType;
         int sz = static_cast<int>( std::distance( first1, last1 ) );
@@ -382,9 +382,9 @@ namespace cl{
                          std::input_iterator_tag 
                        >::value), OutputType
                        >::type
-    inner_product( bolt::cl::control& ctl, const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code )
+    inner_product( bolt::cl::control& ctl, InputIterator& first1,
+                InputIterator& last1, InputIterator& first2, OutputType& init,
+                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code )
     {
          //TODO - Shouldn't we support inner_product for input_iterator_tag also. 
          static_assert( std::is_same< typename std::iterator_traits< InputIterator>::iterator_category, 
