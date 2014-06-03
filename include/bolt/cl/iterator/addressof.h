@@ -26,7 +26,7 @@ namespace cl{
         addressof(const typename bolt::cl::transform_iterator<UnaryFunction, Iterator> itr)
     {
         typedef typename bolt::cl::transform_iterator<UnaryFunction, Iterator>::pointer pointer;
-        pointer ptr = itr.getPointer();
+        pointer ptr = const_cast<pointer>(itr.getPointer());
         return ptr;
     }
 
@@ -35,7 +35,7 @@ namespace cl{
         addressof(typename bolt::cl::counting_iterator<value_type> itr)
     {
         typedef typename bolt::cl::counting_iterator<value_type>::pointer pointer;
-        pointer ptr = itr.getPointer();
+        pointer ptr = const_cast<pointer>(itr.getPointer() );
         return ptr;
     }
 
@@ -44,7 +44,7 @@ namespace cl{
         addressof(typename bolt::cl::constant_iterator<value_type> itr)
     {
         typedef typename bolt::cl::constant_iterator<value_type>::pointer pointer;
-        pointer ptr = itr.getPointer();
+        pointer ptr = const_cast<pointer>(itr.getPointer() );
         return ptr;
     }
 

@@ -192,10 +192,10 @@ namespace cl{
     */
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                const InputIterator& first,
-                const InputIterator& last,
-                const T& init,
-                const BinaryFunction& binary_op,
+                InputIterator& first,
+                InputIterator& last,
+                T& init,
+                BinaryFunction& binary_op,
                 const std::string& cl_code,
                 bolt::cl::device_vector_tag)
     {
@@ -312,10 +312,10 @@ namespace cl{
     */
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                const InputIterator& first,
-                const InputIterator& last,
-                const T& init,
-                const BinaryFunction& binary_op,
+                InputIterator& first,
+                InputIterator& last,
+                T& init,
+                BinaryFunction& binary_op,
                 const std::string& cl_code, 
                 std::random_access_iterator_tag)
     {
@@ -342,10 +342,10 @@ namespace cl{
 
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                const InputIterator& first,
-                const InputIterator& last,
-                const T& init,
-                const BinaryFunction& binary_op,
+                InputIterator& first,
+                InputIterator& last,
+                T& init,
+                BinaryFunction& binary_op,
                 const std::string& cl_code,
                 bolt::cl::fancy_iterator_tag)
     {
@@ -360,10 +360,10 @@ namespace cl{
     */
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                const InputIterator& first,
-                const InputIterator& last,
-                const T& init,
-                const BinaryFunction& binary_op,
+                InputIterator& first,
+                InputIterator& last,
+                T& init,
+                BinaryFunction& binary_op,
                 const std::string& cl_code)
     {
         int sz = static_cast<int>( std::distance(first, last ) );

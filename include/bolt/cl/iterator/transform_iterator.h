@@ -124,12 +124,14 @@ namespace cl
     
         value_type* getPointer()
         {
-            return &(*(this->base_reference())); 
+            typename Iterator base_iterator = this->base_reference();
+            return &(*base_iterator); 
         }    
 
         const value_type* getPointer() const
         {
-            return &(*(this->base_reference())); 
+            typename Iterator base_iterator = this->base_reference();
+            return &(*base_iterator); 
         }    
 
         UnaryFunc functor() const

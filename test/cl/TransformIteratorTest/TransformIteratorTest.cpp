@@ -1669,6 +1669,17 @@ TEST( TransformIterator, ReduceRoutine)
         constant_itr const_itr_end = const_itr_begin + length;
 
         {/*Test case when inputs are trf Iterators*/
+            int sv_result = bolt::cl::reduce(bolt::cl::make_transform_iterator(svIn1Vec.begin(), add3), 
+                                             bolt::cl::make_transform_iterator(svIn1Vec.end(), add3), 0, plus);
+            int dv_result = bolt::cl::reduce(bolt::cl::make_transform_iterator(dvIn1Vec.begin(), add3), 
+                                             bolt::cl::make_transform_iterator(dvIn1Vec.end(), add3), 0, plus);
+            /*Compute expected results*/
+            int expected_result = std::accumulate(sv_trf_begin1, sv_trf_end1, 0, plus);
+            /*Check the results*/
+            EXPECT_EQ( expected_result, sv_result );
+            EXPECT_EQ( expected_result, dv_result );
+        }
+        {/*Test case when inputs are trf Iterators*/
             int sv_result = bolt::cl::reduce(sv_trf_begin1, sv_trf_end1, 0, plus);
             int dv_result = bolt::cl::reduce(dv_trf_begin1, dv_trf_end1, 0, plus);
             /*Compute expected results*/
@@ -1782,7 +1793,18 @@ TEST( TransformIterator, ReduceUDDRoutine)
         UDDone.i = 1;
         UDDone.f = 1.0f;
 
-		 {/*Test case when input is trf Iterator and UDD is returning an int*/
+        {/*Test case when inputs are trf Iterators*/
+            int sv_result = bolt::cl::reduce(bolt::cl::make_transform_iterator(svIn1Vec.begin(), sq_int), 
+                                             bolt::cl::make_transform_iterator(svIn1Vec.end(), sq_int), 0, plus_int);
+            int dv_result = bolt::cl::reduce(bolt::cl::make_transform_iterator(dvIn1Vec.begin(), sq_int), 
+                                             bolt::cl::make_transform_iterator(dvIn1Vec.end(), sq_int), 0, plus_int);
+            /*Compute expected results*/
+            int expected_result = std::accumulate(tsv_trf_begin1, tsv_trf_end1, 0, plus_int);
+            /*Check the results*/
+            EXPECT_EQ( expected_result, sv_result );
+            EXPECT_EQ( expected_result, dv_result );
+        }
+		{/*Test case when input is trf Iterator and UDD is returning an int*/
             int sv_result = bolt::cl::reduce(tsv_trf_begin1, tsv_trf_end1, 0, plus_int);
             int dv_result = bolt::cl::reduce(tdv_trf_begin1, tdv_trf_end1, 0, plus_int);
             /*Compute expected results*/
@@ -1870,7 +1892,7 @@ TEST( TransformIterator, ReduceUDDRoutine)
         global_id = 0; // Reset the global id counter
     }
 }
-
+#if 0
 TEST( TransformIterator, TransformReduceRoutine)
 {
     {
@@ -5628,6 +5650,8 @@ TEST (transform_iterator, BUG400109){
     EXPECT_EQ( dv_result, expected_result);
 			       
 }
+#endif
+
 /* /brief List of possible tests
  * Two input transform with first input a constant iterator
  * One input transform with a constant iterator
