@@ -70,7 +70,7 @@ namespace bolt
 							 *(result + i) = start;
 							 temp = binary_op(start, temp1);
 						  }
-						  else if(binary_pred(*(first_key+i), *(first_key +i- 1))){
+						  else if(binary_pred( first_key[ i ], first_key[ i - 1 ] )){
 							 temp1 = *(first_value + i);
 							 *(result + i) = temp;
 							 temp = binary_op(temp, temp1);
@@ -86,7 +86,7 @@ namespace bolt
 					 else if(i == 0 ){
 						temp = *(first_value+i);
 					 }
-					 else if(binary_pred(*(first_key+i), *(first_key +i- 1))) {
+					 else if(binary_pred(first_key[ i ], first_key[ i - 1 ])) {
 						temp = binary_op(temp, *(first_value+i));
 					 }
 					 else{
@@ -99,7 +99,7 @@ namespace bolt
 					 temp = *(first_value+i);
 					 pre_flag = false;
 				 }
-				 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
+				 else if(binary_pred(first_key[ i ], first_key[ i - 1 ]))
 					 temp = binary_op(temp, *(first_value+i));
 				 else if (!inclusive){
 					 temp = binary_op(start, *(first_value+i));
@@ -110,7 +110,7 @@ namespace bolt
 					 flag = true; 
 				 }
 			 }
-			 if(i<numElements && !binary_pred(*(first_key+i-1), *(first_key +i ))){
+			 if(i<numElements && !binary_pred(first_key[ i - 1 ], first_key[ i ])){
 				next_flag = true;     // this will check the key change at boundaries
 			 }
 			 sum = temp;
