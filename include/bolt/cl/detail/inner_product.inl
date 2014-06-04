@@ -325,7 +325,7 @@ namespace cl{
                        >::type
     inner_product( bolt::cl::control& ctl, InputIterator& first1,
                 InputIterator& last1, InputIterator& first2, OutputType& init,
-                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code )
+                BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code )
     {
         typedef typename std::iterator_traits<InputIterator>::value_type iType;
         int sz = static_cast<int>( std::distance( first1, last1 ) );
@@ -384,7 +384,7 @@ namespace cl{
                        >::type
     inner_product( bolt::cl::control& ctl, InputIterator& first1,
                 InputIterator& last1, InputIterator& first2, OutputType& init,
-                BinaryFunction1& f1, BinaryFunction2& f2, const std::string& user_code )
+                BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code )
     {
          //TODO - Shouldn't we support inner_product for input_iterator_tag also. 
          static_assert( std::is_same< typename std::iterator_traits< InputIterator>::iterator_category, 

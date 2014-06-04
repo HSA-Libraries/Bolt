@@ -192,10 +192,10 @@ namespace cl{
     */
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                InputIterator& first,
-                InputIterator& last,
-                T& init,
-                BinaryFunction& binary_op,
+                InputIterator first,
+                InputIterator last,
+                T init,
+                BinaryFunction binary_op,
                 const std::string& cl_code,
                 bolt::cl::device_vector_tag)
     {
@@ -312,8 +312,8 @@ namespace cl{
     */
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                InputIterator& first,
-                InputIterator& last,
+                InputIterator first,
+                InputIterator last,
                 T& init,
                 BinaryFunction& binary_op,
                 const std::string& cl_code, 
@@ -342,9 +342,9 @@ namespace cl{
 
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                InputIterator& first,
-                InputIterator& last,
-                T& init,
+                InputIterator first,
+                InputIterator last,
+                T init,
                 BinaryFunction& binary_op,
                 const std::string& cl_code,
                 bolt::cl::fancy_iterator_tag)
@@ -360,9 +360,9 @@ namespace cl{
     */
     template<typename T, typename InputIterator, typename BinaryFunction>
     T reduce(bolt::cl::control &ctl,
-                InputIterator& first,
-                InputIterator& last,
-                T& init,
+                InputIterator first,
+                InputIterator last,
+                T init,
                 BinaryFunction& binary_op,
                 const std::string& cl_code)
     {
