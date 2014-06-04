@@ -37,9 +37,6 @@ kernel void count_Template(
     predicate_function functor = * userFunctor;
     bool stat;
     int count=0;
-    //  Abort threads that are passed the end of the input vector
-    if( gx >= length )
-        return;
 
     input_iter.init( input_ptr );
 
@@ -75,6 +72,11 @@ kernel void count_Template(
     _REDUCE_STEP(tail, local_index,  4);
     _REDUCE_STEP(tail, local_index,  2);
     _REDUCE_STEP(tail, local_index,  1);
+
+    //  Abort threads that are passed the end of the input vector
+    gx = get_global_id (0);
+    if( gx >= length )
+        return;
  
     //  Write only the single reduced value for the entire workgroup
     if (local_index == 0) 
