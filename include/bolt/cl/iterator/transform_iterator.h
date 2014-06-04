@@ -124,13 +124,13 @@ namespace cl
     
         value_type* getPointer()
         {
-            typename Iterator base_iterator = this->base_reference();
+            Iterator base_iterator = this->base_reference();
             return &(*base_iterator); 
         }    
 
         const value_type* getPointer() const
         {
-            typename Iterator base_iterator = this->base_reference();
+            Iterator base_iterator = this->base_reference();
             return &(*base_iterator); 
         }    
 

@@ -45,7 +45,7 @@ kernel void count_Template(
 
     //  Initialize the accumulator private variable with data from the input array
     //  This essentially unrolls the loop below at least once
-    iTypePtr accumulator;
+    typename iTypeIter::value_type accumulator;
 
     // Loop sequentially over chunks of input vector, reducing an arbitrary size input
     // length into a length related to the number of workgroups

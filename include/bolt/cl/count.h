@@ -189,8 +189,7 @@ namespace bolt {
             const EqualityComparable &value,
             const std::string& cl_code="")
         {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(ctl, first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
+            return count_if(ctl, first, last, detail::CountIfEqual<EqualityComparable>(value), CountIfEqual_OclCode + cl_code);
         };
 
         template<typename InputIterator, typename EqualityComparable>
@@ -200,8 +199,7 @@ namespace bolt {
             const EqualityComparable &value,
             const std::string& cl_code="")
         {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
+            return count_if(first, last, detail::CountIfEqual<EqualityComparable>(value), CountIfEqual_OclCode + cl_code);
         };
 
          /*!   \}  */

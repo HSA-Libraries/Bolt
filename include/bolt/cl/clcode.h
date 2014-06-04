@@ -276,14 +276,119 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
                                                                                                   + std::string("#define ") + std::string(#D) + std::string(" ") + std::string(#__VA_ARGS__) + std::string(" \n")\
                                                                                                   + std::string("#endif \n"));
 
+
 /*!
- * \brief This macro specializes a template transform iterator with a new type using the template definition of a previously 
- * defined iterator type
- * \detail This is a convenience macro to specialize an iterator for a new type, using the generic template
- * definition from a previosly defined iterator
- * \param CONTAINER A template template parameter, such as std::vector without the type specified
- * \param OLDTYPE A type that has already been registered with the container template definition
- * \param NEWTYPE A new type to register with the template definition
+ * \brief This macro creates a TypeName and the ClCode data structure for the transform iterator associated 
+ *        with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm
+ * \detail This macro creates a TypeName and the ClCode data structure for the transform iterator associated 
+ *        with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm
+ * \param FUNCTOR This defines the unary function for the transform iterator. FUNCTOR should be previously defined 
+ *                using BOLT_FUNCTOR. The FUNCTOR is used to transform the objects of type DATA_TYPE. The FUNCTOR 
+ *                should also define an associated type result_type.
+ * \param DATATYPE This is the type of the data which the transform iterator points to and the unary function FUNCTOR 
+                   operates on.
+ * \details An example:
+ * \code
+ *
+ *  #include <bolt/cl/transform_iterator.h>
+ *
+ *  // Create a new user-defined type UDD on host and copy to kernel
+ *  BOLT_FUNCTOR( UDD,
+ *    struct UDD
+ *    {
+ *        int i;
+ *        float f;
+ *        ...
+ *    };
+ *  );
+ *
+ *  // Create a new square functor takes int and return int
+ *  BOLT_FUNCTOR(square,
+ *    struct square
+ *    {
+ *        int operator() (const int x)  const { return x + 2; }
+ *        typedef int result_type;
+ *    };
+ *  );
+ *
+ *  // Create a new negation functor for UDD
+ *  BOLT_FUNCTOR( UDDNegate,
+ *    class UDDNegate
+ *    {
+ *       ...
+ *
+ *    };
+ *  );
+ *
+ * 
+ *  // Create a new transform iterator with square as a functor and UDD as a data type.
+ *  BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, square, int);
+ *
+ *  // Create a new transform iterator with square as a functor and UDD as a data type.
+ *  BOLT_FUNCTOR(squareUDD,
+ *      struct squareUDD
+ *      {
+ *          UDD operator() (const UDD& x)  const 
+ *          { 
+ *              UDD tmp;
+ *              tmp.i = x.i * x.i;
+ *              tmp.f = x.f * x.f;
+ *              return tmp;
+ *          }
+ *          typedef UDD result_type;
+ *      };
+ *  );
+ *
+ * BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, square, UDD);
+ *
+ *  int main( )
+ *  {
+ *    ...
+ *    {
+ *       typedef bolt::BCKND::transform_iterator< square, bolt::BCKND::device_vector< int >::iterator> dv_trf_itr;
+ *       typedef bolt::BCKND::transform_iterator< square, std::vector< int >::const_iterator>          sv_trf_itr;
+ *
+ *       std::vector< int > svInVec( length );
+ *       bolt::cl::device_vector< int > dvInVec( length );
+ *       std::vector< int > svOutVec( length );
+ *       bolt::cl::device_vector< int > dvOutVec( length );
+ *       
+ *       // Initialize svInVec and dvInVec  ...
+ *
+ *       //Declare the required functors
+ *       UDDNegate udd_negate_functor;
+ *       bolt::cl::negate<int>() neg;
+ *
+ *       sv_trf_itr sv_trf_begin (svInVec.begin(), sq), sv_trf_end (svInVec.end(), sq);
+ *       dv_trf_itr dv_trf_begin (dvInVec.begin(), sq), dv_trf_end (dvInVec.end(), sq);
+ *
+ *      bolt::cl::transform( sv_trf_begin, sv_trf_end, svOutVec.begin(), neg );
+ *      bolt::cl::transform( dv_trf_begin, dv_trf_end, dvOutVec.begin(), neg );
+ *   }
+ *   {
+ *      typedef bolt::BCKND::transform_iterator< squareUDD, bolt::BCKND::device_vector< UDD >::iterator> dv_udd_trf_itr;
+ *      typedef bolt::BCKND::transform_iterator< squareUDD, std::vector< UDD >::const_iterator>          sv_udd_trf_itr;
+ *
+ *       std::vector< UDD > svInVec( length );
+ *       bolt::cl::device_vector< UDD > dvInVec( length );
+ *       std::vector< UDD > svOutVec( length );
+ *       bolt::cl::device_vector< UDD > dvOutVec( length );
+ *       
+ *       // Initialize svInVec and dvInVec  ...
+ *
+ *       //Declare the required functors
+ *       UDDNegate udd_negate_functor;
+ *       squareUDD sq_udd;
+ *
+ *       sv_udd_trf_itr sv_trf_begin (svInVec.begin(), sq_udd), sv_trf_end (svInVec.end(), sq_udd);
+ *       dv_udd_trf_itr dv_trf_begin (dvInVec.begin(), sq_udd), dv_trf_end (dvInVec.end(), sq_udd);
+ *
+ *      bolt::cl::transform( sv_trf_begin, sv_trf_end, svOutVec.begin(), udd_negate_functor );
+ *      bolt::cl::transform( dv_trf_begin, dv_trf_end, dvOutVec.begin(), udd_negate_functor );
+ *   }
+ *
+ *  }
+ * \endcode
  */
 #if defined(WIN32)
 #define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( ITERATOR, FUNCTOR, DATATYPE) \
@@ -314,13 +419,11 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
 #endif
 
 /*!
- * \brief This macro specializes a template permutation iterator with a new type using the template definition of a previously 
- * defined iterator type
+ * \brief A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This macro specializes a template permutation iterator with a new element and index iterator.
  * \detail This is a convenience macro to specialize an iterator for a new type, using the generic template 
  * definition from a previosly defined iterator
- * \param CONTAINER A template template parameter, such as std::vector without the type specified
- * \param OLDTYPE A type that has already been registered with the container template definition
- * \param NEWTYPE A new type to register with the template definition
+ * \param ELEMENT_ITERATOR A template  parameter, such as std::vector without the type specified
+ * \param INDEX_ITERATOR A type that has already been registered with the container template definition
  */
 #if defined(WIN32)
 #define BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( ELEMENT_ITERATOR, INDEX_ITERATOR) \
