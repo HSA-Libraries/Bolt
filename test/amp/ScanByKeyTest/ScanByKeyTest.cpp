@@ -29,6 +29,7 @@
 #include "bolt/miniDump.h"
 
 #include "bolt/amp/iterator/counting_iterator.h"
+#include "bolt/amp/iterator/constant_iterator.h"
 
 #define SERIAL_TBB_OFFSET 1
 #define TEST_LARGE_BUFFERS 1
@@ -4578,6 +4579,105 @@ TEST(ExclusiveScanByKey, MulticoreCLscanbykeyExclUDD)
 
 	bolt::amp::exclusive_scan_by_key(ctl,  keys.begin(), keys.end(), input.begin(), input.begin(), initialMixM2,eq, mM2);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refInput.begin(), mM2, initialMixM2);
+    // compare results
+    cmpArrays(refInput, input);
+}
+
+TEST(sanity_constant_iterator_amp_inclu_scan_by_key_int, inclu_scan_by_key_int){
+    
+    const int length = 1<<20;
+//    const int length = 1<<5;
+
+    int value = 100;
+    std::vector< int > svInVec1( length );
+    std::vector< int > svInVec2( length );
+    
+    std::vector< int > svOutVec( length );
+    std::vector< int > stlOut( length );
+    std::fill( svOutVec.begin( ), svOutVec.end( ), 100 );
+
+    bolt::amp::device_vector< int > dvInVec1( length );
+    bolt::amp::device_vector< int > dvOutVec( length );
+
+    bolt::amp::constant_iterator<int> constIter1 (value);
+    bolt::amp::constant_iterator<int> constIter2 (10);
+
+    bolt::amp::plus<int> pls;
+    bolt::amp::equal_to<int> eql;
+    int n = (int) 1 + rand()%10;
+
+            int segmentLength = 0;
+            int segmentIndex = 0;
+            std::vector<int> key(1);
+            key[0] = 0;
+
+            for (int i = 0; i < length; i++)
+            {
+                // start over, i.e., begin assigning new key
+                if (segmentIndex == segmentLength)
+                {
+                    segmentLength++;
+                    segmentIndex = 0;
+                    key[0] = key[0]+1 ; // key[0]++  is not working in the device_vector
+                }
+                svInVec1[i] = key[0];
+                dvInVec1[i] = svInVec1[i];
+                segmentIndex++;
+            }
+
+   bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+       //bolt::amp::inclusive_scan_by_key(constIter1, constIter1 + length, constIter1, svOutVec.begin(), eql, pls);
+      bolt::amp::inclusive_scan_by_key( ctl, constIter1, constIter1 + length, constIter1, dvOutVec.begin(), eql, pls);
+      gold_scan_by_key( svOutVec.begin( ), svOutVec.end( ), svOutVec.begin( ), stlOut.begin( ), pls );
+    
+       //	STD_INC_SCAN_BY_KEY
+    std::vector<int> const_vector(length, value);
+
+    for(int i =0; i< length; i++)
+    {
+        EXPECT_EQ( dvOutVec[i], stlOut[i]);
+    }
+}
+
+
+TEST (ABB, ExclTestLong)
+{
+    int myStdVectSize = 257;
+    std::vector< int > keys( myStdVectSize, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    for (int i = 0; i < myStdVectSize; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        segmentIndex++;
+    }
+    bolt::amp::device_vector< int > device_keys( keys.begin(), keys.end());
+
+	std::vector< long > refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::amp::device_vector< long > input( refInput.begin(), refInput.end() );
+
+    // call scan
+    bolt::amp::equal_to<int> eq; 
+    bolt::amp::plus<long> mM3; 
+    
+    bolt::amp::control ctl;
+    ctl.setForceRunMode( bolt::amp::control::SerialCpu );
+	bolt::amp::exclusive_scan_by_key( ctl, device_keys.begin(), device_keys.end(), input.begin(), input.begin(), refInput[0], eq, mM3);
+    gold_scan_by_key_exclusive( keys.begin(), keys.end(), refInput.begin(), refInput.begin(), mM3, refInput[0]);
+
     // compare results
     cmpArrays(refInput, input);
 }

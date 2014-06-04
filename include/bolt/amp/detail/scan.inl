@@ -468,48 +468,57 @@ aProfiler.setDataSize(numElements*sizeof(oType));
 
 						
 template<
-    typename vType,
-    typename oType,
-    typename BinaryFunction,
-    typename T>
-oType*
-Serial_scan(
-    vType *values,
-    oType *result,
-    unsigned int  num,
-    const BinaryFunction binary_op,
-    const bool Incl,
-    const T &init)
-{
-    vType  sum, temp;
-    if(Incl){
-      *result = *values; // assign value
-      sum = *values;
-    }
-    else {
-        temp = *values;
-       *result = (oType)init;
-       sum = binary_op( *result, temp);
-    }
-    for ( unsigned int i= 1; i<num; i++)
-    {
-        vType currentValue = *(values + i); // convertible
-        if (Incl)
-        {
-            vType r = binary_op( sum, currentValue);
-            *(result + i) = r;
-            sum = r;
-        }
-        else // new segment
-        {
-            *(result + i) = sum;
-            sum = binary_op( sum, currentValue);
+	typename InputIterator,
+	typename OutputIterator,
+	typename T,
+	typename BinaryFunction >
+          OutputIterator
+          Serial_scan(
+	const InputIterator& first,
+	const InputIterator& last,
+	const OutputIterator& result,
+	const T& init,
+	const bool& inclusive,
+	const BinaryFunction& binary_op)
+	{
 
-        }
-    }
-    return result;
+		size_t sz = (last - first);
+		if (sz == 0)
+			return result;
+
+		typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+
+		oType  sum, temp;
+
+		if(inclusive)
+		{
+		  *result = static_cast<oType>( *first  ); // assign value
+		  sum = *first;
+		}
+		else
+		{
+		  temp = static_cast<oType>( *first  );
+		  *result = static_cast<oType>(init);
+		  sum = binary_op( *result, temp);
+		}
+
+		for ( unsigned int index= 1; index<sz; index++)
+		{
+		  oType currentValue =  static_cast<oType>( *(first + index) ); // convertible
+		  if (inclusive)
+		  {
+			  oType r = binary_op( sum, currentValue);
+			  *(result + index) = r;
+			  sum = r;
+		  }
+		  else // new segment
+		  {
+			  *(result + index) = sum;
+			  sum = binary_op( sum, currentValue);
+		  }
+		}
+		return result;
 }
-
 
 
 /*!
@@ -553,7 +562,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 size_t k0_stepNum, k1_stepNum, k2_stepNum;
 #endif
-         Serial_scan<iType, oType, BinaryFunction, T>(&(*first), &(*result), numElements, binary_op, inclusive, init);
+         Serial_scan( first, last, result, init , inclusive, binary_op );
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.setDataSize(numElements*sizeof(iType));
 aProfiler.stopTrial();
@@ -635,8 +644,14 @@ scan_pick_iterator(
     {
         bolt::amp::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
         bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
-        Serial_scan<iType, oType, BinaryFunction, T>(&scanInputBuffer[first.m_Index], &scanResultBuffer[result.m_Index],
-                                                              numElements, binary_op, inclusive, init);
+
+        Serial_scan( &scanInputBuffer[ first.m_Index ],
+                     &scanInputBuffer [ last.m_Index ],
+                     &scanResultBuffer [ first.m_Index ],
+                     init,
+                     inclusive,
+                     binary_op);
+
         return result + numElements;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
@@ -702,7 +717,7 @@ scan_pick_iterator(
 	}
     if( runMode == bolt::amp::control::SerialCpu )
     {
-       Serial_scan<iType, oType, BinaryFunction, T>(&(*first), &(*result), numElements, binary_op, inclusive, init);
+         Serial_scan( first, last, result, init , inclusive, binary_op );
        return result + numElements;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
