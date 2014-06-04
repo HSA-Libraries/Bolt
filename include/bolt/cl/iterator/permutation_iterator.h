@@ -165,6 +165,7 @@ make_permutation_iterator( ElementIterator e, IndexIterator i )
                 public:    \n
                     typedef int iterator_category;        \n
                     typedef typename ElementIterator::value_type value_type; \n
+                    typedef typename ElementIterator::value_type base_type; \n
                     typedef typename IndexIterator::value_type index_type; \n
                     typedef int difference_type; \n
                     typedef int size_type; \n

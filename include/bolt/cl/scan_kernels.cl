@@ -83,9 +83,9 @@ kernel void perBlockAddition(
                 oIterType    output_iter, 
                 global iPtrType* input_ptr,
                 iIterType    input_iter, 
-                global iPtrType* preSumArray,
-                global iPtrType* preSumArray1,
-                local iPtrType* lds,
+                global typename iIterType::value_type* preSumArray,
+                global typename iIterType::value_type* preSumArray1,
+                local typename iIterType::value_type* lds,
                 const uint vecSize,
                 global BinaryFunction* binaryOp,
                 int exclusive,
@@ -101,7 +101,7 @@ kernel void perBlockAddition(
     input_iter.init( input_ptr );
 
   // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-    iPtrType val;
+    typename iIterType::value_type val;
   
     if (gloId < vecSize){
 	   if (exclusive)
@@ -124,9 +124,9 @@ kernel void perBlockAddition(
        }
     }
   
-   iPtrType scanResult = lds[locId];
-   iPtrType postBlockSum, newResult;
-   iPtrType y, y1, sum;
+   typename iIterType::value_type scanResult = lds[locId];
+   typename iIterType::value_type postBlockSum, newResult;
+   typename iIterType::value_type y, y1, sum;
 
    if(locId == 0 && gloId < vecSize)
    {
@@ -158,7 +158,7 @@ kernel void perBlockAddition(
         barrier( CLK_LOCAL_MEM_FENCE );
         if (locId >= offset)
         {
-            iPtrType y = lds[ locId - offset ];
+            typename iIterType::value_type y = lds[ locId - offset ];
             sum = (*binaryOp)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -273,10 +273,10 @@ kernel void perBlockInclusiveScan(
                 iIterType    input_iter, 
                 initType identity,
                 const uint vecSize,
-                local iPtrType* lds,
+                local typename iIterType::value_type* lds,
                 global BinaryFunction* binaryOp,
-                global iPtrType* preSumArray,
-                global iPtrType* preSumArray1,
+                global typename iIterType::value_type* preSumArray,
+                global typename iIterType::value_type* preSumArray1,
                 int exclusive) // do exclusive scan ?
 {
 // 2 thread per element
@@ -301,7 +301,7 @@ kernel void perBlockInclusiveScan(
 	// Exclusive case
     if(exclusive && gloId == 0)
 	{
-	    iPtrType start_val = input_iter[0];
+	    typename iIterType::value_type start_val = input_iter[0];
 		lds[locId] = (*binaryOp)(identity, start_val);
     }
 	
@@ -312,8 +312,8 @@ kernel void perBlockInclusiveScan(
        {
           size_t temp1 = offset*(2*locId+1)-1;
           size_t temp2 = offset*(2*locId+2)-1;
-          iPtrType y = lds[temp2];
-          iPtrType y1 =lds[temp1];
+          typename iIterType::value_type y = lds[temp2];
+          typename iIterType::value_type y1 =lds[temp1];
           lds[temp2] = (*binaryOp)(y, y1);
        }
        offset *= 2;

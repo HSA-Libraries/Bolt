@@ -355,10 +355,10 @@ namespace detail
 					""        + typeNames[scan_iIterType] + " input_iter,\n"
 					""        + typeNames[scan_initType] + " identity,\n"
 					"const uint vecSize,\n"
-					"local "  + typeNames[scan_iValueType] + "* lds,\n"
+					"local "  + typeNames[scan_iIterType] + "::value_type * lds,\n"
 					"global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
-					"global " + typeNames[scan_iValueType] + "* preSumArray,\n"
-					"global " + typeNames[scan_iValueType] + "* preSumArray1,\n"
+					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray,\n"
+					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray1,\n"
 					"int exclusive\n"
 					");\n\n"
 
@@ -366,10 +366,10 @@ namespace detail
 					"template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
 					"__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
 					"kernel void " + name(1) + "(\n"
-					"global " + typeNames[scan_iValueType] + "* preSumArray,\n"
+					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray,\n"
 					""        + typeNames[scan_initType]+" identity,\n"
 					"const uint vecSize,\n"
-					"local " + typeNames[scan_iValueType] + "* lds,\n"
+					"local " + typeNames[scan_iIterType] + "::value_type * lds,\n"
 					"const uint workPerThread,\n"
 					"global " + typeNames[scan_BinaryFunction] + "* binaryOp\n"
 					");\n\n"
@@ -382,9 +382,9 @@ namespace detail
 					""        + typeNames[scan_oIterType] + " output_iter,\n"
 					"global " + typeNames[scan_iValueType] + "* input,\n"
 					""        + typeNames[scan_iIterType] + " input_iter,\n"
-					"global " + typeNames[scan_iValueType] + "* preSumArray,\n"
-					"global " + typeNames[scan_iValueType] + "* preSumArray1,\n"
-					"local " + typeNames[scan_iValueType] + "* lds,\n"
+					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray,\n"
+					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray1,\n"
+					"local  " + typeNames[scan_iIterType] + "::value_type * lds,\n"
 					"const uint vecSize,\n"
 					"global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
 					"int exclusive,\n"
@@ -1116,7 +1116,8 @@ OutputIterator inclusive_scan(
     const std::string& user_code )
 {
     typedef typename std::iterator_traits<InputIterator>::value_type iType;
-    iType init; memset(&init, 0, sizeof(iType) );
+	typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    oType init; memset(&init, 0, sizeof(oType) );
 	using bolt::cl::detail::scan;
     return detail::scan(
            ctrl, 
@@ -1140,8 +1141,8 @@ OutputIterator inclusive_scan(
     BinaryFunction binary_op,
     const std::string& user_code )
 {
-    typedef typename std::iterator_traits<InputIterator>::value_type iType;
-    iType init; memset(&init, 0, sizeof(iType) );
+	typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    oType init; memset(&init, 0, sizeof(oType) );
 	using bolt::cl::detail::scan;
     return detail::scan(
            ctrl, 
@@ -1207,7 +1208,8 @@ OutputIterator exclusive_scan(
     const std::string& user_code ) // assumes addition of numbers
 {
     typedef typename std::iterator_traits<InputIterator>::value_type iType;
-    iType init = static_cast< iType >( 0 );
+	typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    oType init = static_cast< oType >( 0 );
 	using bolt::cl::detail::scan;
     return detail::scan(
            ctrl, 
