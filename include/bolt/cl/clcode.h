@@ -290,8 +290,8 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
  * \details An example:
  * \code
  *
- *  #include <bolt/cl/transform_iterator.h>
- *
+ *  #include <bolt/cl/iterator/transform_iterator.h>
+ *  #include <bolt/cl/transform.h
  *  // Create a new user-defined type UDD on host and copy to kernel
  *  BOLT_FUNCTOR( UDD,
  *    struct UDD
@@ -322,7 +322,7 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
  *
  * 
  *  // Create a new transform iterator with square as a functor and UDD as a data type.
- *  BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, square, int);
+ *  BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( square, int);
  *
  *  // Create a new transform iterator with square as a functor and UDD as a data type.
  *  BOLT_FUNCTOR(squareUDD,
@@ -339,7 +339,7 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
  *      };
  *  );
  *
- * BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, square, UDD);
+ * BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( square, UDD);
  *
  *  int main( )
  *  {
@@ -391,7 +391,7 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
  * \endcode
  */
 #if defined(WIN32)
-#define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( ITERATOR, FUNCTOR, DATATYPE) \
+#define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( FUNCTOR, DATATYPE) \
             BOLT_CREATE_TYPENAME( bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > );\
             template<> struct ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > > {	static std::vector< std::string > dependencies;\
                                         static void addDependency(std::string s) { dependencies.push_back(s); }; \
@@ -404,7 +404,7 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
                                         static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
                                         __declspec( selectany ) std::vector< std::string > ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > >::dependencies; 
 #else
-#define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( ITERATOR, FUNCTOR, DATATYPE) \
+#define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( FUNCTOR, DATATYPE) \
             BOLT_CREATE_TYPENAME( bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > );\
             template<> struct ClCode< bolt::cl::transform_iterator< FUNCTOR, bolt::cl::device_vector< DATATYPE >::iterator > > {	static std::vector< std::string > dependencies;\
                                         static void addDependency(std::string s) { dependencies.push_back(s); }; \
@@ -419,11 +419,68 @@ __attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies;
 #endif
 
 /*!
- * \brief A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This macro specializes a template permutation iterator with a new element and index iterator.
- * \detail This is a convenience macro to specialize an iterator for a new type, using the generic template 
- * definition from a previosly defined iterator
- * \param ELEMENT_ITERATOR A template  parameter, such as std::vector without the type specified
- * \param INDEX_ITERATOR A type that has already been registered with the container template definition
+ * \brief A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. 
+ *         This Macro creates a ClCode and TypeName for the permutation iterator.
+ * \detail A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. 
+ *         This Macro creates a ClCode and TypeName for the permutation iterator. Note that the data type 
+ *         associated with the element and index iterators must be declared within the BOLT_FUNCTOR macro.
+ *         Only device vector iterators can be used with permutation iterators. Both the iterators has to be either 
+ *         std iterators or device vector iterators. Combination of the two is not supported.
+ * 
+ * \param ELEMENT_ITERATOR This specifies the iterator for elements
+ * \param INDEX_ITERATOR This specifies the iterator for the index elements
+ * \details An example:
+ * \code
+ *
+ *  #include <bolt/cl/iterator/premutation_iterator.h>
+ *  #include <bolt/cl/transform.h
+ *
+ *  // Create a new user-defined type UDD on host and copy to kernel
+ *  BOLT_FUNCTOR( UDD,
+ *    struct UDD
+ *    {
+ *        int i;
+ *        float f;
+ *        ...
+ *    };
+ *  );
+ *
+ *  // Create a new permutation iterator with both index and element iterators as device_vector iterators for int data type.
+ *  BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( bolt::cl::device_vector<int>::iterator, bolt::cl::device_vector<int>::iterator);
+ *  // Create a new permutation iterator with both index and element iterators as device_vector iterators for UDD data type.
+ *  BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( bolt::cl::device_vector<UDD>::iterator, bolt::cl::device_vector<UDD>::iterator);
+ *  
+ *  // Create a new transform iterator with square as a functor and UDD as a data type.
+
+ *
+ *  int main( )
+ *  {
+ *    ...
+ *    {
+ *       const int length = 1<<10;
+ *       std::vector< int > svIndexVec( length );
+ *       std::vector< int > svElementVec( length );
+ *       std::vector< int > svOutVec( length );
+ *       bolt::BCKND::device_vector< int > dvIndexVec( length );
+ *       bolt::BCKND::device_vector< int > dvElementVec( length );        
+ *       bolt::BCKND::device_vector< int > dvOutVec( length );
+ *
+ *       typedef std::vector< int >::const_iterator                  sv_itr;
+ *       typedef bolt::BCKND::device_vector< int >::iterator         dv_itr;
+ *       typedef bolt::BCKND::permutation_iterator< sv_itr, 
+ *                                                  sv_itr>          sv_perm_itr;
+ *       typedef bolt::BCKND::permutation_iterator< dv_itr, 
+ *                                                  dv_itr>          dv_perm_itr;
+ *
+ *       //Create Iterators
+ *       dv_perm_itr dv_perm_begin (dvElementVec.begin(), dvIndexVec.begin()), dv_perm_end (dvElementVec.end(), dvIndexVec.end());
+ *
+ *       // Generate the inputs for the input vectors svIndexVec, svElementVec, dvIndexVec, dvElementVec.
+ *       // Call the transform routine with permutation iterators
+ *       bolt::cl::transform(dv_perm_begin, dv_perm_end, dvOutVec.begin(), add3);
+ *   }
+ *  }
+ * \endcode
  */
 #if defined(WIN32)
 #define BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( ELEMENT_ITERATOR, INDEX_ITERATOR) \

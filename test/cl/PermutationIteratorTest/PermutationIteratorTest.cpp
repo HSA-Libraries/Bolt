@@ -98,8 +98,8 @@ struct UDD
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD);
 
 /*Create Transform iterators*/
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add_3, int);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add_4, int);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add_3, int);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add_4, int);
 
 BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( bolt::cl::device_vector<int>::iterator, bolt::cl::device_vector<int>::iterator);
 BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( bolt::cl::device_vector<int>::iterator, bolt::cl::constant_iterator<int>);
