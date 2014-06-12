@@ -1,4 +1,55 @@
-//Add License for NVIDIA's thrust
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
+
+***************************************************************************/
+
+/***************************************************************************
+ *  Copyright 2008-2012 NVIDIA Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+
+ ***************************************************************************/
+
+/* template<class T> struct addr_impl_ref
+   is covered under the following copyright and license: */
+
+/***************************************************************************
+ * Copyright (C) 2002 Brad King (brad.king@kitware.com)
+ *                    Douglas Gregor (gregod@cs.rpi.edu)
+ *
+ * Copyright (C) 2002, 2008 Peter Dimov
+ *
+ * Distributed under the Boost Software License, Version 1.0. (See
+ * accompanying file LICENSE_1_0.txt or copy at
+ * http://www.boost.org/LICENSE_1_0.txt)
+ *
+ * For more information, see http://www.boost.org
+ *
+ ***************************************************************************/
+
 
 #ifndef BOLT_TYPE_TRAITS_H
 #define BOLT_TYPE_TRAITS_H
@@ -13,7 +64,7 @@ namespace cl {
             typedef _Tp                           value_type;
             typedef integral_constant<_Tp, __v>   type;
         };
- 
+
         /// typedef for true_type
         typedef integral_constant<bool, true>     true_type;
 
@@ -153,10 +204,10 @@ namespace cl {
                 , T2
                 , T3
                 > almost_type_;
- 
+
          public:
             typedef typename almost_type_::type type;
-        };        
+        };
 
         ////template <bool, typename Then, typename Else>
         ////  struct eval_if
@@ -225,16 +276,16 @@ namespace cl {
         typedef bool_<false> false_;
 
         // is_reference
-        template< typename T > struct is_lvalue_reference 
-            : public integral_constant<bool,false> 
-        { 
-        public:
-        }; 
-        template< typename T > struct is_rvalue_reference 
-            : public integral_constant<bool,false> 
+        template< typename T > struct is_lvalue_reference
+            : public integral_constant<bool,false>
         {
         public:
-        }; 
+        };
+        template< typename T > struct is_rvalue_reference
+            : public integral_constant<bool,false>
+        {
+        public:
+        };
         template <bool b1, bool b2, bool b3 = false, bool b4 = false, bool b5 = false, bool b6 = false, bool b7 = false>
         struct ice_or;
 
@@ -250,7 +301,7 @@ namespace cl {
             static const bool  value = false;
         };
 
-        
+
         template <typename T>
         struct is_reference_impl
         {
@@ -260,14 +311,14 @@ namespace cl {
                    >::value);
         };
 
- 
 
-        template< typename T > struct is_reference 
-            : public integral_constant<bool, is_reference_impl<T>::value> 
-        { 
+
+        template< typename T > struct is_reference
+            : public integral_constant<bool, is_reference_impl<T>::value>
+        {
         public:
-        }; 
-        
+        };
+
         template <class T>
         struct add_reference
         {
