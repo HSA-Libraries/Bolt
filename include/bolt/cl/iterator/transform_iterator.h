@@ -1,19 +1,19 @@
-/***************************************************************************         
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/         
+***************************************************************************/
 
 // (C) Copyright David Abrahams 2002.
 // (C) Copyright Jeremy Siek    2002.
@@ -44,7 +44,7 @@ namespace cl
   template <class UnaryFunction, class Iterator, class Reference = use_default, class Value = use_default>
   class transform_iterator;
 
-  namespace detail 
+  namespace detail
   {
     // Compute the iterator_adaptor instantiation to be used for transform_iterator
     template <class UnaryFunc, class Iterator, class Reference, class Value>
@@ -121,18 +121,18 @@ namespace cl
       : super_t(t.base()), m_f(t.functor())
    { }
 
-    
+
         value_type* getPointer()
         {
             Iterator base_iterator = this->base_reference();
-            return &(*base_iterator); 
-        }    
+            return &(*base_iterator);
+        }
 
         const value_type* getPointer() const
         {
             Iterator base_iterator = this->base_reference();
-            return &(*base_iterator); 
-        }    
+            return &(*base_iterator);
+        }
 
         UnaryFunc functor() const
         { return m_f; }
@@ -144,8 +144,8 @@ namespace cl
             UnaryFunc       m_f;
         };
 
-        /*TODO - RAVI Probably I can acheive this using friend class device_vector. But the problem would be 
-                 multiple defintions of functions like advance()*/        
+        /*TODO - RAVI Probably I can acheive this using friend class device_vector. But the problem would be
+                 multiple defintions of functions like advance()*/
         template<typename Container >
         Container& getContainer( ) const
         {
@@ -163,8 +163,8 @@ namespace cl
         {
             cl_int l_Error = CL_SUCCESS;
             //::cl::Device which_device;
-            //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
-            //TODO - fix the device bits 
+            //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );
+            //TODO - fix the device bits
             cl_uint deviceBits = 32;// = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
             //  Size of index and pointer
             cl_uint szUF = sizeof(UnaryFunc);
@@ -216,13 +216,10 @@ namespace cl
   }
 
    //  This string represents the device side definition of the Transform Iterator template
-    static std::string deviceTransformIteratorTemplate = 
-#if !defined( BOLT_CL_DEVICE_VECTOR_H )
+    static std::string deviceTransformIteratorTemplate =
         bolt::cl::deviceVectorIteratorTemplate +
-#endif
-        std::string("#if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n") +
+        std::string("#if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n#define BOLT_CL_TRANSFORM_ITERATOR \n") +
         STRINGIFY_CODE(
-            #define BOLT_CL_TRANSFORM_ITERATOR \n
             namespace bolt { namespace cl { \n
             template< typename UnaryFunc, typename Iterator > \n
             class transform_iterator \n
@@ -232,10 +229,10 @@ namespace cl
                     typedef typename UnaryFunc::result_type value_type; \n
                     typedef typename Iterator::value_type base_type; \n
                     typedef int size_type; \n
-    
+
                     transform_iterator( size_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                     {} \n
-    
+
                     void init( global base_type* ptr )\n
                     { \n
                         m_Ptr = ptr; \n
@@ -259,7 +256,7 @@ namespace cl
             }; \n
             } } \n
         )
-        +  std::string("#endif \n"); 
+        +  std::string("#endif \n");
 
 } // namespace cl
 } // namespace bolt
