@@ -119,7 +119,7 @@ namespace cl {
                 m_Index = rhs.m_Index;
                 return *this;
             }
-            
+
             value_type* getPointer()
             {
                 return &m_constValue;
@@ -229,9 +229,8 @@ namespace cl {
 
     //  This string represents the device side definition of the constant_iterator template
     static std::string deviceConstantIterator =
-        std::string("#if !defined(BOLT_CL_CONSTANT_ITERATOR) \n") +
+        std::string("#if !defined(BOLT_CL_CONSTANT_ITERATOR) \n#define BOLT_CL_CONSTANT_ITERATOR \n") +
         STRINGIFY_CODE(
-        #define BOLT_CL_CONSTANT_ITERATOR \n
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class constant_iterator \n

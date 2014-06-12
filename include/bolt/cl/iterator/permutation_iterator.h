@@ -46,13 +46,13 @@ namespace cl {
 template< class ElementIterator
         , class IndexIterator>
 class permutation_iterator
-  : public iterator_adaptor< 
+  : public iterator_adaptor<
              permutation_iterator<ElementIterator, IndexIterator>
            , IndexIterator, typename bolt::cl::iterator_traits<ElementIterator>::value_type
            , use_default, typename bolt::cl::iterator_traits<ElementIterator>::reference
            , std::ptrdiff_t>
 {
-  typedef iterator_adaptor< 
+  typedef iterator_adaptor<
             permutation_iterator<ElementIterator, IndexIterator>
           , IndexIterator, typename bolt::cl::iterator_traits<ElementIterator>::value_type
           , use_default, typename bolt::cl::iterator_traits<ElementIterator>::reference
@@ -69,7 +69,7 @@ public:
     typedef std::tuple<value_type *, index_type *>                   tuple;
     permutation_iterator() : m_elt_iter() {}
 
-    explicit permutation_iterator(ElementIterator x, IndexIterator y) 
+    explicit permutation_iterator(ElementIterator x, IndexIterator y)
       : super_t(y), m_elt_iter(x) {}
 
     template<class OtherElementIterator, class OtherIndexIterator>
@@ -83,19 +83,19 @@ public:
 
     index_type* getIndex_pointer ()
     {
-        return &(*(this->base_reference())); 
+        return &(*(this->base_reference()));
     }
 
     value_type* getElement_pointer ()
     {
-        return &(*(this->m_elt_iter)); 
+        return &(*(this->m_elt_iter));
     }
 
     struct Payload
     {
         int m_Index;
         int m_ElementPtr[ 3 ];  //Holds pointer to Element Iterator
-        int m_IndexPtr[ 3 ];    //Holds pointer to Index Iterator 
+        int m_IndexPtr[ 3 ];    //Holds pointer to Index Iterator
     };
 
     const Payload  gpuPayload( ) const
@@ -108,8 +108,8 @@ public:
     {
         cl_int l_Error = CL_SUCCESS;
         //::cl::Device which_device;
-        //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
-        //TODO - fix the device bits 
+        //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );
+        //TODO - fix the device bits
         cl_uint deviceBits = 32;// = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
         //  Size of index and pointer
         difference_type payloadSize = sizeof( int ) + 2*( deviceBits >> 3 );
@@ -142,7 +142,7 @@ public:
 
 
 template <class ElementIterator, class IndexIterator>
-permutation_iterator<ElementIterator, IndexIterator> 
+permutation_iterator<ElementIterator, IndexIterator>
 make_permutation_iterator( ElementIterator e, IndexIterator i )
 {
     return permutation_iterator<ElementIterator, IndexIterator>( e, i );
@@ -150,14 +150,13 @@ make_permutation_iterator( ElementIterator e, IndexIterator i )
 
 
    //  This string represents the device side definition of the Transform Iterator template
-    static std::string devicePermutationIteratorTemplate = 
+    static std::string devicePermutationIteratorTemplate =
 
         bolt::cl::deviceVectorIteratorTemplate +
         bolt::cl::deviceConstantIterator +
         bolt::cl::deviceCountingIterator +
-        std::string("#if !defined(BOLT_CL_PERMUTATION_ITERATOR) \n") +
+        std::string("#if !defined(BOLT_CL_PERMUTATION_ITERATOR) \n#define BOLT_CL_PERMUTATION_ITERATOR \n") +
         STRINGIFY_CODE(
-            #define BOLT_CL_PERMUTATION_ITERATOR \n
             namespace bolt { namespace cl { \n
             template< typename IndexIterator, typename ElementIterator > \n
             class permutation_iterator \n
@@ -171,10 +170,10 @@ make_permutation_iterator( ElementIterator e, IndexIterator i )
                     typedef int size_type; \n
                     typedef value_type* pointer; \n
                     typedef value_type& reference; \n
-    
+
                     permutation_iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                     {} \n
-    
+
                     void init( global value_type* element_ptr, global index_type* index_ptr )\n
                     { \n
                         m_ElementPtr = element_ptr; \n
@@ -197,7 +196,7 @@ make_permutation_iterator( ElementIterator e, IndexIterator i )
             }; \n
             } } \n
         )
-        +  std::string("#endif \n"); 
+        +  std::string("#endif \n");
 
 } // End of namespace cl
 } // End of namespace bolt

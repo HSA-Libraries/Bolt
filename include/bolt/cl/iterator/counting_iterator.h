@@ -77,7 +77,7 @@ namespace cl {
         {
         public:
 
-	    typedef typename boost::iterator_facade< counting_iterator< value_type >, value_type,
+        typedef typename boost::iterator_facade< counting_iterator< value_type >, value_type,
             counting_iterator_tag, value_type, int >::difference_type  difference_type;
             typedef counting_iterator_tag                              iterator_category;
             typedef std::random_access_iterator_tag                    memory_system;
@@ -219,7 +219,7 @@ namespace cl {
                 return sameIndex;
             }
 
-            typename boost::iterator_facade< counting_iterator< value_type >, value_type, 
+            typename boost::iterator_facade< counting_iterator< value_type >, value_type,
             counting_iterator_tag, value_type, int >::reference  dereference( ) const
             {
                 return m_initValue + m_Index;
@@ -232,9 +232,8 @@ namespace cl {
 
     //  This string represents the device side definition of the counting_iterator template
     static std::string deviceCountingIterator =
-        std::string("#if !defined(BOLT_CL_COUNTING_ITERATOR) \n") +
+        std::string("#if !defined(BOLT_CL_COUNTING_ITERATOR) \n#define BOLT_CL_COUNTING_ITERATOR \n") +
         STRINGIFY_CODE(
-        #define BOLT_CL_COUNTING_ITERATOR \n
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class counting_iterator \n
