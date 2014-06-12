@@ -217,7 +217,9 @@ namespace cl
 
    //  This string represents the device side definition of the Transform Iterator template
     static std::string deviceTransformIteratorTemplate = 
+#if !defined( BOLT_CL_DEVICE_VECTOR_H )
         bolt::cl::deviceVectorIteratorTemplate +
+#endif
         std::string("#if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n") +
         STRINGIFY_CODE(
             #define BOLT_CL_TRANSFORM_ITERATOR \n
