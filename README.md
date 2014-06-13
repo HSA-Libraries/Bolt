@@ -63,7 +63,7 @@ The latest Catalyst driver contains the most recent OpenCL runtime. Recommended 
 
 
 
-Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
+Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/opencl-zone/opencl-libraries/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
 
 
 ## Examples
