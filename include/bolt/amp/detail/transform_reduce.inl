@@ -33,8 +33,8 @@
 
 #define _T_REDUCE_STEP(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
-      iType mine = scratch[_IDX];\
-      iType other = scratch[_IDX + _W];\
+      oType mine = scratch[_IDX];\
+      oType other = scratch[_IDX + _W];\
       scratch[_IDX] = binary_op(mine, other); \
     }\
     t_idx.barrier.wait();
@@ -68,7 +68,7 @@ namespace bolt {
 				numTiles = static_cast< int >((szElements/_T_REDUCE_WAVEFRONT_SIZE)>= numTiles?(numTiles):
 									(std::ceil( static_cast< float >( szElements ) / _T_REDUCE_WAVEFRONT_SIZE) ));
 				
-				concurrency::array<iType, 1> result(numTiles);
+				concurrency::array<oType, 1> result(numTiles);
 				concurrency::extent< 1 > inputExtent(length);
 				concurrency::tiled_extent< _T_REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< _T_REDUCE_WAVEFRONT_SIZE >();
 
@@ -89,11 +89,11 @@ namespace bolt {
                     {
 						int gx = t_idx.global[0];
 						int gloId = gx;
-						tile_static iType scratch[_T_REDUCE_WAVEFRONT_SIZE];
+						tile_static oType scratch[_T_REDUCE_WAVEFRONT_SIZE];
 						//  Initialize local data store
 						unsigned int tileIndex = t_idx.local[0];
 
-						iType accumulator;
+						oType accumulator;
 						if (gloId < szElements)
 						{
 							accumulator = transform_op(first[gx]);
@@ -105,7 +105,7 @@ namespace bolt {
 						// length into a length related to the number of workgroups
 						while (gx < szElements)
 						{
-							iType element = transform_op(first[gx]);
+							oType element = transform_op(first[gx]);
 							accumulator = binary_op(accumulator, element);
 							gx += length;
 						}
@@ -137,8 +137,8 @@ namespace bolt {
 
                     });
                      
-					iType acc = static_cast<iType>(init);
-					std::vector<iType> *cpuPointerReduce = new std::vector<iType>(numTiles);
+					oType acc = static_cast<oType>(init);
+					std::vector<oType> *cpuPointerReduce = new std::vector<oType>(numTiles);
 					concurrency::copy(result, (*cpuPointerReduce).begin());
 					for(int i = 0; i < numTiles; ++i)
 					{
