@@ -27,7 +27,6 @@
 
 //#include <iterator>
 #include <type_traits>
-#include <tuple>
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/device_vector.h>
 #include <bolt/cl/iterator/iterator_adaptor.h>
@@ -43,6 +42,57 @@ namespace cl {
       : public fancy_iterator_tag
         {  };
 
+
+      /*! \addtogroup fancy_iterators
+       */
+
+      /*! \addtogroup CL-PermutationIterator
+      *   \ingroup fancy_iterators
+      *   \{
+      */
+
+      /*! permutation_iterator permutes values in a range according to keys.
+       *
+       *
+       *
+       *  \details The following example demonstrates how to use a \p permutation_iterator.
+       *
+       *  \code
+       *  #include <bolt/cl/iterator/permutation_iterator.h>
+       *  #include <bolt/cl/transform.h>
+       *  //For OpenCL, Permutation Iterator Macro should be created using the macro BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR
+       *  //The example here uses two device_vector iterators.
+       *  BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( bolt::cl::device_vector<int>::iterator, bolt::cl::device_vector<int>::iterator);
+       *
+       *  int main() {
+       *    // Create device_vectors
+       *    bolt::cl::device_vector< int > values( 5 );
+       *    bolt::cl::device_vector< int > vecEmpty( 5, 0 );
+       *    bolt::cl::device_vector< int > vecDest( 5, 0 );
+       *    bolt::cl::device_vector< int > index( 5 );
+       *
+       *    // Fill values
+       *    values[ 0 ] = 10 ; values[ 1 ] = 15 ; values[ 2 ] = 20 ;
+       *    values[ 3 ] = 25 ; values[ 4 ] = 30 ;
+       *
+       *    // Fill permutation indices
+       *    index[ 0 ] = 3 ; index[ 1 ] = 2 ; index[ 2 ] = 4 ;
+       *    index[ 3 ] = 0 ; index[ 4 ] = 1 ;
+       *
+       *    bolt::cl::control ctrl = control::getDefault( );
+       *    ...
+       *    bolt::cl::transform( ctrl,
+       *                        bolt::cl::make_permutation_iterator( values.begin( ), index.begin( ) ),
+       *                        bolt::cl::make_permutation_iterator( values.end( ), index.end( ) ),
+       *                        vecEmpty.begin( ),
+       *                        vecDest.begin( ),
+       *                        bolt::cl::plus< int >( ) );
+       *
+       *    // Output:
+       *    // vecDest = { 25, 20, 30, 10, 15 }
+       *  }
+       *  \endcode
+       */
 template< class ElementIterator
         , class IndexIterator>
 class permutation_iterator
@@ -64,9 +114,9 @@ public:
     typedef std::ptrdiff_t                                           difference_type;
     typedef typename bolt::cl::iterator_traits<ElementIterator>::value_type     value_type;
     typedef typename bolt::cl::iterator_traits<ElementIterator>::value_type *   pointer;
-    typedef typename bolt::cl::iterator_traits<ElementIterator>::value_type     index_type;
+    typedef typename bolt::cl::iterator_traits<IndexIterator>::value_type       index_type;
     typedef permutation_iterator_tag                                 iterator_category;
-    typedef std::tuple<value_type *, index_type *>                   tuple;
+
     permutation_iterator() : m_elt_iter() {}
 
     explicit permutation_iterator(ElementIterator x, IndexIterator y)

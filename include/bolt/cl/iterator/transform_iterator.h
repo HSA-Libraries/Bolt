@@ -41,6 +41,104 @@ namespace cl
       : public fancy_iterator_tag
         {  };
 
+      /*! \addtogroup fancy_iterators
+       */
+
+      /*! \addtogroup CL-TransformIterator
+      *   \ingroup fancy_iterators
+      *   \{
+      */
+
+      /*! transform iterator adapts an iterator by modifying the operator* to apply a function object to the 
+       *                     result of dereferencing the iterator and returning the result..
+       *
+       *
+       *
+       *  \details The following example demonstrates how to use a \p transform_iterator.
+       *
+       *  \code
+       *  #include <bolt/cl/iterator/transform_iterator.h>
+       *  #include <bolt/cl/transform.h>
+       *  #include <bolt/cl/functional.h>
+       *  //For OpenCL, Transform Iterator macro should be created using the macro BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR
+       *  //The example here uses a device_vector iterators.
+       *
+       *  BOLT_FUNCTOR(UDD, 
+       *    struct UDD
+       *    {
+       *        int i;
+       *        float f;
+       *  
+       *	    UDD operator = (const int rhs) 
+       *        {
+       *            UDD _result;
+       *            _result.i = i + rhs;
+       *            _result.f = f + (float)rhs;
+       *            return _result;
+       *        }
+       *
+       *	    UDD operator + (const UDD &rhs) const
+       *        {
+       *            UDD _result;
+       *            _result.i = this->i + rhs.i;
+       *            _result.f = this->f + rhs.f;
+       *            return _result;
+       *        }
+       *        UDD()
+       *            : i(0), f(0) { }
+       *        UDD(int _in)
+       *            : i(_in), f((float)(_in+2) ){ }
+       *     };
+       *   );
+       *
+       *
+       *  BOLT_FUNCTOR(UDDadd_3,
+       *      struct UDDadd_3
+       *      {
+       *          UDD operator() (const UDD &x) const
+       *  		  { 
+       *  			UDD temp;
+       *  			temp.i = x.i + 3;
+       *  			temp.f = x.f + 3.0f;
+       *  			return temp; 
+       *  		  }
+       *          typedef UDD result_type;
+       *          //Note that the result_type needs to be defined and should be type-defined to the  
+       *          //return type of operator () overload.
+       *      };
+       *  );
+       *  
+       *  
+       *  
+       *  BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( UDDadd_3, UDD);
+       *  BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD);
+       *  BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, UDD );
+       *  
+       *  int main() {
+       *    // Create device_vectors
+       *    bolt::cl::device_vector< UDD > dvInVec1( 5 );
+       *    bolt::cl::device_vector< UDD > dvInVec2( 5 );
+       *    bolt::cl::device_vector< UDD > dvDestVec( 5, 0 );
+       *    UDDadd_3 add3;
+       *
+       *    typedef bolt::BCKND::transform_iterator< UDDadd_3, bolt::BCKND::device_vector< UDD >::iterator> dv_trf_itr_add3;
+       *    dv_trf_itr_add3 dv_trf_begin (dvInVec1.begin(), add3), dv_trf_end (dvInVec1.end(), add3);
+       *    // Fill values
+       *    dvInVec1[ 0 ] = 10 ; dvInVec1[ 1 ] = 15 ; dvInVec1[ 2 ] = 20 ;
+       *    dvInVec1[ 3 ] = 25 ; dvInVec1[ 4 ] = 30 ;
+       *    dvInVec2[ 0 ] = 10 ; dvInVec2[ 1 ] = 15 ; dvInVec2[ 2 ] = 20 ;
+       *    dvInVec2[ 3 ] = 25 ; dvInVec2[ 4 ] = 30 ;       
+       *
+       *    ...
+       *    bolt::cl::transform(dv_trf_begin,
+       *                        dv_trf_end,
+       *                        dvInVec2.begin( ),
+       *                        dvDestVec.begin( ),
+       *                        bolt::cl::plus< int >( ) );
+       *
+       *  }
+       *  \endcode
+       */
   template <class UnaryFunction, class Iterator, class Reference = use_default, class Value = use_default>
   class transform_iterator;
 
