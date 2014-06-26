@@ -389,9 +389,7 @@ void executeFunctionType(
     {
     case f_merge:
         { 
-           /* for(int i =0;i<input1.size();i++)
-                std::cout<<input1[i]<<" ";
-            std::cout<<"\n";*/
+          
             std::cout <<  functionNames[f_merge] << std::endl;
 #if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);

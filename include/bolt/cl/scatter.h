@@ -31,7 +31,7 @@
 namespace bolt {
     namespace cl {
         
-		/*! \addtogroup algorithmssc
+		/*! \addtogroup algorithms
          */
 
         /*! \addtogroup CL-scatter
