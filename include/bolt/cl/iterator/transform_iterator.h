@@ -1,19 +1,19 @@
-/***************************************************************************         
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/         
+***************************************************************************/
 
 // (C) Copyright David Abrahams 2002.
 // (C) Copyright Jeremy Siek    2002.
@@ -41,10 +41,108 @@ namespace cl
       : public fancy_iterator_tag
         {  };
 
+      /*! \addtogroup fancy_iterators
+       */
+
+      /*! \addtogroup CL-TransformIterator
+      *   \ingroup fancy_iterators
+      *   \{
+      */
+
+      /*! transform iterator adapts an iterator by modifying the operator* to apply a function object to the 
+       *                     result of dereferencing the iterator and returning the result..
+       *
+       *
+       *
+       *  \details The following example demonstrates how to use a \p transform_iterator.
+       *
+       *  \code
+       *  #include <bolt/cl/iterator/transform_iterator.h>
+       *  #include <bolt/cl/transform.h>
+       *  #include <bolt/cl/functional.h>
+       *  //For OpenCL, Transform Iterator macro should be created using the macro BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR
+       *  //The example here uses a device_vector iterators.
+       *
+       *  BOLT_FUNCTOR(UDD, 
+       *    struct UDD
+       *    {
+       *        int i;
+       *        float f;
+       *  
+       *	    UDD operator = (const int rhs) 
+       *        {
+       *            UDD _result;
+       *            _result.i = i + rhs;
+       *            _result.f = f + (float)rhs;
+       *            return _result;
+       *        }
+       *
+       *	    UDD operator + (const UDD &rhs) const
+       *        {
+       *            UDD _result;
+       *            _result.i = this->i + rhs.i;
+       *            _result.f = this->f + rhs.f;
+       *            return _result;
+       *        }
+       *        UDD()
+       *            : i(0), f(0) { }
+       *        UDD(int _in)
+       *            : i(_in), f((float)(_in+2) ){ }
+       *     };
+       *   );
+       *
+       *
+       *  BOLT_FUNCTOR(UDDadd_3,
+       *      struct UDDadd_3
+       *      {
+       *          UDD operator() (const UDD &x) const
+       *  		  { 
+       *  			UDD temp;
+       *  			temp.i = x.i + 3;
+       *  			temp.f = x.f + 3.0f;
+       *  			return temp; 
+       *  		  }
+       *          typedef UDD result_type;
+       *          //Note that the result_type needs to be defined and should be type-defined to the  
+       *          //return type of operator () overload.
+       *      };
+       *  );
+       *  
+       *  
+       *  
+       *  BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( UDDadd_3, UDD);
+       *  BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD);
+       *  BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, UDD );
+       *  
+       *  int main() {
+       *    // Create device_vectors
+       *    bolt::cl::device_vector< UDD > dvInVec1( 5 );
+       *    bolt::cl::device_vector< UDD > dvInVec2( 5 );
+       *    bolt::cl::device_vector< UDD > dvDestVec( 5, 0 );
+       *    UDDadd_3 add3;
+       *
+       *    typedef bolt::BCKND::transform_iterator< UDDadd_3, bolt::BCKND::device_vector< UDD >::iterator> dv_trf_itr_add3;
+       *    dv_trf_itr_add3 dv_trf_begin (dvInVec1.begin(), add3), dv_trf_end (dvInVec1.end(), add3);
+       *    // Fill values
+       *    dvInVec1[ 0 ] = 10 ; dvInVec1[ 1 ] = 15 ; dvInVec1[ 2 ] = 20 ;
+       *    dvInVec1[ 3 ] = 25 ; dvInVec1[ 4 ] = 30 ;
+       *    dvInVec2[ 0 ] = 10 ; dvInVec2[ 1 ] = 15 ; dvInVec2[ 2 ] = 20 ;
+       *    dvInVec2[ 3 ] = 25 ; dvInVec2[ 4 ] = 30 ;       
+       *
+       *    ...
+       *    bolt::cl::transform(dv_trf_begin,
+       *                        dv_trf_end,
+       *                        dvInVec2.begin( ),
+       *                        dvDestVec.begin( ),
+       *                        bolt::cl::plus< int >( ) );
+       *
+       *  }
+       *  \endcode
+       */
   template <class UnaryFunction, class Iterator, class Reference = use_default, class Value = use_default>
   class transform_iterator;
 
-  namespace detail 
+  namespace detail
   {
     // Compute the iterator_adaptor instantiation to be used for transform_iterator
     template <class UnaryFunc, class Iterator, class Reference, class Value>
@@ -121,18 +219,18 @@ namespace cl
       : super_t(t.base()), m_f(t.functor())
    { }
 
-    
+
         value_type* getPointer()
         {
-            typename Iterator base_iterator = this->base_reference();
-            return &(*base_iterator); 
-        }    
+            Iterator base_iterator = this->base_reference();
+            return &(*base_iterator);
+        }
 
         const value_type* getPointer() const
         {
-            typename Iterator base_iterator = this->base_reference();
-            return &(*base_iterator); 
-        }    
+            Iterator base_iterator = this->base_reference();
+            return &(*base_iterator);
+        }
 
         UnaryFunc functor() const
         { return m_f; }
@@ -144,8 +242,8 @@ namespace cl
             UnaryFunc       m_f;
         };
 
-        /*TODO - RAVI Probably I can acheive this using friend class device_vector. But the problem would be 
-                 multiple defintions of functions like advance()*/        
+        /*TODO - RAVI Probably I can acheive this using friend class device_vector. But the problem would be
+                 multiple defintions of functions like advance()*/
         template<typename Container >
         Container& getContainer( ) const
         {
@@ -163,8 +261,8 @@ namespace cl
         {
             cl_int l_Error = CL_SUCCESS;
             //::cl::Device which_device;
-            //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
-            //TODO - fix the device bits 
+            //l_Error  = m_it.getContainer().m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );
+            //TODO - fix the device bits
             cl_uint deviceBits = 32;// = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
             //  Size of index and pointer
             cl_uint szUF = sizeof(UnaryFunc);
@@ -216,11 +314,10 @@ namespace cl
   }
 
    //  This string represents the device side definition of the Transform Iterator template
-    static std::string deviceTransformIteratorTemplate = 
+    static std::string deviceTransformIteratorTemplate =
         bolt::cl::deviceVectorIteratorTemplate +
-        std::string("#if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n") +
+        std::string("#if !defined(BOLT_CL_TRANSFORM_ITERATOR) \n#define BOLT_CL_TRANSFORM_ITERATOR \n") +
         STRINGIFY_CODE(
-            #define BOLT_CL_TRANSFORM_ITERATOR \n
             namespace bolt { namespace cl { \n
             template< typename UnaryFunc, typename Iterator > \n
             class transform_iterator \n
@@ -230,10 +327,10 @@ namespace cl
                     typedef typename UnaryFunc::result_type value_type; \n
                     typedef typename Iterator::value_type base_type; \n
                     typedef int size_type; \n
-    
+
                     transform_iterator( size_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                     {} \n
-    
+
                     void init( global base_type* ptr )\n
                     { \n
                         m_Ptr = ptr; \n
@@ -257,7 +354,7 @@ namespace cl
             }; \n
             } } \n
         )
-        +  std::string("#endif \n"); 
+        +  std::string("#endif \n");
 
 } // namespace cl
 } // namespace bolt

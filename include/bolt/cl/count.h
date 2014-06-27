@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -189,8 +189,7 @@ namespace bolt {
             const EqualityComparable &value,
             const std::string& cl_code="")
         {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(ctl, first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
+            return count_if(ctl, first, last, detail::CountIfEqual<EqualityComparable>(value), CountIfEqual_OclCode + cl_code);
         };
 
         template<typename InputIterator, typename EqualityComparable>
@@ -200,8 +199,7 @@ namespace bolt {
             const EqualityComparable &value,
             const std::string& cl_code="")
         {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
+            return count_if(first, last, detail::CountIfEqual<EqualityComparable>(value), CountIfEqual_OclCode + cl_code);
         };
 
          /*!   \}  */

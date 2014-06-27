@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #include <array>
 #include "bolt/amp/functional.h"
+#include "bolt/amp/iterator/constant_iterator.h"
 #define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 1
 
@@ -1938,6 +1939,38 @@ TEST(AMPTileLimitTest, AMPTileLimitTest)
 	}
 } 
 
+TEST(ScanByKeyEPR392210, constant_iterator)
+{
+    const int length = 1<<10;
+
+    int value = 100;
+    std::vector< int > svInVec1( length );
+    std::vector< int > svInVec2( length );
+    
+    std::vector< int > svOutVec( length );
+    std::vector< int > stlOut( length );
+
+    bolt::amp::device_vector< int > dvInVec1( length );
+    bolt::amp::device_vector< int > dvOutVec( length );
+
+    bolt::amp::constant_iterator<int> constIter1 (value);
+    bolt::amp::constant_iterator<int> constIter2 (10);
+
+    bolt::amp::plus<int> pls;
+    int n = (int) 1 + rand()%10;
+
+    bolt::amp::control ctl;
+    ctl.setForceRunMode( bolt::amp::control::SerialCpu );
+    bolt::amp::inclusive_scan( ctl, constIter1, constIter1 + length, dvOutVec.begin(), pls );
+    
+    std::vector<int> const_vector(length,value);
+    std::partial_sum(const_vector.begin(), const_vector.end(), stlOut.begin(), pls);
+    
+    for(int i =0; i< length; i++)
+    {
+      EXPECT_EQ( dvOutVec[i], stlOut[i]);
+    }
+}
 
 
 int _tmain(int argc, _TCHAR* argv[])

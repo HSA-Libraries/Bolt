@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -67,41 +67,36 @@ namespace detail
 */
 
 template<
-    typename kType,
-    typename vType,
-    typename oType,
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
     typename BinaryPredicate,
     typename BinaryFunction>
-oType*
+OutputIterator
 Serial_inclusive_scan_by_key(
-    kType *firstKey,
-    vType *values,
-    oType *result,
+    InputIterator1 firstKey,
+    InputIterator2 values,
+    OutputIterator result,
     unsigned int  num,
     const BinaryPredicate binary_pred,
     const BinaryFunction binary_op)
 {
-    // do zeroeth element
-    *result = *values; // assign value
-    // scan oneth element and beyond
-    for ( unsigned int i=1; i< num;  i++)
-    {
-        // load keys
-        kType currentKey  = *(firstKey+i);
-        kType previousKey = *(firstKey + i -1);
-        // load value
-        oType currentValue = *(values+i); // convertible
-        oType previousValue = *(result + i - 1);
 
-        // within segment
-        if (binary_pred(currentKey, previousKey))
+    if ( num < 1 ) return result;
+
+    // zeroth element
+    *result = *values;
+
+    // scan oneth element and beyond
+    for ( unsigned int i = 1; i < num;  i++ )
+    {
+        if ( binary_pred( *( firstKey + i ), *( firstKey + ( i - 1 ) ) ) )
         {
-            oType r = binary_op( previousValue, currentValue);
-            *(result+i) = r;
+            *( result + i ) = binary_op( *( result + ( i - 1 ) ), *( values + i ) );
         }
-        else // new segment
+        else
         {
-            *(result + i) = currentValue;
+            *( result + i ) = *( values + i );
         }
     }
 
@@ -109,49 +104,45 @@ Serial_inclusive_scan_by_key(
 }
 
 template<
-    typename kType,
-    typename vType,
-    typename oType,
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
     typename BinaryPredicate,
     typename BinaryFunction,
     typename T>
-oType*
+OutputIterator
 Serial_exclusive_scan_by_key(
-    kType *firstKey,
-    vType *values,
-    oType *result,
+    InputIterator1 firstKey,
+    InputIterator2 values,
+    OutputIterator result,
     unsigned int  num,
     const BinaryPredicate binary_pred,
     const BinaryFunction binary_op,
     const T &init)
 {
-
+    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
     // do zeroeth element
-    //*result = *values; // assign value
+
     oType temp = *values;
-    *result = (vType)init;
+    *result = init;
     // scan oneth element and beyond
     for ( unsigned int i= 1; i<num; i++)
     {
-        // load keys
-        kType currentKey  = *(firstKey + i);
-        kType previousKey = *(firstKey + i - 1);
-
         // load value
         oType currentValue = temp; // convertible
-        oType previousValue = *(result + i - 1);
+        oType previousValue = result [ i - 1];
 
         // within segment
-        if (binary_pred(currentKey,previousKey))
+        if (binary_pred(firstKey [ i ],firstKey [ i - 1 ]))
         {
-            temp = *(values + i);
+            temp = values [ i ];
             oType r = binary_op( previousValue, currentValue);
-            *(result + i) = r;
+            result [ i ] = r;
         }
         else // new segment
         {
-             temp = *(values + i);
-            *(result + i) = (vType)init;
+             temp = values [ i ];
+             result [ i ] = init;
         }
     }
 
@@ -703,12 +694,10 @@ scan_by_key_pick_iterator(
           dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
           #endif
           if(inclusive){
-          Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&(*firstKey),
-                                      &(*firstValue), &(*result), numElements, binary_pred, binary_funct);
+          Serial_inclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct);
        }
        else{
-          Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&(*firstKey),
-                                   &(*firstValue), &(*result), numElements, binary_pred, binary_funct, init);
+          Serial_exclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct, init);
        }
        return result + numElements;
     }
@@ -809,10 +798,10 @@ scan_by_key_pick_iterator(
         bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
         if(inclusive)
-            Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&scanInputkey[ firstKey.m_Index ],
+            Serial_inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],
                                  &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct);
         else
-            Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&scanInputkey[ firstKey.m_Index ],
+            Serial_exclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],
                              &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct, init);
 
         return result + numElements;
@@ -909,12 +898,10 @@ scan_by_key_pick_iterator(
           dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
           #endif
           if(inclusive){
-          Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&(*firstKey),
-                                      &(*firstValue), &(*result), numElements, binary_pred, binary_funct);
+          Serial_inclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct);
        }
        else{
-          Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&(*firstKey),
-                                   &(*firstValue), &(*result), numElements, binary_pred, binary_funct, init);
+          Serial_exclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct, init);
        }
        return result + numElements;
     }

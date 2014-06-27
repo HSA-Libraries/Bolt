@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -55,6 +55,23 @@ struct InRange {
 
   bool operator() (const T& value) {
     return (value >= _low) && (value <= _high) ;
+  };
+
+  T _low;
+  T _high;
+};
+);
+BOLT_TEMPLATE_FUNCTOR4(NOTInRange,int,float,double,long long,
+template<typename T>
+// Functor for range checking.
+struct NOTInRange {
+  NOTInRange (T low, T high) {
+    _low=low;
+    _high=high;
+  };
+
+  bool operator() (const T& value) {
+    return (value < _low) || (value > _high) ;
   };
 
   T _low;
@@ -1112,12 +1129,30 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountifFloatTBB){
   //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
+
 #if(TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P (useStdVectWithDoubleValues, countDoubleValueUsedASKeyInStdVect,
                          ::testing::Values(1, 100, 1000, 10000, 100000));
 INSTANTIATE_TEST_CASE_P (serialFloatValueWithStdVector, testCountIfFloatWithStdVector,
                          ::testing::Values(10, 100, 1000, 10000, 100000));
 #endif
+
+TEST (sanity_count_if_testCountIfIntWithStdVector3, EPR400650_400651){
+	int mySize = 10;
+	std::vector<int> my_vect(mySize);
+
+	for (int i = 0; i < mySize; ++i){
+		my_vect[i]	= rand() % 10 + 1;
+	}
+	bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.setForceRunMode(bolt::cl::control::OpenCL);
+
+	size_t stdCount = std::count_if(my_vect.begin(), my_vect.end(), NOTInRange<int>(5,7));
+
+	size_t boltCount = bolt::cl::count_if(ctl, my_vect.begin(), my_vect.end(), NOTInRange<int>(5, 7));
+
+	EXPECT_EQ (stdCount, boltCount);
+}
 
 int main(int argc, char* argv[])
 {

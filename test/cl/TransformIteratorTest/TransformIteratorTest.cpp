@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -334,21 +334,21 @@ struct UDDminus
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD);
 
 /*Create Transform iterators*/
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, square, UDD);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add_3, int);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add_4, int);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add_0, int);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, UDDadd_3, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( square, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add_3, int);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add_4, int);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add_0, int);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( UDDadd_3, UDD);
 
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, squareUDD_result_int, UDD);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, cubeUDD_result_int, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( squareUDD_result_int, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( cubeUDD_result_int, UDD);
 
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, squareUDD_result_float, UDD);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, squareUDD_resultUDD, UDD);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, cubeUDD_resultUDD, UDD);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, cubeUDD, UDD);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add3UDD_resultUDD, UDD);
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add4UDD_resultUDD, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( squareUDD_result_float, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( squareUDD_resultUDD, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( cubeUDD_resultUDD, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( cubeUDD, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add3UDD_resultUDD, UDD);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add4UDD_resultUDD, UDD);
 
 
 BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::negate, float, UDD );
@@ -632,7 +632,7 @@ void Serial_gather_if (InputIterator1 map_first,
     }
 }
 
-
+#if 1
 TEST( TransformIterator, FirstTest)
 {
     {
@@ -1217,7 +1217,6 @@ TEST( TransformIterator, BinaryTransformUDDRoutine)
     }
 }
 
-
 TEST( TransformIterator, InclusiveTransformScanRoutine)
 {
     {
@@ -1624,7 +1623,6 @@ TEST( TransformIterator, ExclusiveTransformScanUDDRoutine)
     }
 }
 
-
 TEST( TransformIterator, ReduceRoutine)
 {
     {
@@ -1892,7 +1890,7 @@ TEST( TransformIterator, ReduceUDDRoutine)
         global_id = 0; // Reset the global id counter
     }
 }
-#if 0
+
 TEST( TransformIterator, TransformReduceRoutine)
 {
     {
@@ -2099,7 +2097,6 @@ TEST( TransformIterator, TransformReduceUDDRoutine)
     }
 }
 
-
 #if 0
 TEST( TransformIterator, CopyRoutine)
 {
@@ -2184,7 +2181,6 @@ TEST( TransformIterator, CopyRoutine)
     }
 }
 #endif
-
 
 TEST( TransformIterator, CountRoutine)
 {
@@ -2613,7 +2609,6 @@ TEST( TransformIterator, InnerProductUDDRoutine)
         global_id = 0; // Reset the global id counter
     }
 }
-
 
 TEST( TransformIterator, ScatterRoutine)
 {
@@ -4355,8 +4350,6 @@ TEST( TransformIterator, GatherIfUDDRoutine)
     }
  }
 
-
-
 TEST( TransformIterator, ReduceByKeyRoutine)
 {
     {
@@ -4974,7 +4967,6 @@ TEST( TransformIterator, InclusiveScanbykeyRoutine)
     }
 }
 
-
 TEST( TransformIterator, UDDInclusiveScanRoutine)
 {  
         const int length = 10;
@@ -5092,7 +5084,6 @@ TEST( TransformIterator, UDDInclusiveScanRoutine)
         }
         global_id = 0; // Reset the global id counter
 }
-
 
 TEST( TransformIterator, UDDInclusiveScanbykeyRoutine)
 {
@@ -5239,7 +5230,7 @@ TEST( TransformIterator, UDDInclusiveScanbykeyRoutine)
         global_id = 0; // Reset the global id counter
     }
 }
-
+#endif
 
 //BUGS
 
@@ -5264,7 +5255,6 @@ struct UDD_trans
 			int a = 0;
 			temp.i =  a++;
 			return temp ;
-			//return get_global_id(0); 
 		}
     
 };
@@ -5281,12 +5271,9 @@ BOLT_FUNCTOR(add_UDD,
 
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD_trans);
 
-BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( bolt::cl::transform_iterator, add_UDD, UDD_trans);
+BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( add_UDD, UDD_trans);
 
-
-
-
-TEST (TransformIterator, BUG399572)
+TEST(TransformIterator, BUG399572)
 {
 	int length = 5;
 
@@ -5380,9 +5367,7 @@ TEST (TransformIterator, BUG399572)
 
 }
 
-
-
-TEST(transform_iterator, BUG400107)
+TEST(TransformIterator, BUG400107)
 {
 //	int length =  1<<20;
 	int length =  5;
@@ -5450,8 +5435,7 @@ TEST(transform_iterator, BUG400107)
 	  
 }
 
-
-TEST (transform_iterator, BUG400103){
+TEST(TransformIterator, BUG400103){
 	bolt::cl::square<int> sqInt; 
 	bolt::cl::plus<int> plInt; 
 	int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10}; 
@@ -5464,7 +5448,7 @@ TEST (transform_iterator, BUG400103){
 	}
 }
 
-TEST (transform_iterator, BUG400294){
+TEST(TransformIterator, BUG400294){
  const int N = 7;
   int A[N] = {1, 3, 3, 3, 2, 2, 1}; // input keys
   int B[N] = {9, 8, 7, 6, 5, 4, 3}; // input values
@@ -5482,7 +5466,7 @@ TEST (transform_iterator, BUG400294){
   int D_exp[N] = {9, 21, 9, 3};
 }
 
-TEST ( transform_iterator, BUG400110)
+TEST(TransformIterator, BUG400110)
 {
 //	int length =  1<<20;
 	int length =  5;
@@ -5579,7 +5563,7 @@ TEST ( transform_iterator, BUG400110)
 	}
 }
 
-TEST (transform_iterator, BUG400109){
+TEST(TransformIterator, BUG400109){
 
     int length =  1<<8;
     
@@ -5650,7 +5634,46 @@ TEST (transform_iterator, BUG400109){
     EXPECT_EQ( dv_result, expected_result);
 			       
 }
-#endif
+
+TEST(TransformIterator, BUG400709)
+{
+    int length =  (1<<10) + 13;
+    
+    std::vector< UDD_trans > svInVec( length );
+    std::vector< int > svOutVec( length );
+    std::vector< int > stlOut(length);
+
+    bolt::cl::device_vector< UDD_trans > dvInVec( length );
+
+    add_UDD add1;
+    UDD_trans gen_udd(51) ;
+
+    // ADD
+    bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::iterator>        sv_trf_begin (svInVec.begin(), add1) ;
+    bolt::cl::transform_iterator< add_UDD, std::vector< UDD_trans >::iterator>        sv_trf_end   (svInVec.end(),   add1) ;
+
+    bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  dv_trf_begin (dvInVec.begin(), add1) ;
+    bolt::cl::transform_iterator< add_UDD, bolt::cl::device_vector< UDD_trans >::iterator>  dv_trf_end   (dvInVec.end(),   add1) ;
+
+    global_id = 0;
+    std::generate(svInVec.begin(), svInVec.end(), gen_udd);
+
+    global_id = 0;
+    bolt::cl::generate(dvInVec.begin(), dvInVec.end(), gen_udd);
+
+    bolt::cl::control ctrl = bolt::cl::control::getDefault();
+
+    global_id = 0;
+
+    bolt::cl::iterator_traits<bolt::cl::device_vector<UDD_trans>::iterator>::difference_type sv_result = bolt::cl::count( sv_trf_begin, sv_trf_end, 3);
+    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type dv_result = bolt::cl::count(ctrl, dv_trf_begin, dv_trf_end, 3);
+
+    //STD_COUNT
+    std::iterator_traits<std::vector<UDD_trans>::iterator>::difference_type expected_result = std::count(sv_trf_begin, sv_trf_end, 3);
+
+	EXPECT_EQ( sv_result, expected_result );
+    EXPECT_EQ( dv_result, expected_result);
+}
 
 /* /brief List of possible tests
  * Two input transform with first input a constant iterator

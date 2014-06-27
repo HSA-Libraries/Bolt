@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -32,7 +32,7 @@ if( NOT DEFINED Bolt_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_MINOR )
-   set( Bolt_VERSION_MINOR 1 )
+   set( Bolt_VERSION_MINOR 2 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_PATCH )
@@ -153,8 +153,18 @@ elseif( ( C_COMPILER_NAME STREQUAL "gcc" ) OR ( CMAKE_COMPILER_IS_GNUCXX GREATER
     if( Bolt_BUILD64 )
         set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
-        set( CMAKE_EXE_LINKER_FLAGS " -m64 ${CMAKE_EXE_LINKER_FLAGS}" )
-        set( CMAKE_SHARED_LINKER_FLAGS "-lpthread -m64 ${CMAKE_SHARED_LINKER_FLAGS}" )
+        execute_process(COMMAND lsb_release -irc 
+	OUTPUT_VARIABLE suse-ubuntu)
+	STRING(FIND $(suse_ubuntu) "Ubuntu" pos)
+	SET(com -1)
+	if($(pos) EQUAL com)
+		set( CMAKE_SHARED_LINKER_FLAGS "-m64 ${CMAKE_SHARED_LINKER_FLAGS}" )
+		set( CMAKE_EXE_LINKER_FLAGS "-lpthread -m64 ${CMAKE_EXE_LINKER_FLAGS}" )
+	else()
+		set( CMAKE_EXE_LINKER_FLAGS " -m64 ${CMAKE_EXE_LINKER_FLAGS}" )
+		set( CMAKE_SHARED_LINKER_FLAGS "-lpthread -m64 ${CMAKE_SHARED_LINKER_FLAGS}" )
+	endif()
+
     else( )
         set( CMAKE_CXX_FLAGS "-m32 -msse2 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m32 -msse2 ${CMAKE_C_FLAGS}" )
