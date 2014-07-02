@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -716,7 +716,7 @@ TEST( Vector, wdSpecifyingSize )
     bolt::BCKND::device_vector<int> myIntDevVect;
     int myIntArray[10] = {2, 3, 5, 6, 76, 5, 8, -10, 30, 34};
 
-    for (int i = 0; i < mySize; ++i){
+	for (size_t i = 0; i < mySize; ++i){
         myIntDevVect.push_back(myIntArray[i]);
     }
 
@@ -1333,7 +1333,19 @@ TEST_P(FillUDDIntVector, VariableAssignInt)
 
 INSTANTIATE_TEST_CASE_P( VariableSizeResizeWithValues, FillUDDIntVector, ::testing::Range( 0, 1048576, 4096 ) );
 
+TEST(BUG, BUG398791)
+{
+    int length = 100;
+    bolt::cl::device_vector<int> dv1(length);
+    bolt::cl::device_vector<int> dv2(length);
 
+    for(int i=0; i<length; i++)
+    {
+        dv1[i] = i;
+        dv2[i] = dv1[i];
+        EXPECT_EQ( dv2[i], i );
+    }
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

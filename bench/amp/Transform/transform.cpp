@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -74,7 +74,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 	try
 	{
 		// Declare the supported options.
-		po::options_description desc( "AMP Scan command line options" );
+		po::options_description desc( "AMP Transform command line options" );
 		desc.add_options()
 			( "help,h",			"produces this help message" )
 			( "version,v",		"Print queryable version information from the Bolt AMP library" )
@@ -174,7 +174,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 	double scanGB = ( output.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
 
 	bolt::tout << std::left;
-	bolt::tout << std::setw( colWidth ) << _T( "Scan profile: " ) << _T( "[" ) << numLoops-pruned << _T( "] samples" ) << std::endl;
+	bolt::tout << std::setw( colWidth ) << _T( "Transform profile: " ) << _T( "[" ) << numLoops-pruned << _T( "] samples" ) << std::endl;
 	bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << scanGB << std::endl;
 	bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << scanTime << std::endl;
 	bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << scanGB / scanTime << std::endl;

@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 #define BOLT_BTBB_REDUCE_INL
 #pragma once
 
+//#include <thread>
+#include "tbb/partitioner.h"
 
 namespace bolt{
     namespace btbb {
@@ -43,7 +45,8 @@ namespace bolt{
                 Reduce( Reduce& s, tbb::split ) : flag(true), op(s.op) {}
                 void operator()( const tbb::blocked_range<InputIterator>& r ) {
                     T temp = value;
-                    for( InputIterator a=r.begin(); a!=r.end(); ++a ) {
+					InputIterator rend = r.end();
+                    for( InputIterator a=r.begin(); a!=rend; ++a ) {
                       if(flag){
                         temp = (T) *a;
                         flag = false;
@@ -67,9 +70,16 @@ namespace bolt{
             BinaryFunction binary_op)
         {
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+            //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+			//Gets the number of concurrent threads supported by the underlying platform
+            //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+			unsigned int concurentThreadsSupported = tbb::task_scheduler_init::default_num_threads();
+			//Explicitly setting the number of threads to spawn
+            tbb::task_scheduler_init((int) concurentThreadsSupported);
+
             Reduce<T,InputIterator, BinaryFunction> reduce_op(binary_op, init);
-            tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), reduce_op );
+            tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last, 100000), reduce_op, tbb::auto_partitioner() );
             return reduce_op.value;
         }
 

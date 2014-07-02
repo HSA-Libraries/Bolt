@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@
 #define BOLT_CL_SORT_BY_KEY_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <string>
-#include <iostream>
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
 /*! \file bolt/cl/sort_by_key.h
     \brief Returns the sorted result of all the elements in input based on equivalent keys.
@@ -44,7 +42,7 @@ namespace bolt {
         *   for a detailed description.
         */
 
-        /*! \addtogroup CL-sort
+        /*! \addtogroup CL-sort_by_key
         *   \ingroup sorting
         *   \{
         */

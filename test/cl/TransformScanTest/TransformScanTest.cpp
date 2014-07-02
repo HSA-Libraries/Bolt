@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -21,13 +21,16 @@
 
 //#include "bolt/cl/scan.h"
 #include "bolt/cl/transform_scan.h"
+#include "bolt/cl/functional.h"
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
+#include "test_common.h"
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
 #define TEST_DOUBLE 1
-
+#define TEST_LARGE_BUFFERS 0
+	
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
@@ -301,13 +304,13 @@ struct MixM3
         uddtM3 _result;
         _result.a = lhs.a^rhs.a;
         _result.b = lhs.b+rhs.b;
-        _result.c = lhs.c*rhs.c;
+        _result.c = lhs.c+rhs.c;
         return _result;
     };
 };
 );
 uddtM3 identityMixM3 = { 0, 0.f, 0.0 };
-uddtM3 initialMixM3  = { 2, 3.f, 1.000001 };
+uddtM3 initialMixM3  = { 1, 1.f, 1.000000 };
 
 BOLT_FUNCTOR(NegateM3,
     struct NegateM3
@@ -384,109 +387,6 @@ Serial_scan(
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-};
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-};
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-/*
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc)
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-
-//  The following cmpArrays verify the correctness of std::vectors's
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-#if TEST_DOUBLE
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-#endif
-*/
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
 
 class scanStdVectorWithIters:public ::testing::TestWithParam<int>
 {
@@ -785,7 +685,7 @@ INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScanMultiCore, ::tes
 TEST(NegateScanUserDefined, IncAddInt2)
 {
     //setup containers
-    int length = (1<<16)+23;
+    int length = (1<<15)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
@@ -809,7 +709,7 @@ TEST(NegateScanUserDefined, IncAddInt2)
 TEST(NegateScanUserDefined, SerialIncAddInt2)
 {
     //setup containers
-    int length = (1<<16)+23;
+    int length = (1<<15)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
@@ -837,7 +737,7 @@ TEST(NegateScanUserDefined, SerialIncAddInt2)
 TEST(NegateScanUserDefined, MultiCoreIncAddInt2)
 {
     //setup containers
-    int length = (1<<16)+23;
+    int length = (1<<15)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
@@ -866,8 +766,13 @@ TEST(TransformScanCLtypeTest, ExclTestLong)
 {
 	cl_long n = 1 + rand()%3;
 
-    //setup containers
-    int length = (1<<14);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::negate< cl_long > nM3;
 
 	std::vector< cl_long > refInput( length);
@@ -889,8 +794,13 @@ TEST(TransformScanCLtypeTest, ExclTestLong)
 TEST(TransformScanCLtypeTest, InclTestLong)
 {
 
-    //setup containers
-    int length = (1<<14);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::negate< cl_long > nM3;
 
     std::vector< cl_long > refInput( length);
@@ -917,8 +827,13 @@ TEST(TransformScanCLtypeTest, ExclTestULong)
 {
 	cl_ulong n = 1 + rand()%3;
 
-    //setup containers
-    int length = (1<<14);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::square< cl_ulong > nM3;
    
 	std::vector< cl_ulong > refInput( length);
@@ -940,8 +855,13 @@ TEST(TransformScanCLtypeTest, ExclTestULong)
 TEST(TransformScanCLtypeTest, InclTestULong)
 {
 
-    //setup containers
-    int length = (1<<14);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::square< cl_ulong > nM3;
 
     std::vector< cl_ulong > refInput( length);
@@ -970,7 +890,13 @@ TEST(TransformScanCLtypeTest, ExclTestShort)
 	cl_short n = 1 + rand()%3;
 
     //setup containers
-    int length = (1<<14);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::negate< cl_short > nM3;
   
 	std::vector< cl_short > refInput( length);
@@ -994,10 +920,15 @@ TEST(TransformScanCLtypeTest, ExclTestShort)
 
 TEST(TransformScanCLtypeTest, InclTestShort)
 {
-	
 
     //setup containers
-    int length = (1<<14);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::negate< cl_short > nM3;
    
 	std::vector< cl_short > refInput( length);
@@ -1025,7 +956,13 @@ TEST(TransformScanCLtypeTest, ExclTestUShort)
 	cl_ushort n = 1 + rand()%3;
 
     //setup containers
-    int length = 1024;
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::square< cl_ushort > nM3;
     
 	std::vector< cl_ushort > refInput( length);
@@ -1057,7 +994,13 @@ TEST(TransformScanCLtypeTest, InclTestUShort)
 {
 
     //setup containers
-    int length = 1024;
+   #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
     bolt::cl::square< unsigned short > nM3;
    
 	std::vector< cl_ushort > refInput( length);
@@ -1086,7 +1029,7 @@ TEST(TransformScanCLtypeTest, InclTestUShort)
 TEST(NegateScanUserDefined, IncMultiplyDouble4)
 {
     //setup containers
-    int length = (1<<16)+11;
+    int length = (1<<15)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
     bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
@@ -1108,7 +1051,7 @@ TEST(NegateScanUserDefined, IncMultiplyDouble4)
 TEST(NegateScanUserDefined, SerialIncMultiplyDouble4)
 {
     //setup containers
-    int length = (1<<16)+11;
+    int length = (1<<15)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
     bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
@@ -1134,7 +1077,7 @@ TEST(NegateScanUserDefined, SerialIncMultiplyDouble4)
 TEST(NegateScanUserDefined, MultiCoreIncMultiplyDouble4)
 {
     //setup containers
-    int length = (1<<16)+11;
+    int length = (1<<15)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
     bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
@@ -1161,7 +1104,7 @@ TEST(NegateScanUserDefined, MultiCoreIncMultiplyDouble4)
 TEST(NegateScanUserDefined, IncMixedM3)
 {
     //setup containers
-    int length = (1<<16)+57;
+    int length = (1<<15)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
@@ -1183,7 +1126,7 @@ TEST(NegateScanUserDefined, IncMixedM3)
 TEST(NegateScanUserDefined, SerialIncMixedM3)
 {
     //setup containers
-    int length = (1<<16)+57;
+    int length = (1<<15)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
@@ -1209,7 +1152,7 @@ TEST(NegateScanUserDefined, SerialIncMixedM3)
 TEST(NegateScanUserDefined, MultiCoreIncMixedM3)
 {
     //setup containers
-    int length = (1<<16)+57;
+    int length = (1<<15)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
@@ -1238,7 +1181,7 @@ TEST(NegateScanUserDefined, MultiCoreIncMixedM3)
 TEST(NegateScanUserDefined, ExclAddInt2)
 {
     //setup containers
-    int length = (1<<16)+23;
+    int length = (1<<15)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
@@ -1262,7 +1205,7 @@ TEST(NegateScanUserDefined, ExclAddInt2)
 TEST(NegateScanUserDefined, SerialExclAddInt2)
 {
     //setup containers
-    int length = (1<<16)+23;
+    int length = (1<<15)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
@@ -1290,7 +1233,7 @@ TEST(NegateScanUserDefined, SerialExclAddInt2)
 TEST(NegateScanUserDefined, MultiCoreExclAddInt2)
 {
     //setup containers
-    int length = (1<<16)+23;
+    int length = (1<<15)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
@@ -1319,7 +1262,7 @@ TEST(NegateScanUserDefined, MultiCoreExclAddInt2)
 TEST(NegateScanUserDefined, ExclMultiplyDouble4)
 {
     //setup containers
-    int length = (1<<16)+11;
+    int length = (1<<15)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
     bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
@@ -1344,7 +1287,7 @@ TEST(NegateScanUserDefined, ExclMultiplyDouble4)
 TEST(NegateScanUserDefined, SerialExclMultiplyDouble4)
 {
     //setup containers
-    int length = (1<<16)+11;
+    int length = (1<<15)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
     bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
@@ -1372,7 +1315,7 @@ TEST(NegateScanUserDefined, SerialExclMultiplyDouble4)
 TEST(NegateScanUserDefined, MultiCoreExclMultiplyDouble4)
 {
     //setup containers
-    int length = (1<<16)+11;
+    int length = (1<<15)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
     bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
@@ -1401,7 +1344,7 @@ TEST(NegateScanUserDefined, MultiCoreExclMultiplyDouble4)
 TEST(NegateScanUserDefined, ExclMixedM3)
 {
     //setup containers
-    int length = (1<<16)+57;
+    int length = (1<<15)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
@@ -1422,7 +1365,7 @@ TEST(NegateScanUserDefined, ExclMixedM3)
 TEST(NegateScanUserDefined, SerialExclMixedM3)
 {
     //setup containers
-    int length = (1<<16)+57;
+    int length = (1<<15)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
@@ -1445,7 +1388,7 @@ TEST(NegateScanUserDefined, SerialExclMixedM3)
 TEST(NegateScanUserDefined, MultiCoreExclMixedM3)
 {
     //setup containers
-    int length = (1<<16)+57;
+    int length = (1<<15)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
@@ -1469,7 +1412,12 @@ TEST(NegateScanUserDefined, MultiCoreExclMixedM3)
 TEST(NegateScanUserDefined, SerialExclOffsetTest)
 {
     //setup containers
-    int length = (1<<15);
+   #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
@@ -1500,9 +1448,12 @@ TEST(NegateScanUserDefined, SerialExclOffsetTest)
 
 TEST(NegateScanFloatDefined, CLExclOffsetTestFloat)
 {
-    //setup containers1ost
-    int length = (1<<18);
-
+	#if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
 
     bolt::cl::device_vector< float > input( length, 1.f );// refInput[0] = identityMixM3;
     //bolt::cl::device_vector< float > output( length,0.f);
@@ -1536,8 +1487,13 @@ TEST(NegateScanFloatDefined, CLExclOffsetTestFloat)
 
 TEST(NegateScanUserDefined, CLExclOffsetTest)
 {
-    //setup containers
-    int length = (1<<16);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
@@ -1553,6 +1509,8 @@ TEST(NegateScanUserDefined, CLExclOffsetTest)
     //cmpArrays(refOutput, output);
 
 	bolt::cl::transform_exclusive_scan( input.begin()+(length/2), input.end()-(length/4), input.begin()+(length/2), nM3, identityMixM3, mM3 );
+
+	
     std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
     Serial_scan<uddtM3, MixM3, uddtM3>(&refInput[(length/2)], &refInput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
     // compare results
@@ -1561,8 +1519,13 @@ TEST(NegateScanUserDefined, CLExclOffsetTest)
 
 TEST(NegateScanUserDefined, MulticoreInclOffsetTest)
 {
-    //setup containers
-    int length = (1<<16);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
@@ -1590,8 +1553,13 @@ TEST(NegateScanUserDefined, MulticoreInclOffsetTest)
 
 TEST(NegateScanUserDefined, CLInclOffsetTest)
 {
-    //setup containers
-    int length = (1<<16);
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
 //    bolt::cl::negate< uddtM3 > nM3;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
     //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
@@ -1615,8 +1583,13 @@ TEST(NegateScanUserDefined, CLInclOffsetTest)
 
 TEST(Mixed, IncAddInt2)
 {
-    //setup containers
-    int length = (1<<16)+23;
+	#if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
     bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
@@ -1639,8 +1612,13 @@ TEST(Mixed, IncAddInt2)
 
 TEST(Mixed, SerialIncAddInt2)
 {
-    //setup containers
-    int length = (1<<16)+23;
+  	#if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
     bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
@@ -1668,8 +1646,13 @@ TEST(Mixed, SerialIncAddInt2)
 
 TEST(Mixed, MultiCoreIncAddInt2)
 {
-    //setup containers
-    int length = (1<<16)+23;
+    #if TEST_LARGE_BUFFERS
+        //setup containers1ost
+        int length = 33554432; //2^25
+    #else
+	    int length = 32768;//2^15
+    #endif
+
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
     bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );

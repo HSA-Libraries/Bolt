@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -21,11 +21,11 @@
 
 
 
-
-#include "bolt/unicode.h"
 #include "bolt/cl/device_vector.h"
+#include "bolt/unicode.h"
 #include <array>
 #include <gtest/gtest.h>
+
 #if !defined( BOLT_TEST_MAX_FAILURES )
     #define BOLT_TEST_MAX_FAILURES 8
 #endif
@@ -66,7 +66,7 @@ template< typename T1,typename T2>
         typename bolt::cl::device_vector<T2>::pointer copySrc =  calc.data( );
 
         BOLT_TEST_RESET_FAILURES
-        for( size_t i = 0; i < ref.size(); ++i )
+        for( typename T1::size_type i = 0; i < ref.size(); ++i )
         {
             BOLT_TEST_INCREMENT_FAILURES(ref,copySrc)
             EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
@@ -80,7 +80,7 @@ template< typename T1,typename T2 >
 {
 
         BOLT_TEST_RESET_FAILURES
-        for( size_t i = 0; i < ref.size(); ++i )
+        for( int i = 0; i < static_cast<int>(ref.size() ); ++i )
         {
             BOLT_TEST_INCREMENT_FAILURES(ref,calc)
             EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
@@ -98,7 +98,7 @@ cmpArrays( const T1 &ref, typename bolt::cl::device_vector<T2> &calc, size_t N )
         typename bolt::cl::device_vector<T2>::pointer copySrc =  calc.data( );
 
         BOLT_TEST_RESET_FAILURES
-        for( size_t i = 0; i < N; ++i )
+        for( int i = 0; i < static_cast<int>( N ); ++i )
         {
             BOLT_TEST_INCREMENT_FAILURES(ref,copySrc)
             EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
@@ -111,7 +111,7 @@ template< typename T1,typename T2 >
 ::testing::AssertionResult   cmpArrays( const T1 &ref,  T2 &calc, size_t N )
 {
         BOLT_TEST_RESET_FAILURES
-        for( size_t i = 0; i < N; ++i )
+        for( int i = 0; i < static_cast<int>( N ); ++i )
         {
             BOLT_TEST_INCREMENT_FAILURES(ref,calc)
             EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;

@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ void gather(InputIterator1 mapfirst,
                  tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
                   {
                     for(size_t iter = r.begin(); iter!=r.end(); iter++)
-                        *(result + (int)iter) = * (input + mapfirst[(int)iter]); 
+                        *(result + (int)iter) = * (input + (int)mapfirst[(int)iter]); 
                   });
              }
 

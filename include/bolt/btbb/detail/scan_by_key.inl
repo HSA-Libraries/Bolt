@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 #if !defined( BOLT_BTBB_SCAN_BY_KEY_INL )
 #define BOLT_BTBB_SCAN_BY_KEY_INL
 #pragma once
+
+//#include <thread>
+#include "tbb/partitioner.h"
 
 namespace bolt
 {
@@ -58,7 +61,8 @@ namespace bolt
               unsigned int i;
 			  strt_indx = r.begin();
               end_indx = r.end();
-			  for( i=r.begin(); i<r.end(); ++i ) {
+			  unsigned int rend = r.end();
+			  for( i=r.begin(); i<rend; ++i ) {
 				 if( Tag::is_final_scan() ) {
 					 if(!inclusive){
 						  if( i==0){
@@ -66,7 +70,7 @@ namespace bolt
 							 *(result + i) = start;
 							 temp = binary_op(start, temp1);
 						  }
-						  else if(binary_pred(*(first_key+i), *(first_key +i- 1))){
+						  else if(binary_pred( first_key[ i ], first_key[ i - 1 ] )){
 							 temp1 = *(first_value + i);
 							 *(result + i) = temp;
 							 temp = binary_op(temp, temp1);
@@ -82,7 +86,7 @@ namespace bolt
 					 else if(i == 0 ){
 						temp = *(first_value+i);
 					 }
-					 else if(binary_pred(*(first_key+i), *(first_key +i- 1))) {
+					 else if(binary_pred(first_key[ i ], first_key[ i - 1 ])) {
 						temp = binary_op(temp, *(first_value+i));
 					 }
 					 else{
@@ -95,7 +99,7 @@ namespace bolt
 					 temp = *(first_value+i);
 					 pre_flag = false;
 				 }
-				 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
+				 else if(binary_pred(first_key[ i ], first_key[ i - 1 ]))
 					 temp = binary_op(temp, *(first_value+i));
 				 else if (!inclusive){
 					 temp = binary_op(start, *(first_value+i));
@@ -106,7 +110,7 @@ namespace bolt
 					 flag = true; 
 				 }
 			 }
-			 if(i<numElements && !binary_pred(*(first_key+i-1), *(first_key +i ))){
+			 if(i<numElements && !binary_pred(first_key[ i - 1 ], first_key[ i ])){
 				next_flag = true;     // this will check the key change at boundaries
 			 }
 			 sum = temp;
@@ -153,12 +157,20 @@ inclusive_scan_by_key(
 	BinaryFunction  binary_funct)
 	{
 		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-		typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
+		typedef typename std::iterator_traits< OutputIterator >::value_type oType;
 
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,vType> tbbkey_scan((InputIterator1 &)first1,
-			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, true, vType());
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
+		//tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+		//Gets the number of concurrent threads supported by the underlying platform
+        //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+		unsigned int concurentThreadsSupported = tbb::task_scheduler_init::default_num_threads();
+	    //Explicitly setting the number of threads to spawn
+        tbb::task_scheduler_init((int) concurentThreadsSupported);
+
+		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,oType> tbbkey_scan((InputIterator1 &)first1,
+			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, true, oType());
+		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 )), 6250), tbbkey_scan, tbb::simple_partitioner());
+
 		return result + numElements;
 
 	}
@@ -219,10 +231,17 @@ exclusive_scan_by_key(
 	{
 		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
 
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+		//tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+		//Gets the number of concurrent threads supported by the underlying platform
+        //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+		unsigned int concurentThreadsSupported = tbb::task_scheduler_init::default_num_threads();
+	    //Explicitly setting the number of threads to spawn
+        tbb::task_scheduler_init((int) concurentThreadsSupported);
+
 		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,T> tbbkey_scan((InputIterator1 &)first1,
 			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, false, init);
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
+		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 )), 6250), tbbkey_scan, tbb::simple_partitioner());
 		return result + numElements;
 
 	}

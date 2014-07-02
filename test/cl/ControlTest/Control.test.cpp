@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -132,7 +132,7 @@ template< typename T >
 template< typename S, typename B >
 ::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
 {
-    for( size_t i = 0; i < ref.size( ); ++i )
+    for( int i = 0; i < static_cast<int> (ref.size( ) ); ++i )
     {
         EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
     }

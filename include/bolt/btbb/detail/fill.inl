@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -38,12 +38,13 @@ namespace bolt{
 
                 void operator()( ForwardIterator first,  ForwardIterator last, T val)
                 {
-                    
+                    typedef typename std::iterator_traits<ForwardIterator>::value_type iType;
+
                     tbb::parallel_for(  tbb::blocked_range<ForwardIterator>(first, last) ,
                         [=] (const tbb::blocked_range<ForwardIterator> &r) -> void
                         {
                               for(ForwardIterator a = r.begin(); a!=r.end(); a++)
-                                 *a = val;
+                                 *a = (iType) val;
                         });
                 }
 

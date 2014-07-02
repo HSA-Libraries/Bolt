@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -32,7 +32,7 @@ if( NOT DEFINED Bolt.SuperBuild_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_MINOR )
-    set( Bolt.SuperBuild_VERSION_MINOR 1 )
+    set( Bolt.SuperBuild_VERSION_MINOR 2 )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_PATCH )
@@ -90,6 +90,7 @@ option( BUILD_TBB "Install TBB as an external dependency" OFF )
 option( BUILD_AMP "Generate projects that use the AMP backend" ${Bolt_Amp_default})
 option( BUILD_OpenCL "Generate projects that use the OpenCL backend" ON )
 option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
+option( BUILD_benchmarks "Build Bench Mark" OFF )
 
 # Comment this out because this does not work yet
 # option( BUILD_Examples "Generate example projects to demonstrate Bolt usage" OFF )
@@ -105,7 +106,7 @@ if( BUILD_Boost )
     set( BOOST_ROOT ${binary_dir} )
     message( STATUS "BOOST_ROOT configured as: " ${BOOST_ROOT} )
     list( APPEND Bolt.Dependencies Boost )
-    list( APPEND Bolt.Cmake.Args -D BUILD_benchmarks=TRUE -D Boost.VERSION=${Boost_VERSION} -D BOOST_ROOT=${BOOST_ROOT} )
+    list( APPEND Bolt.Cmake.Args -D BUILD_benchmarks=${BUILD_benchmarks} -D Boost.VERSION=${Boost_VERSION} -D BOOST_ROOT=${BOOST_ROOT} )
 endif( )
 
 # If the user selects, download, uncompress, and setup Doxygen

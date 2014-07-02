@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -29,8 +29,8 @@ __kernel void perBlockTransformScan(
                 local oValueType* lds,
                 global UnaryFunction* unaryOp,
                 global BinaryFunction* binaryOp,
-                global oValueType* scanBuffer,
-                global oValueType* scanBuffer1,
+                global oValueType* preSumArray,
+                global oValueType* preSumArray1,
                 int exclusive) // do exclusive scan ?
 {
     // 2 thread per element
@@ -44,22 +44,23 @@ __kernel void perBlockTransformScan(
     size_t offset = 1;
 
     oValueType val;
+	uint input_offset = (groId*wgSize)+locId;
 
    // load input into shared memory
-    if(groId*wgSize+locId < vecSize){
-          iValueType inVal = input_iter[groId*wgSize+locId];
+    if(input_offset < vecSize){
+          typename iIterType::value_type  inVal = input_iter[input_offset];
           val = (*unaryOp)(inVal);
           lds[locId] = val;
      }
-     if(groId*wgSize +locId+ (wgSize/2) < vecSize){
-        iValueType inVal = input_iter[ groId*wgSize +locId+ (wgSize/2)];
+     if(input_offset + (wgSize/2) < vecSize){
+        typename iIterType::value_type inVal = input_iter[ input_offset + (wgSize/2)];
         val = (*unaryOp)(inVal);
         lds[locId+(wgSize/2)] = val;
      }
     // Exclusive case
     if(exclusive && gloId == 0)
 	{
-	    iValueType start_val = input_iter[0];
+	    typename iIterType::value_type start_val = input_iter[0];
 		val = (*unaryOp)(start_val); 
 		lds[locId] = (*binaryOp)(identity, val);
     }
@@ -79,8 +80,8 @@ __kernel void perBlockTransformScan(
     barrier( CLK_LOCAL_MEM_FENCE );
     if (locId == 0)
     {
-        scanBuffer[ groId ] = lds[wgSize -1];
-        scanBuffer1[ groId ] = lds[wgSize/2 -1];
+        preSumArray[ groId ] = lds[wgSize -1];
+        preSumArray1[ groId ] = lds[wgSize/2 -1];
     }
 }
 
@@ -91,7 +92,6 @@ __kernel void perBlockTransformScan(
 //__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))
 template< typename Type, typename BinaryFunction >
 __kernel void intraBlockInclusiveScan(
-                global Type* postSumArray,
                 global Type* preSumArray, 
                 const uint vecSize,
                 local Type* lds,
@@ -113,8 +113,6 @@ __kernel void intraBlockInclusiveScan(
         // accumulate zeroth value manually
         offset = 0;
         workSum = preSumArray[mapId+offset];
-        postSumArray[ mapId + offset ] = workSum;
-
         //  Serial accumulation
         for( offset = offset+1; offset < workPerThread; offset += 1 )
         {
@@ -122,7 +120,6 @@ __kernel void intraBlockInclusiveScan(
             {
                 Type y = preSumArray[mapId+offset];
                 workSum = (*binaryOp)( workSum, y );
-                postSumArray[ mapId + offset ] = workSum;
             }
         }
     }
@@ -147,19 +144,33 @@ __kernel void intraBlockInclusiveScan(
         lds[ locId ] = scanSum;
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
-    
     // write final scan from pre-scan and lds scan
-    for( offset = 0; offset < workPerThread; offset += 1 )
+     workSum = preSumArray[mapId];
+     if(locId > 0){
+        Type y = lds[locId-1];
+        workSum = (*binaryOp)(workSum, y);
+        preSumArray[ mapId] = workSum;
+     }
+     else{
+       preSumArray[ mapId] = workSum;
+    }
+
+    for( offset = 1; offset < workPerThread; offset += 1 )
     {
         barrier( CLK_GLOBAL_MEM_FENCE );
-
-        if (mapId < vecSize && locId > 0)
+		if ((mapId + offset) < vecSize && locId > 0)
         {
-            Type y = postSumArray[ mapId + offset ];
-            Type y2 = lds[locId-1];
-            y = (*binaryOp)( y, y2 );
-            postSumArray[ mapId + offset ] = y;
+            Type y  = preSumArray[ mapId + offset ] ;
+            Type y1 = (*binaryOp)(y, workSum);
+            preSumArray[ mapId + offset ] = y1;
+            workSum = y1;
+
         } // thread in bounds
+        else if((mapId + offset) < vecSize){
+           Type y  = preSumArray[ mapId + offset ] ;
+           preSumArray[ mapId + offset ] = (*binaryOp)(y, workSum);
+           workSum = preSumArray[ mapId + offset ];
+        }
     } // for 
 } // end kernel
 
@@ -175,7 +186,7 @@ __kernel void perBlockAddition(
                 oIterType output_iter,
                 global iValueType* input_ptr,
                 iIterType input_iter,
-                global oValueType* postSumArray,
+                global oValueType* preSumArray,
                 global oValueType* preSumArray1,
                 local oValueType* lds,
                 const uint vecSize,
@@ -199,7 +210,7 @@ __kernel void perBlockAddition(
        {
           if (gloId > 0)
           { // thread>0
-              iValueType inVal = input_iter[gloId-1];
+              typename iIterType::value_type  inVal = input_iter[gloId-1];
               val = (*unaryOp)(inVal);
               lds[ locId ] = val;
           }
@@ -211,7 +222,7 @@ __kernel void perBlockAddition(
        }
        else
        {
-          iValueType inVal = input_iter[gloId];
+          typename iIterType::value_type  inVal = input_iter[gloId];
           val = (*unaryOp)(inVal);
           lds[ locId ] = val;
        }
@@ -224,11 +235,11 @@ __kernel void perBlockAddition(
     {
        if(groId > 0) {
            if(groId % 2 == 0)
-               postBlockSum = postSumArray[ groId/2 -1 ];
+               postBlockSum = preSumArray[ groId/2 -1 ];
            else if(groId == 1)
                postBlockSum = preSumArray1[0];
            else {
-                y = postSumArray[ groId/2 -1 ];
+                y = preSumArray[ groId/2 -1 ];
                 y1 = preSumArray1[groId/2];
                 postBlockSum = (*binaryOp)(y, y1);
            }

@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,12 +19,8 @@
 #define BOLT_CL_MIN_ELEMENT_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
+#include "bolt/cl/device_vector.h"
 
-#include <string>
-#include <iostream>
 
 /*! \file bolt/cl/min_element.h
     \brief min_element returns the location of the first minimum element in the specified range.

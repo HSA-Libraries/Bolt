@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,28 +19,17 @@
 #if !defined( BOLT_CL_STABLESORT_BY_KEY_INL )
 #define BOLT_CL_STABLESORT_BY_KEY_INL
 
-#include <algorithm>
-#include <type_traits>
-
-#include <boost/bind.hpp>
-#include <boost/thread/once.hpp>
-#include <boost/shared_array.hpp>
-
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/functional.h"
-#include "bolt/cl/sort_by_key.h"
-#include "bolt/cl/pair.h"
-#include "bolt/cl/device_vector.h"
-
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/stable_sort_by_key.h"
 #endif
 
-#define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 64
+#define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 256
+#include "bolt/cl/sort_by_key.h"
 
 namespace bolt {
 namespace cl {
+
 namespace detail
 {
     template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
@@ -83,7 +72,7 @@ namespace detail
     public:
         StableSort_by_key_KernelTemplateSpecializer() : KernelTemplateSpecializer( )
         {
-            addKernelName( "blockInsertionSort" );
+            addKernelName( "LocalMergeSort" );
             addKernelName( "merge" );
         }
 
@@ -98,7 +87,9 @@ namespace detail
                 ""        + typeNames[stableSort_by_key_ValueIterType] + " value_iter,\n"
                 "const uint vecSize,\n"
                 "local "  + typeNames[stableSort_by_key_KeyType] + "* key_lds,\n"
+				"local "  + typeNames[stableSort_by_key_KeyType] + "* key_lds2,\n"
                 "local "  + typeNames[stableSort_by_key_ValueType] + "* val_lds,\n"
+				"local "  + typeNames[stableSort_by_key_ValueType] + "* val_lds2,\n"
                 "global " + typeNames[stableSort_by_key_lessFunction] + " * lessOp\n"
                 ");\n\n"
 
@@ -159,11 +150,11 @@ namespace detail
         typedef std_stable_sort<keyType, valType> KeyValuePair;
         typedef std_stable_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
 
-        size_t vecSize = std::distance( keys_first, keys_last );
+        int vecSize = static_cast<int>( std::distance( keys_first, keys_last ) );
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_stable_sort vector.
-        for (size_t i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             KeyValuePairVector[i].key   = *(keys_first + i);
             KeyValuePairVector[i].value = *(values_first + i);
@@ -171,7 +162,7 @@ namespace detail
         //Sort the std_stable_sort vector using std::stable_sort
         std::stable_sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
         //Extract the keys and values from the KeyValuePair and fill the respective iterators.
-        for (size_t i=0; i< vecSize; i++)
+        for (int i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
@@ -192,6 +183,7 @@ namespace detail
                                     const DVRandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp, const std::string& cl_code )
     {
+		
         bolt::cl::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
         return;    
     }
@@ -209,6 +201,7 @@ namespace detail
                                const DVRandomAccessIterator2 values_first,
                                const StrictWeakOrdering& comp, const std::string& cl_code )
     {
+		
         bolt::cl::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
         return;    
     }
@@ -270,10 +263,8 @@ namespace detail
             compileOptions );
         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-        size_t localRange=kernels[0].getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(ctrl.getDevice(),
-                                                                                                    &l_Error);
-        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-
+        size_t localRange= BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD;
+		
 
         //  Make sure that globalRange is a multiple of localRange
         size_t globalRange = vecSize;
@@ -284,7 +275,7 @@ namespace detail
             globalRange += localRange;
         }
 
-        ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
+	    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
         control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ),
                                                               CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, &aligned_comp );
 
@@ -308,10 +299,12 @@ namespace detail
         V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
          // Scratch buffer
         V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
-         // Scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+		V_OPENCL( kernels[ 0 ].setArg( 6, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+		// Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 7, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 8, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
          // User provided functor class
-        V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 9, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
 
 
 
@@ -334,7 +327,7 @@ namespace detail
 
         //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
         //  this is how many merge passes we want
-        size_t log2BlockSize = vecSize >> 6;
+        size_t log2BlockSize = vecSize >> 8;
         for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
         {
             ++numMerges;
@@ -345,8 +338,9 @@ namespace detail
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-        control::buffPointer tmpKeyBuffer = ctrl.acquireBuffer( globalRange * sizeof( keyType ) );
-        control::buffPointer tmpValueBuffer = ctrl.acquireBuffer( globalRange * sizeof( valueType ) );
+		device_vector< keyType >       tmpKeyBuffer( vecSize);
+		device_vector< valueType >     tmpValueBuffer( vecSize);
+
          // Size of scratch buffer
         V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" );
          // Scratch buffer
@@ -359,10 +353,10 @@ namespace detail
         ::cl::Event kernelEvent;
         for( size_t pass = 1; pass <= numMerges; ++pass )
         {
-        typename DVRandomAccessIterator1::Payload  keys_first_payload = keys_first.gpuPayload( );
-        typename DVRandomAccessIterator2::Payload  values_first_payload = values_first.gpuPayload( );
-        typename DVRandomAccessIterator1::Payload  keys_first1_payload = keys_first.gpuPayload( );
-        typename DVRandomAccessIterator2::Payload  values_first1_payload = values_first.gpuPayload( );
+			typename DVRandomAccessIterator1::Payload  keys_first_payload = keys_first.gpuPayload( );
+			typename DVRandomAccessIterator2::Payload  values_first_payload = values_first.gpuPayload( );
+			typename DVRandomAccessIterator1::Payload  keys_first1_payload = tmpKeyBuffer.begin().gpuPayload( );
+			typename DVRandomAccessIterator2::Payload  values_first1_payload = tmpValueBuffer.begin().gpuPayload( );
 
             //  For each pass, flip the input-output buffers
             if( pass & 0x1 )
@@ -376,31 +370,31 @@ namespace detail
                 V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ),&values_first_payload  ),
                                                "Error setting a kernel argument" );
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),"Error setting argument for kernels[0]");
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ),&keys_first1_payload),
+                V_OPENCL( kernels[ 1 ].setArg( 4, tmpKeyBuffer.begin().getContainer().getBuffer() ),"Error setting argument for kernels[0]");
+                V_OPENCL( kernels[ 1 ].setArg( 5, tmpKeyBuffer.begin().gpuPayloadSize( ),&keys_first1_payload),
                                                "Error setting a kernel argument" );
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),"Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first1_payload ),
+                V_OPENCL( kernels[ 1 ].setArg( 6, tmpValueBuffer.begin().getContainer().getBuffer() ),"Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 7, tmpValueBuffer.begin().gpuPayloadSize( ),&values_first1_payload ),
                                                "Error setting a kernel argument" );
             }
             else
             {
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload),
+                V_OPENCL( kernels[ 1 ].setArg( 0, tmpKeyBuffer.begin().getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 1, tmpKeyBuffer.begin().gpuPayloadSize( ),&keys_first1_payload),
                                                "Error setting a kernel argument" );
                  // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ),&values_first_payload ),
+                V_OPENCL( kernels[ 1 ].setArg( 2, tmpValueBuffer.begin().getContainer().getBuffer()),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 3, tmpValueBuffer.begin().gpuPayloadSize( ),&values_first1_payload ),
                                                "Error setting a kernel argument" );
                 V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getContainer().getBuffer() ),
                                                "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ),&keys_first1_payload),
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ),&keys_first_payload),
                                                "Error setting a kernel argument" );
                 V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getContainer().getBuffer() ),
                                                "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first1_payload ),
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first_payload ),
                                                "Error setting a kernel argument" );
             }
             //  For each pass, the merge window doubles
@@ -418,7 +412,7 @@ namespace detail
             else
             {
                 l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
-                        ::cl::NDRange( localRange ), NULL, NULL );
+                        ::cl::NDRange( localRange ), NULL, &kernelEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
             }
 
@@ -428,20 +422,23 @@ namespace detail
         //  the results back into the input array
         if( numMerges & 1 )
         {
-            ::cl::Event copyEvent;
+			detail::copy_enqueue(ctrl, tmpKeyBuffer.begin(), vecSize, keys_first);
+			detail::copy_enqueue(ctrl, tmpValueBuffer.begin(), vecSize, values_first);
+
+            /*::cl::Event copyEvent;
 
             wait( ctrl, kernelEvent );
-            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getContainer().getBuffer(), 0,
+            l_Error = myCQ.enqueueCopyBuffer( tmpKeyBuffer.begin().getContainer().getBuffer(), keys_first.getContainer().getBuffer(), 0,
                                                keys_first.m_Index * sizeof( keyType ),
                                                vecSize * sizeof( keyType ), NULL, NULL );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getContainer().getBuffer(), 0,
-                                               values_first.m_Index * sizeof( keyType ),
-                                               vecSize * sizeof( keyType ), NULL, &copyEvent );
+            l_Error = myCQ.enqueueCopyBuffer( tmpValueBuffer.begin().getContainer().getBuffer(), values_first.getContainer().getBuffer(), 0,
+                                               values_first.m_Index * sizeof( valueType ),
+                                               vecSize * sizeof( valueType ), NULL, &copyEvent );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            wait( ctrl, copyEvent );
+            wait( ctrl, copyEvent );*/
         }
         else
         {
@@ -468,11 +465,13 @@ namespace detail
         typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
 
-        size_t vecSize = std::distance( keys_first, keys_last );
+        int vecSize = static_cast<int>( std::distance( keys_first, keys_last ) );
         if( vecSize < 2 )
             return;
 
         bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
+
+				
 
         if( runMode == bolt::cl::control::Automatic )
         {
@@ -531,7 +530,7 @@ namespace detail
     {
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
-        size_t vecSize = std::distance( keys_first, keys_last );
+        int vecSize = static_cast<int>( std::distance( keys_first, keys_last ) );
         if( vecSize < 2 )
             return;
 
@@ -576,6 +575,7 @@ namespace detail
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
+			
             stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
         }
         return;

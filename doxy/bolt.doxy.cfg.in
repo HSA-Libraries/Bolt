@@ -672,13 +672,13 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/mainpage.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingTBB.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/distributingBoltProjects.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingExamples.dox \
-						 @CMAKE_CURRENT_SOURCE_DIR@/SupportedFunction.dox \
+                         @CMAKE_CURRENT_SOURCE_DIR@/SupportedFunction.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/detail \     
-					     @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/iterator \ 						 
+                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/iterator \ 						 
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/detail \
-						 @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/iterator
+                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/iterator
 						 
 
 # This tag can be used to specify the character encoding of the source files 
@@ -711,7 +711,7 @@ RECURSIVE              = NO
 # Note that relative paths are relative to the directory from which doxygen is 
 # run.
 
-EXCLUDE                = 
+EXCLUDE                = @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/detail/type_traits.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or 
 # directories that are symbolic links (a Unix file system feature) are excluded 

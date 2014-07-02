@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( ampBolt.Test.Scan.Source ScanTest.cpp )
-set( ampBolt.Test.Scan.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/scan.h )
+set( ampBolt.Test.Scan.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/scan.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/scan.inl)
 
 set( ampBolt.Test.Scan.Files ${ampBolt.Test.Scan.Source} ${ampBolt.Test.Scan.Headers} )
 

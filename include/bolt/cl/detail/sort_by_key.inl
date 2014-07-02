@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -28,7 +28,12 @@
 * 
 *  Besides this following publications were referred: 
 *  1. "Parallel Scan For Stream Architectures"  
-*     Technical Report CS2009-14Department of Computer Science, University of Virginia. *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf*  2. "Revisiting Sorting for GPGPU Stream Architectures" *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
+*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
 *  3. The SHOC Benchmark Suite 
 *     https://github.com/vetter/shoc
 *
@@ -38,21 +43,13 @@
 #if !defined( BOLT_CL_SORT_BY_KEY_INL )
 #define BOLT_CL_SORT_BY_KEY_INL
 
-#include <algorithm>
-#include <type_traits>
-
-#include <boost/bind.hpp>
-#include <boost/thread/once.hpp>
-
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/stablesort_by_key.h"
-#include "bolt/cl/functional.h"
-#include "bolt/cl/device_vector.h"
 
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/sort_by_key.h"
 #endif
+
+#include "bolt/cl/stablesort_by_key.h"
 
 #define BITONIC_SORT_WGSIZE 64
 #define DEBUG 1
@@ -61,6 +58,40 @@ namespace cl {
 
 namespace detail {
  
+
+	 template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
+                         DVKeys keys_first, DVKeys keys_last,
+                         DVValues values_first,
+                         StrictWeakOrdering comp, const std::string& cl_code);
+
+	 template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           unsigned int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
+                         DVKeys keys_first, DVKeys keys_last,
+                         DVValues values_first,
+                         StrictWeakOrdering comp, const std::string& cl_code);
+
+  template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if<
+        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
+           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
+         )
+                           >::type
+    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
+                        const DVKeys& keys_last, const DVValues& values_first,
+                        const StrictWeakOrdering& comp, const std::string& cl_code);
+
+	
+
+
 enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
                      sort_by_key_valueValueType, sort_by_key_valueIterType,
                      sort_by_key_StrictWeakOrdering, sort_by_key_end };
@@ -215,8 +246,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         }
     }
 
-
-    template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+ template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
     typename std::enable_if<
         !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
            std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
@@ -247,8 +277,8 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t orig_szElements = static_cast<size_t>(std::distance(keys_first, keys_last));
-    size_t szElements = orig_szElements;
+    int orig_szElements = static_cast<int>(std::distance(keys_first, keys_last));
+    int szElements = orig_szElements;
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     cl_int l_Error = CL_SUCCESS;
@@ -468,8 +498,8 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t orig_szElements = static_cast<size_t>(std::distance(keys_first, keys_last));
-    size_t szElements = orig_szElements;
+    int orig_szElements = static_cast<int>(std::distance(keys_first, keys_last));
+    int szElements = orig_szElements;
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     cl_int l_Error = CL_SUCCESS;
@@ -843,7 +873,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
         typedef typename std::iterator_traits<RandomAccessIterator2>::value_type T_values;
-        size_t szElements = (size_t)(keys_last - keys_first);
+        int szElements = static_cast<int>(keys_last - keys_first);
         if (szElements == 0)
             return;
 

@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -18,6 +18,7 @@
 #define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
+#define TEST_LARGE_BUFFERS 0
 
 #pragma warning(disable: 4244) // Disabling possible loss of data warning
 #if defined (_WIN32)
@@ -131,7 +132,7 @@ typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 262144 > >,//18    
     std::tuple< cl_long, TypeValue< 524288 > >,//19    
     std::tuple< cl_long, TypeValue< 1048576 > >,//20    
-    std::tuple< cl_long, TypeValue< 2097152 > >//21    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21 
 #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< cl_long, TypeValue< 4194304 > >,//22    
@@ -164,7 +165,7 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 262144 > >,//18    
     std::tuple< int, TypeValue< 524288 > >,//19    
     std::tuple< int, TypeValue< 1048576 > >,//20    
-    std::tuple< int, TypeValue< 2097152 > >//21    
+    std::tuple< int, TypeValue< 2097152 > >//21 
 #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< int, TypeValue< 4194304 > >,//22    
@@ -197,7 +198,7 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 262144 > >,//18    
     std::tuple< unsigned int, TypeValue< 524288 > >,//19    
     std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
-    std::tuple< unsigned int, TypeValue< 2097152 > >//21    
+    std::tuple< unsigned int, TypeValue< 2097152 > >//21  
 #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
@@ -3059,7 +3060,7 @@ TEST (dvIntToFloatCopy, MultiCoreoffsetCopy){
     }
 } 
 
-
+//#if (TEST_LARGE_BUFFERS == 1)
 TEST (dvIntToFloatlargeBufferCopy, offsetCopy){ 
     int length = 4096;
     bolt::cl::device_vector<int> dvIn(length);
@@ -3171,7 +3172,7 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
         }
     }
 } 
-
+//#endif
 
 BOLT_FUNCTOR(ichar,
 struct ichar

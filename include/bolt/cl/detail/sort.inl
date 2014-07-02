@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -28,7 +28,12 @@
 * 
 *  Besides this following publications were referred: 
 *  1. "Parallel Scan For Stream Architectures"  
-*     Technical Report CS2009-14Department of Computer Science, University of Virginia. *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf*  2. "Revisiting Sorting for GPGPU Stream Architectures" *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
+*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
 *  3. The SHOC Benchmark Suite 
 *     https://github.com/vetter/shoc
 *
@@ -39,11 +44,6 @@
 #define BOLT_CL_SORT_INL
 #pragma once
 
-#include <algorithm>
-#include <type_traits>
-
-#include "bolt/cl/functional.h"
-#include "bolt/cl/device_vector.h"
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
 #endif
@@ -203,9 +203,11 @@ sort_enqueue(control &ctl,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t szElements = static_cast<size_t>(std::distance(first, last));
+    int szElements = static_cast<int>(std::distance(first, last));
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+    if (computeUnits > 32 )
+        computeUnits = 32;
     cl_int l_Error = CL_SUCCESS;
 
     //static std::vector< ::cl::Kernel > radixSortUintKernels;
@@ -417,9 +419,11 @@ sort_enqueue(control &ctl,
 
     const int RADICES = (1 << RADIX); //Values handeled by each work-item?
 
-    size_t szElements = static_cast<size_t>(std::distance(first, last));
+    int szElements = static_cast<int>(std::distance(first, last));
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+    if (computeUnits > 32 )
+        computeUnits = 32;
     cl_int l_Error = CL_SUCCESS;
 
     //static std::vector< ::cl::Kernel > radixSortUintKernels;

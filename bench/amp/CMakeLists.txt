@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -22,9 +22,9 @@ message( STATUS "Setting up AMP specific benchmarking projects" )
 include_directories( ${BOLT_INCLUDE_DIR} )
 
 if( BUILD_ampBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( Scan )
-	add_subdirectory( Reduce )
-	add_subdirectory( Transform )
-	add_subdirectory( TransformReduce )
+    # Include standard OpenCL headers
+    #add_subdirectory( Scan )
+    #add_subdirectory( Reduce )
+    #add_subdirectory( Transform )
+    #add_subdirectory( TransformReduce )
 endif( )

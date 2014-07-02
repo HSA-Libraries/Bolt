@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                               
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                               
 *                                                                             
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.          
@@ -58,13 +58,8 @@ uint lowerBoundLinear( global sType* data, uint left, uint right, sType searchVa
     
     return firstIndex;
 }
-
-//  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
-//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
-//  passed as a functor parameter lessOp
-//  This function returns an index that is the first index whos value would be equal to the searched value
 template< typename sType, typename StrictWeakOrdering >
-uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+uint lowerBoundBinarylocal( local sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
 {
     //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
     uint firstIndex = left;
@@ -95,15 +90,10 @@ uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVa
     return firstIndex;
 }
 
-//  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
-//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
-//  passed as a functor parameter lessOp
-//  This function returns an index that is the first index whos value would be greater than the searched value
-//  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
 template< typename sType, typename StrictWeakOrdering >
-uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+uint upperBoundBinarylocal( local sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
 {
-    uint upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
+    uint upperBound = lowerBoundBinarylocal( data, left, right, searchVal, lessOp );
     
      //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
     //  upperBound is always between left and right or equal to right
@@ -129,6 +119,83 @@ uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVa
                 upperBound++;
             }
             upperValue = data[ upperBound ];
+            //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+        }
+    }
+    //printf( "end of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+    return upperBound;
+}
+//  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
+//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
+//  passed as a functor parameter lessOp
+//  This function returns an index that is the first index whos value would be equal to the searched value
+template< typename keyIterType, typename keyType, typename sType, typename StrictWeakOrdering >
+uint lowerBoundBinary( keyIterType keyIter, keyType *keyptr, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+{
+    //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
+    uint firstIndex = left;
+    uint lastIndex = right;
+    keyIter.init( keyptr ); 
+    //  This loops through [firstIndex, lastIndex)
+    //  Since firstIndex and lastIndex will be different for every thread depending on the nested branch,
+    //  this while loop will be divergent within a wavefront
+    while( firstIndex < lastIndex )
+    {
+        //  midIndex is the average of first and last, rounded down
+        uint midIndex = ( firstIndex + lastIndex ) / 2;
+        sType midValue = keyIter[ midIndex ];
+        
+        //  This branch will create divergent wavefronts
+        if( (*lessOp)( midValue, searchVal ) )
+        {
+            firstIndex = midIndex+1;
+            // printf( "lowerBound: lastIndex[ %i ]=%i\n", get_local_id( 0 ), lastIndex );
+        }
+        else
+        {
+            lastIndex = midIndex;
+            // printf( "lowerBound: firstIndex[ %i ]=%i\n", get_local_id( 0 ), firstIndex );
+        }
+    }
+    
+    return firstIndex;
+}
+
+//  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
+//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
+//  passed as a functor parameter lessOp
+//  This function returns an index that is the first index whos value would be greater than the searched value
+//  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
+template< typename keyIterType, typename keyType, typename sType, typename StrictWeakOrdering >
+uint upperBoundBinary( keyIterType keyIter, keyType *keyptr, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+{
+
+    uint upperBound = lowerBoundBinary( keyIter, keyptr, left, right, searchVal, lessOp );
+
+     keyIter.init( keyptr );    
+    //  upperBound is always between left and right or equal to right
+    //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
+    if( upperBound != right )
+    {
+        //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
+        uint mid = 0;
+        sType upperValue = keyIter[ upperBound ];
+        //This loop is a kind of a specialized binary search. 
+        //This will find the first index location which is not equal to searchVal.
+        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) && (upperBound < right))
+        {
+            mid = (upperBound + right)/2;
+            sType midValue = keyIter[mid];
+            if( !(*lessOp)( midValue, searchVal ) && !(*lessOp)( searchVal, midValue) )
+            {
+                upperBound = mid + 1;
+            }   
+            else
+            {
+                right = mid;
+                upperBound++;
+            }
+            upperValue = keyIter[ upperBound ];
             //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
         }
     }
@@ -164,6 +231,13 @@ kernel void mergeTemplate(
     size_t localID      = get_local_id( 0 );
     size_t wgSize       = get_local_size( 0 );
 
+
+	 iKey_iter.init( iKey_ptr );
+     iValue_iter.init( iValue_ptr );
+
+	 oKey_iter.init( oKey_ptr );
+     oValue_iter.init( oValue_ptr );
+
     //  Abort threads that are passed the end of the input vector
     if( globalID >= srcVecSize )
         return; // on SI this doesn't mess-up barriers
@@ -183,21 +257,17 @@ kernel void mergeTemplate(
     leftBlockIndex = min( leftBlockIndex, srcVecSize );
     uint rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, srcVecSize );
     
-    // if( localID == 0 )
-    // {
-        // printf( "mergeTemplate: wavefront[ %i ] logicalBlock[ %i ] logicalIndex[ %i ] leftBlockIndex[ %i ] <=> rightBlockIndex[ %i ]\n", groupID, srcBlockNum, srcBlockIndex, leftBlockIndex, rightBlockIndex );
-    // }
-    
     //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
-    // uint insertionIndex = lowerBoundLinear( iKey_ptr, leftBlockIndex, rightBlockIndex, iKey_ptr[ globalID ], lessOp ) - leftBlockIndex;
+    // uint insertionIndex = lowerBoundLinear( iKey_iter, leftBlockIndex, rightBlockIndex, iKey_iter[ globalID ], lessOp ) - leftBlockIndex;
     uint insertionIndex = 0;
+	keyType searchKey = iKey_iter[ globalID ];
     if( (srcBlockNum & 0x1) == 0 )
     {
-        insertionIndex = lowerBoundBinary( iKey_ptr, leftBlockIndex, rightBlockIndex, iKey_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        insertionIndex = lowerBoundBinary( iKey_iter, iKey_ptr, leftBlockIndex, rightBlockIndex, searchKey, lessOp ) - leftBlockIndex;
     }
     else
     {
-        insertionIndex = upperBoundBinary( iKey_ptr, leftBlockIndex, rightBlockIndex, iKey_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        insertionIndex = upperBoundBinary( iKey_iter, iKey_ptr, leftBlockIndex, rightBlockIndex, searchKey, lessOp ) - leftBlockIndex;
     }
     
     //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -205,85 +275,115 @@ kernel void mergeTemplate(
     uint dstBlockIndex = srcBlockIndex + insertionIndex;
     uint dstBlockNum = srcBlockNum/2;
     
-    // if( (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex == 395 )
-    // {
-        // printf( "mergeTemplate: (dstBlockNum[ %i ] * dstLogicalBlockSize[ %i ]) + dstBlockIndex[ %i ] = srcBlockIndex[ %i ] + insertionIndex[ %i ]\n", dstBlockNum, dstLogicalBlockSize, dstBlockIndex, srcBlockIndex, insertionIndex );
-        // printf( "mergeTemplate: dstBlockIndex[ %i ] = iKey_ptr[ %i ] ( %i )\n", (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex, globalID, iKey_ptr[ globalID ] );
-    // }
-    oKey_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = iKey_ptr[ globalID ];
-    oValue_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = iValue_ptr[ globalID ];
-    // printf( "mergeTemplate: leftResultIndex[ %i ]=%i + %i\n", leftResultIndex, srcBlockIndex, leftInsertionIndex );
+    oKey_iter[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = iKey_iter[ globalID ];
+    oValue_iter[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = iValue_iter[ globalID ];
 }
 
 template< typename keyType, typename keyIterType, typename valueType, typename valueIterType, 
             typename StrictWeakOrdering >
-kernel void blockInsertionSortTemplate( 
+kernel void LocalMergeSortTemplate( 
                 global keyType*     key_ptr,
                 keyIterType         key_iter, 
                 global valueType*   value_ptr,
                 valueIterType       value_iter, 
                 const uint          vecSize,
                 local keyType*      key_lds,
+				local keyType*      key_lds2,
                 local valueType*    val_lds,
+				local valueType*    val_lds2,
                 global StrictWeakOrdering* lessOp
             )
 {
+
     size_t gloId    = get_global_id( 0 );
     size_t groId    = get_group_id( 0 );
     size_t locId    = get_local_id( 0 );
     size_t wgSize   = get_local_size( 0 );
 
-    //  Abort threads that are passed the end of the input vector
-    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
 
     key_iter.init( key_ptr );
     value_iter.init( value_ptr );
 
     //  Make a copy of the entire input array into fast local memory
-    keyType key = key_iter[ gloId ];
-    valueType val = value_iter[ gloId ];
-    key_lds[ locId ] = key;
-    val_lds[ locId ] = val;
+	keyType key; 
+	valueType val; 
+	if( gloId < vecSize)
+	{
+	      key = key_iter[ gloId ];
+		  val = value_iter[ gloId ];
+		  key_lds[ locId ] = key;
+		  val_lds[ locId ] = val;
+	}
     barrier( CLK_LOCAL_MEM_FENCE );
+	uint end =  wgSize;
+	if( (groId+1)*(wgSize) >= vecSize )
+	{
+		end = vecSize - (groId*wgSize);
+	}
 
-    //  Sorts a workgroup using a naive insertion sort
-    //  The sort uses one thread within a workgroup to sort the entire workgroup
-    if( locId == 0 )
-    {
-        //  The last workgroup may have an irregular size, so we calculate a per-block endIndex
-        //  endIndex is essentially emulating a mod operator with subtraction and multiply
-        size_t endIndex = vecSize - ( groId * wgSize );
-        endIndex = min( endIndex, wgSize );
+	uint numMerges = 8;
+	uint pass;
 
-        // printf( "Debug: endIndex[%i]=%i\n", groId, endIndex );
-
-        //  Indices are signed because the while loop will generate a -1 index inside of the max function
-        for( int currIndex = 1; currIndex < endIndex; ++currIndex )
-        {
-            key = key_lds[ currIndex ];
-            val = val_lds[ currIndex ];
-            int scanIndex = currIndex;
-            keyType ldsKey = key_lds[scanIndex - 1];
-            while( scanIndex > 0 && (*lessOp)( key, ldsKey ) )
-            {
-                valueType ldsVal = val_lds[scanIndex - 1];
-                
-                //  If the keys are being swapped, make sure the values are swapped identicaly
-                key_lds[ scanIndex ] = ldsKey;
-                val_lds[ scanIndex ] = ldsVal;
-
-                scanIndex = scanIndex - 1;
-                ldsKey = key_lds[ max( 0, scanIndex - 1 ) ];  // scanIndex-1 may be -1
-            }
-            key_lds[ scanIndex ] = key;
-            val_lds[ scanIndex ] = val;
-        }
-    }
-    barrier( CLK_LOCAL_MEM_FENCE );
-
-    key = key_lds[ locId ];
-    key_iter[ gloId ] = key;
+    for( pass = 1; pass <= numMerges; ++pass )
+	{
+		uint srcLogicalBlockSize = 1 << (pass-1);
+	    if( gloId < vecSize)
+		{
+  		    uint srcBlockNum = (locId) / srcLogicalBlockSize;
+			uint srcBlockIndex = (locId) % srcLogicalBlockSize;
     
-    val = val_lds[ locId ];
-    value_iter[ gloId ] = val;
+			uint dstLogicalBlockSize = srcLogicalBlockSize<<1;
+			uint leftBlockIndex = (locId)  & ~(dstLogicalBlockSize - 1 );
+
+		    leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
+			leftBlockIndex = min( leftBlockIndex, end );
+			uint rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize,  end  );
+  			uint insertionIndex = 0;
+			if(pass%2 != 0)
+			{
+				if( (srcBlockNum & 0x1) == 0 )
+				{
+					insertionIndex = lowerBoundBinarylocal( key_lds, leftBlockIndex, rightBlockIndex, key_lds[ locId ], lessOp ) - leftBlockIndex;
+				}
+				else
+				{
+					insertionIndex = upperBoundBinarylocal( key_lds, leftBlockIndex, rightBlockIndex, key_lds[ locId ], lessOp ) - leftBlockIndex;
+				}
+			}
+			else
+			{
+				if( (srcBlockNum & 0x1) == 0 )
+				{
+					insertionIndex = lowerBoundBinarylocal( key_lds2, leftBlockIndex, rightBlockIndex, key_lds2[ locId ], lessOp ) - leftBlockIndex;
+				}
+				else
+				{
+					insertionIndex = upperBoundBinarylocal( key_lds2, leftBlockIndex, rightBlockIndex, key_lds2[ locId ], lessOp ) - leftBlockIndex;
+				} 
+			}
+			uint dstBlockIndex = srcBlockIndex + insertionIndex;
+			uint dstBlockNum = srcBlockNum/2;
+			if(pass%2 != 0)
+			{
+			   key_lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = key_lds[ locId ];
+			   val_lds2[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds[ locId ];
+			}
+			else
+			{
+			   key_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = key_lds2[ locId ]; 
+			   val_lds[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = val_lds2[ locId ];
+			}
+		}
+        barrier( CLK_LOCAL_MEM_FENCE );
+	}	  
+	if( gloId < vecSize)
+	{
+		key = key_lds[ locId ];
+		val = val_lds[ locId ];
+		key_iter[ gloId ] = key;
+        value_iter[ gloId ] = val;
+
+	}
+
+    
 }

@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ namespace cl
             typedef T value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
-            typedef size_t size_type;
+            typedef int size_type;
 
             typedef boost::shared_array< value_type > pointer;
             typedef boost::shared_array< const value_type > const_pointer;
@@ -157,6 +157,26 @@ namespace cl
                     return *this;
                 }
 
+                //This specialization is needed for linux Only.
+                //EPR - 398791
+                reference_base< Container >& operator=( reference_base< Container >& rhs )
+                {
+
+                    cl_int l_Error = CL_SUCCESS;
+                    value_type value = static_cast<value_type>(rhs);
+                    naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer(
+                    m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_Index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                    *result = value;
+
+                    ::cl::Event unmapEvent;
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result, NULL, &unmapEvent ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+
+                    return *this;
+                }
+
                 /*! \brief A get accessor function to return the encapsulated device_vector.
                 */
                 Container& getContainer( ) const
@@ -195,15 +215,15 @@ namespace cl
             *   \bug operator[] with device_vector iterators result in a compile-time error when accessed for reading.
             *   Writing with operator[] appears to be OK.  Workarounds: either use the operator[] on the device_vector
             *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
-            *   \note The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index 
+            *   \note The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index
             *   is used in clSetKernelArg(), which does not accept size_t parameters
             */
             template< typename Container >
-            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
+            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag,
             typename device_vector::reference, int >
             {
             public:
-            typedef typename boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
+            typedef typename boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag,
             typename device_vector::reference, int >::difference_type difference_type;
 
 
@@ -211,8 +231,8 @@ namespace cl
 
                 //  This class represents the iterator data transferred to the openCL device.  Transferring pointers is tricky,
                 //  the only reason we allocate space for a pointer in this payload is because the openCl clSetKernelArg() checks the
-                //  size ( bytes ) of the argument passed in, and the corresponding GPU iterator has a pointer member.  
-                //  The value of the pointer is not relevant on host side, and is initialized on the device side with the init method 
+                //  size ( bytes ) of the argument passed in, and the corresponding GPU iterator has a pointer member.
+                //  The value of the pointer is not relevant on host side, and is initialized on the device side with the init method
                 //  This size of the payload needs to be able to encapsulate both 32bit and 64bit devices
                 //  sizeof( 32bit device payload ) = 32bit index & 32bit pointer = 8 bytes
                 //  sizeof( 64bit device payload ) = 32bit index & 64bit aligned pointer = 16 bytes
@@ -222,7 +242,7 @@ namespace cl
                     difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
                 };
 
-                
+
                 //  Basic constructor requires a reference to the container and a positional element
                 iterator_base( ): m_Container( getContainer() ), m_Index( 0 )
                 {}
@@ -236,6 +256,9 @@ namespace cl
                 iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
                 {}
 
+                iterator_base( value_type *ptr ): m_Container( ptr ), m_Index( 0 )
+                {
+                }
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
                 //template< typename Container >
                 iterator_base< Container >& operator = ( const iterator_base< Container >& rhs )
@@ -244,7 +267,17 @@ namespace cl
                     m_Index = rhs.m_Index;
                     return *this;
                 }
-    
+
+                iterator_base< Container > & base()
+                {
+                    return *this;
+                }
+
+                const iterator_base< Container > & base() const
+                {
+                    return *this;
+                }
+
                 iterator_base< Container > & operator+= ( const difference_type & n )
                 {
                     advance( n );
@@ -256,9 +289,9 @@ namespace cl
                     advance( n );
                     return *this;
                 }
-                
 
-                
+
+
                 const iterator_base< Container > operator + ( const difference_type & n ) const
                 {
                     iterator_base< Container > result(*this);
@@ -271,6 +304,14 @@ namespace cl
                     return m_Container;
                 }
 
+                int setKernelBuffers(int arg_num, ::cl::Kernel &kernel) const
+                {
+                    const ::cl::Buffer &buffer = getContainer().getBuffer();
+                    kernel.setArg(arg_num, buffer );
+                    arg_num++;
+                    return arg_num;
+                }
+
                 //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
                 //  on the host
                 const Payload  gpuPayload( ) const
@@ -279,16 +320,16 @@ namespace cl
                     return payload;
                 }
 
-                //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be 
+                //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be
                 //  queried.  The bitness of the device determines the size of the pointer contained in the payload.  64bit pointers must
-                //  be 8 byte aligned, so 
+                //  be 8 byte aligned, so
                 const difference_type gpuPayloadSize( ) const
                 {
                     cl_int l_Error = CL_SUCCESS;
-		    ::cl::Device which_device;
-		   l_Error  = m_Container.m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
-                   
-		  cl_uint deviceBits = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
+                    ::cl::Device which_device;
+                    l_Error  = m_Container.m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );
+
+                    cl_uint deviceBits = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
 
                     //  Size of index and pointer
                     difference_type payloadSize = sizeof( difference_type ) + ( deviceBits >> 3 );
@@ -308,7 +349,7 @@ namespace cl
                 }
             private:
 
-		
+
                 //  Payload payload;
                 //  Implementation detail of boost.iterator
                 friend class boost::iterator_core_access;
@@ -349,6 +390,7 @@ namespace cl
                 }
 
                 Container& m_Container;
+
             };
 
             /*! \brief A reverse random access iterator in the classic sense
@@ -605,7 +647,7 @@ namespace cl
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE,
+            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR,
                 bool init = true, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ),
                 m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
@@ -661,7 +703,7 @@ namespace cl
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
+            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
@@ -673,7 +715,7 @@ namespace cl
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
-                m_Size = std::distance( begin, end );
+                m_Size = static_cast< size_type >( std::distance( begin, end ) );
                 if ( m_Size == 0 )
                 {
                     m_devMemory=NULL;
@@ -683,8 +725,9 @@ namespace cl
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
-                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
+                        m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize,
+                            reinterpret_cast< value_type* >( const_cast< value_type* >( std::addressof(*(begin) ) /*&*begin*/ ) ) );
+
                 }
                 else
                 {
@@ -703,7 +746,9 @@ namespace cl
                     l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, pointer, 0, 0 );
                     V_OPENCL( l_Error, "enqueueUnmapMemObject failed in device_vector constructor" );
                 }
-            };
+            }
+
+
 
             /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
             *   \param rhs A pre-existing ::cl::Buffer supplied by the user.
@@ -1001,7 +1046,7 @@ namespace cl
                 ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_size, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
-                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
+                size_type l_srcSize = static_cast<size_type> (m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 ::cl::Event copyEvent;
@@ -1034,7 +1079,7 @@ namespace cl
                     l_memSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                     V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
                     return static_cast< size_type >( l_memSize / sizeof( value_type ) );
-                
+
             }
 
             /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements.
@@ -1061,7 +1106,7 @@ namespace cl
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
                 //TODO - this is equal to the capacity()
-                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
+                size_type l_srcSize = static_cast< size_type >( m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 std::vector< ::cl::Event > copyEvent( 1 );
@@ -1225,9 +1270,9 @@ namespace cl
             /*! \brief Retrieves the value stored at index 0.
             *   \note This returns a proxy object, to control when device memory gets mapped.
             */
-            reference front( void ) 
+            reference front( void )
             {
-		        return (*begin());
+                return (*begin());
             }
 
             /*! \brief Retrieves the value stored at index 0.
@@ -1243,7 +1288,7 @@ namespace cl
             */
             reference back( void )
             {
-		        return ( *(end() - 1) );
+                return ( *(end() - 1) );
             }
 
             /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -1251,7 +1296,7 @@ namespace cl
             */
             const_reference back( void ) const
             {
-		        return ( *(end() - 1) );
+                return ( *(end() - 1) );
             }
 
             pointer data( void )
@@ -1403,8 +1448,8 @@ namespace cl
 
                 --m_Size;
 
-            size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
-                return iterator( *this, static_cast< difference_type >( newIndex ) );
+                size_t newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
+                return iterator( *this, static_cast< difference_type >( (int)newIndex ) );
             }
 
             /*! \brief Removes a range of elements.
@@ -1417,7 +1462,7 @@ namespace cl
                 if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( last.m_Index > m_Size )
+                if( last.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 if( (first == begin( )) && (last == end( )) )
@@ -1444,7 +1489,7 @@ namespace cl
 
                 m_Size -= sizeErase;
 
-            size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
+                size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
                 return iterator( *this, static_cast< typename iterator::difference_type >( newIndex ) );
             }
 
@@ -1460,7 +1505,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_Index > m_Size )
+                if (index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
             if( index.m_Index == m_Size )
@@ -1512,7 +1557,7 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_Index > m_Size )
+                if( index.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
@@ -1553,18 +1598,18 @@ namespace cl
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_Index > m_Size )
+                if ( index.m_Index > m_Size)
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
                 //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem
                 //  right at first blush.
-                size_type n = std::distance( begin, end );
+                size_type n = static_cast< size_type >( std::distance( begin, end ) );
                 if( ( m_Size + n ) > capacity( ) )
                 {
                     reserve( m_Size + n );
                 }
-            size_type sizeMap = (m_Size - index.m_Index) + n;
+                size_type sizeMap = (m_Size - index.m_Index) + n;
 
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
@@ -1635,9 +1680,19 @@ namespace cl
                   fill_mapEvent.wait( );
 
                   // Use serial fill_n to fill the device_vector with value
+
+#if( _WIN32 )
+
+                  std::fill_n(  stdext::checked_array_iterator< naked_pointer >(  host_buffer,newSize),
+                               newSize,
+                               value );
+
+#else
                   std::fill_n(  host_buffer ,
                                newSize,
                                value );
+#endif
+
 
                   // Unmap the buffer
                   l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory,
@@ -1657,18 +1712,11 @@ namespace cl
              *  \param end The iterator position signifying the end of the range (exclusive).
             *   \warning All previous iterators, references, and pointers are invalidated.
             */
-#if _MSC_VER == 1700   
             template<typename InputIterator>
-            typename std::enable_if< std::_Is_iterator<InputIterator>::value, void>::type
+            typename std::enable_if< !std::is_integral<InputIterator>::value, void>::type
             assign( InputIterator begin, InputIterator end )
-#else
-            template<typename InputIterator>
-            typename std::enable_if< !std::is_same< typename std::iterator_traits<InputIterator >::value_type,
-                                       size_type >::value, void>::type
-            assign( InputIterator begin, InputIterator end )
-#endif
             {
-                size_type l_Count = std::distance( begin, end );
+                size_type l_Count = static_cast< size_type >( std::distance( begin, end ) );
 
                 if( l_Count > m_Size )
                 {
@@ -1700,9 +1748,9 @@ namespace cl
             *   this location seems less intrusive to the design of the vector class.
             */
             const ::cl::Buffer& getBuffer( ) const
-                {
+            {
                 return m_devMemory;
-                }
+            }
 
             /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
             *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
@@ -1723,7 +1771,10 @@ namespace cl
         };
 
     //  This string represents the device side definition of the constant_iterator template
-    static std::string deviceVectorIteratorTemplate = STRINGIFY_CODE(
+    static std::string deviceVectorIteratorTemplate =
+    std::string ("#if !defined(BOLT_CL_DEVICE_ITERATOR) \n#define BOLT_CL_DEVICE_ITERATOR \n") +
+    STRINGIFY_CODE(
+
         namespace bolt { namespace cl { \n
         template< typename T > \n
         class device_vector \n
@@ -1734,6 +1785,7 @@ namespace cl
             public:
                 typedef int iterator_category;      // device code does not understand std:: tags  \n
                 typedef T value_type; \n
+                typedef T base_type; \n
                 typedef int difference_type; \n
                 typedef int size_type; \n
                 typedef T* pointer; \n
@@ -1762,7 +1814,8 @@ namespace cl
             }; \n
         }; \n
     } } \n
-    );
+    ) +
+    std::string ("#endif \n");
 }
 }
 
@@ -1772,14 +1825,14 @@ BOLT_CREATE_CLCODE( bolt::cl::device_vector< cl_int >::iterator, bolt::cl::devic
 //Visual Studio 2012 is not able to map char to cl_char. Hence this typename is added.
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, char );
 
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_char );          
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_uchar );  
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_short );          
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_ushort );         
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_uint );           
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_long );           
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_ulong );          
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_float );          
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_double );         
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_char );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_uchar );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_double );
 
 #endif

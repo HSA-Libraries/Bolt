@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -38,10 +38,12 @@ set( CMAKE_CXX_FLAGS "-DAMP_TESTS=1 ${CMAKE_CXX_FLAGS}" )
 endif()
 
 add_executable( ampBolt.Test.Device.Vector ${ampBolt.Test.Device.Vector.Files} )
-target_link_libraries( ampBolt.Test.Device.Vector
-  ampBolt.Runtime
-  ${GTEST_LIBRARIES}
-  ${Boost_LIBRARIES} )
+if(BUILD_TBB)
+	target_link_libraries( ampBolt.Test.Device.Vector ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+	target_link_libraries( ampBolt.Test.Device.Vector ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+endif()
+
 
 set_target_properties( ampBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

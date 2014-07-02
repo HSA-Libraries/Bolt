@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -60,7 +60,7 @@ get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
 
 # Set the component to find if the user does not specify explicitely
 if( NOT BOLT_FIND_COMPONENTS )
-	set( BOLT_FIND_COMPONENTS CL )
+    set( BOLT_FIND_COMPONENTS CL )
 endif( )
 if(WIN32)
 if( MSVC_VERSION VERSION_LESS 1600 )
@@ -69,47 +69,49 @@ elseif( MSVC_VERSION VERSION_LESS 1700 )
     set( myMSVCVer "vc100" )
 elseif( MSVC_VERSION VERSION_LESS 1800 )
     set( myMSVCVer "vc110" )
+else()
+    set( myMSVCVer "vc120" )
 endif( )
 else()
-	set( myMSVCVer "gcc" )
+    set( myMSVCVer "gcc" )
 endif()
 
 if(WIN32)
  set( BoltLibName "clBolt.runtime.${myMSVCVer}") 
- set( LIB_EXT "lib")	
+ set( LIB_EXT "lib")    
 else()
  set( BoltLibName "libclBolt.runtime.${myMSVCVer}")
- set( LIB_EXT "a")	
+ set( LIB_EXT "a")  
 endif()
 
 # Eventually, Bolt may support multiple backends, but for now it only supports CL
 list( FIND BOLT_FIND_COMPONENTS CL find_CL )
 if( NOT find_CL EQUAL -1 )
-	set( BOLT_LIBNAME_BASE ${BoltLibName} )
+    set( BOLT_LIBNAME_BASE ${BoltLibName} )
 endif( )
 
 if( NOT find_CL EQUAL -1 )
-	# Find and set the location of main BOLT static lib file
-	find_library( BOLT_LIBRARY_STATIC_RELEASE
-		NAMES ${BOLT_LIBNAME_BASE}.${LIB_EXT}
-		HINTS
-			${BOLT_ROOT}
-			ENV BOLT_ROOT
-		DOC "BOLT static library path"
-		PATH_SUFFIXES lib
-	)
-	mark_as_advanced( BOLT_LIBRARY_STATIC_RELEASE )
+    # Find and set the location of main BOLT static lib file
+    find_library( BOLT_LIBRARY_STATIC_RELEASE
+        NAMES ${BOLT_LIBNAME_BASE}.${LIB_EXT}
+        HINTS
+            ${BOLT_ROOT}
+            ENV BOLT_ROOT
+        DOC "BOLT static library path"
+        PATH_SUFFIXES lib
+    )
+    mark_as_advanced( BOLT_LIBRARY_STATIC_RELEASE )
 
-	# Find and set the location of main BOLT static lib file
-	find_library( BOLT_LIBRARY_STATIC_DEBUG
-		NAMES ${BOLT_LIBNAME_BASE}.debug.${LIB_EXT}
-		HINTS
-			${BOLT_ROOT}
-			ENV BOLT_ROOT
-		DOC "BOLT static library path"
-		PATH_SUFFIXES lib
-	)
-	mark_as_advanced( BOLT_LIBRARY_STATIC_DEBUG )
+    # Find and set the location of main BOLT static lib file
+    find_library( BOLT_LIBRARY_STATIC_DEBUG
+        NAMES ${BOLT_LIBNAME_BASE}.debug.${LIB_EXT}
+        HINTS
+            ${BOLT_ROOT}
+            ENV BOLT_ROOT
+        DOC "BOLT static library path"
+        PATH_SUFFIXES lib
+    )
+    mark_as_advanced( BOLT_LIBRARY_STATIC_DEBUG )
     
     if( BOLT_LIBRARY_STATIC_RELEASE )
         set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} )
@@ -134,14 +136,14 @@ if( NOT find_CL EQUAL -1 )
     )
     mark_as_advanced( BOLT_INCLUDE_DIRS )
 
-	FIND_PACKAGE_HANDLE_STANDARD_ARGS( BOLT DEFAULT_MSG BOLT_LIBRARY_STATIC BOLT_INCLUDE_DIRS )
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS( BOLT DEFAULT_MSG BOLT_LIBRARY_STATIC BOLT_INCLUDE_DIRS )
 endif( )
 
 if( BOLT_FOUND )
-	list( APPEND BOLT_LIBRARIES ${BOLT_LIBRARY_STATIC} )
+    list( APPEND BOLT_LIBRARIES ${BOLT_LIBRARY_STATIC} )
 else( )
-	if( NOT BOLT_FIND_QUIETLY )
-		message( WARNING "FindBOLT could not find the BOLT library" )
-		message( STATUS "Did you remember to set the BOLT_ROOT environment variable?" )
-	endif( )
+    if( NOT BOLT_FIND_QUIETLY )
+        message( WARNING "FindBOLT could not find the BOLT library" )
+        message( STATUS "Did you remember to set the BOLT_ROOT environment variable?" )
+    endif( )
 endif()

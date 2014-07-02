@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@
 #define BOLT_CL_SCAN_BY_KEY_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
+#include "bolt/cl/device_vector.h"
+
 
 /*! \file bolt/cl/scan_by_key.h
     \brief Performs, on a sequence, scan of each sub-sequence as defined by equivalent keys inclusive or exclusive.
@@ -38,7 +37,7 @@ namespace cl
  *   \ingroup algorithms
  */
 
-/*! \addtogroup SegmentedPrefixSums CL-Segmented Prefix Sums
+/*! \addtogroup CLSegmentedPrefixSums CL-Segmented Prefix Sums
  *   \ingroup PrefixSums
  *   \{
  */
@@ -71,7 +70,7 @@ namespace cl
  * int vals[11] = { 1, 1, 1, 1, 1, 1,  1,  1,  1,  1, 1 };
  * int out[11];
  *
- * bolt::cl::control ctrl = control::getDefault();
+ * bolt::cl::control ctrl = bolt::cl::control::getDefault();
  *
  * bolt::cl::inclusive_scan_by_key( ctrl, keys, keys+11, vals, out );
  * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
@@ -139,7 +138,7 @@ inclusive_scan_by_key(
  * int out[11];
  *
  * bolt::cl::equal_to<int> eq;
- * bolt::cl::control ctrl = control::getDefault();
+ * bolt::cl::control ctrl = bolt::cl::control::getDefault();
  *
  * bolt::cl::inclusive_scan_by_key( ctrl, keys, keys+11, vals, out, eq );
  * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
@@ -215,7 +214,7 @@ inclusive_scan_by_key(
  *
  * bolt::cl::equal_to<int> eq;
  * bolt::cl::multiplies<int> mult;
- * bolt::cl::control ctrl = control::getDefault();
+ * bolt::cl::control ctrl = bolt::cl::control::getDefault();
  *
  * bolt::cl::inclusive_scan_by_key( ctrl, keys, keys+11, vals, out, eq, mult );
  * // out => { 2, 2, 4, 2, 4, 8, 2, 4, 8, 16, 2 }
@@ -293,7 +292,7 @@ inclusive_scan_by_key(
  * int vals[11] = { 1, 1, 1, 1, 1, 1,  1,  1,  1,  1, 1 };
  * int out[11];
  *
- * bolt::cl::control ctrl = control::getDefault();
+ * bolt::cl::control ctrl = bolt::cl::control::getDefault();
  *
  * bolt::cl::exclusive_scan_by_key( ctrl, keys, keys+11, vals, out );
  * // out => { 0, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0 }
@@ -361,7 +360,7 @@ exclusive_scan_by_key(
  * int vals[11] = { 1, 1, 1, 1, 1, 1,  1,  1,  1,  1, 1 };
  * int out[11];
  *
- * bolt::cl::control ctrl = control::getDefault();
+ * bolt::cl::control ctrl = bolt::cl::control::getDefault();
  *
  * bolt::cl::exclusive_scan_by_key( ctrl, keys, keys+11, vals, out, 0 );
  * // out => { 0, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0 }
@@ -436,7 +435,7 @@ exclusive_scan_by_key(
  * int out[11];
  *
  * bolt::cl::equal_to<int> eq;
- * bolt::cl::control ctrl = control::getDefault();
+ * bolt::cl::control ctrl = bolt::cl::control::getDefault();
  *
  * bolt::cl::exclusive_scan_by_key( ctrl, keys, keys+11, vals, out, 1, eq );
  * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
@@ -517,7 +516,7 @@ exclusive_scan_by_key(
  *
  * bolt::cl::equal_to<int> eq;
  * bolt::cl::multiplies<int> mult;
- * bolt::cl::control ctrl = control::getDefault();
+ * bolt::cl::control ctrl = bolt::cl::control::getDefault();
  *
  * bolt::cl::exclusive_scan_by_key( ctrl, keys, keys+11, vals, out, 1, eq, mult );
  * // out => { 1, 1, 2, 1, 2, 4, 1, 2, 4, 8, 1 }

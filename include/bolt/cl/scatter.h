@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@
 #define BOLT_CL_SCATTER_H
 #pragma once
 
-#include "bolt/cl/bolt.h"
 #include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
-#include <string>
-#include <iostream>
 
 /*! \file bolt/cl/scatter.h
     \brief scatters elements from a source range to a destination array.
@@ -32,23 +30,21 @@
 
 namespace bolt {
     namespace cl {
-
-        /*! \addtogroup algorithms
+        
+		/*! \addtogroup algorithms
          */
 
-        /*! \addtogroup copying
-        *   \ingroup algorithms
+        /*! \addtogroup CL-scatter
+        *   \ingroup copying
+        *   \{
+        */
+
+        /*! 
         *   \p scatter APIs copy elements from a source range to a destination array (conditionally) according to a
         *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
         *   implementations. See Bolt Tools for Split-Source for a detailed description.
         */
-
-        /*! \addtogroup CL-scatter
-        *   \ingroup algorithms
-        *   \{
-        */
-
-
+		
        /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
          * the corresponding \p input_first to result[ map [ i ] ]
@@ -76,7 +72,7 @@ namespace bolt {
          *  int output[10];
          *  bolt::cl::scatter(input, input + 10, map, output);
          *
-         *  // output is now {1, 2, 3, 4, 5, 6, 7, 8, 9, 12};
+         *  // output is now {12, 9, 7, 2, 4, 6, 1, 8, 5, 3};
          *  \endcode
          *
          */
@@ -100,8 +96,8 @@ namespace bolt {
                       OutputIterator result,
                       const std::string& user_code="" );
 
-       /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+       /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter_if copies
          * the corresponding \p input_first to result[ map [ i ] ] if stencil[ i - first ] is
          * \p true.
          *
@@ -119,7 +115,7 @@ namespace bolt {
          *  \tparam InputIterator3 is a model of InputIterator
          *  \tparam OutputIterator is a model of OutputIterator
          *
-         *  \details The following code snippet demonstrates how to use \p scatter
+         *  \details The following code snippet demonstrates how to use \p scatter_if
          *
          *  \code
          *  #include <bolt/cl/scatter.h>
@@ -129,9 +125,9 @@ namespace bolt {
          *  int map[10]     = {8, 2, 3, 9, 0, 5, 1, 7, 6, 4};
          *  int stencil[10] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
          *  int output[10];
-         *  bolt::cl::scatter(input, input + 10, map, stencil, output);
+         *  bolt::cl::scatter_if(input, input + 10, map, stencil, output);
          *
-         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  // output is now {0, 9, 0, 0, 4, 6, 1, 8, 0, 0};
          *  \endcode
          *
          */
@@ -160,8 +156,8 @@ namespace bolt {
                          OutputIterator result,
                          const std::string& user_code="" );
 
-       /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+       /*! \brief This version of \p scatter_if copies elements from a source range to a destination array according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter_if copies
          * the corresponding \p input_first to result[ map [ i ] ] if pred (stencil[ i - first ])
          * is \p true.
          *
@@ -181,7 +177,7 @@ namespace bolt {
          *  \tparam OutputIterator is a model of OutputIterator
          *  \tparam Predicate is a model of Predicate
          *
-         *  \details The following code snippet demonstrates how to use \p scatter
+         *  \details The following code snippet demonstrates how to use \p scatter_if
          *
          *  \code
          *  #include <bolt/cl/scatter.h>
@@ -195,7 +191,7 @@ namespace bolt {
          *        }
          *    };
          *  );
-         * 
+         *
          *  ...
          *
          *  int input[10]   = {5, 7, 2, 3, 12, 6, 9, 8, 1, 4};
@@ -203,9 +199,9 @@ namespace bolt {
          *  int stencil[10] = {1, 3, 5, 2, 4, 6, 10, 9, 12, 22};
          *  int output[10];
          *  greater_pred is_gt_5;
-         *  bolt::cl::scatter(input, input + 10, map, stencil, output, is_gt_5);
+         *  bolt::cl::scatter_if(input, input + 10, map, stencil, output, is_gt_5);
          *
-         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  // output is now {0, 9, 0, 0, 4, 6, 1, 8, 0, 0};
          *  \endcode
          *
          */
@@ -214,27 +210,27 @@ namespace bolt {
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
+                  typename Predicate >
         void scatter_if( bolt::cl::control &ctl,
                          InputIterator1 first1,
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred,
+                         Predicate pred,
                          const std::string& user_code="" );
 
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
+                  typename Predicate >
         void scatter_if( InputIterator1 first1,
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred,
+                         Predicate pred,
                          const std::string& user_code="" );
 
 

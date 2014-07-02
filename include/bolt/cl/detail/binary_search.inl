@@ -1,5 +1,5 @@
 /***************************************************************************
-* Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+* © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -20,13 +20,7 @@
 #define BOLT_CL_BINARY_SEARCH_INL
 #define BINARY_SEARCH_WAVEFRONT_SIZE 64
 //#define BINARY_SEARCH_THRESHOLD 16
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
 
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/device_vector.h"
-#include "bolt/cl/functional.h"
 //TBB Includes
 #if defined(ENABLE_TBB)
 #include "bolt/btbb/binary_search.h"
@@ -145,7 +139,7 @@ namespace bolt {
                     typeDefs,
                     binary_search_kernels,
                     compileOptions);
-                size_t totalThreads = globalThreads+residueGlobalThreads;
+                int totalThreads = globalThreads+residueGlobalThreads;
 
                 control::buffPointer result = ctl.acquireBuffer( sizeof( int ) * totalThreads,
                                                                 CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
@@ -227,7 +221,7 @@ namespace bolt {
                 bolt::cl::wait(ctl, l_mapEvent);
 
                 bool r = false;
-                for(size_t i=0; i<totalThreads; i++)
+                for(int i=0; i<totalThreads; i++)
                 {
                     if(h_result[i] == 1)
                     {
@@ -262,7 +256,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
-                size_t sz = (last - first);
+                int sz = static_cast<int>(last - first);
                 if (sz < 1)
                      return false;
 
@@ -318,7 +312,7 @@ namespace bolt {
                 bolt::cl::device_vector_tag )
             {
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
-                size_t szElements = static_cast<size_t>(std::distance(first, last) );
+                int szElements = static_cast<int>(std::distance(first, last) );
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode(); // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -368,7 +362,7 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
-                size_t szElements = static_cast<size_t>(std::distance(first, last) );
+                int szElements = static_cast<int>(std::distance(first, last) );
                 if (szElements == 0)
                     return false;
 

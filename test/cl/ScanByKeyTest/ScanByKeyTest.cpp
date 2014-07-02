@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -2640,8 +2640,8 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
 
 } 
 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 1, 1024, 47 )); 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 4096, 555)); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 1, 4096, 54 ) ); //   1 to 2^12
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(4096, 65536, 555 ) ); //2^12 to 2^16
 
 
 #if (TEST_DOUBLE == 1)
@@ -3614,12 +3614,10 @@ TEST(InclusiveScanByKey, Multicore_DeviceVectorInclUdd)
     bolt::cl::device_vector< uddtM2 > device_keys( keys.begin(), keys.end());
     
     // input and output vectors for device and reference
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3 );
-    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3 );
-    std::vector< uddtM3 > refInput( length, initialMixM3 );
-    //std::vector< uddtM3 > refOutput( length );
-    // call scan
-    MixM3 mM3;
+    std::vector< uddtM2 > refInput( length, initialMixM2 );
+    bolt::cl::device_vector< uddtM2 > input(  refInput.begin(), refInput.end() );
+
+    MixM2 mM2;
     uddtM2_equal_to eq;
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -3630,8 +3628,8 @@ TEST(InclusiveScanByKey, Multicore_DeviceVectorInclUdd)
     //// compare results
     //cmpArrays(refOutput, output);
 
-	bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), input.begin(),eq,mM3);
-    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refInput.begin(), mM3);
+	bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), input.begin(), eq, mM2);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refInput.begin(), mM2);
     // compare resultsScanByKeyCLtype
     cmpArrays(refInput, input);
 }
@@ -4050,13 +4048,9 @@ TEST(ExclusiveScanByKey, Multicore_DeviceVectorExclUdd)
         segmentIndex++;
     }
     bolt::cl::device_vector< uddtM2 > device_keys( keys.begin(), keys.end());
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3 );
-    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3 );
-    std::vector< uddtM3 > refInput( length, initialMixM3 );
-    //std::vector< uddtM3 > refOutput( length );
-    // call scan
-    MixM3 mM3;
+    std::vector< uddtM2 > refInput( length, initialMixM2 );
+    bolt::cl::device_vector< uddtM2 > input(  refInput.begin(), refInput.end() );
+    MixM2 mM2;
     uddtM2_equal_to eq;
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -4066,16 +4060,12 @@ TEST(ExclusiveScanByKey, Multicore_DeviceVectorExclUdd)
     //// compare results
     //cmpArrays(refOutput, output);
 
-	bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), input.begin(), initialMixM3,eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refInput.begin(), mM3, initialMixM3);
+	bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), input.begin(), initialMixM2, eq, mM2);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refInput.begin(), mM2, initialMixM2);
     // compare results
     cmpArrays(refInput, input);
 
 }
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
 
 TEST(InclusiveScanByKey, MulticoreInclUdd)
 {
@@ -4227,7 +4217,7 @@ TEST(InclusiveScanByKey, MulticoreInclFloat)
     int segmentLength = 0;
     int segmentIndex = 0;
     int key = 0;
-    for (int i = 0; i < length; i++)
+	for (int i = 0; i < length; i++)
     {
         // start over, i.e., begin assigning new key
         if (segmentIndex == segmentLength)
@@ -4236,18 +4226,16 @@ TEST(InclusiveScanByKey, MulticoreInclFloat)
             segmentIndex = 0;
             ++key;
         }
-        keys[i] = 1;
+        keys[i] = key;
         segmentIndex++;
     }
     // input and output vectors for device and reference
-    std::vector< float > input( length);
-    //std::vector< float > output( length);
     std::vector< float > refInput( length);
-    //std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
-        input[i] = 1.0f + rand()%3;
-        refInput[i] = input[i];
-    }
+    for(int i=0; i<length; i++) 
+	{
+        refInput[i]  = 1.0f + rand()%3;
+    }	
+    std::vector< float > input( refInput.begin(), refInput.end());
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
@@ -4473,7 +4461,7 @@ while(status) {
         if(HostDataBuffer[i] != deviceOutput[i]) { status = 0; break; }
     }
 
-    std::cout << "Verify Result : " << ((status == 1) ? "PASS" : "FAIL") << std::endl;
+    //std::cout << "Verify Result : " << ((status == 1) ? "PASS" : "FAIL") << std::endl;
     if(++count > 20) break;
 }
     

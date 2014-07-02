@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ void gatherIfTemplate (
             const uint length,
             global Predicate* pred )
 {
+    typedef typename stencilIterType::value_type stencilValueType;
+    typedef typename mapIterType::value_type mapValueType;
+
     int gid = get_global_id( 0 );
     if ( gid >= length ) return;
 
@@ -45,8 +48,8 @@ void gatherIfTemplate (
     input.init( input_naked );
     output.init( output_naked );   
    
-    mapType m = map[ gid ];
-    stencilType s = stencil[ gid ];
+    mapValueType m = map[ gid ];
+    stencilValueType s = stencil[ gid ];
 
     if ( (*pred)( s ) )
     {
@@ -72,6 +75,7 @@ void gatherTemplate (
             oIterType output,
             const uint length )
 {
+    typedef typename mapIterType::value_type mapValueType;
     int gid = get_global_id( 0 );
     if ( gid >= length ) return;
 
@@ -80,7 +84,7 @@ void gatherTemplate (
     output.init( output_naked );
 
     // Store in registers
-    mapType m = map[ gid ];
+    mapValueType m = map[ gid ];
     output [ gid ] = input [ m ] ;
 
 }

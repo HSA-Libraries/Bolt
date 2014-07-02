@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 
 #define TEST_DOUBLE 1
+#define TEST_LARGE_BUFFERS 0
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -483,6 +484,55 @@ TEST( MinEleDevice , DeviceVectoroffset )
     int stdReduce =  20;
 
     EXPECT_EQ(*boltReduce,stdReduce);
+
+}
+
+
+TEST( MinEleDevice , DeviceVectoroffsetSerial )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > stdinput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      stdinput[i] = rand();
+
+    }
+    
+	bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
+	
+	bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element(ctl, input.begin()+20, input.end());
+    std::vector<int>::iterator stdReduce =  min_element(stdinput.begin()+20, stdinput.end());;
+
+    EXPECT_EQ(*boltReduce, *stdReduce);
+
+}
+
+TEST( MinEleDevice , DeviceVectoroffsetMultiCore )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > stdinput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      stdinput[i] = rand();
+
+    }
+    
+	bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
+	
+	bolt::cl::control ctl = bolt::cl::control::getDefault( );
+	ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element(ctl, input.begin()+20, input.end());
+    std::vector<int>::iterator stdReduce =  min_element(stdinput.begin()+20, stdinput.end());;
+
+    EXPECT_EQ(*boltReduce, *stdReduce);
 
 }
 

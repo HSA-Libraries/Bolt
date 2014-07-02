@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -22,12 +22,6 @@
 #ifndef BURST_SIZE
 #define BURST_SIZE 4
 #endif
-
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
-
-#include "bolt/cl/bolt.h"
 
 #ifdef ENABLE_TBB
 //TBB Includes
@@ -147,47 +141,9 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
 };
 
 
-
 template< typename DVInputIterator, typename Size, typename DVOutputIterator >
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
-                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
-                                     >::value
-
-                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
-                                       typename std::iterator_traits<DVOutputIterator >::value_type
-                                     >::value
-
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
-    const DVOutputIterator& result, const std::string& cl_code)
-{
-
-    typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-    typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-    ::cl::Event copyEvent;
-    ctrl.getCommandQueue( ).enqueueCopyBuffer(
-                        first.getContainer().getBuffer(),
-                        result.getContainer().getBuffer(),
-                        first.m_Index * sizeof(iType),
-                        result.m_Index * sizeof(oType),
-                        n*sizeof(oType),
-                        NULL,
-                        &copyEvent);
-    // wait for results
-    bolt::cl::wait(ctrl, copyEvent);
-}
-
-
-template< typename DVInputIterator, typename Size, typename DVOutputIterator >
-typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
-                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
-                                     >::value
-                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
-                                       typename std::iterator_traits<DVOutputIterator >::value_type
-                                     >::value )
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
-    const DVOutputIterator& result, const std::string& cl_code)
+void copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& cl_code="")
 {
 
     /**********************************************************************************
@@ -311,7 +267,6 @@ typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIt
 
     // wait for results
     bolt::cl::wait(ctrl, kernelEvent);
-
 
     // profiling
     cl_command_queue_properties queueProperties;
@@ -510,7 +465,7 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
 	     #if defined(BOLT_DEBUG_LOG)
          dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_OPENCL_GPU,"::Copy::OPENCL_GPU");
          #endif
-		
+		 
          copy_enqueue( ctrl, first, n, result, user_code );
      }
 }

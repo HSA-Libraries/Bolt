@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -15,12 +15,12 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 1
-#define TEST_LARGE_BUFFERS 0
-#define TEST_OFFSET_BUFFERS 0 // OFFSET BUffers not working in C++ AMP
+#define TEST_LARGE_BUFFERS 1
+#define TEST_OFFSET_BUFFERS 1 // OFFSET BUffers not working in C++ AMP
 #define GOOGLE_TEST 1
 #define BKND amp 
 #define SORT_FUNC sort
@@ -28,13 +28,11 @@
 #if (GOOGLE_TEST == 1)
 #include <gtest/gtest.h>
 #include "common/stdafx.h"
-#include "common/test_common.h"
-
 #include <bolt/amp/sort.h>
 #include <bolt/miniDump.h>
 //#include <bolt/unicode.h>
 #include <bolt/amp/functional.h>
-
+#include "common/test_common.h"
 //#include <boost/shared_array.hpp>
 #include <array>
 #include <algorithm>
@@ -81,7 +79,7 @@ struct uddtD4
 //BOLT_FUNCTOR(AddD4,
 struct AddD4
 {
-    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
+    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const restrict(amp, cpu)
     {
 
         if( ( lhs.a + lhs.b + lhs.c + lhs.d ) > ( rhs.a + rhs.b + rhs.c + rhs.d) )
@@ -97,6 +95,30 @@ uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 //BOLT_CREATE_TYPENAME( bolt::BKND::device_vector< uddtD4 >::iterator );
 //BOLT_CREATE_CLCODE( bolt::BKND::device_vector< uddtD4 >::iterator, bolt::BKND::deviceVectorIteratorTemplate );
+
+TEST(Sort_large_power, StdclLong)  
+{
+        // test length
+        int length = 33554432;
+
+        std::vector<long> bolt_source(length);
+        std::vector<long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::BKND::SORT_FUNC(bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
 
 TEST(Sort, StdclLong)  
 {
@@ -1686,7 +1708,7 @@ TEST_P( SortDoubleDeviceVector, MulticoreInplace )
 
 TEST_P( SortIntegerNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1706,7 +1728,7 @@ TEST_P( SortIntegerNakedPointer, SerialInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::SerialCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1726,7 +1748,7 @@ TEST_P( SortIntegerNakedPointer, MultiCoreInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::MultiCoreCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
@@ -1744,7 +1766,7 @@ TEST_P( SortIntegerNakedPointer, MultiCoreInplace )
 
 TEST_P( SortFloatNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1764,7 +1786,7 @@ TEST_P( SortFloatNakedPointer, SerialInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::SerialCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1784,7 +1806,7 @@ TEST_P( SortFloatNakedPointer, MultiCoreInplace )
     bolt::BKND::control ctl = bolt::BKND::control::getDefault( );
     ctl.setForceRunMode(bolt::BKND::control::MultiCoreCpu);
 
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
@@ -1802,7 +1824,7 @@ TEST_P( SortFloatNakedPointer, MultiCoreInplace )
 #if (TEST_DOUBLE == 1)
 TEST_P( SortDoubleNakedPointer, Inplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
@@ -1819,7 +1841,7 @@ TEST_P( SortDoubleNakedPointer, Inplace )
 
 TEST_P( SortDoubleNakedPointer, SerialInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
@@ -1838,7 +1860,7 @@ TEST_P( SortDoubleNakedPointer, SerialInplace )
 }
 TEST_P( SortDoubleNakedPointer, MulticoreInplace )
 {
-    size_t endIndex = GetParam( );
+    unsigned int endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
@@ -1858,41 +1880,41 @@ TEST_P( SortDoubleNakedPointer, MulticoreInplace )
 
 
 #endif
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768}; // 2 to 2^15
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range(  1, 4096, 54 ) );  //   1 to 2^22
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 0, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16	
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                         TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range(65536, 2097152, 55555 ) ); //2^16 to 2^21
 INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                             TestValues.end() ) );
 #endif
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( SortRange, SortUDDDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortUDDDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortUDDDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                 TestValues.end()));
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
                                                                                     TestValues.end()));
 #endif
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 1, 32768, 3276  )); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                                     TestValues.end()));
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 1, 32768, 3276  ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
 #endif
@@ -2156,11 +2178,11 @@ INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
 
 #if (TEST_DOUBLE ==1)
 TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
-	size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
+	int sizeOfInputBufer = 64; //test case is failing for all values greater than 32
 	std::vector<double>  stdVect(0);
 	bolt::BKND::device_vector<double>  boltVect(0);
 
-	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+	for (int i = 0 ; i < sizeOfInputBufer; i++){
 	    double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
@@ -2170,9 +2192,10 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
 	bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::BKND::greater<double>( ) );
 
-	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+	for (int i = 0 ; i < sizeOfInputBufer; i++){
 	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
 	}
+
 }
 #endif
 TEST (rawArrayTest, floatarray){

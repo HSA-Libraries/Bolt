@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -83,9 +83,9 @@ kernel void perBlockAddition(
                 oIterType    output_iter, 
                 global iPtrType* input_ptr,
                 iIterType    input_iter, 
-                global iPtrType* postSumArray_ptr,
-                global iPtrType* preSumArray_ptr1,
-                local iPtrType* lds,
+                global typename iIterType::value_type* preSumArray,
+                global typename iIterType::value_type* preSumArray1,
+                local typename iIterType::value_type* lds,
                 const uint vecSize,
                 global BinaryFunction* binaryOp,
                 int exclusive,
@@ -101,7 +101,7 @@ kernel void perBlockAddition(
     input_iter.init( input_ptr );
 
   // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-    iPtrType val;
+    typename iIterType::value_type val;
   
     if (gloId < vecSize){
 	   if (exclusive)
@@ -124,20 +124,20 @@ kernel void perBlockAddition(
        }
     }
   
-   iPtrType scanResult = lds[locId];
-   iPtrType postBlockSum, newResult;
-   iPtrType y, y1, sum;
+   typename iIterType::value_type scanResult = lds[locId];
+   typename iIterType::value_type postBlockSum, newResult;
+   typename iIterType::value_type y, y1, sum;
 
    if(locId == 0 && gloId < vecSize)
    {
       if(groId > 0) {
          if(groId % 2 == 0)
-             postBlockSum = postSumArray_ptr[ groId/2 -1 ];
+             postBlockSum = preSumArray[ groId/2 -1 ];
          else if(groId == 1)
-             postBlockSum = preSumArray_ptr1[0];
+             postBlockSum = preSumArray1[0];
          else {
-              y = postSumArray_ptr[ groId/2 -1 ];
-              y1 = preSumArray_ptr1[groId/2];
+              y = preSumArray[ groId/2 -1 ];
+              y1 = preSumArray1[groId/2];
               postBlockSum = (*binaryOp)(y, y1);
          }
          if (!exclusive)
@@ -158,7 +158,7 @@ kernel void perBlockAddition(
         barrier( CLK_LOCAL_MEM_FENCE );
         if (locId >= offset)
         {
-            iPtrType y = lds[ locId - offset ];
+            typename iIterType::value_type y = lds[ locId - offset ];
             sum = (*binaryOp)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -178,7 +178,6 @@ kernel void perBlockAddition(
  *****************************************************************************/
 template< typename iPtrType, typename initType, typename BinaryFunction >
 kernel void intraBlockInclusiveScan(
-                global iPtrType* postSumArray,
                 global iPtrType* preSumArray, 
                 initType identity,
                 const uint vecSize,
@@ -231,34 +230,32 @@ kernel void intraBlockInclusiveScan(
 
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
-
     // write final scan from pre-scan and lds scan
      workSum = preSumArray[mapId];
      if(locId > 0){
         iPtrType y = lds[locId-1];
         workSum = (*binaryOp)(workSum, y);
-        postSumArray[ mapId] = workSum;
+        preSumArray[ mapId] = workSum;
      }
      else{
-       postSumArray[ mapId] = workSum;
+       preSumArray[ mapId] = workSum;
     }
-
     for( offset = 1; offset < workPerThread; offset += 1 )
     {
         barrier( CLK_GLOBAL_MEM_FENCE );
 
-        if (mapId < vecSize && locId > 0)
+        if ((mapId + offset) < vecSize && locId > 0)
         {
             iPtrType y  = preSumArray[ mapId + offset ] ;
             iPtrType y1 = (*binaryOp)(y, workSum);
-            postSumArray[ mapId + offset ] = y1;
+            preSumArray[ mapId + offset ] = y1;
             workSum = y1;
 
         } // thread in bounds
-        else{
+        else if((mapId + offset) < vecSize){
            iPtrType y  = preSumArray[ mapId + offset ] ;
-           postSumArray[ mapId + offset ] = (*binaryOp)(y, workSum);
-           workSum = postSumArray[ mapId + offset ];
+           preSumArray[ mapId + offset ] = (*binaryOp)(y, workSum);
+           workSum = preSumArray[ mapId + offset ];
         }
 
     } // for 
@@ -276,10 +273,10 @@ kernel void perBlockInclusiveScan(
                 iIterType    input_iter, 
                 initType identity,
                 const uint vecSize,
-                local iPtrType* lds,
+                local typename iIterType::value_type* lds,
                 global BinaryFunction* binaryOp,
-                global iPtrType* scanBuffer,
-                global iPtrType* scanBuffer1,
+                global typename iIterType::value_type* preSumArray,
+                global typename iIterType::value_type* preSumArray1,
                 int exclusive) // do exclusive scan ?
 {
 // 2 thread per element
@@ -294,15 +291,17 @@ kernel void perBlockInclusiveScan(
 
    // load input into shared memory
    
-	if(groId*wgSize+locId < vecSize)
-       lds[locId] = input_iter[groId*wgSize+locId];
-    if(groId*wgSize +locId+ (wgSize/2) < vecSize)
-        lds[locId+(wgSize/2)] = input_iter[ groId*wgSize +locId+ (wgSize/2)];
+    uint input_offset = (groId*wgSize)+locId;
+
+	if(input_offset < vecSize)
+       lds[locId] = input_iter[input_offset];
+    if(input_offset+(wgSize/2) < vecSize)
+        lds[locId+(wgSize/2)] = input_iter[ input_offset+(wgSize/2)];
     
 	// Exclusive case
     if(exclusive && gloId == 0)
 	{
-	    iPtrType start_val = input_iter[0];
+	    typename iIterType::value_type start_val = input_iter[0];
 		lds[locId] = (*binaryOp)(identity, start_val);
     }
 	
@@ -313,8 +312,8 @@ kernel void perBlockInclusiveScan(
        {
           size_t temp1 = offset*(2*locId+1)-1;
           size_t temp2 = offset*(2*locId+2)-1;
-          iPtrType y = lds[temp2];
-          iPtrType y1 =lds[temp1];
+          typename iIterType::value_type y = lds[temp2];
+          typename iIterType::value_type y1 =lds[temp1];
           lds[temp2] = (*binaryOp)(y, y1);
        }
        offset *= 2;
@@ -322,8 +321,8 @@ kernel void perBlockInclusiveScan(
     barrier( CLK_LOCAL_MEM_FENCE );
     if (locId == 0)
     {
-        scanBuffer[ groId ] = lds[wgSize -1];
-        scanBuffer1[ groId ] = lds[wgSize/2 -1];
+        preSumArray[ groId ] = lds[wgSize -1];
+        preSumArray1[ groId ] = lds[wgSize/2 -1];
     }
   
 }

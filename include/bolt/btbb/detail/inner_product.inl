@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -33,8 +33,7 @@ namespace bolt{
              {
 
                OutputType result;
-
-               Inner_Product_Op (): result(0) {}
+               Inner_Product_Op () {result = 0;}
                Inner_Product_Op (OutputType _x ): result(_x) {}
 
                void operator() (InputIterator first1, InputIterator last1, InputIterator first2, OutputType init,

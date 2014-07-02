@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -436,7 +436,7 @@ TEST( MultiCoreCPU, MultiCoreNormal )
 
 TYPED_TEST_P( SortArrayTest, Normal )
 {
-        typedef typename SortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef typename SortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
     typedef std::array< ArrayType, SortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
     //  Calling the actual functions under test
     std::SORT_FUNC( SortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), SortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
@@ -529,7 +529,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
 {
-        typedef typename SortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef typename SortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
     typedef std::array< ArrayType, SortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
@@ -575,7 +575,7 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
 
 TYPED_TEST_P( SortArrayTest, GreaterFunction )
 {
-        typedef typename SortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef typename SortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
     typedef std::array< ArrayType, SortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
     //  Calling the actual functions under test
@@ -2202,92 +2202,92 @@ TEST_P( SortDoubleNakedPointer, MulticoreInplace )
 
 #endif
 */
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024, 32768};
-std::array<int, 15> TestValues2 = {2048,4096,8192,16384,32768};
+std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
+std::array<int, 5> TestValues2 = {2048,4096,8192,16384,32768};
 
 
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 67183, 1013 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range(1, 4096, 54 ) ); //   1 to 2^12
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																			
-INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
+//#if(TEST_LARGE_BUFFERS == 1)																			
+INSTANTIATE_TEST_CASE_P( SortValues2, SortIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
                                                                             TestValues2.end() ) );
-#endif
+//#endif
                                                                             
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 0, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 4096, 65536, 555 ) ); //2^12 to 2^16	
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                         TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																		
-INSTANTIATE_TEST_CASE_P( SortValues, SortFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
+//#if(TEST_LARGE_BUFFERS == 1)																		
+INSTANTIATE_TEST_CASE_P( SortValues2, SortFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                         TestValues2.end() ) );
-#endif																		
+//#endif																		
                                                                         
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range( 65536, 2097152, 55555 ) ); //2^16 to 2^21
 INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                             TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																			
-INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleVector, ::testing::ValuesIn( TestValues2.begin(), 
+//#if(TEST_LARGE_BUFFERS == 1)																			
+INSTANTIATE_TEST_CASE_P( SortValues2, SortDoubleVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                             TestValues2.end() ) );
-#endif																			
+//#endif																			
 #endif
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
+//#if(TEST_LARGE_BUFFERS == 1)																				
+INSTANTIATE_TEST_CASE_P( SortValues2, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
-#endif																				
+//#endif																				
                                                                                 
-INSTANTIATE_TEST_CASE_P( SortRange, SortUDDDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortUDDDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortUDDDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( SortValues, SortUDDDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
+//#if(TEST_LARGE_BUFFERS == 1)																				
+INSTANTIATE_TEST_CASE_P( SortValues2, SortUDDDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
-#endif																				
+//#endif																				
                                                                                 
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                 TestValues.end()));
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( SortValues, SortFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
+//#if(TEST_LARGE_BUFFERS == 1)																				
+INSTANTIATE_TEST_CASE_P( SortValues2, SortFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
                                                                                 TestValues2.end()));
-#endif
+//#endif
                                                                                 
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
                                                                                     TestValues.end()));
-#if(TEST_LARGE_BUFFERS == 1)																					
-INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleDeviceVector, ::testing::ValuesIn(TestValues2.begin(),
+//#if(TEST_LARGE_BUFFERS == 1)																					
+INSTANTIATE_TEST_CASE_P( SortValues2, SortDoubleDeviceVector, ::testing::ValuesIn(TestValues2.begin(),
                                                                                     TestValues2.end()));
-#endif																					
+//#endif																					
 #endif
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                                     TestValues.end()));
-#if(TEST_LARGE_BUFFERS == 1)																					
-INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
+//#if(TEST_LARGE_BUFFERS == 1)																					
+INSTANTIATE_TEST_CASE_P( SortValues2, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
                                                                                     TestValues2.end()));
-#endif																					
-INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+//#endif																					
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
+//#if(TEST_LARGE_BUFFERS == 1)																				
+INSTANTIATE_TEST_CASE_P( SortValues2, SortFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
-#endif
+//#endif
                                                                                 
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 1, 32768, 3276 ) ); // 1 to 2^15
 INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS == 1)																				
-INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
+//#if(TEST_LARGE_BUFFERS == 1)																				
+INSTANTIATE_TEST_CASE_P( Sort2, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
                                                                             TestValues2.end() ) );
-#endif																			
+//#endif																			
 #endif
 
 typedef ::testing::Types< 
@@ -2302,9 +2302,7 @@ typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 1000 > >,
     std::tuple< cl_long, TypeValue< 1053 > >,
     std::tuple< cl_long, TypeValue< 4096 > >,
-    std::tuple< cl_long, TypeValue< 4097 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 4097 > >,
     std::tuple< cl_long, TypeValue< 8192 > >,
     std::tuple< cl_long, TypeValue< 16384 > >,//13
     std::tuple< cl_long, TypeValue< 32768 > >,//14
@@ -2314,7 +2312,9 @@ typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 262144 > >,//18    
     std::tuple< cl_long, TypeValue< 524288 > >,//19    
     std::tuple< cl_long, TypeValue< 1048576 > >,//20    
-    std::tuple< cl_long, TypeValue< 2097152 > >,//21    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
     std::tuple< cl_long, TypeValue< 4194304 > >,//22    
     std::tuple< cl_long, TypeValue< 8388608 > >,//23
     std::tuple< cl_long, TypeValue< 16777216 > >,//24
@@ -2335,9 +2335,7 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 1000 > >,
     std::tuple< int, TypeValue< 1053 > >,
     std::tuple< int, TypeValue< 4096 > >,
-    std::tuple< int, TypeValue< 4097 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 8192 > >,
     std::tuple< int, TypeValue< 16384 > >,//13
     std::tuple< int, TypeValue< 32768 > >,//14
@@ -2347,7 +2345,9 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 262144 > >,//18    
     std::tuple< int, TypeValue< 524288 > >,//19    
     std::tuple< int, TypeValue< 1048576 > >,//20    
-    std::tuple< int, TypeValue< 2097152 > >,//21    
+    std::tuple< int, TypeValue< 2097152 > >//21
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
     std::tuple< int, TypeValue< 4194304 > >,//22    
     std::tuple< int, TypeValue< 8388608 > >,//23
     std::tuple< int, TypeValue< 16777216 > >,//24
@@ -2368,9 +2368,7 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 1000 > >,
     std::tuple< unsigned int, TypeValue< 1053 > >,
     std::tuple< unsigned int, TypeValue< 4096 > >,
-    std::tuple< unsigned int, TypeValue< 4097 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< unsigned int, TypeValue< 4097 > >,
     std::tuple< unsigned int, TypeValue< 8192 > >,
     std::tuple< unsigned int, TypeValue< 16384 > >,//13
     std::tuple< unsigned int, TypeValue< 32768 > >,//14
@@ -2380,7 +2378,9 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 262144 > >,//18    
     std::tuple< unsigned int, TypeValue< 524288 > >,//19    
     std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
-    std::tuple< unsigned int, TypeValue< 2097152 > >,//21    
+    std::tuple< unsigned int, TypeValue< 2097152 > >//21  
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
     std::tuple< unsigned int, TypeValue< 8388608 > >,//23
     std::tuple< unsigned int, TypeValue< 16777216 > >,//24
@@ -2401,13 +2401,10 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 129 > >,
     std::tuple< float, TypeValue< 1000 > >,
     std::tuple< float, TypeValue< 1053 > >,
-    std::tuple< float, TypeValue< 4096 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< float, TypeValue< 4096 > >,
     std::tuple< float, TypeValue< 4097 > >,
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
-#endif
 > FloatTests;
 
 #if (TEST_DOUBLE == 1)
@@ -2423,12 +2420,9 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 1000 > >,
     std::tuple< double, TypeValue< 1053 > >,
     std::tuple< double, TypeValue< 4096 > >,
-    std::tuple< double, TypeValue< 4097 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< double, TypeValue< 4097 > >,
     std::tuple< double, TypeValue< 65535 > >,
     std::tuple< double, TypeValue< 65536 > >
-#endif
 > DoubleTests;
 #endif 
 
@@ -2501,12 +2495,9 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 1000 > >,
     std::tuple< UDD, TypeValue< 1053 > >,
     std::tuple< UDD, TypeValue< 4096 > >,
-    std::tuple< UDD, TypeValue< 4097 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< UDD, TypeValue< 4097 > >,
     std::tuple< UDD, TypeValue< 65535 > >,
     std::tuple< UDD, TypeValue< 65536 > >
-#endif
 > UDDTests;
 
 typedef ::testing::Types< 
@@ -2521,12 +2512,9 @@ typedef ::testing::Types<
     std::tuple< cl_ushort, TypeValue< 1000 > >,
     std::tuple< cl_ushort, TypeValue< 1053 > >,
     std::tuple< cl_ushort, TypeValue< 4096 > >,
-    std::tuple< cl_ushort, TypeValue< 4097 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< cl_ushort, TypeValue< 4097 > >,
     std::tuple< cl_ushort, TypeValue< 65535 > >,
     std::tuple< cl_ushort, TypeValue< 65536 > >
-#endif
 > cl_ushortTests;
 
 typedef ::testing::Types< 
@@ -2541,12 +2529,9 @@ typedef ::testing::Types<
     std::tuple< cl_short, TypeValue< 1000 > >,
     std::tuple< cl_short, TypeValue< 1053 > >,
     std::tuple< cl_short, TypeValue< 4096 > >,
-    std::tuple< cl_short, TypeValue< 4097 > >
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
+    std::tuple< cl_short, TypeValue< 4097 > >,
     std::tuple< cl_short, TypeValue< 65535 > >,
     std::tuple< cl_short, TypeValue< 65536 > >
-#endif
 > cl_shortTests;
 
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
@@ -2635,14 +2620,14 @@ TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
         EXPECT_EQ(my_vect[i], std_vect[i])<<"Failed at i = "<<i<<std::endl;
     }
 }
-INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 1));
+INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 10));
 
 TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
-    size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
+    int sizeOfInputBufer = 64; //test case is failing for all values greater than 32
     std::vector<double>  stdVect(0);
     bolt::cl::device_vector<double>  boltVect(0);
 
-    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+    for (int i = 0 ; i < sizeOfInputBufer; i++){
         double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
@@ -2652,7 +2637,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
     std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
     bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
 
-    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+    for (int i = 0 ; i < sizeOfInputBufer; i++){
         EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
     }
 }

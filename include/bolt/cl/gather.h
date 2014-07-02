@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@
 #define BOLT_CL_GATHER_H
 #pragma once
 
-#include "bolt/cl/bolt.h"
 #include "bolt/cl/device_vector.h"
+#include "bolt/cl/functional.h"
 
-#include <string>
-#include <iostream>
 
 /*! \file bolt/cl/gather.h
     \brief gathers elements from a source array to a destination range.
@@ -32,23 +30,21 @@
 
 namespace bolt {
     namespace cl {
-
-        /*! \addtogroup algorithms
+        
+		/*! \addtogroup algorithms
          */
 
-        /*! \addtogroup copying
-        *   \ingroup algorithms
+        /*! \addtogroup CL-gather
+        *   \ingroup copying
+        *   \{
+        */
+
+        /*! 
         *   \p gather APIs copy elements from a source array to a destination range (conditionally) according to a
         *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
         *   implementations. See Bolt Tools for Split-Source for a detailed description.
         */
-
-        /*! \addtogroup CL-gather
-        *   \ingroup algorithms
-        *   \{
-        */
-
-
+		
        /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
          * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ]
@@ -101,8 +97,8 @@ namespace bolt {
                      const std::string& user_code="" );
 
 
-       /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
+       /*! \brief This version of \p gather_if copies elements from a source array to a destination range according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather_if copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is
          * \p true.
          *
@@ -120,7 +116,7 @@ namespace bolt {
          *  \tparam InputIterator3 is a model of InputIterator
          *  \tparam OutputIterator is a model of OutputIterator
          *
-         *  \details The following code snippet demonstrates how to use \p gather
+         *  \details The following code snippet demonstrates how to use \p gather_if
          *
          *  \code
          *  #include <bolt/cl/gather.h>
@@ -130,9 +126,9 @@ namespace bolt {
          *  int input[10] = {0, 11, 22, 33, 44, 55, 66, 77, 88, 99};
          *  int stencil[10] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
          *  int output[10];
-         *  bolt::cl::gather(map, map + 10, stencil, input, output);
+         *  bolt::cl::gather_if(map, map + 10, stencil, input, output);
          *
-         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  // output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};
          *  \endcode
          *
          */
@@ -160,8 +156,8 @@ namespace bolt {
                          OutputIterator result,
                          const std::string& user_code="" );
 
-       /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
-         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
+       /*! \brief This version of \p gather_if copies elements from a source array to a destination range according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather_if copies
          * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ])
          * is \p true.
          *
@@ -181,7 +177,7 @@ namespace bolt {
          *  \tparam OutputIterator is a model of OutputIterator
          *  \tparam Predicate is a model of Predicate
          *
-         *  \details The following code snippet demonstrates how to use \p gather
+         *  \details The following code snippet demonstrates how to use \p gather_if
          *
          *  \code
          *  #include <bolt/cl/gather.h>
@@ -204,9 +200,9 @@ namespace bolt {
          *  int output[10];
          *
          *  greater_pred is_gt_5;
-         *  bolt::cl::gather(map, map + 10, stencil, input, output, is_gt_5);
+         *  bolt::cl::gather_if(map, map + 10, stencil, input, output, is_gt_5);
          *
-         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  // output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};
          *  \endcode
          *
          */

@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -51,7 +51,7 @@ kernel void reduceTemplate(
     // length into a length related to the number of workgroups
     while (gx < length)
     {
-        iTypePtr element = input_iter[gx];
+        typename iTypeIter::value_type element = input_iter[gx];
         accumulator = (*userFunctor)(accumulator, element);
         gx += get_global_size(0);
     }

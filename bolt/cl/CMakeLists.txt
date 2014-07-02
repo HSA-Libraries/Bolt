@@ -1,5 +1,5 @@
 ############################################################################
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/copy.h
         ${clBolt.Include.Dir}/count.h
         ${clBolt.Include.Dir}/device_vector.h
+        ${clBolt.Include.Dir}/distance.h
         ${clBolt.Include.Dir}/functional.h
         ${clBolt.Include.Dir}/fill.h
         ${clBolt.Include.Dir}/gather.h
@@ -98,9 +99,16 @@ set( clBolt.Runtime.Headers
     )
 
 set( clBolt.Runtime.Headers.Iterator
+        ${clBolt.Include.Dir}/iterator/addressof.h
+        ${clBolt.Include.Dir}/iterator/facade_iterator_category.h
+        ${clBolt.Include.Dir}/iterator/iterator_adaptor.h
+        ${clBolt.Include.Dir}/iterator/iterator_categories.h
+        ${clBolt.Include.Dir}/iterator/iterator_facade.h
         ${clBolt.Include.Dir}/iterator/iterator_traits.h
         ${clBolt.Include.Dir}/iterator/constant_iterator.h
         ${clBolt.Include.Dir}/iterator/counting_iterator.h
+        ${clBolt.Include.Dir}/iterator/transform_iterator.h
+        ${clBolt.Include.Dir}/iterator/permutation_iterator.h
     )
 
 set( clBolt.Runtime.Headers.Misc
@@ -112,9 +120,10 @@ set( clBolt.Runtime.Headers.Misc
     )
 
 set( clBolt.Runtime.Headers.Detail
+        ${clBolt.Include.Dir}/detail/binary_search.inl
         ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/count.inl
-        ${clBolt.Include.Dir}/detail/binary_search.inl
+        ${clBolt.Include.Dir}/detail/distance.inl
         ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/gather.inl
         ${clBolt.Include.Dir}/detail/generate.inl
@@ -134,6 +143,7 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/transform.inl
         ${clBolt.Include.Dir}/detail/transform_reduce.inl
         ${clBolt.Include.Dir}/detail/transform_scan.inl
+        ${clBolt.Include.Dir}/detail/type_traits.h
     )
 
 set( clBolt.Runtime.clFiles
@@ -268,6 +278,8 @@ if( MSVC )
         set( boltLibName "${boltLibName}.vc100" )
     elseif( MSVC_VERSION VERSION_LESS 1800 )
         set( boltLibName "${boltLibName}.vc110" )
+    else()
+        set( boltLibName "${boltLibName}.vc120" )
     endif( )
 else()
     set( boltLibName "${boltLibName}.gcc" )

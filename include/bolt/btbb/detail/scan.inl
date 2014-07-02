@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@
 #define BOLT_BTBB_SCAN_INL
 #pragma once
 
-
+//#include <thread>
+#include "tbb/partitioner.h"
 
 namespace bolt {
 namespace   btbb {
@@ -46,7 +47,8 @@ namespace   btbb {
           template<typename Tag>
           void operator()( const tbb::blocked_range<int>& r, Tag ) {
              T temp = sum, temp1;
-             for(int i=r.begin(); i<r.end(); ++i ) {
+			 int rend = r.end();
+             for(int i=r.begin(); i<rend; ++i ) {
                  if(Tag::is_final_scan()){
                      if(!inclusive){
                         if(i==0 ) {
@@ -101,12 +103,22 @@ inclusive_scan(
     OutputIterator result,
     BinaryFunction binary_op)
     {
-                unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-               typedef typename std::iterator_traits< InputIterator >::value_type iType;
-               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               Scan_tbb<InputIterator, OutputIterator, BinaryFunction, iType> tbb_scan((InputIterator &)first,(OutputIterator &)
-                                                                         result,binary_op,true,iType());
-               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
+
+               unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+			   typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+               //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+			   //Gets the number of concurrent threads supported by the underlying platform
+               //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+			   unsigned int concurentThreadsSupported = tbb::task_scheduler_init::default_num_threads();
+
+			   //Explicitly setting the number of threads to spawn
+               tbb::task_scheduler_init((int) concurentThreadsSupported);
+
+               Scan_tbb<InputIterator, OutputIterator, BinaryFunction, oType> tbb_scan((InputIterator &)first,(OutputIterator &)
+                                                                         result,binary_op,true, oType());
+
+               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last )), 12500), tbb_scan, tbb::simple_partitioner() );
                return result + numElements;
     }
 
@@ -128,11 +140,20 @@ OutputIterator
     {
 
                unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-               typedef typename std::iterator_traits< InputIterator >::value_type iType;
-               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               Scan_tbb<InputIterator, OutputIterator, BinaryFunction, iType> tbb_scan((InputIterator &)first,(OutputIterator &)
+			   typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+               //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+			   //Gets the number of concurrent threads supported by the underlying platform
+               //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+			   unsigned int concurentThreadsSupported = tbb::task_scheduler_init::default_num_threads();
+
+			   //Explicitly setting the number of threads to spawn
+               tbb::task_scheduler_init((int) concurentThreadsSupported);
+			   
+               Scan_tbb<InputIterator, OutputIterator, BinaryFunction, oType> tbb_scan((InputIterator &)first,(OutputIterator &)
                                                                          result,binary_op,false,init);
-               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
+
+               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last )), 12500), tbb_scan, tbb::simple_partitioner() );
                return result + numElements;
     }
 

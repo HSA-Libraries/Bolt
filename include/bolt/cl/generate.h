@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,11 +19,7 @@
 #define BOLT_CL_GENERATE_H
 #pragma once
 
-#include <bolt/cl/bolt.h>
-#include <bolt/cl/device_vector.h>
-
-#include <string>
-#include <iostream>
+#include "bolt/cl/device_vector.h"
 
 /*! \file bolt/cl/generate.h
     \brief Generate assigns to each element of a sequence [first,last].
@@ -40,7 +36,7 @@ namespace bolt {
         *   \p generate assigns to each element of a sequence the value returned by a generator.
         */
 
-        /*! \addtogroup CL-filling
+        /*! \addtogroup CL-generate
         *   \ingroup transformations
         *   \{
         */

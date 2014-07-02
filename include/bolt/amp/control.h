@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -33,13 +33,16 @@ namespace bolt
 namespace amp
 {
 
-/*! \addtogroup miscellaneous
- */
+ /*! \addtogroup miscellaneous
+        */
 
-/*! \addtogroup control
- * \ingroup miscellaneous
- * \{
- */
+        /*! \addtogroup miscellaneous
+        */
+
+        /*! \addtogroup AMP-control
+        * \ingroup miscellaneous
+        * \{
+        */
 
 /*! The \p control class lets you control the parameters of a specific Bolt algorithm call,
  * such as the debug information, load-balancing with  the host, and more.  Each Bolt Algorithm call
@@ -116,6 +119,7 @@ public:
         m_accelerator(accel),
         m_useHost(useHost),
         m_forceRunMode(getDefault().m_forceRunMode),
+		m_defaultRunMode(getDefault().m_defaultRunMode),
         m_debug(debug),
         m_autoTune(getDefault().m_autoTune),
         m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
@@ -127,6 +131,7 @@ public:
         m_accelerator(ref.m_accelerator),
         m_useHost(ref.m_useHost),
         m_forceRunMode(ref.m_forceRunMode),
+		m_defaultRunMode(ref.m_defaultRunMode),
         m_debug(ref.m_debug),
         m_autoTune(ref.m_autoTune),
         m_wgPerComputeUnit(ref.m_wgPerComputeUnit),
@@ -181,6 +186,7 @@ public:
 
     e_UseHostMode getUseHost() const { return m_useHost; };
     e_RunMode getForceRunMode() const { return m_forceRunMode; };
+	e_RunMode getDefaultPathToRun() const { return m_defaultRunMode; };
     unsigned getDebug() const { return m_debug;};
     int const getWGPerComputeUnit() const { return m_wgPerComputeUnit; };
     e_WaitMode getWaitMode() const { return m_waitMode; };
@@ -225,12 +231,32 @@ private:
         m_wgPerComputeUnit(8),
         m_waitMode(BusyWait),
         m_unroll(1)
-    {};
+    {
+
+		if(m_accelerator.default_accelerator == NULL)
+        {
+#ifdef ENABLE_TBB
+            m_forceRunMode = MultiCoreCpu;
+			m_defaultRunMode = MultiCoreCpu;
+#else
+            m_forceRunMode = SerialCpu;
+			m_defaultRunMode = SerialCpu;
+#endif
+        }
+        else
+        {
+            m_forceRunMode   = Gpu;
+			m_defaultRunMode = Gpu;
+        }
+	
+	
+	};
 
     //::cl::CommandQueue  m_commandQueue;
     ::Concurrency::accelerator m_accelerator;
     e_UseHostMode       m_useHost;
     e_RunMode           m_forceRunMode;
+	e_RunMode           m_defaultRunMode;
     e_AutoTuneMode      m_autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
     unsigned            m_debug;
     int                 m_wgPerComputeUnit;

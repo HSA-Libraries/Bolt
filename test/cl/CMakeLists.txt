@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -61,6 +61,7 @@ add_subdirectory( MaxElementTest )
 add_subdirectory( MergeTest )
 add_subdirectory( MinElementTest )
 add_subdirectory( PairTest )
+add_subdirectory( PermutationIteratorTest )
 add_subdirectory( ReduceTest )
 add_subdirectory( ReduceByKeyTest )
 add_subdirectory( ReadFromFileTest )
@@ -71,6 +72,7 @@ add_subdirectory( SortTest )
 add_subdirectory( SortByKeyTest )
 add_subdirectory( StableSortTest )
 add_subdirectory( StableSortByKeyTest )
+add_subdirectory( TransformIteratorTest )
 add_subdirectory( TransformTest )
 add_subdirectory( TransformReduceTest )
 add_subdirectory( TransformScanTest )

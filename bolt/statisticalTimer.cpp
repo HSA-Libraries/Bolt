@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -239,10 +239,21 @@ statTimer::getMean( size_t id ) const
 
 	size_t	N	= clkTicks.at( id ).size( );
 
-	Accumulator<statTimer::ulong> sum = std::for_each( clkTicks.at( id ).begin(), clkTicks.at( id ).end(), Accumulator<statTimer::ulong>() );
+#if _MSC_VER <  1800   
 
-	return	static_cast<double>( sum.acc ) / N;
+	Accumulator< statTimer::ulong > sum = std::for_each( clkTicks.at( id ).begin(), clkTicks.at( id ).end(), Accumulator< statTimer::ulong > () );
+
+#else	
+	Accumulator< statTimer::ulong > sum;
+	for (std::vector<ulong>::const_iterator f1 = clkTicks.at(id).begin(); f1 != clkTicks.at(id).end(); f1++)
+	{
+		sum(*f1);
+	}
+#endif
+	return	static_cast<double>(sum.acc) / N;
+
 }
+
 
 double
 statTimer::getVariance( size_t id ) const

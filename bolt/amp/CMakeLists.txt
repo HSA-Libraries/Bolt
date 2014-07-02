@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -26,35 +26,69 @@ set( ampBolt.Runtime.Source
    )
 
 set( ampBolt.Runtime.Headers 
-        ${ampBolt.Include.Dir}/bolt.h 
-        ${ampBolt.Include.Dir}/control.h 
-        ${ampBolt.Include.Dir}/count.h
-        ${ampBolt.Include.Dir}/device_vector.h 
-        ${ampBolt.Include.Dir}/functional.h 
-        ${ampBolt.Include.Dir}/parallel_iteration.h 
-        ${ampBolt.Include.Dir}/pool_alloc.h 
-        ${ampBolt.Include.Dir}/reduce.h 
-        ${ampBolt.Include.Dir}/scan.h 
-        ${ampBolt.Include.Dir}/sort.h         
-        ${ampBolt.Include.Dir}/synchronized_view.h 
-        ${ampBolt.Include.Dir}/transform.h 
-        ${ampBolt.Include.Dir}/transform_reduce.h 
-        ${ampBolt.Include.Dir}/transform_reduce_range.h
+	${ampBolt.Include.Dir}/bolt.h 
+	${ampBolt.Include.Dir}/control.h 
+	${ampBolt.Include.Dir}/binary_search.h
+	${ampBolt.Include.Dir}/count.h
+	${ampBolt.Include.Dir}/device_vector.h 
+	${ampBolt.Include.Dir}/functional.h 
+	${ampBolt.Include.Dir}/merge.h	
+	${ampBolt.Include.Dir}/min_element.h
+	${ampBolt.Include.Dir}/max_element.h	
+	${ampBolt.Include.Dir}/copy.h
+	${ampBolt.Include.Dir}/fill.h	
+	${ampBolt.Include.Dir}/gather.h
+	${ampBolt.Include.Dir}/generate.h	
+	${ampBolt.Include.Dir}/inner_product.h	
+	${ampBolt.Include.Dir}/pair.h 		
+	${ampBolt.Include.Dir}/parallel_iteration.h 
+	${ampBolt.Include.Dir}/pool_alloc.h 
+	${ampBolt.Include.Dir}/reduce.h 
+	${ampBolt.Include.Dir}/reduce_by_key.h 
+	${ampBolt.Include.Dir}/scan.h 
+	${ampBolt.Include.Dir}/scatter.h 
+	${ampBolt.Include.Dir}/scan_by_key.h 
+	${ampBolt.Include.Dir}/sort.h
+	${ampBolt.Include.Dir}/sort_by_key.h    
+	${ampBolt.Include.Dir}/stablesort.h 
+	${ampBolt.Include.Dir}/stablesort_by_key.h
+	${ampBolt.Include.Dir}/synchronized_view.h 
+	${ampBolt.Include.Dir}/transform.h 
+	${ampBolt.Include.Dir}/transform_reduce.h 
+	${ampBolt.Include.Dir}/transform_reduce_range.h
+	${ampBolt.Include.Dir}/transform_scan.h
     )
 set( ampBolt.Runtime.Headers.Iterator
-        ${ampBolt.Include.Dir}/iterator/iterator_traits.h 
+	${ampBolt.Include.Dir}/iterator/constant_iterator.h
+	${ampBolt.Include.Dir}/iterator/counting_iterator.h
+	${ampBolt.Include.Dir}/iterator/iterator_traits.h 
+  ${ampBolt.Include.Dir}/iterator/permutation_iterator.h
    )
     
 set( ampBolt.Runtime.Headers.Detail
-        ${ampBolt.Include.Dir}/detail/count.inl
-        ${ampBolt.Include.Dir}/detail/reduce.inl
-        ${ampBolt.Include.Dir}/detail/scan.inl
-        ${ampBolt.Include.Dir}/detail/scan_by_key.inl
-        ${ampBolt.Include.Dir}/detail/sort.inl        
-        ${ampBolt.Include.Dir}/detail/transform.inl
-        ${ampBolt.Include.Dir}/detail/transform_reduce.inl
-        ${ampBolt.Include.Dir}/detail/transform_scan.inl
-    )
+	${ampBolt.Include.Dir}/detail/copy.inl
+	${ampBolt.Include.Dir}/detail/count.inl
+	${ampBolt.Include.Dir}/detail/binary_search.inl
+	${ampBolt.Include.Dir}/detail/fill.inl
+	${ampBolt.Include.Dir}/detail/gather.inl
+	${ampBolt.Include.Dir}/detail/generate.inl
+	${ampBolt.Include.Dir}/detail/inner_product.inl
+	${ampBolt.Include.Dir}/detail/merge.inl
+	${ampBolt.Include.Dir}/detail/min_element.inl
+	${ampBolt.Include.Dir}/detail/pair.inl
+	${ampBolt.Include.Dir}/detail/reduce.inl
+	${ampBolt.Include.Dir}/detail/reduce_by_key.inl
+	${ampBolt.Include.Dir}/detail/scan.inl
+	${ampBolt.Include.Dir}/detail/scatter.inl
+	${ampBolt.Include.Dir}/detail/scan_by_key.inl
+	${ampBolt.Include.Dir}/detail/sort.inl
+	${ampBolt.Include.Dir}/detail/sort_by_key.inl
+	${ampBolt.Include.Dir}/detail/stablesort.inl
+	${ampBolt.Include.Dir}/detail/stablesort_by_key.inl
+	${ampBolt.Include.Dir}/detail/transform.inl
+	${ampBolt.Include.Dir}/detail/transform_reduce.inl
+	${ampBolt.Include.Dir}/detail/transform_scan.inl
+   )
 
 
 # The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
@@ -89,6 +123,8 @@ elseif( MSVC_VERSION VERSION_LESS 1700 )
     set( boltLibName "${boltLibName}.vc100" )
 elseif( MSVC_VERSION VERSION_LESS 1800 )
     set( boltLibName "${boltLibName}.vc110" )
+else()
+    set( boltLibName "${boltLibName}.vc120" )
 endif( )
 
 set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} SOVERSION ${Bolt_VERSION_MAJOR} )

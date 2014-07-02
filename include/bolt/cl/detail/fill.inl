@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -19,12 +19,6 @@
 #if !defined( BOLT_CL_FILL_INL )
 #define BOLT_CL_FILL_INL
 #define WAVEFRONT_SIZE 64
-
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include <type_traits>
-
-#include "bolt/cl/bolt.h"
 
 //TBB Includes
 #ifdef ENABLE_TBB
@@ -221,7 +215,7 @@ namespace detail {
 
                 typedef typename  std::iterator_traits<ForwardIterator>::value_type Type;
 
-                size_t sz = (last - first);
+                int sz = static_cast<int>(last - first);
                 if (sz < 1)
                     return;
 

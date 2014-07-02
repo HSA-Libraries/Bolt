@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -170,9 +170,9 @@ TEST( Merge, IntTest)
 
 
 #if LARGE_SIZE
-  int length = 1<<21;
+  int length = 33554432; //2^25
 #else
-  int length = 1024;
+  int length = 1048576; //2^20
 #endif
 
   std::vector<int> hVectorA( length ),

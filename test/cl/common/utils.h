@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -23,7 +23,7 @@ int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , 
 	int errCnt = 0;
 	static const int maxErrCnt = 20;
 	size_t sz = end1-first1 ;
-	for (int i=0; i<sz ; i++) {
+	for (size_t i = 0; i<sz; i++) {
 		if (first1 [i] != *(first2 + i) ) {
 			errCnt++;
 			if (errCnt < maxErrCnt) {

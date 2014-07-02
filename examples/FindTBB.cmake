@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -111,7 +111,7 @@ else ( )
     mark_as_advanced( TBB_MALLOC_LIBRARY_DEBUG )
 
     mark_as_advanced( TBB_ROOT )
-    message ( "TBB_ROOT: "${TBB_ROOT} )
+    message ( "TBB_ROOT: " ${TBB_ROOT} )
 
     include( FindPackageHandleStandardArgs )
     FIND_PACKAGE_HANDLE_STANDARD_ARGS( TBB DEFAULT_MSG TBB_LIBRARY TBB_MALLOC_LIBRARY TBB_LIBRARY_DEBUG TBB_MALLOC_LIBRARY_DEBUG TBB_INCLUDE_DIRS TBB_ROOT)

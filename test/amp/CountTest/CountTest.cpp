@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
 
 ***************************************************************************/
 
-#define TEST_DOUBLE 0
+
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
+#define TEST_LARGE_BUFFERS 1
 #include "common/stdafx.h"
 
 #include "bolt/amp/count.h"
@@ -30,6 +32,7 @@
 #include <array>
 #include <algorithm>
 #include "bolt/amp/device_vector.h"
+#include "bolt/amp/iterator/counting_iterator.h"
 
 class testCountIfFloatWithStdVector: public ::testing::TestWithParam<int>{
 protected:
@@ -307,10 +310,13 @@ TEST_P(countFloatValueOccuranceStdVect, MultiCorefloatVectSearchWithSameValue2){
     std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
-
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P (useStdVectWithFloatValues, countFloatValueOccuranceStdVect,
                                     ::testing::Values(1, 100, 1000, 10000, 100000));
-
+#else
+INSTANTIATE_TEST_CASE_P (useStdVectWithFloatValues, countFloatValueOccuranceStdVect,
+                                    ::testing::Values(1, 100, 1000));
+#endif
 
 //Test case id: 7 (Failed)
 class countDoubleValueUsedASKeyInStdVect :public ::testing::TestWithParam<int>{
@@ -362,6 +368,75 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
 }
 
 //test case: 1, test: 1
+
+TEST (testCountIf, OffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+  bolt::amp::device_vector< int > dA(A.begin(), aSize);
+  int intVal = 1;
+
+  int offset = 1+rand()%(aSize-1);
+
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::amp::count( dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
+TEST (testCountIf, SerialOffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+    bolt::amp::device_vector< int > dA(A.begin(), aSize);
+    int intVal = 1;
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    int offset = 1+rand()%(aSize-1);
+
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::amp::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
+TEST (testCountIf, MultiCoreOffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+    bolt::amp::device_vector< int > dA(A.begin(), aSize);
+    int intVal = 1;
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    int offset = 1+rand()%(aSize-1);
+
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::amp::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
 
 TEST (testCountIf, intBtwRange)
 {
@@ -430,13 +505,21 @@ TEST (testCountIf, MultiCoreintBtwRange)
 
 
 #if (TEST_DOUBLE == 1)
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P (useStdVectWithDoubleValues, countDoubleValueUsedASKeyInStdVect,
                                         ::testing::Values(1, 100, 1000, 10000, 100000));
+#else
+INSTANTIATE_TEST_CASE_P (useStdVectWithDoubleValues, countDoubleValueUsedASKeyInStdVect,
+                                        ::testing::Values(1, 100, 1000));
 #endif
+#endif
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P (serialFloatValueWithStdVector, testCountIfFloatWithStdVector,
                                     ::testing::Values(10, 100, 1000, 10000, 100000));
-
-
+#else
+INSTANTIATE_TEST_CASE_P (serialFloatValueWithStdVector, testCountIfFloatWithStdVector,
+                                    ::testing::Values(10, 100, 1000));
+#endif
 
 struct UDD {
     int a;
@@ -877,6 +960,87 @@ TEST(count_IntValueOccuranceStdVect, intVectWithSerialvalue){
 
 
 
+class StdVectCountingIterator :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:
+    StdVectCountingIterator():mySize(GetParam()){
+    }
+};
+
+TEST_P( StdVectCountingIterator, withCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    int myValue = 3;
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    size_t stdCount = std::count(a.begin(), a.end(), myValue);
+    size_t boltCount = bolt::amp::count(first, last, myValue);
+
+    EXPECT_EQ(stdCount, boltCount);
+}
+
+
+//TEST_P( StdVectCountingIterator, SerialwithCountingIterator)
+//{
+//    bolt::amp::counting_iterator<int> first(0);
+//    bolt::amp::counting_iterator<int> last = first +  mySize;
+//
+//    std::vector<int> a(mySize);
+//
+//    int myValue = 3;
+//
+//    for (int i=0; i < mySize; i++) {
+//        a[i] = i;
+//    };
+//
+//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+//    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+//
+//    size_t stdCount = std::count(a.begin(), a.end(), myValue);
+//    size_t boltCount = bolt::amp::count(ctl, first, last, myValue);
+//
+//    EXPECT_EQ(stdCount, boltCount);
+//}
+
+#if 0
+TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    int myValue = 3;
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    size_t stdCount = std::count(a.begin(), a.end(), myValue);
+    size_t boltCount = bolt::amp::count(ctl, first, last, myValue);
+
+    EXPECT_EQ(stdCount, boltCount);
+}
+#endif
+
+#if TEST_LARGE_BUFFERS
+INSTANTIATE_TEST_CASE_P (useStdVectWithIntValues, StdVectCountingIterator,
+                         ::testing::Values(1, 100, 1000, 10000, 100000));
+#else
+INSTANTIATE_TEST_CASE_P (useStdVectWithIntValues, StdVectCountingIterator,
+                         ::testing::Values(1, 100, 1000));
+#endif
+
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
@@ -910,7 +1074,5 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-    std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
     return retVal;
 }
