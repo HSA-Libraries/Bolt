@@ -13,7 +13,7 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 1. Visual Studio 2010 onwards (VS2012 onwards for C++ AMP)
 2. Tested with 32/64 bit Windows® 7/8 and Windows® Blue
 3. CMake 2.8.12
-4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See <a href=https://hsa-libraries.github.io/Bolt/html/buildingTBB.html>Building Bolt with TBB</a>.
 5. APP SDK 2.8 or onwards.
 
 *Note:* If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
@@ -23,7 +23,7 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 1. GCC 4.6.3 and above
 2. Tested with OpenSuse 13.1 64-bit, RHEL 6.4 32/64 bit, Ubuntu 13.10 64-bit
 3. CMake 2.8.12
-4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See <a href=https://hsa-libraries.github.io/Bolt/html/buildingTBB.html>Building Bolt with TBB</a>.
 5. APP SDK 2.8 onwards.
 
 *Note:* Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application building else user has to build Bolt from source with GCC 4.6.3 or higher.
