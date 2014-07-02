@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -50,7 +50,7 @@
 </ul>
 </li>
 <li class="level1"><a href="#using_tbb">Running TBB (Intel) routines in Bolt</a><ul><li class="level2"><a href="#tbb_control">Control object</a></li>
-<li class="level2"><a href="#examples">Example:</a><ul><li class="level3"><a href="#transform_reduce">Transform Reduce:</a></li>
+<li class="level2"><a href="#examples">Examples:</a><ul><li class="level3"><a href="#transform_reduce">Transform Reduce:</a></li>
 <li class="level3"><a href="#scan_by_key">Inclusive and Exclusive Scan By key:</a></li>
 <li class="level3"><a href="#sort">Sort:</a></li>
 </ul>
@@ -137,7 +137,7 @@ Control object</h2>
 <li>The default mode is "Automatic" which means it will go into OpenCL &trade; path first, then TBB (Intel), then SerialCpu. The examples discussed below in the next subsection focus on how TBB (Intel) parallelization is achieved with different functions.</li>
 </ol>
 <h2><a class="anchor" id="examples"></a>
-Example:</h2>
+Examples:</h2>
 <h3><a class="anchor" id="transform_reduce"></a>
 Transform Reduce:</h3>
 <p>Transform_reduce performs a transformation defined by unary_op into a temporary sequence and then performs reduce on the transformed sequence.</p>
@@ -163,14 +163,14 @@ Transform Reduce:</h3>
 <div class="line">int length = 10;</div>
 <div class="line">std::vector&lt; float &gt; input( length );</div>
 <div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
-<div class="line">ctl.<a class="code" href="group__control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::MultiCoreCpu);</div>
+<div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
+<div class="line">ctl.<a class="code" href="group__AMP-control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::MultiCoreCpu);</div>
 <div class="line"><span class="keywordtype">float</span> boldReduce = <a class="code" href="group__CL-transform__reduce.html#gae58c061918f2819ad9df48a133c63f89" title="transform_reduce fuses transform and reduce operations together, increasing performance by reducing m...">bolt::cl::transform_reduce</a>(ctl, input.begin(), input.end(),  unary_op, 4.f, binary_op );</div>
 </div><!-- fragment --><h3><a class="anchor" id="scan_by_key"></a>
 Inclusive and Exclusive Scan By key:</h3>
 <p>Inclusive_scan_by_key performs, on a sequence, an inclusive scan of each sub-sequence as defined by equivalent keys.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2control_8h.html" title="Control the parameters of a specific Bolt algorithm call.">bolt/cl/control.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="scan__by__key_8h.html" title="Performs, on a sequence, scan of each sub-sequence as defined by equivalent keys inclusive or exclusi...">bolt/cl/scan_by_key.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2scan__by__key_8h.html" title="Performs, on a sequence, scan of each sub-sequence as defined by equivalent keys inclusive or exclusi...">bolt/cl/scan_by_key.h</a>&gt;</span></div>
 <div class="line"></div>
 <div class="line">......</div>
 <div class="line"></div>
@@ -187,18 +187,18 @@ Inclusive and Exclusive Scan By key:</h3>
 <div class="line">ctl.<a class="code" href="group__CL-control.html#gab2ae4ea074dd26814f6356d884cc2146">setForceRunMode</a>(bolt::cl::control::MultiCoreCpu); </div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Inclusive call:</span></div>
-<div class="line"><a class="code" href="group__SegmentedPrefixSums.html#gab9269ad1d61edb2ffb20ebee6e12bcb6" title="inclusive_scan_by_key performs, on a sequence, an inclusive scan of each sub-sequence as defined by e...">bolt::cl::inclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, plus);</div>
+<div class="line"><a class="code" href="group__CLSegmentedPrefixSums.html#gab9269ad1d61edb2ffb20ebee6e12bcb6" title="inclusive_scan_by_key performs, on a sequence, an inclusive scan of each sub-sequence as defined by e...">bolt::cl::inclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, plus);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Exclusive call:</span></div>
-<div class="line"><a class="code" href="group__SegmentedPrefixSums.html#ga802f9694048d41d2cd4c960659d61abf" title="exclusive_scan_by_key performs, on a sequence, an exclusive scan of each sub-sequence as defined by e...">bolt::cl::exclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f, eq, plus)</div>
+<div class="line"><a class="code" href="group__CLSegmentedPrefixSums.html#ga802f9694048d41d2cd4c960659d61abf" title="exclusive_scan_by_key performs, on a sequence, an exclusive scan of each sub-sequence as defined by e...">bolt::cl::exclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f, eq, plus)</div>
 </div><!-- fragment --><p> AMP backend variant: </p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="amp_2control_8h.html" title="Control the parameters of a specific Bolt algorithm call.">bolt/amp/control.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;bolt/amp/scan_by_key.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="amp_2scan__by__key_8h.html" title="Performs, on a sequence, scan of each sub-sequence as defined by equivalent keys inclusive or exclusi...">bolt/amp/scan_by_key.h</a>&gt;</span></div>
 <div class="line"></div>
 <div class="line">......</div>
 <div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
-<div class="line">ctl.<a class="code" href="group__control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::MultiCoreCpu);</div>
+<div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
+<div class="line">ctl.<a class="code" href="group__AMP-control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::MultiCoreCpu);</div>
 <div class="line"></div>
 <div class="line">std::vector&lt; float &gt; input( length);</div>
 <div class="line">std::vector&lt; float &gt; output( length);</div>
@@ -207,10 +207,10 @@ Inclusive and Exclusive Scan By key:</h3>
 <div class="line">bolt::cl::plus&lt;float&gt; plus; </div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Inclusive call:</span></div>
-<div class="line"><a class="code" href="group__SegmentedPrefixSums.html#gab9269ad1d61edb2ffb20ebee6e12bcb6" title="inclusive_scan_by_key performs, on a sequence, an inclusive scan of each sub-sequence as defined by e...">bolt::amp::inclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, plus);</div>
+<div class="line"><a class="code" href="group__AMPSegmentedPrefixSums.html#gae514c0b964fc5183045f0dec3f7282c4" title="inclusive_scan_by_key performs, on a sequence, an inclusive scan of each sub-sequence as defined by e...">bolt::amp::inclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, plus);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Exclusive call:</span></div>
-<div class="line"><a class="code" href="group__SegmentedPrefixSums.html#gab9269ad1d61edb2ffb20ebee6e12bcb6" title="inclusive_scan_by_key performs, on a sequence, an inclusive scan of each sub-sequence as defined by e...">bolt::amp::inclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f, eq, plus);</div>
+<div class="line"><a class="code" href="group__AMPSegmentedPrefixSums.html#gae514c0b964fc5183045f0dec3f7282c4" title="inclusive_scan_by_key performs, on a sequence, an inclusive scan of each sub-sequence as defined by e...">bolt::amp::inclusive_scan_by_key</a>(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f, eq, plus);</div>
 </div><!-- fragment --><h3><a class="anchor" id="sort"></a>
 Sort:</h3>
 <p>Sort the input array based on the comparison function provided.</p>
@@ -235,14 +235,14 @@ Sort:</h3>
 <div class="line"><span class="keywordtype">int</span> length = 1024;</div>
 <div class="line">std::vector&lt; float &gt; input( length, 0.0 );</div>
 <div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
-<div class="line">ctl.<a class="code" href="group__control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::MultiCoreCpu);</div>
+<div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
+<div class="line">ctl.<a class="code" href="group__AMP-control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::MultiCoreCpu);</div>
 <div class="line"> </div>
 <div class="line"><a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>( ctl, boltInput.begin( ), boltInput.end( ), cmp_fun );</div>
 </div><!-- fragment --> </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:31 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

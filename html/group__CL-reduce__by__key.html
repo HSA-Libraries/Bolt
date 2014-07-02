@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -62,7 +62,7 @@ OutputIterator2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>
 <tr class="memitem:ga5679c3c8230106d927e5885373fc0dae"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator1 , typename OutputIterator2 , typename BinaryPredicate &gt; </td></tr>
 <tr class="memitem:ga5679c3c8230106d927e5885373fc0dae"><td class="memTemplItemLeft" align="right" valign="top">pair&lt; OutputIterator1, <br class="typebreak"/>
 OutputIterator2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-reduce__by__key.html#ga5679c3c8230106d927e5885373fc0dae">bolt::cl::reduce_by_key</a> (control &amp;ctl, InputIterator1 keys_first, InputIterator1 keys_last, InputIterator2 values_first, OutputIterator1 keys_output, OutputIterator2 values_output, BinaryPredicate binary_pred, const std::string &amp;user_code=&quot;&quot;)</td></tr>
-<tr class="memdesc:ga5679c3c8230106d927e5885373fc0dae"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys; the BinaryFunction in this version is plus().  <a href="#ga5679c3c8230106d927e5885373fc0dae"></a><br/></td></tr>
+<tr class="memdesc:ga5679c3c8230106d927e5885373fc0dae"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys; the BinaryFunction in this version is plus(). reduce_by_key is a generalization of reduce to key-value pairs. If the reduction operator is not commutative then bolt::reduce_by_key should not be used.  <a href="#ga5679c3c8230106d927e5885373fc0dae"></a><br/></td></tr>
 <tr class="separator:ga5679c3c8230106d927e5885373fc0dae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4a90839e77072cf80143b0f1211eaedb"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga4a90839e77072cf80143b0f1211eaedb"></a>
 template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator1 , typename OutputIterator2 , typename BinaryPredicate &gt; </td></tr>
@@ -72,7 +72,7 @@ OutputIterator2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>
 <tr class="memitem:ga19ca4592242058c9e5ed81a55e8858fd"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator1 , typename OutputIterator2 , typename BinaryPredicate , typename BinaryFunction &gt; </td></tr>
 <tr class="memitem:ga19ca4592242058c9e5ed81a55e8858fd"><td class="memTemplItemLeft" align="right" valign="top">pair&lt; OutputIterator1, <br class="typebreak"/>
 OutputIterator2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-reduce__by__key.html#ga19ca4592242058c9e5ed81a55e8858fd">bolt::cl::reduce_by_key</a> (control &amp;ctl, InputIterator1 keys_first, InputIterator1 keys_last, InputIterator2 values_first, OutputIterator1 keys_output, OutputIterator2 values_output, BinaryPredicate binary_pred, BinaryFunction binary_op, const std::string &amp;user_code=&quot;&quot;)</td></tr>
-<tr class="memdesc:ga19ca4592242058c9e5ed81a55e8858fd"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys;  <a href="#ga19ca4592242058c9e5ed81a55e8858fd"></a><br/></td></tr>
+<tr class="memdesc:ga19ca4592242058c9e5ed81a55e8858fd"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys; reduce_by_key is a generalization of reduce to key-value pairs. If the reduction operator is not commutative then bolt::reduce_by_key should not be used.  <a href="#ga19ca4592242058c9e5ed81a55e8858fd"></a><br/></td></tr>
 <tr class="separator:ga19ca4592242058c9e5ed81a55e8858fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga30fe04252309dfa30024fda9de194f8a"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga30fe04252309dfa30024fda9de194f8a"></a>
 template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator1 , typename OutputIterator2 , typename BinaryPredicate , typename BinaryFunction &gt; </td></tr>
@@ -161,7 +161,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>result+(last1-first1).</dd></dl>
 <p>Example: </p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="reduce__by__key_8h.html" title="Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">bolt/cl/reduce_by_key.h</a>&quot;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="cl_2reduce__by__key_8h.html" title="Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">bolt/cl/reduce_by_key.h</a>&quot;</span></div>
 <div class="line">...</div>
 <div class="line"></div>
 <div class="line">int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };</div>
@@ -239,7 +239,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
       </table>
 </div><div class="memdoc">
 
-<p><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys; the BinaryFunction in this version is plus(). </p>
+<p><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys; the BinaryFunction in this version is plus(). reduce_by_key is a generalization of reduce to key-value pairs. If the reduction operator is not commutative then bolt::reduce_by_key should not be used. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctl</td><td><b>Optional</b> Control structure to control command-queue, debug, tuning, etc. See <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>. </td></tr>
@@ -264,7 +264,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>pair(last of keys output, last of value output)</dd></dl>
 <p>Example: </p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="reduce__by__key_8h.html" title="Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">bolt/cl/reduce_by_key.h</a>&quot;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="cl_2reduce__by__key_8h.html" title="Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">bolt/cl/reduce_by_key.h</a>&quot;</span></div>
 <div class="line">...</div>
 <div class="line"></div>
 <div class="line">int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };</div>
@@ -349,7 +349,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
       </table>
 </div><div class="memdoc">
 
-<p><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys; </p>
+<p><code>reduce_by_key</code> performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys; reduce_by_key is a generalization of reduce to key-value pairs. If the reduction operator is not commutative then bolt::reduce_by_key should not be used. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctl</td><td><b>Optional</b> Control structure to control command-queue, debug, tuning, etc. See <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>. </td></tr>
@@ -376,7 +376,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>pair(last of keys output, last of value output)</dd></dl>
 <p>Example: </p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="reduce__by__key_8h.html" title="Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">bolt/cl/reduce_by_key.h</a>&quot;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="cl_2reduce__by__key_8h.html" title="Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">bolt/cl/reduce_by_key.h</a>&quot;</span></div>
 <div class="line">...</div>
 <div class="line"></div>
 <div class="line">int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };</div>
@@ -395,7 +395,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

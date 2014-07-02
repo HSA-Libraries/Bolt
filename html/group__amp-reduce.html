@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: Amp-reduce</title>
+<title>Bolt: AMP-reduce</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -43,7 +43,7 @@
   <div class="summary">
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">Amp-reduce<div class="ingroups"><a class="el" href="group__reductions.html">Reductions</a></div></div>  </div>
+<div class="title">AMP-reduce<div class="ingroups"><a class="el" href="group__reductions.html">Reductions</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
@@ -51,7 +51,7 @@
 Functions</h2></td></tr>
 <tr class="memitem:ga7cc02de68696520df430df94876e1c99"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
 <tr class="memitem:ga7cc02de68696520df430df94876e1c99"><td class="memTemplItemLeft" align="right" valign="top">std::iterator_traits<br class="typebreak"/>
-&lt; InputIterator &gt;::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-reduce.html#ga7cc02de68696520df430df94876e1c99">bolt::amp::reduce</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> &amp;ctl, InputIterator first, InputIterator last)</td></tr>
+&lt; InputIterator &gt;::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-reduce.html#ga7cc02de68696520df430df94876e1c99">bolt::amp::reduce</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> &amp;ctl, InputIterator first, InputIterator last)</td></tr>
 <tr class="memdesc:ga7cc02de68696520df430df94876e1c99"><td class="mdescLeft">&#160;</td><td class="mdescRight">reduce returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the initial value is "0" and the binary operator is "plus&lt;&gt;()".  <a href="#ga7cc02de68696520df430df94876e1c99"></a><br/></td></tr>
 <tr class="separator:ga7cc02de68696520df430df94876e1c99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1e519c7c42c99f1462da556faf5ba455"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga1e519c7c42c99f1462da556faf5ba455"></a>
@@ -60,7 +60,7 @@ template&lt;typename InputIterator &gt; </td></tr>
 &lt; InputIterator &gt;::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::reduce</b> (InputIterator first, InputIterator last)</td></tr>
 <tr class="separator:ga1e519c7c42c99f1462da556faf5ba455"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga09817ced60422b383fca43cabcea3eae"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename T &gt; </td></tr>
-<tr class="memitem:ga09817ced60422b383fca43cabcea3eae"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-reduce.html#ga09817ced60422b383fca43cabcea3eae">bolt::amp::reduce</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> &amp;ctl, InputIterator first, InputIterator last, T init)</td></tr>
+<tr class="memitem:ga09817ced60422b383fca43cabcea3eae"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-reduce.html#ga09817ced60422b383fca43cabcea3eae">bolt::amp::reduce</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> &amp;ctl, InputIterator first, InputIterator last, T init)</td></tr>
 <tr class="memdesc:ga09817ced60422b383fca43cabcea3eae"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>reduce</code> returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the initial value is "0" and the binary operator is "plus&lt;&gt;()".  <a href="#ga09817ced60422b383fca43cabcea3eae"></a><br/></td></tr>
 <tr class="separator:ga09817ced60422b383fca43cabcea3eae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga98203a3a19990b2f301569edd1154bcc"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga98203a3a19990b2f301569edd1154bcc"></a>
@@ -68,7 +68,7 @@ template&lt;typename InputIterator , typename T &gt; </td></tr>
 <tr class="memitem:ga98203a3a19990b2f301569edd1154bcc"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::reduce</b> (InputIterator first, InputIterator last, T init)</td></tr>
 <tr class="separator:ga98203a3a19990b2f301569edd1154bcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gafe5439c62bdaef7d275c2962065cbd3f"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; </td></tr>
-<tr class="memitem:gafe5439c62bdaef7d275c2962065cbd3f"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-reduce.html#gafe5439c62bdaef7d275c2962065cbd3f">bolt::amp::reduce</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> &amp;ctl, InputIterator first, InputIterator last, T init, BinaryFunction binary_op=<a class="el" href="structbolt_1_1amp_1_1plus.html">bolt::amp::plus</a>&lt; T &gt;())</td></tr>
+<tr class="memitem:gafe5439c62bdaef7d275c2962065cbd3f"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-reduce.html#gafe5439c62bdaef7d275c2962065cbd3f">bolt::amp::reduce</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> &amp;ctl, InputIterator first, InputIterator last, T init, BinaryFunction binary_op=<a class="el" href="structbolt_1_1amp_1_1plus.html">bolt::amp::plus</a>&lt; T &gt;())</td></tr>
 <tr class="memdesc:gafe5439c62bdaef7d275c2962065cbd3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">reduce returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the binary operator is "plus&lt;&gt;()". The version takes a <a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> structure as a first argument.  <a href="#gafe5439c62bdaef7d275c2962065cbd3f"></a><br/></td></tr>
 <tr class="separator:gafe5439c62bdaef7d275c2962065cbd3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7fae2838e08f58ea1cc27d0863deb3e1"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga7fae2838e08f58ea1cc27d0863deb3e1"></a>
@@ -111,7 +111,7 @@ template&lt;typename InputIterator &gt; </div>
 </div><div class="memdoc">
 
 <p>reduce returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the initial value is "0" and the binary operator is "plus&lt;&gt;()". </p>
-<p><code>reduce</code> requires that the binary reduction op ("binary_op") is cummutative. The order in which <code>reduce</code> applies the binary_op is not deterministic.</p>
+<p><code>reduce</code> requires that the binary reduction op ("binary_op") be commutative. The order in which <code>reduce</code> applies the binary_op is not deterministic. If the reduction operator is not commutative then bolt::reduce should not be used. Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.</p>
 <p>The <code>reduce</code> operation is similar the std::accumulate function</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -183,7 +183,7 @@ template&lt;typename InputIterator , typename T &gt; </div>
 </div><div class="memdoc">
 
 <p><code>reduce</code> returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the initial value is "0" and the binary operator is "plus&lt;&gt;()". </p>
-<p><code>reduce</code> requires that the binary reduction op ("binary_op") is cummutative. The order in which <code>reduce</code> applies the binary_op is not deterministic.</p>
+<p><code>reduce</code> requires that the binary reduction op ("binary_op") be commutative. The order in which <code>reduce</code> applies the binary_op is not deterministic. If the reduction operator is not commutative then bolt::reduce should not be used. Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.</p>
 <p>The <code>reduce</code> operation is similar the std::accumulate function</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -213,7 +213,7 @@ template&lt;typename InputIterator , typename T &gt; </div>
 <div class="line"> ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);</div>
 <div class="line"> <a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl(accel);</div>
 <div class="line"></div>
-<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__amp-reduce.html#ga7cc02de68696520df430df94876e1c99" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::amp::reduce</a>(ctl, a, a+10, 0);</div>
+<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__AMP-reduce.html#ga7cc02de68696520df430df94876e1c99" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::amp::reduce</a>(ctl, a, a+10, 0);</div>
 <div class="line"><span class="comment">// sum = 55</span></div>
 </div><!-- fragment --> 
 </div>
@@ -263,7 +263,7 @@ template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; <
 </div><div class="memdoc">
 
 <p>reduce returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the binary operator is "plus&lt;&gt;()". The version takes a <a class="el" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> structure as a first argument. </p>
-<p><code>reduce</code> requires that the binary reduction op ("binary_op") is cummutative. The order in which <code>reduce</code> applies the binary_op is not deterministic.</p>
+<p><code>reduce</code> requires that the binary reduction op ("binary_op") be commutative. The order in which <code>reduce</code> applies the binary_op is not deterministic. If the reduction operator is not commutative then bolt::reduce should not be used. Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.</p>
 <p>The <code>reduce</code> operation is similar the std::accumulate function.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -292,7 +292,7 @@ template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; <
 <div class="line">::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);</div>
 <div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl(accel);</div>
 <div class="line"></div>
-<div class="line"><span class="keywordtype">int</span> max = <a class="code" href="group__amp-reduce.html#ga7cc02de68696520df430df94876e1c99" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::amp::reduce</a>(ctl, a, a+10, -1, <a class="code" href="structbolt_1_1amp_1_1maximum.html">bolt::amp::maximum&lt;int&gt;</a>());</div>
+<div class="line"><span class="keywordtype">int</span> max = <a class="code" href="group__AMP-reduce.html#ga7cc02de68696520df430df94876e1c99" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::amp::reduce</a>(ctl, a, a+10, -1, <a class="code" href="structbolt_1_1amp_1_1maximum.html">bolt::amp::maximum&lt;int&gt;</a>());</div>
 <div class="line"><span class="comment">// max = 9</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/accumulate.html">http://www.sgi.com/tech/stl/accumulate.html</a> </dd></dl>
 
@@ -301,7 +301,7 @@ template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; <
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

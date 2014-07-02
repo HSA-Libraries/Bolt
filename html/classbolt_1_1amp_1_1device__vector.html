@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -55,6 +55,7 @@
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classbolt_1_1amp_1_1device__vector-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -92,12 +93,9 @@ typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><b>differen
 <tr class="memitem:a42ea357bb8242756e2fd6158389e69af"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a42ea357bb8242756e2fd6158389e69af"></a>
 typedef difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>distance_type</b></td></tr>
 <tr class="separator:a42ea357bb8242756e2fd6158389e69af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60a6681f71b2c9f2a746eb09ff6adfb5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a60a6681f71b2c9f2a746eb09ff6adfb5"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a60a6681f71b2c9f2a746eb09ff6adfb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a58f6cebcbb8f9dfe117c36cf86e82254"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a58f6cebcbb8f9dfe117c36cf86e82254"></a>
-typedef CONT&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>container_type</b></td></tr>
-<tr class="separator:a58f6cebcbb8f9dfe117c36cf86e82254"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27e5bbfc4441c2f9184b59b20263e83d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a27e5bbfc4441c2f9184b59b20263e83d"></a>
+typedef int&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
+<tr class="separator:a27e5bbfc4441c2f9184b59b20263e83d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae19218ba4fabcfff7dc575b15693ddbf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae19218ba4fabcfff7dc575b15693ddbf"></a>
 typedef <br class="typebreak"/>
 concurrency::array_view&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>arrayview_type</b></td></tr>
@@ -105,6 +103,9 @@ concurrency::array_view&lt; T &gt;&#160;</td><td class="memItemRight" valign="bo
 <tr class="memitem:aeba16f687322e82e098a877ba2f11084"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeba16f687322e82e098a877ba2f11084"></a>
 typedef concurrency::array&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>array_type</b></td></tr>
 <tr class="separator:aeba16f687322e82e098a877ba2f11084"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58f6cebcbb8f9dfe117c36cf86e82254"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a58f6cebcbb8f9dfe117c36cf86e82254"></a>
+typedef CONT&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>container_type</b></td></tr>
+<tr class="separator:a58f6cebcbb8f9dfe117c36cf86e82254"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7c5b5223a235dc74f91c91dc5cf8d55"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae7c5b5223a235dc74f91c91dc5cf8d55"></a>
 typedef naked_pointer&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
 <tr class="separator:ae7c5b5223a235dc74f91c91dc5cf8d55"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,38 +150,47 @@ typedef <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__itera
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aa39e463bd1105f36ef57421d667d87b2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#aa39e463bd1105f36ef57421d667d87b2">device_vector</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
+<tr class="memitem:aa39e463bd1105f36ef57421d667d87b2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#aa39e463bd1105f36ef57421d667d87b2">device_vector</a> (<a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
 <tr class="memdesc:aa39e463bd1105f36ef57421d667d87b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">A default constructor that creates an empty <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>.  <a href="#aa39e463bd1105f36ef57421d667d87b2"></a><br/></td></tr>
 <tr class="separator:aa39e463bd1105f36ef57421d667d87b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4d695e16ca1572aed4abb64218da97d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac4d695e16ca1572aed4abb64218da97d">device_vector</a> (size_type newSize, const value_type &amp;initValue=value_type(), bool init=true, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
+<tr class="memitem:ac4d695e16ca1572aed4abb64218da97d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac4d695e16ca1572aed4abb64218da97d">device_vector</a> (size_type newSize, const value_type &amp;initValue=value_type(), bool init=true, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
 <tr class="memdesc:ac4d695e16ca1572aed4abb64218da97d"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> with the specified number of elements, with a specified initial value.  <a href="#ac4d695e16ca1572aed4abb64218da97d"></a><br/></td></tr>
 <tr class="separator:ac4d695e16ca1572aed4abb64218da97d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a75c25d59f89d1b78e7d4416c7a33b0b5"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:a75c25d59f89d1b78e7d4416c7a33b0b5"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a75c25d59f89d1b78e7d4416c7a33b0b5">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, size_type newSize, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; array_type, container_type &gt;::value &gt;::type *=0)</td></tr>
-<tr class="memdesc:a75c25d59f89d1b78e7d4416c7a33b0b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#a75c25d59f89d1b78e7d4416c7a33b0b5"></a><br/></td></tr>
-<tr class="separator:a75c25d59f89d1b78e7d4416c7a33b0b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad37719dba3c4b342fc063dc38276c3d4"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:ad37719dba3c4b342fc063dc38276c3d4"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad37719dba3c4b342fc063dc38276c3d4">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, size_type newSize, bool discard=false, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; arrayview_type, container_type &gt;::value &gt;::type *=0)</td></tr>
+<tr class="memitem:ad37719dba3c4b342fc063dc38276c3d4"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad37719dba3c4b342fc063dc38276c3d4">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, size_type newSize, bool discard=false, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; arrayview_type, container_type &gt;::value &gt;::type *=0)</td></tr>
 <tr class="memdesc:ad37719dba3c4b342fc063dc38276c3d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#ad37719dba3c4b342fc063dc38276c3d4"></a><br/></td></tr>
 <tr class="separator:ad37719dba3c4b342fc063dc38276c3d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1415fba7f87f1a4ab5f4bce10b9b11a7"><td class="memTemplParams" colspan="2">template&lt;typename Container &gt; </td></tr>
-<tr class="memitem:a1415fba7f87f1a4ab5f4bce10b9b11a7"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a1415fba7f87f1a4ab5f4bce10b9b11a7">device_vector</a> (Container &amp;cont, bool discard=false, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
-<tr class="memdesc:a1415fba7f87f1a4ab5f4bce10b9b11a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#a1415fba7f87f1a4ab5f4bce10b9b11a7"></a><br/></td></tr>
-<tr class="separator:a1415fba7f87f1a4ab5f4bce10b9b11a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad035c064d0c7a53038f357fe1ffb6605"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:ad035c064d0c7a53038f357fe1ffb6605"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad035c064d0c7a53038f357fe1ffb6605">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac53ab468e178a1498f692066cd75c0b0">end</a>, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; array_type, container_type &gt;::value &gt;::type *=0)</td></tr>
-<tr class="memdesc:ad035c064d0c7a53038f357fe1ffb6605"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#ad035c064d0c7a53038f357fe1ffb6605"></a><br/></td></tr>
-<tr class="separator:ad035c064d0c7a53038f357fe1ffb6605"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ac84c03c7b29b7bae6c7f244b8f06e5"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:a9ac84c03c7b29b7bae6c7f244b8f06e5"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a9ac84c03c7b29b7bae6c7f244b8f06e5">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac53ab468e178a1498f692066cd75c0b0">end</a>, bool discard=false, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; arrayview_type, container_type &gt;::value &gt;::type *=0)</td></tr>
-<tr class="memdesc:a9ac84c03c7b29b7bae6c7f244b8f06e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#a9ac84c03c7b29b7bae6c7f244b8f06e5"></a><br/></td></tr>
-<tr class="separator:a9ac84c03c7b29b7bae6c7f244b8f06e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0292da1935161669e76adf94c8dae774"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a0292da1935161669e76adf94c8dae774">device_vector</a> (container_type &amp;rhs, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
-<tr class="memdesc:a0292da1935161669e76adf94c8dae774"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a pre-initialized buffer supplied by the user.  <a href="#a0292da1935161669e76adf94c8dae774"></a><br/></td></tr>
-<tr class="separator:a0292da1935161669e76adf94c8dae774"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62781b87dc076772fc325f54e5ea3843"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:a62781b87dc076772fc325f54e5ea3843"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a62781b87dc076772fc325f54e5ea3843">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, size_type newSize, bool discard=false, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; array_type, container_type &gt;::value &gt;::type *=0)</td></tr>
+<tr class="memdesc:a62781b87dc076772fc325f54e5ea3843"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#a62781b87dc076772fc325f54e5ea3843"></a><br/></td></tr>
+<tr class="separator:a62781b87dc076772fc325f54e5ea3843"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b5096a515a3305033dc982f59f5c9fe"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a9b5096a515a3305033dc982f59f5c9fe"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a9b5096a515a3305033dc982f59f5c9fe">device_vector</a> (const <a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a>&lt; T, CONT &gt; &amp;cont, bool <a class="el" href="group__AMP-copy.html#ga3c8605096cd7595d787ddb3870d78bd2">copy</a>=true, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
+<tr class="memdesc:a9b5096a515a3305033dc982f59f5c9fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> from <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> specified by user.  <a href="#a9b5096a515a3305033dc982f59f5c9fe"></a><br/></td></tr>
+<tr class="separator:a9b5096a515a3305033dc982f59f5c9fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaa6f0e41b9dc1c168a72ca635182757"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#afaa6f0e41b9dc1c168a72ca635182757">device_vector</a> (arrayview_type &amp;cont)</td></tr>
+<tr class="memdesc:afaa6f0e41b9dc1c168a72ca635182757"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a pre-initialized array supplied by the user.  <a href="#afaa6f0e41b9dc1c168a72ca635182757"></a><br/></td></tr>
+<tr class="separator:afaa6f0e41b9dc1c168a72ca635182757"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a161f476e1955aee8b4a6613372c16296"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a161f476e1955aee8b4a6613372c16296">device_vector</a> (array_type &amp;cont)</td></tr>
+<tr class="memdesc:a161f476e1955aee8b4a6613372c16296"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a pre-initialized array_view supplied by the user.  <a href="#a161f476e1955aee8b4a6613372c16296"></a><br/></td></tr>
+<tr class="separator:a161f476e1955aee8b4a6613372c16296"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7105be2b73e749421b3deeb81f74ff49"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:a7105be2b73e749421b3deeb81f74ff49"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a7105be2b73e749421b3deeb81f74ff49">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac53ab468e178a1498f692066cd75c0b0">end</a>, bool discard=false, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; std::is_same&lt; arrayview_type, container_type &gt;::value &amp;&amp;!std::is_integral&lt; InputIterator &gt;::value &gt;::type *=0)</td></tr>
+<tr class="memdesc:a7105be2b73e749421b3deeb81f74ff49"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#a7105be2b73e749421b3deeb81f74ff49"></a><br/></td></tr>
+<tr class="separator:a7105be2b73e749421b3deeb81f74ff49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28cf8196f713ff7918ca54469dc103c1"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:a28cf8196f713ff7918ca54469dc103c1"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a28cf8196f713ff7918ca54469dc103c1">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, const InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac53ab468e178a1498f692066cd75c0b0">end</a>, bool discard=false, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(), typename std::enable_if&lt; std::is_same&lt; array_type, container_type &gt;::value &amp;&amp;!std::is_integral&lt; InputIterator &gt;::value &gt;::type *=0)</td></tr>
+<tr class="memdesc:a28cf8196f713ff7918ca54469dc103c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#a28cf8196f713ff7918ca54469dc103c1"></a><br/></td></tr>
+<tr class="separator:a28cf8196f713ff7918ca54469dc103c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a966abf0b557fc8cca0bf05c356dc0ef7"><td class="memItemLeft" align="right" valign="top">arrayview_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a966abf0b557fc8cca0bf05c356dc0ef7">getBuffer</a> () const </td></tr>
 <tr class="memdesc:a966abf0b557fc8cca0bf05c356dc0ef7"><td class="mdescLeft">&#160;</td><td class="mdescRight">A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument to the C++ AMP parallel_for_each constructs.  <a href="#a966abf0b557fc8cca0bf05c356dc0ef7"></a><br/></td></tr>
 <tr class="separator:a966abf0b557fc8cca0bf05c356dc0ef7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcc32e57184bb5795e8bd873bca57293"><td class="memItemLeft" align="right" valign="top">arrayview_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#adcc32e57184bb5795e8bd873bca57293">getBuffer</a> (<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a8b8edf2443945aaefc7fc1d775b92ba3">const_iterator</a> itr, unsigned int <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43">size</a>) const </td></tr>
+<tr class="memdesc:adcc32e57184bb5795e8bd873bca57293"><td class="mdescLeft">&#160;</td><td class="mdescRight">A get accessor function to return the encapsulated device buffer for const objects based on the iterator getIndex() and size. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument to the C++ AMP parallel_for_each constructs.  <a href="#adcc32e57184bb5795e8bd873bca57293"></a><br/></td></tr>
+<tr class="separator:adcc32e57184bb5795e8bd873bca57293"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab414b33bed21ba9c2089307aec4d89fd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab414b33bed21ba9c2089307aec4d89fd"></a>
+arrayview_type&#160;</td><td class="memItemRight" valign="bottom"><b>getBuffer</b> (<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a0faeee9b976ebef334ff2893dada4df3">const_reverse_iterator</a> itr, unsigned int <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43">size</a>) const </td></tr>
+<tr class="separator:ab414b33bed21ba9c2089307aec4d89fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27f4d129c1527a037059f62ada325672"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a27f4d129c1527a037059f62ada325672">resize</a> (size_type reqSize, const value_type &amp;val=value_type())</td></tr>
 <tr class="memdesc:a27f4d129c1527a037059f62ada325672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change the number of elements in <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> to reqSize. If the new requested size is less than the original size, the data is truncated and lost. If the new size is greater than the original size, the extra paddign will be initialized with the value specified by the user.  <a href="#a27f4d129c1527a037059f62ada325672"></a><br/></td></tr>
 <tr class="separator:a27f4d129c1527a037059f62ada325672"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,7 +198,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a042c843f3892d066a771e79641062c43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of known elements.  <a href="#a042c843f3892d066a771e79641062c43"></a><br/></td></tr>
 <tr class="separator:a042c843f3892d066a771e79641062c43"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6d3b0bfcb2d648aca064c63923017fb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb">reserve</a> (size_type reqSize)</td></tr>
-<tr class="memdesc:ad6d3b0bfcb2d648aca064c63923017fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the maximum number of elements possible to allocate on the associated device.  <a href="#ad6d3b0bfcb2d648aca064c63923017fb"></a><br/></td></tr>
+<tr class="memdesc:ad6d3b0bfcb2d648aca064c63923017fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request a change in the capacity of the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>. If reserve completes successfully, this <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> object guarantees that the it can store the requested amount of elements without another reallocation, until the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> size exceeds n.  <a href="#ad6d3b0bfcb2d648aca064c63923017fb"></a><br/></td></tr>
 <tr class="separator:ad6d3b0bfcb2d648aca064c63923017fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa36cb327688c4c54b8f682af3a31c12"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12">capacity</a> (void) const </td></tr>
 <tr class="memdesc:afa36cb327688c4c54b8f682af3a31c12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the maximum possible number of elements without reallocation.  <a href="#afa36cb327688c4c54b8f682af3a31c12"></a><br/></td></tr>
@@ -196,12 +206,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a989eaafc43f6c1435ec6544fbbc15f2c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a989eaafc43f6c1435ec6544fbbc15f2c">shrink_to_fit</a> ()</td></tr>
 <tr class="memdesc:a989eaafc43f6c1435ec6544fbbc15f2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shrink the <a class="el" href="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12" title="Return the maximum possible number of elements without reallocation.">capacity( )</a> of this <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> to just fit its elements. This makes the <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size( )</a> of the vector equal to its <a class="el" href="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12" title="Return the maximum possible number of elements without reallocation.">capacity( )</a>.  <a href="#a989eaafc43f6c1435ec6544fbbc15f2c"></a><br/></td></tr>
 <tr class="separator:a989eaafc43f6c1435ec6544fbbc15f2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b9ee37c018b7dd32f2503e65f04b280"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#abe5ac2f8acf50ab3a49b3f018a334602">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a1b9ee37c018b7dd32f2503e65f04b280">operator[]</a> (size_type n)</td></tr>
-<tr class="memdesc:a1b9ee37c018b7dd32f2503e65f04b280"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index n.  <a href="#a1b9ee37c018b7dd32f2503e65f04b280"></a><br/></td></tr>
-<tr class="separator:a1b9ee37c018b7dd32f2503e65f04b280"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a633d87e555f09e574d7f2fc0449d1f3e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a633d87e555f09e574d7f2fc0449d1f3e">operator[]</a> (size_type n) const </td></tr>
-<tr class="memdesc:a633d87e555f09e574d7f2fc0449d1f3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a constant value stored at index n.  <a href="#a633d87e555f09e574d7f2fc0449d1f3e"></a><br/></td></tr>
-<tr class="separator:a633d87e555f09e574d7f2fc0449d1f3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7f2ef798856d1b6776ebcc28bfcee28"><td class="memItemLeft" align="right" valign="top">value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ae7f2ef798856d1b6776ebcc28bfcee28">operator[]</a> (size_type n) restrict(cpu</td></tr>
+<tr class="memdesc:ae7f2ef798856d1b6776ebcc28bfcee28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index n.  <a href="#ae7f2ef798856d1b6776ebcc28bfcee28"></a><br/></td></tr>
+<tr class="separator:ae7f2ef798856d1b6776ebcc28bfcee28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a03121e711d0fc21fff2000a22bf82c"><td class="memItemLeft" align="right" valign="top">value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a3a03121e711d0fc21fff2000a22bf82c">operator[]</a> (size_type ix) const restrict(cpu</td></tr>
+<tr class="memdesc:a3a03121e711d0fc21fff2000a22bf82c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a constant value stored at index n.  <a href="#a3a03121e711d0fc21fff2000a22bf82c"></a><br/></td></tr>
+<tr class="separator:a3a03121e711d0fc21fff2000a22bf82c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acbfa253609dd6ac45a10a4ea2ee0baf6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a6243dd5f79d8c3b7eeee67c6374f90a9">iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a> (void)</td></tr>
 <tr class="memdesc:acbfa253609dd6ac45a10a4ea2ee0baf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves an iterator for this container that points at the beginning element.  <a href="#acbfa253609dd6ac45a10a4ea2ee0baf6"></a><br/></td></tr>
 <tr class="separator:acbfa253609dd6ac45a10a4ea2ee0baf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -238,18 +248,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a10c66eeee719362525a525bd4f990390"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a0faeee9b976ebef334ff2893dada4df3">const_reverse_iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a10c66eeee719362525a525bd4f990390">crend</a> (void) const </td></tr>
 <tr class="memdesc:a10c66eeee719362525a525bd4f990390"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a reverse_iterator for this container that points at the beginning constant element. No operation through this iterator may modify the contents of the referenced container.  <a href="#a10c66eeee719362525a525bd4f990390"></a><br/></td></tr>
 <tr class="separator:a10c66eeee719362525a525bd4f990390"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63e5f7fbbd23cd8123fd17bd7a745125"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#abe5ac2f8acf50ab3a49b3f018a334602">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a63e5f7fbbd23cd8123fd17bd7a745125">front</a> (void)</td></tr>
-<tr class="memdesc:a63e5f7fbbd23cd8123fd17bd7a745125"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index 0.  <a href="#a63e5f7fbbd23cd8123fd17bd7a745125"></a><br/></td></tr>
-<tr class="separator:a63e5f7fbbd23cd8123fd17bd7a745125"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a528a5c9eee58e69ae23c68ac4a34625e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a528a5c9eee58e69ae23c68ac4a34625e">front</a> (void) const </td></tr>
-<tr class="memdesc:a528a5c9eee58e69ae23c68ac4a34625e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index 0.  <a href="#a528a5c9eee58e69ae23c68ac4a34625e"></a><br/></td></tr>
-<tr class="separator:a528a5c9eee58e69ae23c68ac4a34625e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4e2cb1d071fb534e801eaa3a99eb8eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#abe5ac2f8acf50ab3a49b3f018a334602">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ae4e2cb1d071fb534e801eaa3a99eb8eb">back</a> (void)</td></tr>
-<tr class="memdesc:ae4e2cb1d071fb534e801eaa3a99eb8eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size( )</a> - 1.  <a href="#ae4e2cb1d071fb534e801eaa3a99eb8eb"></a><br/></td></tr>
-<tr class="separator:ae4e2cb1d071fb534e801eaa3a99eb8eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab634c0e2f1cc1e99b061b7894c36eec5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#ab634c0e2f1cc1e99b061b7894c36eec5">back</a> (void) const </td></tr>
-<tr class="memdesc:ab634c0e2f1cc1e99b061b7894c36eec5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size( )</a> - 1.  <a href="#ab634c0e2f1cc1e99b061b7894c36eec5"></a><br/></td></tr>
-<tr class="separator:ab634c0e2f1cc1e99b061b7894c36eec5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8fc5aebcb81a30f8e4f8abd37ab8903"><td class="memItemLeft" align="right" valign="top">value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#aa8fc5aebcb81a30f8e4f8abd37ab8903">front</a> (void)</td></tr>
+<tr class="memdesc:aa8fc5aebcb81a30f8e4f8abd37ab8903"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index 0.  <a href="#aa8fc5aebcb81a30f8e4f8abd37ab8903"></a><br/></td></tr>
+<tr class="separator:aa8fc5aebcb81a30f8e4f8abd37ab8903"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a928b2620b58a3f6a902c342815fe40de"><td class="memItemLeft" align="right" valign="top">const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a928b2620b58a3f6a902c342815fe40de">front</a> (void) const </td></tr>
+<tr class="memdesc:a928b2620b58a3f6a902c342815fe40de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index 0.  <a href="#a928b2620b58a3f6a902c342815fe40de"></a><br/></td></tr>
+<tr class="separator:a928b2620b58a3f6a902c342815fe40de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af14965f44538810ff277b0c00fdd34ec"><td class="memItemLeft" align="right" valign="top">value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#af14965f44538810ff277b0c00fdd34ec">back</a> (void)</td></tr>
+<tr class="memdesc:af14965f44538810ff277b0c00fdd34ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size( )</a> - 1.  <a href="#af14965f44538810ff277b0c00fdd34ec"></a><br/></td></tr>
+<tr class="separator:af14965f44538810ff277b0c00fdd34ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13c546cd662d0540b8ee37cb25ece215"><td class="memItemLeft" align="right" valign="top">const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a13c546cd662d0540b8ee37cb25ece215">back</a> (void) const </td></tr>
+<tr class="memdesc:a13c546cd662d0540b8ee37cb25ece215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the value stored at index <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size( )</a> - 1.  <a href="#a13c546cd662d0540b8ee37cb25ece215"></a><br/></td></tr>
+<tr class="separator:a13c546cd662d0540b8ee37cb25ece215"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24b16a44376c4a93ce2da5fbe1e91abc"><td class="memItemLeft" align="right" valign="top">pointer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a24b16a44376c4a93ce2da5fbe1e91abc">data</a> (void)</td></tr>
 <tr class="separator:a24b16a44376c4a93ce2da5fbe1e91abc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98a4b29b07a62beebe881a6a99049712"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a98a4b29b07a62beebe881a6a99049712"></a>
@@ -298,6 +308,11 @@ template&lt;typename InputIterator &gt; </td></tr>
 <tr class="memdesc:af6b78ed2bce122350633c2e75bcf14e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns a range of values to <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>, replacing all previous elements.  <a href="#af6b78ed2bce122350633c2e75bcf14e2"></a><br/></td></tr>
 <tr class="separator:af6b78ed2bce122350633c2e75bcf14e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a7505188dcc043b4d0f4ab1ab930b06ad"><td class="memItemLeft" align="right" valign="top">value_type&#160;</td><td class="memItemRight" valign="bottom"><b>amp</b></td></tr>
+<tr class="separator:a7505188dcc043b4d0f4ab1ab930b06ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
 <tr class="memitem:a811ee22ffe70f7ebb2829f620f369cdb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a811ee22ffe70f7ebb2829f620f369cdb"></a>
@@ -305,7 +320,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>reference</b></td></
 <tr class="separator:a811ee22ffe70f7ebb2829f620f369cdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt;<br/>
+<div class="textblock"><h3>template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt;<br/>
 class bolt::amp::device_vector&lt; T, CONT &gt;</h3>
 
 <p>This defines the AMP version of a <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>. </p>
@@ -316,7 +331,7 @@ class bolt::amp::device_vector&lt; T, CONT &gt;</h3>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">typedef <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1const__reference__base.html">const_reference_base</a>&lt; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a>&lt; value_type, CONT &gt; &gt; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a></td>
@@ -334,7 +349,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -343,7 +358,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
           <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a> </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code></td><td>)</td>
+          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -369,7 +384,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -396,7 +411,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>&#160;</td>
+          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -416,76 +431,12 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
   <table class="params">
     <tr><td class="paramname">newSize</td><td>The number of elements of the new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> </td></tr>
     <tr><td class="paramname">value</td><td>The value with which to initialize new elements. </td></tr>
-    <tr><td class="paramname">flags</td><td>A bitfield that takes the OpenCL memory flags to help specify where the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> allocates memory. </td></tr>
-    <tr><td class="paramname">init</td><td>Boolean value to indicate whether to initialize device memory from host memory. </td></tr>
+    <tr><td class="paramname">init</td><td>Boolean value to indicate whether to initialize device memory from initValue. </td></tr>
     <tr><td class="paramname">ctl</td><td>A Bolt control class for copy operations; a default is used if not supplied by the user. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section warning"><dt>Warning</dt><dd>The ::cl::CommandQueue is not an STD <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb" title="Return the maximum number of elements possible to allocate on the associated device.">reserve( )</a> parameter. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="a75c25d59f89d1b78e7d4416c7a33b0b5"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
-<div class="memtemplate">
-template&lt;typename InputIterator &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a> </td>
-          <td>(</td>
-          <td class="paramtype">const InputIterator&#160;</td>
-          <td class="paramname"><em>begin</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_type&#160;</td>
-          <td class="paramname"><em>newSize</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; array_type, container_type &gt;::value &gt;::type *&#160;</td>
-          <td class="paramname"> = <code>0</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">begin</td><td>An iterator pointing at the beginning of the range. </td></tr>
-    <tr><td class="paramname">end</td><td>An iterator pointing at the end of the range. </td></tr>
-    <tr><td class="paramname">flags</td><td>A bitfield that takes the OpenCL memory flags to help specify where the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> allocates memory. </td></tr>
-    <tr><td class="paramname">init</td><td>Boolean value to indicate whether to initialize device memory from host memory. </td></tr>
-    <tr><td class="paramname">ctl</td><td>A Bolt control class used to perform copy operations; a default is used if not supplied by the user. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section note"><dt>Note</dt><dd>Ignore the enable_if&lt;&gt; parameter; it prevents this constructor from being called with integral types. </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The ::cl::CommandQueue is not an STD <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb" title="Request a change in the capacity of the device_vector. If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount of elements without another reallocation, until the device_vector size exceeds n.">reserve( )</a> parameter. </dd></dl>
 
 </div>
 </div>
@@ -493,7 +444,7 @@ template&lt;typename InputIterator &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -522,7 +473,7 @@ template&lt;typename InputIterator &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
+          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -547,9 +498,8 @@ template&lt;typename InputIterator &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">begin</td><td>An iterator pointing at the beginning of the range. </td></tr>
-    <tr><td class="paramname">end</td><td>An iterator pointing at the end of the range. </td></tr>
-    <tr><td class="paramname">flags</td><td>A bitfield that takes the OpenCL memory flags to help specify where the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> allocates memory. </td></tr>
-    <tr><td class="paramname">discard</td><td>Boolean value to whether the container data will be read; basically used as a hint to indicate this is an output buffer </td></tr>
+    <tr><td class="paramname">newSize</td><td>The number of elements of the new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> </td></tr>
+    <tr><td class="paramname">discard</td><td>Boolean value to whether the container data will be discarded for read operation. </td></tr>
     <tr><td class="paramname">ctl</td><td>A Bolt control class used to perform copy operations; a default is used if not supplied by the user. </td></tr>
   </table>
   </dd>
@@ -558,65 +508,11 @@ template&lt;typename InputIterator &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a1415fba7f87f1a4ab5f4bce10b9b11a7"></a>
+<a class="anchor" id="a62781b87dc076772fc325f54e5ea3843"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
-<div class="memtemplate">
-template&lt;typename Container &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a> </td>
-          <td>(</td>
-          <td class="paramtype">Container &amp;&#160;</td>
-          <td class="paramname"><em>cont</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>discard</em> = <code>false</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">cont</td><td>An object that has both .<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a24b16a44376c4a93ce2da5fbe1e91abc">data()</a> and .<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size()</a> members </td></tr>
-    <tr><td class="paramname">discard</td><td>Boolean value to whether the container data will be read; basically used as a hint to indicate this is an output buffer </td></tr>
-    <tr><td class="paramname">ctl</td><td>A Bolt control class used to perform copy operations; a default is used if not supplied by the user. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="ad035c064d0c7a53038f357fe1ffb6605"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -632,14 +528,20 @@ template&lt;typename InputIterator &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const InputIterator&#160;</td>
-          <td class="paramname"><em>end</em>, </td>
+          <td class="paramtype">size_type&#160;</td>
+          <td class="paramname"><em>newSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>discard</em> = <code>false</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
+          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -664,8 +566,9 @@ template&lt;typename InputIterator &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">begin</td><td>An iterator pointing at the beginning of the range. </td></tr>
-    <tr><td class="paramname">end</td><td>An iterator pointing at the end of the range. </td></tr>
-    <tr><td class="paramname">ctl</td><td>A Bolt control class for copy operations; a default is used if not supplied by the user. </td></tr>
+    <tr><td class="paramname">newSize</td><td>The number of elements of the new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> </td></tr>
+    <tr><td class="paramname">discard</td><td>Boolean value to whether the container data will be discarded for read operation. </td></tr>
+    <tr><td class="paramname">ctl</td><td>A Bolt control class used to perform copy operations; a default is used if not supplied by the user. </td></tr>
   </table>
   </dd>
 </dl>
@@ -673,11 +576,133 @@ template&lt;typename InputIterator &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a9ac84c03c7b29b7bae6c7f244b8f06e5"></a>
+<a class="anchor" id="a9b5096a515a3305033dc982f59f5c9fe"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a> </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a>&lt; T, CONT &gt; &amp;&#160;</td>
+          <td class="paramname"><em>cont</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>copy</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
+          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> from <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> specified by user. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cont</td><td>An <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> object that has both .<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a24b16a44376c4a93ce2da5fbe1e91abc">data()</a> and .<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size()</a> members </td></tr>
+    <tr><td class="paramname">copy</td><td>Boolean value to decide whether new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> will be shallow copy or deep copy </td></tr>
+    <tr><td class="paramname">ctl</td><td>A Bolt control class used to perform copy operations; a default is used if not supplied by the user. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="afaa6f0e41b9dc1c168a72ca635182757"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a> </td>
+          <td>(</td>
+          <td class="paramtype">arrayview_type &amp;&#160;</td>
+          <td class="paramname"><em>cont</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a pre-initialized array supplied by the user. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cont</td><td>An concurrency::array object. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a161f476e1955aee8b4a6613372c16296"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a> </td>
+          <td>(</td>
+          <td class="paramtype">array_type &amp;&#160;</td>
+          <td class="paramname"><em>cont</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a pre-initialized array_view supplied by the user. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cont</td><td>An concurrency::array_view object. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a7105be2b73e749421b3deeb81f74ff49"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -706,12 +731,12 @@ template&lt;typename InputIterator &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
+          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &amp;&amp;std::is_same&lt; arrayview_type, container_type &gt;::value &gt;::type *&#160;</td>
+          <td class="paramtype">typename std::enable_if&lt; std::is_same&lt; arrayview_type, container_type &gt;::value &amp;&amp;!std::is_integral&lt; InputIterator &gt;::value &gt;::type *&#160;</td>
           <td class="paramname"> = <code>0</code>&#160;</td>
         </tr>
         <tr>
@@ -732,19 +757,22 @@ template&lt;typename InputIterator &gt; </div>
   <table class="params">
     <tr><td class="paramname">begin</td><td>An iterator pointing at the beginning of the range. </td></tr>
     <tr><td class="paramname">end</td><td>An iterator pointing at the end of the range. </td></tr>
-    <tr><td class="paramname">ctl</td><td>A Bolt control class for copy operations; a default is used if not supplied by the user. </td></tr>
+    <tr><td class="paramname">discard</td><td>Boolean value to whether the container data will be discarded for read operation. </td></tr>
+    <tr><td class="paramname">ctl</td><td>A Bolt control class used to perform copy operations; a default is used if not supplied by the user. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>Ignore the enable_if&lt;&gt; parameter; it prevents this constructor from being called with integral types. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>concurrency::array_view specialization Ignore the enable_if&lt;&gt; parameter; it prevents this constructor from being called with integral types. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="a0292da1935161669e76adf94c8dae774"></a>
+<a class="anchor" id="a28cf8196f713ff7918ca54469dc103c1"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
+<div class="memtemplate">
+template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -752,14 +780,32 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
         <tr>
           <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a> </td>
           <td>(</td>
-          <td class="paramtype">container_type &amp;&#160;</td>
-          <td class="paramname"><em>rhs</em>, </td>
+          <td class="paramtype">const InputIterator&#160;</td>
+          <td class="paramname"><em>begin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const InputIterator&#160;</td>
+          <td class="paramname"><em>end</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>discard</em> = <code>false</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;&#160;</td>
-          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>&#160;</td>
+          <td class="paramname"><em>ctl</em> = <code><a class="el" href="group__AMP-control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>(&#160;)</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">typename std::enable_if&lt; std::is_same&lt; array_type, container_type &gt;::value &amp;&amp;!std::is_integral&lt; InputIterator &gt;::value &gt;::type *&#160;</td>
+          <td class="paramname"> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -774,14 +820,17 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 </table>
 </div><div class="memdoc">
 
-<p>A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a pre-initialized buffer supplied by the user. </p>
+<p>A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a range specified by the user. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">rhs</td><td>A pre-existing ::cl::Buffer supplied by the user. </td></tr>
-    <tr><td class="paramname">ctl</td><td>A Bolt control class for copy operations; a default is used if not supplied by the user. </td></tr>
+    <tr><td class="paramname">begin</td><td>An iterator pointing at the beginning of the range. </td></tr>
+    <tr><td class="paramname">end</td><td>An iterator pointing at the end of the range. </td></tr>
+    <tr><td class="paramname">discard</td><td>Boolean value to whether the container data will be discarded for read operation. </td></tr>
+    <tr><td class="paramname">ctl</td><td>A Bolt control class used to perform copy operations; a default is used if not supplied by the user. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>concurrency::array specializationIgnore the enable_if&lt;&gt; parameter; it prevents this constructor from being called with integral types. </dd></dl>
 
 </div>
 </div>
@@ -790,7 +839,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -836,7 +885,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -880,17 +929,17 @@ template&lt;typename InputIterator &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ae4e2cb1d071fb534e801eaa3a99eb8eb"></a>
+<a class="anchor" id="af14965f44538810ff277b0c00fdd34ec"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#abe5ac2f8acf50ab3a49b3f018a334602">reference</a> <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::back </td>
+          <td class="memname">value_type&amp; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::back </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -909,17 +958,17 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 
 </div>
 </div>
-<a class="anchor" id="ab634c0e2f1cc1e99b061b7894c36eec5"></a>
+<a class="anchor" id="a13c546cd662d0540b8ee37cb25ece215"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a> <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::back </td>
+          <td class="memname">const value_type&amp; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::back </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -942,7 +991,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -971,7 +1020,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1000,7 +1049,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1030,7 +1079,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1060,7 +1109,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1090,7 +1139,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1119,7 +1168,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1149,7 +1198,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1179,7 +1228,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1206,7 +1255,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1235,7 +1284,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1264,7 +1313,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1293,7 +1342,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1328,7 +1377,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1370,17 +1419,17 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 
 </div>
 </div>
-<a class="anchor" id="a63e5f7fbbd23cd8123fd17bd7a745125"></a>
+<a class="anchor" id="aa8fc5aebcb81a30f8e4f8abd37ab8903"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#abe5ac2f8acf50ab3a49b3f018a334602">reference</a> <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::front </td>
+          <td class="memname">value_type&amp; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::front </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -1399,17 +1448,17 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 
 </div>
 </div>
-<a class="anchor" id="a528a5c9eee58e69ae23c68ac4a34625e"></a>
+<a class="anchor" id="a928b2620b58a3f6a902c342815fe40de"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a> <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::front </td>
+          <td class="memname">const value_type&amp; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::front </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -1432,7 +1481,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1456,11 +1505,57 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 
 </div>
 </div>
+<a class="anchor" id="adcc32e57184bb5795e8bd873bca57293"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">arrayview_type <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::getBuffer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a8b8edf2443945aaefc7fc1d775b92ba3">const_iterator</a>&#160;</td>
+          <td class="paramname"><em>itr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>A get accessor function to return the encapsulated device buffer for const objects based on the iterator getIndex() and size. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument to the C++ AMP parallel_for_each constructs. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">itr</td><td>An iterator pointing at the beginning of the range. </td></tr>
+    <tr><td class="paramname">size</td><td>Size of buffer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so this location seems less intrusive to the design of the vector class. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a8e01f9fb9b37ffcbffde70747975fc6f"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1509,7 +1604,7 @@ If the container must grow to contain the new value, all iterators and reference
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1560,28 +1655,20 @@ If the container must grow to contain the new value, all iterators and reference
 
 </div>
 </div>
-<a class="anchor" id="a1b9ee37c018b7dd32f2503e65f04b280"></a>
+<a class="anchor" id="ae7f2ef798856d1b6776ebcc28bfcee28"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#abe5ac2f8acf50ab3a49b3f018a334602">reference</a> <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::operator[] </td>
+          <td class="memname">value_type&amp; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::operator[] </td>
           <td>(</td>
           <td class="paramtype">size_type&#160;</td>
           <td class="paramname"><em>n</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Retrieves the value stored at index n. </p>
@@ -1589,28 +1676,20 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 
 </div>
 </div>
-<a class="anchor" id="a633d87e555f09e574d7f2fc0449d1f3e"></a>
+<a class="anchor" id="a3a03121e711d0fc21fff2000a22bf82c"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a> <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::operator[] </td>
+          <td class="memname">value_type&amp; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::operator[] </td>
           <td>(</td>
           <td class="paramtype">size_type&#160;</td>
-          <td class="paramname"><em>n</em></td><td>)</td>
+          <td class="paramname"><em>ix</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Retrieves a constant value stored at index n. </p>
@@ -1622,7 +1701,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1656,7 +1735,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1685,7 +1764,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1714,7 +1793,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1743,7 +1822,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1772,7 +1851,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1792,8 +1871,6 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 </table>
 </div><div class="memdoc">
 
-<p>Return the maximum number of elements possible to allocate on the associated device. </p>
-<dl class="section return"><dt>Returns</dt><dd>The maximum amount of memory possible to allocate, counted in elements.</dd></dl>
 <p>Request a change in the capacity of the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>. If reserve completes successfully, this <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> object guarantees that the it can store the requested amount of elements without another reallocation, until the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> size exceeds n. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -1806,7 +1883,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 Contents are preserved, and the <a class="el" href="classbolt_1_1amp_1_1device__vector.html#a042c843f3892d066a771e79641062c43" title="Return the number of known elements.">size( )</a> of the vector is not affected. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>if the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> must reallocate, all previous iterators, references, and pointers are invalidated. </dd>
 <dd>
-The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb" title="Return the maximum number of elements possible to allocate on the associated device.">reserve( )</a> parameter  what if reqSize &lt; the size of the original buffer </dd></dl>
+The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb" title="Request a change in the capacity of the device_vector. If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount of elements without another reallocation, until the device_vector size exceeds n.">reserve( )</a> parameter  what if reqSize &lt; the size of the original buffer </dd></dl>
 
 </div>
 </div>
@@ -1814,7 +1891,7 @@ The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1devi
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1855,7 +1932,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <dl class="section note"><dt>Note</dt><dd><a class="el" href="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12" title="Return the maximum possible number of elements without reallocation.">capacity( )</a> may exceed n, but is not less than n. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>If the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> must reallocate, all previous iterators, references, and pointers are invalidated. </dd>
 <dd>
-The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb" title="Return the maximum number of elements possible to allocate on the associated device.">reserve( )</a> parameter </dd></dl>
+The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb" title="Request a change in the capacity of the device_vector. If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount of elements without another reallocation, until the device_vector size exceeds n.">reserve( )</a> parameter </dd></dl>
 
 </div>
 </div>
@@ -1863,7 +1940,7 @@ The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1devi
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1892,7 +1969,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1922,7 +1999,7 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1952,13 +2029,30 @@ template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = conc
 
 </div>
 </div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="a7505188dcc043b4d0f4ab1ab930b06ad"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">value_type <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::amp</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">{</div>
+<div class="line">        <span class="keywordflow">return</span> m_devMemory[n]</div>
+</div><!-- fragment -->
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
+<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -49,26 +49,33 @@
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="groups"></a>
 Modules</h2></td></tr>
-<tr class="memitem:group__amp-sort"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__amp-sort.html">Amp-sort</a></td></tr>
+<tr class="memitem:group__AMP-sort"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__AMP-sort.html">AMP-sort</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:group__CL-merge"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__CL-merge.html">CL-merge</a></td></tr>
+<tr class="memitem:group__AMP-sort__by__key"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__AMP-sort__by__key.html">AMP-sort_by_key</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:group__AMP-stable__sort"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__AMP-stable__sort.html">AMP-stable_sort</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:group__AMP-stable__sort__by__key"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__AMP-stable__sort__by__key.html">AMP-stable_sort_by_key</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:group__CL-sort"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__CL-sort.html">CL-sort</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:group__stable__sort"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stable__sort.html">Stable_sort</a></td></tr>
+<tr class="memitem:group__CL-sort__by__key"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__CL-sort__by__key.html">CL-sort_by_key</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:group__stable__sort__by__key"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stable__sort__by__key.html">Stable_sort_by_key</a></td></tr>
+<tr class="memitem:group__CL-stable__sort"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__CL-stable__sort.html">CL-stable_sort</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:group__CL-stable__sort__by__key"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__CL-stable__sort__by__key.html">CL-stable_sort_by_key</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>An Algorithm for sorting the given InputIterator. It is capable of sorting the arithmetic data types, or the user-defined data types. For common code between the hostand device, take a look at the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> implementations. See the Bolt Tools for Split-Source for a detailed description.</p>
-<p>An Algorithm for sorting the given InputIterator. It is capable of sorting the arithmetic data types, or the user-defined data types. For common code between the host and device, take a look at the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> implementations. See the Bolt Tools for Split-Source for a detailed description.</p>
+<p>An Algorithm for sorting the given InputIterator. It is capable of sorting the arithmetic data types, or the user-defined data types. For common code between the host and device, take a look at the AMPCode and <a class="el" href="structTypeName.html">TypeName</a> implementations. See the Bolt Tools for Split-Source for a detailed description.</p>
 <p>Algorithms for sorting a given iterator range, with a possible user specified sorting criteria. Either fundamental or user-defined data types can be sorted.</p>
-<p>Algorithms for sorting a given iterator range, with a possible user specified sorting criteria. These algorithms handle data where the keys and the values are split into seperate arrays. The criteria to sort is applied to the key array, but the value array follows suite. Fundamental or user-defined data types can be sorted. </p>
+<p>Algorithms for sorting a given iterator range, with a possible user specified sorting criteria. These algorithms handle data where the keys and the values are split into seperate arrays. The criteria to sort is applied to the key array, but the value array follows suite. Fundamental or user-defined data types can be sorted.</p>
+<p>An Algorithm for sorting the given InputIterator. It is capable of sorting the arithmetic data types, or the user-defined data types. For common code between the host and device, take a look at the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> implementations. See the Bolt Tools for Split-Source for a detailed description. </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

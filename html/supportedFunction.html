@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -45,10 +45,8 @@
 </div><!--header-->
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#Functions">Supported Functions and Paths</a><ul><li class="level2"><a href="#examples">Example:</a><ul><li class="level3"><a href="#transform_scan">Transform Scan:</a></li>
-</ul>
-</li>
-<li class="level2"><a href="#FunctionsSupported">List of Supported Function and Code Paths</a></li>
+<ul><li class="level1"><a href="#Functions">Supported Functions and Paths</a><ul><li class="level2"><a href="#FunctionsSupported">List of Supported Function and Code Paths</a></li>
+<li class="level2"><a href="#Limitations"></a></li>
 </ul>
 </li>
 </ul>
@@ -56,106 +54,96 @@
 <div class="textblock"><h1><a class="anchor" id="Functions"></a>
 Supported Functions and Paths</h1>
 <p>Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then Multicore CPU (Intel TBB), then SerialCpu, control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the function with that code path. All Bolt functions have OpenCL™, Multicore CPU and Serial path implementation.</p>
-<h2><a class="anchor" id="examples"></a>
-Example:</h2>
-<h3><a class="anchor" id="transform_scan"></a>
-Transform Scan:</h3>
-<p>Transform_inclusive_scan performs, on a sequence, the transformation defined by a unary operator, then the inclusive scan defined by a binary operator. As Multicore path for transform_inclusive_scan function is not implemented yet, forcing transform_inclusive_scan to MultiCoreCpu will run Serial code in the example below.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2control_8h.html" title="Control the parameters of a specific Bolt algorithm call.">bolt/cl/control.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="transform__scan_8h.html" title="Performs on a sequence, the transformation defined by a unary operator, then the inclusive scan defin...">bolt/cl/transform_scan.h</a>&gt;</span></div>
-<div class="line"></div>
-<div class="line">.....</div>
-<div class="line"></div>
-<div class="line">int length = 10;</div>
-<div class="line">std::vector&lt; float &gt; input( length );</div>
-<div class="line">std::vector&lt; float &gt; output( length );</div>
-<div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> ctl = <a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>( );</div>
-<div class="line">ctl.<a class="code" href="group__CL-control.html#gab2ae4ea074dd26814f6356d884cc2146">setForceRunMode</a>(bolt::cl::control::MultiCoreCpu);</div>
-<div class="line">  </div>
-<div class="line">bolt::cl::negate&lt;float&gt; unary_op;</div>
-<div class="line">bolt::cl::plus&lt;float&gt; binary_op;</div>
-<div class="line"><a class="code" href="group__TransformedPrefixSums.html#ga794bfe18c0859cbbebb6bef6f5c5d537" title="transform_inclusive_scan performs, on a sequence, the transformation defined by a unary operator...">bolt::cl::transform_inclusive_scan</a>(ctl, input.begin(), input.end(), output.begin(), unary_op, binary_op  );  <span class="comment">// run with serial path.</span></div>
-</div><!-- fragment --><h2><a class="anchor" id="FunctionsSupported"></a>
+<h2><a class="anchor" id="FunctionsSupported"></a>
 List of Supported Function and Code Paths</h2>
 <table  border="6" cellpadding="10">
 <tr>
 <th align="center">API </th><th align="center">OpenCL™ GPU </th><th align="center">AMP </th><th align="center">Multicore TBB </th><th align="center">Serial  </th></tr>
 <tr>
-<td align="center">constant_iterator </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">constant_iterator </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">copy </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">copy </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">copy_n </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">copy_n </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">count </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">count_if </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">counting_iterator </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">counting_iterator </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">device_vector </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">exclusive_scan </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">exclusive_scan_by_key </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">exclusive_scan_by_key </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">fill </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">fill </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">fill_n </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">fill_n </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">generate </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">generate </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">generate_n </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">generate_n </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">inclusive_scan </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">inclusive_scan_by_key </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">inclusive_scan_by_key </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">inner_product </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">inner_product </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">max_element </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">max_element </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">min_element </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">min_element </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">permutation_iterator </td><td align="center">YES<sup><b>1</b></sup> </td><td align="center">YES<sup><b>2</b></sup> </td><td align="center">YES<sup><b>3</b></sup> </td><td align="center">YES<sup><b>3</b></sup>  </td></tr>
 <tr>
 <td align="center">reduce </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">reduce_by_key </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">reduce_by_key </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">sort </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">sort_by_key </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">sort_by_key </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">stable_sort </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">stable_sort </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">stable_sort_by_key </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">stable_sort_by_key </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">transform </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">transform_exclusive_scan </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">transform_exclusive_scan </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">transform_inclusive_scan </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">transform_inclusive_scan </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center"><a class="el" href="classtransform__iterator.html">transform_iterator</a> </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">transform_reduce </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">binary_search </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">binary_search </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">merge </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">merge </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">scatter </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">scatter </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">scatter_if </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">scatter_if </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">gather </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center">gather </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">gather_if </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center"><p class="starttd">YES </p>
+<td align="center">gather_if </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center"><p class="starttd">YES </p>
 <p class="endtd"></p>
 </td></tr>
 </table>
+<h2><a class="anchor" id="Limitations"></a>
+Limitations</h2>
+<p>1 - Works with device_vector iterators, and transform routine only <br/>
+ 2 - Works only with device_vector iterators <br/>
+ 3 - Supported on C++ AMP path, but not on OpenCL path. Slower performance expected <br/>
+ </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

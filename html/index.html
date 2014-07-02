@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -90,7 +90,7 @@ Simple Example</h2>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// generate random data (on host)</span></div>
 <div class="line">    std::vector&lt;int&gt; a(8192);</div>
-<div class="line">    <a class="code" href="group__CL-filling.html#gaab817673f478a5e719a3b960e9dad4ea" title="generate assigns to each element of a sequence [first,last] the value returned by gen...">std::generate</a>(a.begin(), a.end(), rand);</div>
+<div class="line">    <a class="code" href="group__AMP-generate.html#ga213848b9e8b6e7ceda4aa40bca0ed317" title="generate assigns to each element of a sequence [first,last] the value returned by gen...">std::generate</a>(a.begin(), a.end(), rand);</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">// sort, run on best device in the platform</span></div>
 <div class="line">    <a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>(a.begin(), a.end());</div>
@@ -113,13 +113,13 @@ Bolt Functor Example</h2>
 <div class="line">    <span class="keywordtype">bool</span> operator() (<span class="keyword">const</span> MyType&amp; lhs, <span class="keyword">const</span> MyType&amp; rhs)<span class="keyword"> const  </span>{</div>
 <div class="line">        <span class="keywordflow">return</span> (lhs.a &gt; rhs.a);</div>
 <div class="line">    }</div>
-<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#gafd150c808efd3e9205b069bf3f62f3ea">operator &lt; </a>(<span class="keyword">const</span> MyType&amp; other)<span class="keyword"> const </span>{</div>
+<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#gaa000aed72f74d660b4c29835cc90541b">operator &lt; </a>(<span class="keyword">const</span> MyType&amp; other)<span class="keyword"> const </span>{</div>
 <div class="line">        <span class="keywordflow">return</span> (a &lt; other.a);</div>
 <div class="line">    }</div>
-<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#ga3e678bbdc25d204db143cd5b6db61d97">operator &gt; </a>(<span class="keyword">const</span> MyType&amp; other)<span class="keyword"> const </span>{</div>
+<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#gac6bb9b583b368b7e9c63e669436aaac6">operator &gt; </a>(<span class="keyword">const</span> MyType&amp; other)<span class="keyword"> const </span>{</div>
 <div class="line">        <span class="keywordflow">return</span> (a &gt; other.a);</div>
 <div class="line">    }</div>
-<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#ga0fb42124039c4e0f72525963ef7153f0">operator &gt;= </a>(<span class="keyword">const</span> MyType&amp; other)<span class="keyword"> const </span>{</div>
+<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#ga0bfa64d7b0149d8eb7f4b7c4ca0db349">operator &gt;= </a>(<span class="keyword">const</span> MyType&amp; other)<span class="keyword"> const </span>{</div>
 <div class="line">        <span class="keywordflow">return</span> (a &gt;= other.a);</div>
 <div class="line">    }</div>
 <div class="line">    MyType()</div>
@@ -179,10 +179,10 @@ Templatized Bolt Functor</h2>
 <div class="line">    <span class="keywordtype">bool</span> operator() (<span class="keyword">const</span> MyFunctor&amp; lhs, <span class="keyword">const</span> MyFunctor&amp; rhs)<span class="keyword"> const </span>{ </div>
 <div class="line">        <span class="keywordflow">return</span> (lhs.a &gt; rhs.a);</div>
 <div class="line">    } </div>
-<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#gafd150c808efd3e9205b069bf3f62f3ea">operator &lt; </a>(<span class="keyword">const</span> MyFunctor&amp; other)<span class="keyword"> const </span>{ </div>
+<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#gaa000aed72f74d660b4c29835cc90541b">operator &lt; </a>(<span class="keyword">const</span> MyFunctor&amp; other)<span class="keyword"> const </span>{ </div>
 <div class="line">        <span class="keywordflow">return</span> (a &lt; other.a);</div>
 <div class="line">    }</div>
-<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#ga3e678bbdc25d204db143cd5b6db61d97">operator &gt; </a>(<span class="keyword">const</span> MyFunctor&amp; other)<span class="keyword"> const </span>{ </div>
+<div class="line">    <span class="keywordtype">bool</span> <a class="code" href="group__pair.html#gac6bb9b583b368b7e9c63e669436aaac6">operator &gt; </a>(<span class="keyword">const</span> MyFunctor&amp; other)<span class="keyword"> const </span>{ </div>
 <div class="line">        <span class="keywordflow">return</span> (a &gt; other.a);</div>
 <div class="line">    }</div>
 <div class="line">    MyFunctor(<span class="keyword">const</span> MyFunctor &amp;other) </div>
@@ -258,9 +258,9 @@ Prerequisites</h2>
 <h3><a class="anchor" id="Windows"></a>
 Windows</h3>
 <ol type="1">
-<li>Visual Studio 2010 onwards (VS2012 for C++ AMP)</li>
+<li>Visual Studio 2010 onwards (VS 2012 onwards for C++ AMP)</li>
 <li>Tested with 32/64 bit Windows® 7/8 and Windows® Blue</li>
-<li>CMake 2.8.10</li>
+<li>CMake 2.8.12</li>
 <li>TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.</li>
 <li>APP SDK 2.8 or onwards.</li>
 </ol>
@@ -269,8 +269,8 @@ Windows</h3>
 Linux</h3>
 <ol type="1">
 <li>GCC 4.6.3 and above</li>
-<li>Tested with OpenSuse 12.3, RHEL 6.4 64bit, RHEL 6.3 32bit, Ubuntu 13.4</li>
-<li>CMake 2.8.10</li>
+<li>Tested with OpenSuse 13.1 64-bit, RHEL 6.4 32/64 bit, Ubuntu 13.10 64-bit</li>
+<li>CMake 2.8.12</li>
 <li>TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.</li>
 <li>APP SDK 2.8 or onwards.</li>
 </ol>
@@ -296,9 +296,6 @@ Supported Devices</h2>
 <li>7900 Series (7990, 7970, 7950)</li>
 <li>7800 Series (7870, 7850)</li>
 <li>7700 Series (7770, 7750)</li>
-</ol>
-<p><b>AMD Radeon™ HD Graphics</b></p>
-<ol type="1">
 <li>6900 Series (6990, 6970, 6950)</li>
 <li>6800 Series (6870, 6850)</li>
 <li>6700 Series (6790 , 6770, 6750)</li>
@@ -307,11 +304,17 @@ Supported Devices</h2>
 <li>6400 Series (6450)</li>
 <li>6xxxM Series</li>
 </ol>
+<p><b>AMD Radeon™ Rx 2xx Graphics</b></p>
+<ol type="1">
+<li>R9 2xx Series</li>
+<li>R8 2xx Series</li>
+<li>R7 2xx Series</li>
+</ol>
 <p>Compiled binary windows packages (zip packages) for Bolt may be downloaded from the Bolt landing page hosted on AMD's Developer Central website. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:21 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:35 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

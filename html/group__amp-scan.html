@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: Amp-scan</title>
+<title>Bolt: AMP-scan</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -43,14 +43,14 @@
   <div class="summary">
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">Amp-scan<div class="ingroups"><a class="el" href="group__PrefixSums.html">Prefix Sums</a></div></div>  </div>
+<div class="title">AMP-scan<div class="ingroups"><a class="el" href="group__PrefixSums.html">Prefix Sums</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:gaf8552608c570f33a7b3b018a8cedd852"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename OutputIterator &gt; </td></tr>
-<tr class="memitem:gaf8552608c570f33a7b3b018a8cedd852"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-scan.html#gaf8552608c570f33a7b3b018a8cedd852">bolt::amp::inclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result)</td></tr>
+<tr class="memitem:gaf8552608c570f33a7b3b018a8cedd852"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-scan.html#gaf8552608c570f33a7b3b018a8cedd852">bolt::amp::inclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result)</td></tr>
 <tr class="memdesc:gaf8552608c570f33a7b3b018a8cedd852"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>inclusive_scan</code> calculates a running sum over a range of values, inclusive of the current value. The result value at iterator position <code>i</code> is the running sum of all values less than <code>i</code> in the input range. inclusive_scan requires associativity of the binary operation to parallelize the prefix sum.  <a href="#gaf8552608c570f33a7b3b018a8cedd852"></a><br/></td></tr>
 <tr class="separator:gaf8552608c570f33a7b3b018a8cedd852"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7a3fe87fc27aac221de33f0570b62aaf"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga7a3fe87fc27aac221de33f0570b62aaf"></a>
@@ -58,7 +58,7 @@ template&lt;typename InputIterator , typename OutputIterator &gt; </td></tr>
 <tr class="memitem:ga7a3fe87fc27aac221de33f0570b62aaf"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::inclusive_scan</b> (InputIterator first, InputIterator last, OutputIterator result)</td></tr>
 <tr class="separator:ga7a3fe87fc27aac221de33f0570b62aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0f08e2463f4da1c7ddc2782eb639b6b4"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename OutputIterator , typename BinaryFunction &gt; </td></tr>
-<tr class="memitem:ga0f08e2463f4da1c7ddc2782eb639b6b4"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-scan.html#ga0f08e2463f4da1c7ddc2782eb639b6b4">bolt::amp::inclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op)</td></tr>
+<tr class="memitem:ga0f08e2463f4da1c7ddc2782eb639b6b4"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-scan.html#ga0f08e2463f4da1c7ddc2782eb639b6b4">bolt::amp::inclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op)</td></tr>
 <tr class="memdesc:ga0f08e2463f4da1c7ddc2782eb639b6b4"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>inclusive_scan</code> calculates a running sum over a range of values, inclusive of the current value. The result value at iterator position <code>i</code> is the running sum of all values less than <code>i</code> in the input range. inclusive_scan requires associativity of the binary operation to parallelize the prefix sum.  <a href="#ga0f08e2463f4da1c7ddc2782eb639b6b4"></a><br/></td></tr>
 <tr class="separator:ga0f08e2463f4da1c7ddc2782eb639b6b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac906f206341cf77fdcb30bb9a2825127"><td class="memTemplParams" colspan="2"><a class="anchor" id="gac906f206341cf77fdcb30bb9a2825127"></a>
@@ -66,7 +66,7 @@ template&lt;typename InputIterator , typename OutputIterator , typename BinaryFu
 <tr class="memitem:gac906f206341cf77fdcb30bb9a2825127"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::inclusive_scan</b> (InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op)</td></tr>
 <tr class="separator:gac906f206341cf77fdcb30bb9a2825127"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga19d5200c9b608c7409a588a3ff5b7c1f"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename OutputIterator &gt; </td></tr>
-<tr class="memitem:ga19d5200c9b608c7409a588a3ff5b7c1f"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f">bolt::amp::exclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result)</td></tr>
+<tr class="memitem:ga19d5200c9b608c7409a588a3ff5b7c1f"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f">bolt::amp::exclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result)</td></tr>
 <tr class="memdesc:ga19d5200c9b608c7409a588a3ff5b7c1f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>exclusive_scan</code> calculates a running sum over a range of values, exclusive of the current value. The result value at iterator position <code>i</code> is the running sum of all values less than <code>i</code> in the input range. exclusive_scan requires associativity of the binary operation to parallelize it.  <a href="#ga19d5200c9b608c7409a588a3ff5b7c1f"></a><br/></td></tr>
 <tr class="separator:ga19d5200c9b608c7409a588a3ff5b7c1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gafa5679a6f491c711d5d9fef12335c610"><td class="memTemplParams" colspan="2"><a class="anchor" id="gafa5679a6f491c711d5d9fef12335c610"></a>
@@ -74,7 +74,7 @@ template&lt;typename InputIterator , typename OutputIterator &gt; </td></tr>
 <tr class="memitem:gafa5679a6f491c711d5d9fef12335c610"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::exclusive_scan</b> (InputIterator first, InputIterator last, OutputIterator result)</td></tr>
 <tr class="separator:gafa5679a6f491c711d5d9fef12335c610"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga66d432f8974fff1b2386e8917a03fea4"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename OutputIterator , typename T &gt; </td></tr>
-<tr class="memitem:ga66d432f8974fff1b2386e8917a03fea4"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-scan.html#ga66d432f8974fff1b2386e8917a03fea4">bolt::amp::exclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result, T init)</td></tr>
+<tr class="memitem:ga66d432f8974fff1b2386e8917a03fea4"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-scan.html#ga66d432f8974fff1b2386e8917a03fea4">bolt::amp::exclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result, T init)</td></tr>
 <tr class="memdesc:ga66d432f8974fff1b2386e8917a03fea4"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>exclusive_scan</code> calculates a running sum over a range of values, exclusive of the current value. The result value at iterator position <code>i</code> is the running sum of all values less than <code>i</code> in the input range. exclusive_scan requires associativity of the binary operation to parallelize it.  <a href="#ga66d432f8974fff1b2386e8917a03fea4"></a><br/></td></tr>
 <tr class="separator:ga66d432f8974fff1b2386e8917a03fea4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gabb255cf4f42beb0fc70a248195aa657b"><td class="memTemplParams" colspan="2"><a class="anchor" id="gabb255cf4f42beb0fc70a248195aa657b"></a>
@@ -82,7 +82,7 @@ template&lt;typename InputIterator , typename OutputIterator , typename T &gt; <
 <tr class="memitem:gabb255cf4f42beb0fc70a248195aa657b"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::exclusive_scan</b> (InputIterator first, InputIterator last, OutputIterator result, T init)</td></tr>
 <tr class="separator:gabb255cf4f42beb0fc70a248195aa657b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3978356e0a2987ac50f33327cfa82d33"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename OutputIterator , typename T , typename BinaryFunction &gt; </td></tr>
-<tr class="memitem:ga3978356e0a2987ac50f33327cfa82d33"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-scan.html#ga3978356e0a2987ac50f33327cfa82d33">bolt::amp::exclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op)</td></tr>
+<tr class="memitem:ga3978356e0a2987ac50f33327cfa82d33"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-scan.html#ga3978356e0a2987ac50f33327cfa82d33">bolt::amp::exclusive_scan</a> (control &amp;ctl, InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op)</td></tr>
 <tr class="memdesc:ga3978356e0a2987ac50f33327cfa82d33"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>exclusive_scan</code> calculates a running sum over a range of values, exclusive of the current value. The result value at iterator position <code>i</code> is the running sum of all values less than <code>i</code> in the input range. exclusive_scan requires associativity of the binary operation to parallelize it.  <a href="#ga3978356e0a2987ac50f33327cfa82d33"></a><br/></td></tr>
 <tr class="separator:ga3978356e0a2987ac50f33327cfa82d33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaeda08fc830d1005f5f5b4a56d7434970"><td class="memTemplParams" colspan="2"><a class="anchor" id="gaeda08fc830d1005f5f5b4a56d7434970"></a>
@@ -153,7 +153,7 @@ template&lt;typename InputIterator , typename OutputIterator &gt; </div>
 <div class="line"><span class="keywordtype">int</span> a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Calculate the exclusive scan of an input range, modifying the values in-place.</span></div>
-<div class="line"><a class="code" href="group__amp-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f" title="exclusive_scan calculates a running sum over a range of values, exclusive of the current value...">bolt::amp::exclusive_scan</a>( a, a+10, a );</div>
+<div class="line"><a class="code" href="group__AMP-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f" title="exclusive_scan calculates a running sum over a range of values, exclusive of the current value...">bolt::amp::exclusive_scan</a>( a, a+10, a );</div>
 <div class="line"><span class="comment">// a =&gt; {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/partial_sum.html">http://www.sgi.com/tech/stl/partial_sum.html</a> </dd></dl>
 
@@ -230,7 +230,7 @@ template&lt;typename InputIterator , typename OutputIterator , typename T &gt; <
 <div class="line"><span class="keywordtype">int</span> init = 0;</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Calculate the exclusive scan of an input range, modifying the values in-place.</span></div>
-<div class="line"><a class="code" href="group__amp-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f" title="exclusive_scan calculates a running sum over a range of values, exclusive of the current value...">bolt::amp::exclusive_scan</a>( a, a+10, a, init );</div>
+<div class="line"><a class="code" href="group__AMP-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f" title="exclusive_scan calculates a running sum over a range of values, exclusive of the current value...">bolt::amp::exclusive_scan</a>( a, a+10, a, init );</div>
 <div class="line"><span class="comment">// a =&gt; {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/partial_sum.html">http://www.sgi.com/tech/stl/partial_sum.html</a> </dd></dl>
 
@@ -313,7 +313,7 @@ template&lt;typename InputIterator , typename OutputIterator , typename T , type
 <div class="line"><span class="keywordtype">int</span> a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Calculate the exclusive scan of an input range, modifying the values in-place</span></div>
-<div class="line"><a class="code" href="group__amp-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f" title="exclusive_scan calculates a running sum over a range of values, exclusive of the current value...">bolt::amp::exclusive_scan</a>( a, a+10, a, 0, <a class="code" href="structbolt_1_1amp_1_1plus.html">bolt::amp::plus&lt; int &gt;</a>( ) );</div>
+<div class="line"><a class="code" href="group__AMP-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f" title="exclusive_scan calculates a running sum over a range of values, exclusive of the current value...">bolt::amp::exclusive_scan</a>( a, a+10, a, 0, <a class="code" href="structbolt_1_1amp_1_1plus.html">bolt::amp::plus&lt; int &gt;</a>( ) );</div>
 <div class="line"><span class="comment">// a =&gt; {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/partial_sum.html">http://www.sgi.com/tech/stl/partial_sum.html</a> </dd></dl>
 
@@ -380,7 +380,7 @@ template&lt;typename InputIterator , typename OutputIterator &gt; </div>
 <div class="line"><span class="keywordtype">int</span> a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Calculate the inclusive scan of an input range, modifying the values in-place.</span></div>
-<div class="line"><a class="code" href="group__amp-scan.html#gaf8552608c570f33a7b3b018a8cedd852" title="inclusive_scan calculates a running sum over a range of values, inclusive of the current value...">bolt::amp::inclusive_scan</a>( a, a+10, a );</div>
+<div class="line"><a class="code" href="group__AMP-scan.html#gaf8552608c570f33a7b3b018a8cedd852" title="inclusive_scan calculates a running sum over a range of values, inclusive of the current value...">bolt::amp::inclusive_scan</a>( a, a+10, a );</div>
 <div class="line"><span class="comment">// a =&gt; {1, 3, 6, 10, 15, 21, 28, 36, 45, 55}</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/partial_sum.html">http://www.sgi.com/tech/stl/partial_sum.html</a> </dd></dl>
 
@@ -454,7 +454,7 @@ template&lt;typename InputIterator , typename OutputIterator , typename BinaryFu
 <div class="line"><span class="keywordtype">int</span> a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Calculate the inclusive scan of an input range, modifying the values in-place.</span></div>
-<div class="line"><a class="code" href="group__amp-scan.html#gaf8552608c570f33a7b3b018a8cedd852" title="inclusive_scan calculates a running sum over a range of values, inclusive of the current value...">bolt::amp::inclusive_scan</a>( a, a+10, a );</div>
+<div class="line"><a class="code" href="group__AMP-scan.html#gaf8552608c570f33a7b3b018a8cedd852" title="inclusive_scan calculates a running sum over a range of values, inclusive of the current value...">bolt::amp::inclusive_scan</a>( a, a+10, a );</div>
 <div class="line"><span class="comment">// a =&gt; {1, 3, 6, 10, 15, 21, 28, 36, 45, 55}</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/partial_sum.html">http://www.sgi.com/tech/stl/partial_sum.html</a> </dd></dl>
 
@@ -463,7 +463,7 @@ template&lt;typename InputIterator , typename OutputIterator , typename BinaryFu
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

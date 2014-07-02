@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -70,8 +70,8 @@ Macros</h2></td></tr>
 <tr class="separator:ga73fe90c6484b9cc8ac8e872723c7fbe3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae450d86ddb8074c855fff0379253dcac"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#gae450d86ddb8074c855fff0379253dcac">BOLT_HOST_DEVICE_DEFINITION</a>(...)&#160;&#160;&#160;&quot;namespace bolt { namespace cl {\n&quot; STRINGIFY_CODE( __VA_ARGS__ ) &quot;\n } } \n&quot; ; __VA_ARGS__;</td></tr>
 <tr class="separator:gae450d86ddb8074c855fff0379253dcac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gae47f88b0e8fbb3d374821aac54c5c872"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>(Type)&#160;&#160;&#160;template&lt;&gt; struct <a class="el" href="structTypeName.html">TypeName</a>&lt; Type &gt; { static std::string get( ) { return #Type; } };</td></tr>
-<tr class="separator:gae47f88b0e8fbb3d374821aac54c5c872"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga46a8cfa98b81bd4c20a6b41918ceefde"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>(...)&#160;&#160;&#160;template&lt;&gt; struct <a class="el" href="structTypeName.html">TypeName</a>&lt; __VA_ARGS__ &gt; { static std::string get( ) { return #__VA_ARGS__; } };</td></tr>
+<tr class="separator:ga46a8cfa98b81bd4c20a6b41918ceefde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga312e9c961b61fc4bc77bf7308ed675c6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a>(Type, CODE_STRING)</td></tr>
 <tr class="separator:ga312e9c961b61fc4bc77bf7308ed675c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8b9cbe9b8afde5a23262c5f25e3436c2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2">BOLT_TEMPLATE_REGISTER_NEW_TYPE</a>(CONTAINER, OLDTYPE, NEWTYPE)</td></tr>
@@ -80,8 +80,15 @@ Macros</h2></td></tr>
 <tr class="memitem:ga012279644d3227bf7ff71dc62c4635b7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga012279644d3227bf7ff71dc62c4635b7">BOLT_TEMPLATE_REGISTER_NEW_ITERATOR</a>(CONTAINER, OLDTYPE, NEWTYPE)</td></tr>
 <tr class="memdesc:ga012279644d3227bf7ff71dc62c4635b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">This macro specializes a template iterator with a new type using the template definition of a previously defined iterator type  This is a convenience macro to specialize an iterator for a new type, using the generic template definition from a previosly defined iterator.  <a href="#ga012279644d3227bf7ff71dc62c4635b7"></a><br/></td></tr>
 <tr class="separator:ga012279644d3227bf7ff71dc62c4635b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_DEFINE</b>(DefineName, D,...)</td></tr>
+<tr class="memitem:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga925a11b78f3aaa1661ef1e34bfbcf9b8">BOLT_CREATE_DEFINE</a>(DefineName, D,...)</td></tr>
+<tr class="memdesc:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">This macro defines a macro on the kernel code.  <a href="#ga925a11b78f3aaa1661ef1e34bfbcf9b8"></a><br/></td></tr>
 <tr class="separator:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaeacf4c833ce7cf2adf2bde23f3c6fb44"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#gaeacf4c833ce7cf2adf2bde23f3c6fb44">BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR</a>(FUNCTOR, DATATYPE)</td></tr>
+<tr class="memdesc:gaeacf4c833ce7cf2adf2bde23f3c6fb44"><td class="mdescLeft">&#160;</td><td class="mdescRight">This macro creates a <a class="el" href="structTypeName.html">TypeName</a> and the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> data structure for the transform iterator associated with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm  This macro creates a <a class="el" href="structTypeName.html">TypeName</a> and the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> data structure for the transform iterator associated with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm.  <a href="#gaeacf4c833ce7cf2adf2bde23f3c6fb44"></a><br/></td></tr>
+<tr class="separator:gaeacf4c833ce7cf2adf2bde23f3c6fb44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga981889f6ad38f372e3b25ebd87393a1a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga981889f6ad38f372e3b25ebd87393a1a">BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR</a>(ELEMENT_ITERATOR, INDEX_ITERATOR)</td></tr>
+<tr class="memdesc:ga981889f6ad38f372e3b25ebd87393a1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This Macro creates a <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> for the permutation iterator.  A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This Macro creates a <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> for the permutation iterator. Note that the data type associated with the element and index iterators must be declared within the BOLT_FUNCTOR macro. Only device vector iterators can be used with permutation iterators. Both the iterators has to be either std iterators or device vector iterators. Combination of the two is not supported.  <a href="#ga981889f6ad38f372e3b25ebd87393a1a"></a><br/></td></tr>
+<tr class="separator:ga981889f6ad38f372e3b25ebd87393a1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga2478d544fdd6b2cb0b1104ee5378a177"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>(T,...)</td></tr>
 <tr class="separator:ga2478d544fdd6b2cb0b1104ee5378a177"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7f21e1fb33d54ecc5adaeca8b4a05b45"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga7f21e1fb33d54ecc5adaeca8b4a05b45">BOLT_TEMPLATE_FUNCTOR1</a>(CONTAINER, TYPE1,...)</td></tr>
@@ -135,11 +142,40 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">Type</td><td>The A type </td></tr>
-    <tr><td class="paramname">DependingType</td><td>The B type </td></tr>
+    <tr><td class="paramname">DependingType</td><td>The B type</td></tr>
   </table>
   </dd>
 </dl>
-
+<p>An example: </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#define EPS CL_FLT_EPSILON</span></div>
+<div class="line"><span class="preprocessor"></span></div>
+<div class="line"><span class="comment">// Copies macro the to kernel code.</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga925a11b78f3aaa1661ef1e34bfbcf9b8" title="This macro defines a macro on the kernel code.">BOLT_CREATE_DEFINE</a>( BOLT_EPSILON, EPS, CL_FLT_EPSILON );</div>
+<div class="line"></div>
+<div class="line"><span class="comment">// A simple functor to multiply by e</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>( MultiplyE,</div>
+<div class="line">  <span class="keyword">struct</span> MultiplyE</div>
+<div class="line">  {</div>
+<div class="line">    <span class="keywordtype">double</span> operator( )( <span class="keywordtype">double</span> x )</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keywordflow">return</span> x * EPS;</div>
+<div class="line">    };</div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><span class="keywordtype">int</span> main( )</div>
+<div class="line">{</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1counting__iterator.html">bolt::cl::counting_iterator&lt; double &gt;</a> Ci( 1 );</div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; double &gt;</a> Dest( 10 );</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="group__ClCode.html#gac25fecf1a4f297675b6f4435b27a2d0c">BOLT_ADD_DEPENDENCY</a>( MultiplyE, BOLT_EPSILON );</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( Ci, Ci + 10 , Dest.begin( ), MultiplyE( ) );</div>
+<div class="line"></div>
+<div class="line">  <span class="keywordflow">return</span> 0;</div>
+<div class="line">}</div>
+</div><!-- fragment --> 
 </div>
 </div>
 <a class="anchor" id="ga73fe90c6484b9cc8ac8e872723c7fbe3"></a>
@@ -280,9 +316,19 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
 <div class="line">                                                                                                  + std::string(<span class="stringliteral">&quot;#define &quot;</span>) + std::string(#D) + std::string(<span class="stringliteral">&quot; &quot;</span>) + std::string(#__VA_ARGS__) + std::string(<span class="stringliteral">&quot; \n&quot;</span>)\</div>
 <div class="line">                                                                                                  + std::string(<span class="stringliteral">&quot;#endif \n&quot;</span>));</div>
 </div><!-- fragment -->
+<p>This macro defines a macro on the kernel code. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">DefineName</td><td>Name of the macro. Can be used with other Bolt macros. </td></tr>
+    <tr><td class="paramname">D</td><td>The macro </td></tr>
+    <tr><td class="paramname">...</td><td>Value of the macro ( Arbitrary type definition to associate with the type ) See ClCodeTraits </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
-<a class="anchor" id="gae47f88b0e8fbb3d374821aac54c5c872"></a>
+<a class="anchor" id="ga46a8cfa98b81bd4c20a6b41918ceefde"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -290,8 +336,8 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
           <td class="memname">#define BOLT_CREATE_TYPENAME</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">Type</td><td>)</td>
-          <td>&#160;&#160;&#160;template&lt;&gt; struct <a class="el" href="structTypeName.html">TypeName</a>&lt; Type &gt; { static std::string get( ) { return #Type; } };</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;template&lt;&gt; struct <a class="el" href="structTypeName.html">TypeName</a>&lt; __VA_ARGS__ &gt; { static std::string get( ) { return #__VA_ARGS__; } };</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -306,7 +352,7 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
 <div class="line"><span class="keyword">class </span>MyClass { ... };</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Associate string &quot;MyClass&quot; with class MyClass</span></div>
-<div class="line"><a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>(MyClass);</div>
+<div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>(MyClass);</div>
 </div><!-- fragment --><p>See <a class="el" href="structTypeName.html">TypeName</a> for more information. </p>
 
 </div>
@@ -344,11 +390,34 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">Type</td><td>A fully specified type name </td></tr>
-    <tr><td class="paramname">...</td><td>Arbitrary type definition to associate with the type. See ClCodeTraits </td></tr>
+    <tr><td class="paramname">...</td><td>Arbitrary type definition to associate with the type. See ClCodeTraits</td></tr>
   </table>
   </dd>
 </dl>
-
+<p>An example: </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2transform_8h.html" title="Applies a binary function to each pair of elements from two input sequences.">bolt/cl/transform.h</a>&gt;</span></div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create a new cube root functor on host and copy to kernel</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>( CbrtFunctor,</div>
+<div class="line">  <span class="keyword">class</span> CbrtFunctor</div>
+<div class="line">  {</div>
+<div class="line">     ...</div>
+<div class="line"></div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><span class="keywordtype">int</span> main( )</div>
+<div class="line">{</div>
+<div class="line">  ...</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; double &gt;</a> Src( 10, rand( ) );</div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; double &gt;</a> Dest( 10 );</div>
+<div class="line"></div>
+<div class="line">  CbrtFunctor cbrt_func;</div>
+<div class="line">  <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( Src.begin( ), Src.end( ), Dest.begin( ), cbrt_func );</div>
+<div class="line"></div>
+<div class="line">}</div>
+</div><!-- fragment --> 
 </div>
 </div>
 <a class="anchor" id="gae450d86ddb8074c855fff0379253dcac"></a>
@@ -405,11 +474,54 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
   <table class="params">
     <tr><td class="paramname">CONTAINER</td><td>Name to associate with the code given in the macro variable argument </td></tr>
     <tr><td class="paramname">TYPE1</td><td>Type used to fully specialize the template code given in the macro variable argument </td></tr>
-    <tr><td class="paramname">...</td><td>Arbitrary user defined code; expected to be a 1 argument template type </td></tr>
+    <tr><td class="paramname">...</td><td>Arbitrary user defined code; expected to be a 1 argument template type</td></tr>
   </table>
   </dd>
 </dl>
-
+<p>An example: </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2transform_8h.html" title="Applies a binary function to each pair of elements from two input sequences.">bolt/cl/transform.h</a>&gt;</span></div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create a new user-defined type UDD on host and copy to kernel</span></div>
+<div class="line"><span class="comment">// In this example, BOLT_TEMPLATE_FUNCTOR1 enables integer templatization of UDD - UDD&lt;int&gt;</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga7f21e1fb33d54ecc5adaeca8b4a05b45">BOLT_TEMPLATE_FUNCTOR1</a>( UDD, <span class="keywordtype">int</span>,</div>
+<div class="line">  template&lt;typename T&gt;</div>
+<div class="line">  <span class="keyword">struct</span> UDD</div>
+<div class="line">  {</div>
+<div class="line"></div>
+<div class="line">    ....</div>
+<div class="line"></div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga7f21e1fb33d54ecc5adaeca8b4a05b45">BOLT_TEMPLATE_FUNCTOR1</a>( UDDNegate, <span class="keywordtype">int</span>,</div>
+<div class="line">  template&lt;typename T&gt;</div>
+<div class="line">  <span class="keyword">struct</span> UDDNegate</div>
+<div class="line">  {</div>
+<div class="line">    UDD&lt; T &gt; operator( ) ( <span class="keyword">const</span> UDD&lt; T &gt; &amp;x, <span class="keyword">const</span> UDD&lt; T &gt; &amp;y ) <span class="keyword">const</span></div>
+<div class="line">    {</div>
+<div class="line"></div>
+<div class="line">       ...</div>
+<div class="line"></div>
+<div class="line">    }</div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>( <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector</a>&lt; UDD&lt; int &gt; &gt;::iterator );</div>
+<div class="line"><a class="code" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a>( <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector</a>&lt; UDD&lt; int &gt; &gt;::iterator,</div>
+<div class="line">                    bolt::cl::deviceVectorIteratorTemplate );</div>
+<div class="line"></div>
+<div class="line"><span class="keywordtype">int</span> main( )</div>
+<div class="line">{</div>
+<div class="line">  ...</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD&lt; int &gt;</a> &gt; Src( 10, UDD&lt; int &gt;( ) );</div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD&lt; int &gt;</a> &gt; Dest( 10 );</div>
+<div class="line"></div>
+<div class="line">  UDDNegate&lt;int&gt; udd_negate;</div>
+<div class="line">  <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( Src.begin( ), Src.end( ), Dest.begin( ), udd_negate );</div>
+<div class="line"></div>
+<div class="line">}</div>
+</div><!-- fragment --> 
 </div>
 </div>
 <a class="anchor" id="ga47f8822755b12057e173f0245cb7a136"></a>
@@ -621,7 +733,7 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( CONTAINER&lt; NEWTYPE &gt;::iterator ) \</div>
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>( CONTAINER&lt; NEWTYPE &gt;::iterator ) \</div>
 <div class="line">            BOLT_CREATE_CLCODE( CONTAINER&lt; NEWTYPE &gt;::iterator, <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; CONTAINER&lt; OLDTYPE &gt;::iterator &gt;::<span class="keyword">get</span>( ) )</div>
 </div><!-- fragment -->
 <p>This macro specializes a template iterator with a new type using the template definition of a previously defined iterator type  This is a convenience macro to specialize an iterator for a new type, using the generic template definition from a previosly defined iterator. </p>
@@ -629,11 +741,286 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
   <table class="params">
     <tr><td class="paramname">CONTAINER</td><td>A template template parameter, such as std::vector without the type specified </td></tr>
     <tr><td class="paramname">OLDTYPE</td><td>A type that has already been registered with the container template definition </td></tr>
-    <tr><td class="paramname">NEWTYPE</td><td>A new type to register with the template definition </td></tr>
+    <tr><td class="paramname">NEWTYPE</td><td>A new type to register with the template definition</td></tr>
   </table>
   </dd>
 </dl>
-
+<p>An example: </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2transform_8h.html" title="Applies a binary function to each pair of elements from two input sequences.">bolt/cl/transform.h</a>&gt;</span></div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create a new user-defined type UDD on host and copy to kernel</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>( UDD,</div>
+<div class="line">  <span class="keyword">class</span> UDD</div>
+<div class="line">  {</div>
+<div class="line">     ...</div>
+<div class="line"></div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create a new negation functor for UDD</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>( UDDNegate,</div>
+<div class="line">  <span class="keyword">class</span> UDDNegate</div>
+<div class="line">  {</div>
+<div class="line">     ...</div>
+<div class="line"></div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create an UDD instance of device_vector</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga012279644d3227bf7ff71dc62c4635b7" title="This macro specializes a template iterator with a new type using the template definition of a previou...">BOLT_TEMPLATE_REGISTER_NEW_ITERATOR</a>( <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector</a>, <span class="keywordtype">int</span>, UDD );</div>
+<div class="line"></div>
+<div class="line"><span class="keywordtype">int</span> main( )</div>
+<div class="line">{</div>
+<div class="line">  ...</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD &gt;</a> Src( 10, UDD( ) );</div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD &gt;</a> Dest( 10 );</div>
+<div class="line"></div>
+<div class="line">  UDDNegate udd_negate_functor;</div>
+<div class="line">  <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( Src.begin( ), Src.end( ), Dest.begin( ), udd_negate_functor );</div>
+<div class="line"></div>
+<div class="line">}</div>
+</div><!-- fragment --> 
+</div>
+</div>
+<a class="anchor" id="ga981889f6ad38f372e3b25ebd87393a1a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">ELEMENT_ITERATOR, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">INDEX_ITERATOR&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>( <a class="code" href="classbolt_1_1cl_1_1permutation__iterator.html">bolt::cl::permutation_iterator&lt; ELEMENT_ITERATOR, INDEX_ITERATOR &gt;</a> );\</div>
+<div class="line">            template&lt;&gt; <span class="keyword">struct </span><a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; bolt::cl::permutation_iterator&lt; ELEMENT_ITERATOR, INDEX_ITERATOR &gt; &gt; {    <span class="keyword">static</span> std::vector&lt; std::string &gt; dependencies;\</div>
+<div class="line">                                        static <span class="keywordtype">void</span> addDependency(std::string s) { dependencies.push_back(s); }; \</div>
+<div class="line">                                        static std::string getDependingCodeString() { \</div>
+<div class="line">                                            std::string c;\</div>
+<div class="line">                                            for (std::vector&lt; std::string &gt;::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \</div>
+<div class="line">                                            return c; \</div>
+<div class="line">                                        };\</div>
+<div class="line">                                        static std::string getCodeString() { <span class="keywordflow">return</span> <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode&lt;ELEMENT_ITERATOR&gt;::get</a>() + <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode&lt;INDEX_ITERATOR&gt;::get</a>() + bolt::cl::devicePermutationIteratorTemplate; }; \</div>
+<div class="line">                                        static std::string <span class="keyword">get</span>() { <span class="keywordflow">return</span> getDependingCodeString() + getCodeString(); }; };\</div>
+<div class="line">                                        __attribute__((weak))  std::vector&lt; std::<span class="keywordtype">string</span> &gt; <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; bolt::cl::permutation_iterator&lt; ELEMENT_ITERATOR, INDEX_ITERATOR &gt; &gt;::dependencies;</div>
+</div><!-- fragment -->
+<p>A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This Macro creates a <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> for the permutation iterator.  A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This Macro creates a <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> for the permutation iterator. Note that the data type associated with the element and index iterators must be declared within the BOLT_FUNCTOR macro. Only device vector iterators can be used with permutation iterators. Both the iterators has to be either std iterators or device vector iterators. Combination of the two is not supported. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ELEMENT_ITERATOR</td><td>This specifies the iterator for elements </td></tr>
+    <tr><td class="paramname">INDEX_ITERATOR</td><td>This specifies the iterator for the index elements</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>An example: </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;bolt/cl/iterator/premutation_iterator.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;bolt/cl/transform.h</span></div>
+<div class="line"><span class="preprocessor"></span></div>
+<div class="line"><span class="preprocessor"></span><span class="comment">// Create a new user-defined type UDD on host and copy to kernel</span></div>
+<div class="line">BOLT_FUNCTOR( UDD,</div>
+<div class="line">  struct UDD</div>
+<div class="line">  {</div>
+<div class="line">      int i;</div>
+<div class="line">      float f;</div>
+<div class="line">      ...</div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create a new permutation iterator with both index and element iterators as device_vector iterators for int data type.</span></div>
+<div class="line">BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR( bolt::cl::device_vector&lt;int&gt;::iterator, <a class="code" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html" title="Base class provided to encapsulate all the common functionality for constant and non-constant iterato...">bolt::cl::device_vector&lt;int&gt;::iterator</a>);</div>
+<div class="line"><span class="comment">// Create a new permutation iterator with both index and element iterators as device_vector iterators for UDD data type.</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga981889f6ad38f372e3b25ebd87393a1a" title="A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This Macro creates ...">BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR</a>( <a class="code" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html" title="Base class provided to encapsulate all the common functionality for constant and non-constant iterato...">bolt::cl::device_vector&lt;UDD&gt;::iterator</a>, <a class="code" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html" title="Base class provided to encapsulate all the common functionality for constant and non-constant iterato...">bolt::cl::device_vector&lt;UDD&gt;::iterator</a>);</div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create a new transform iterator with square as a functor and UDD as a data type.</span></div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line"><span class="keywordtype">int</span> main( )</div>
+<div class="line">{</div>
+<div class="line">  ...</div>
+<div class="line">  {</div>
+<div class="line">     <span class="keyword">const</span> <span class="keywordtype">int</span> length = 1&lt;&lt;10;</div>
+<div class="line">     std::vector&lt; int &gt; svIndexVec( length );</div>
+<div class="line">     std::vector&lt; int &gt; svElementVec( length );</div>
+<div class="line">     std::vector&lt; int &gt; svOutVec( length );</div>
+<div class="line">     bolt::BCKND::device_vector&lt; int &gt; dvIndexVec( length );</div>
+<div class="line">     bolt::BCKND::device_vector&lt; int &gt; dvElementVec( length );        </div>
+<div class="line">     bolt::BCKND::device_vector&lt; int &gt; dvOutVec( length );</div>
+<div class="line"></div>
+<div class="line">     <span class="keyword">typedef</span> std::vector&lt; int &gt;::const_iterator                  sv_itr;</div>
+<div class="line">     <span class="keyword">typedef</span> bolt::BCKND::device_vector&lt; int &gt;::iterator         dv_itr;</div>
+<div class="line">     <span class="keyword">typedef</span> bolt::BCKND::permutation_iterator&lt; sv_itr, </div>
+<div class="line">                                                sv_itr&gt;          sv_perm_itr;</div>
+<div class="line">     <span class="keyword">typedef</span> bolt::BCKND::permutation_iterator&lt; dv_itr, </div>
+<div class="line">                                                dv_itr&gt;          dv_perm_itr;</div>
+<div class="line"></div>
+<div class="line">     <span class="comment">//Create Iterators</span></div>
+<div class="line">     dv_perm_itr dv_perm_begin (dvElementVec.begin(), dvIndexVec.begin()), dv_perm_end (dvElementVec.end(), dvIndexVec.end());</div>
+<div class="line"></div>
+<div class="line">     <span class="comment">// Generate the inputs for the input vectors svIndexVec, svElementVec, dvIndexVec, dvElementVec.</span></div>
+<div class="line">     <span class="comment">// Call the transform routine with permutation iterators</span></div>
+<div class="line">     <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>(dv_perm_begin, dv_perm_end, dvOutVec.begin(), add3);</div>
+<div class="line"> }</div>
+<div class="line">}</div>
+</div><!-- fragment --> 
+</div>
+</div>
+<a class="anchor" id="gaeacf4c833ce7cf2adf2bde23f3c6fb44"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">FUNCTOR, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">DATATYPE&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>( <a class="code" href="classbolt_1_1cl_1_1transform__iterator.html">bolt::cl::transform_iterator</a>&lt; FUNCTOR, <a class="code" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html" title="Base class provided to encapsulate all the common functionality for constant and non-constant iterato...">bolt::cl::device_vector&lt; DATATYPE &gt;::iterator</a> &gt; );\</div>
+<div class="line">            template&lt;&gt; <span class="keyword">struct </span><a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; bolt::cl::transform_iterator&lt; FUNCTOR, bolt::cl::device_vector&lt; DATATYPE &gt;::iterator &gt; &gt; {    <span class="keyword">static</span> std::vector&lt; std::string &gt; dependencies;\</div>
+<div class="line">                                        static <span class="keywordtype">void</span> addDependency(std::string s) { dependencies.push_back(s); }; \</div>
+<div class="line">                                        static std::string getDependingCodeString() { \</div>
+<div class="line">                                            std::string c;\</div>
+<div class="line">                                            for (std::vector&lt; std::string &gt;::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \</div>
+<div class="line">                                            return c; \</div>
+<div class="line">                                        };\</div>
+<div class="line">                                        static std::string getCodeString() { <span class="keywordflow">return</span> <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode&lt;DATATYPE&gt;::get</a>() + <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode&lt;FUNCTOR&gt;::get</a>() + bolt::cl::deviceTransformIteratorTemplate; }; \</div>
+<div class="line">                                        static std::string <span class="keyword">get</span>() { <span class="keywordflow">return</span> getDependingCodeString() + getCodeString(); }; };\</div>
+<div class="line">                                        __attribute__((weak))  std::vector&lt; std::<span class="keywordtype">string</span> &gt; <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; bolt::cl::<a class="code" href="classtransform__iterator.html">transform_iterator</a>&lt; FUNCTOR, bolt::cl::device_vector&lt; DATATYPE &gt;::iterator &gt; &gt;::dependencies;</div>
+</div><!-- fragment -->
+<p>This macro creates a <a class="el" href="structTypeName.html">TypeName</a> and the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> data structure for the transform iterator associated with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm  This macro creates a <a class="el" href="structTypeName.html">TypeName</a> and the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> data structure for the transform iterator associated with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">FUNCTOR</td><td>This defines the unary function for the transform iterator. FUNCTOR should be previously defined using BOLT_FUNCTOR. The FUNCTOR is used to transform the objects of type DATA_TYPE. The FUNCTOR should also define an associated type result_type. </td></tr>
+    <tr><td class="paramname">DATATYPE</td><td>This is the type of the data which the transform iterator points to and the unary function FUNCTOR operates on.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>An example: </p>
+<div class="fragment"><div class="line"><span class="preprocessor"> #include &lt;bolt/cl/iterator/transform_iterator.h&gt;</span></div>
+<div class="line"><span class="preprocessor"> #include &lt;bolt/cl/transform.h</span></div>
+<div class="line"><span class="preprocessor"> </span><span class="comment">// Create a new user-defined type UDD on host and copy to kernel</span></div>
+<div class="line"> BOLT_FUNCTOR( UDD,</div>
+<div class="line">   struct UDD</div>
+<div class="line">   {</div>
+<div class="line">       int i;</div>
+<div class="line">       float f;</div>
+<div class="line">       ...</div>
+<div class="line">   };</div>
+<div class="line"> );</div>
+<div class="line"></div>
+<div class="line"> <span class="comment">// Create a new square functor takes int and return int</span></div>
+<div class="line"> BOLT_FUNCTOR(square,</div>
+<div class="line">   struct square</div>
+<div class="line">   {</div>
+<div class="line">       int operator() (const int x)  const { return x + 2; }</div>
+<div class="line">       typedef int result_type;</div>
+<div class="line">   };</div>
+<div class="line"> );</div>
+<div class="line"></div>
+<div class="line"> <span class="comment">// Create a new negation functor for UDD</span></div>
+<div class="line"> BOLT_FUNCTOR( UDDNegate,</div>
+<div class="line">   class UDDNegate</div>
+<div class="line">   {</div>
+<div class="line">      ...</div>
+<div class="line"></div>
+<div class="line">   };</div>
+<div class="line"> );</div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line"> <span class="comment">// Create a new transform iterator with square as a functor and UDD as a data type.</span></div>
+<div class="line"> BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( square, int);</div>
+<div class="line"></div>
+<div class="line"> <span class="comment">// Create a new transform iterator with square as a functor and UDD as a data type.</span></div>
+<div class="line"> BOLT_FUNCTOR(squareUDD,</div>
+<div class="line">     struct squareUDD</div>
+<div class="line">     {</div>
+<div class="line">         UDD operator() (const UDD&amp; x)  const </div>
+<div class="line">         { </div>
+<div class="line">             UDD tmp;</div>
+<div class="line">             tmp.i = x.i * x.i;</div>
+<div class="line">             tmp.f = x.f * x.f;</div>
+<div class="line">             return tmp;</div>
+<div class="line">         }</div>
+<div class="line">         typedef UDD result_type;</div>
+<div class="line">     };</div>
+<div class="line"> );</div>
+<div class="line"></div>
+<div class="line">BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR( square, UDD);</div>
+<div class="line"></div>
+<div class="line"> int main( )</div>
+<div class="line"> {</div>
+<div class="line">   ...</div>
+<div class="line">   {</div>
+<div class="line">      typedef bolt::BCKND::transform_iterator&lt; square, bolt::BCKND::device_vector&lt; int &gt;::iterator&gt; dv_trf_itr;</div>
+<div class="line">      <span class="keyword">typedef</span> bolt::BCKND::transform_iterator&lt; square, std::vector&lt; int &gt;::const_iterator&gt;          sv_trf_itr;</div>
+<div class="line"></div>
+<div class="line">      std::vector&lt; int &gt; svInVec( length );</div>
+<div class="line">      <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; int &gt;</a> dvInVec( length );</div>
+<div class="line">      std::vector&lt; int &gt; svOutVec( length );</div>
+<div class="line">      <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; int &gt;</a> dvOutVec( length );</div>
+<div class="line">      </div>
+<div class="line">      <span class="comment">// Initialize svInVec and dvInVec  ...</span></div>
+<div class="line"></div>
+<div class="line">      <span class="comment">//Declare the required functors</span></div>
+<div class="line">      UDDNegate udd_negate_functor;</div>
+<div class="line">      bolt::cl::negate&lt;int&gt;() neg;</div>
+<div class="line"></div>
+<div class="line">      sv_trf_itr sv_trf_begin (svInVec.begin(), sq), sv_trf_end (svInVec.end(), sq);</div>
+<div class="line">      dv_trf_itr dv_trf_begin (dvInVec.begin(), sq), dv_trf_end (dvInVec.end(), sq);</div>
+<div class="line"></div>
+<div class="line">     <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( sv_trf_begin, sv_trf_end, svOutVec.begin(), neg );</div>
+<div class="line">     <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( dv_trf_begin, dv_trf_end, dvOutVec.begin(), neg );</div>
+<div class="line">  }</div>
+<div class="line">  {</div>
+<div class="line">     <span class="keyword">typedef</span> bolt::BCKND::transform_iterator&lt; squareUDD, bolt::BCKND::device_vector&lt; UDD &gt;::iterator&gt; dv_udd_trf_itr;</div>
+<div class="line">     <span class="keyword">typedef</span> bolt::BCKND::transform_iterator&lt; squareUDD, std::vector&lt; UDD &gt;::const_iterator&gt;          sv_udd_trf_itr;</div>
+<div class="line"></div>
+<div class="line">      std::vector&lt; UDD &gt; svInVec( length );</div>
+<div class="line">      <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD &gt;</a> dvInVec( length );</div>
+<div class="line">      std::vector&lt; UDD &gt; svOutVec( length );</div>
+<div class="line">      <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD &gt;</a> dvOutVec( length );</div>
+<div class="line">      </div>
+<div class="line">      <span class="comment">// Initialize svInVec and dvInVec  ...</span></div>
+<div class="line"></div>
+<div class="line">      <span class="comment">//Declare the required functors</span></div>
+<div class="line">      UDDNegate udd_negate_functor;</div>
+<div class="line">      squareUDD sq_udd;</div>
+<div class="line"></div>
+<div class="line">      sv_udd_trf_itr sv_trf_begin (svInVec.begin(), sq_udd), sv_trf_end (svInVec.end(), sq_udd);</div>
+<div class="line">      dv_udd_trf_itr dv_trf_begin (dvInVec.begin(), sq_udd), dv_trf_end (dvInVec.end(), sq_udd);</div>
+<div class="line"></div>
+<div class="line">     <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( sv_trf_begin, sv_trf_end, svOutVec.begin(), udd_negate_functor );</div>
+<div class="line">     <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( dv_trf_begin, dv_trf_end, dvOutVec.begin(), udd_negate_functor );</div>
+<div class="line">  }</div>
+<div class="line"></div>
+<div class="line"> }</div>
+</div><!-- fragment --> 
 </div>
 </div>
 <a class="anchor" id="ga8b9cbe9b8afde5a23262c5f25e3436c2"></a>
@@ -665,7 +1052,7 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( CONTAINER&lt; NEWTYPE &gt; ) \</div>
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>( CONTAINER&lt; NEWTYPE &gt; ) \</div>
 <div class="line">            BOLT_CREATE_CLCODE( CONTAINER&lt; NEWTYPE &gt;, <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; CONTAINER&lt; OLDTYPE &gt; &gt;::<span class="keyword">get</span>( ) )</div>
 </div><!-- fragment -->
 <p>This macro specializes a template with a new type using the template definition of a previously defined type  This is a convenience macro to specialize a template for a new type, using the generic template definition from a previosly defined type. </p>
@@ -673,11 +1060,36 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
   <table class="params">
     <tr><td class="paramname">CONTAINER</td><td>A template template parameter, such as std::vector without the type specified </td></tr>
     <tr><td class="paramname">OLDTYPE</td><td>A type that has already been registered with the container template definition </td></tr>
-    <tr><td class="paramname">NEWTYPE</td><td>A new type to register with the template definition </td></tr>
+    <tr><td class="paramname">NEWTYPE</td><td>A new type to register with the template definition</td></tr>
   </table>
   </dd>
 </dl>
-
+<p>An example: </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2transform_8h.html" title="Applies a binary function to each pair of elements from two input sequences.">bolt/cl/transform.h</a>&gt;</span></div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create a new user-defined type UDD on host and copy to kernel</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>( UDD,</div>
+<div class="line">  <span class="keyword">class</span> UDD</div>
+<div class="line">  {</div>
+<div class="line">     ...</div>
+<div class="line"></div>
+<div class="line">  };</div>
+<div class="line">);</div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Create an instance of bolt::cl::negate of type UDD</span></div>
+<div class="line"><a class="code" href="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2" title="This macro specializes a template with a new type using the template definition of a previously defin...">BOLT_TEMPLATE_REGISTER_NEW_TYPE</a>( bolt::cl::negate, <span class="keywordtype">int</span>, UDD );</div>
+<div class="line"></div>
+<div class="line"><span class="keywordtype">int</span> main( )</div>
+<div class="line">{</div>
+<div class="line">  ...</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD &gt;</a> Src( 10, UDD( ) );</div>
+<div class="line">  <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt; UDD &gt;</a> Dest( 10 );</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( Src.begin( ), Src.end( ), Dest.begin( ), bolt::cl::negate&lt; UDD &gt;( ) );</div>
+<div class="line"></div>
+<div class="line">}</div>
+</div><!-- fragment --> 
 </div>
 </div>
 <a class="anchor" id="ga47ec232b44ad61a83bc726d1665bf39a"></a>
@@ -703,7 +1115,7 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

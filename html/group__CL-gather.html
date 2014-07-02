@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -43,7 +43,7 @@
   <div class="summary">
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">CL-gather<div class="ingroups"><a class="el" href="group__algorithms.html">Algorithms</a></div></div>  </div>
+<div class="title">CL-gather<div class="ingroups"><a class="el" href="group__copying.html">Copying</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
@@ -59,7 +59,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 <tr class="separator:ga9f1af03b43219b56914059cdcba77e03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga845d1270d4425c9623b09f513a3a020b"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator &gt; </td></tr>
 <tr class="memitem:ga845d1270d4425c9623b09f513a3a020b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-gather.html#ga845d1270d4425c9623b09f513a3a020b">bolt::cl::gather_if</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input_first, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
-<tr class="memdesc:ga845d1270d4425c9623b09f513a3a020b"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is <code>true</code>.  <a href="#ga845d1270d4425c9623b09f513a3a020b"></a><br/></td></tr>
+<tr class="memdesc:ga845d1270d4425c9623b09f513a3a020b"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>gather_if</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather_if copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is <code>true</code>.  <a href="#ga845d1270d4425c9623b09f513a3a020b"></a><br/></td></tr>
 <tr class="separator:ga845d1270d4425c9623b09f513a3a020b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga72c1dd667fce1e3513ad983e4ecbb54e"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga72c1dd667fce1e3513ad983e4ecbb54e"></a>
 template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator &gt; </td></tr>
@@ -67,7 +67,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIt
 <tr class="separator:ga72c1dd667fce1e3513ad983e4ecbb54e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab06f2c244ff2a50637b9c4506e984f19"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename Predicate &gt; </td></tr>
 <tr class="memitem:gab06f2c244ff2a50637b9c4506e984f19"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-gather.html#gab06f2c244ff2a50637b9c4506e984f19">bolt::cl::gather_if</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input, OutputIterator result, Predicate pred, const std::string &amp;user_code=&quot;&quot;)</td></tr>
-<tr class="memdesc:gab06f2c244ff2a50637b9c4506e984f19"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ]) is <code>true</code>.  <a href="#gab06f2c244ff2a50637b9c4506e984f19"></a><br/></td></tr>
+<tr class="memdesc:gab06f2c244ff2a50637b9c4506e984f19"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>gather_if</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather_if copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ]) is <code>true</code>.  <a href="#gab06f2c244ff2a50637b9c4506e984f19"></a><br/></td></tr>
 <tr class="separator:gab06f2c244ff2a50637b9c4506e984f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga827b2cde48aef8f832c7f65e27845ce0"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga827b2cde48aef8f832c7f65e27845ce0"></a>
 template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename Predicate &gt; </td></tr>
@@ -127,6 +127,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 </div><div class="memdoc">
 
 <p>This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ]. </p>
+<p><code>gather</code> APIs copy elements from a source array to a destination range (conditionally) according to a specified map. For common code between the host and device, one can take a look at the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> implementations. See Bolt Tools for Split-Source for a detailed description.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctl</td><td><b>Optional</b> Control structure to control command-queue, debug, tuning, etc.See <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>. </td></tr>
@@ -147,7 +148,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
   </dd>
 </dl>
 <p>The following code snippet demonstrates how to use <code>gather</code> </p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="gather_8h.html" title="gathers elements from a source array to a destination range.">bolt/cl/gather.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2gather_8h.html" title="gathers elements from a source array to a destination range.">bolt/cl/gather.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2functional_8h.html" title="List all the unary and binary functions.">bolt/cl/functional.h</a>&gt;</span></div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> map[10] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};</div>
@@ -215,7 +216,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIt
       </table>
 </div><div class="memdoc">
 
-<p>This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is <code>true</code>. </p>
+<p>This version of <code>gather_if</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather_if copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is <code>true</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctl</td><td><b>Optional</b> Control structure to control command-queue, debug, tuning, etc.See <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>. </td></tr>
@@ -237,17 +238,17 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIt
   </table>
   </dd>
 </dl>
-<p>The following code snippet demonstrates how to use <code>gather</code> </p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="gather_8h.html" title="gathers elements from a source array to a destination range.">bolt/cl/gather.h</a>&gt;</span></div>
+<p>The following code snippet demonstrates how to use <code>gather_if</code> </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2gather_8h.html" title="gathers elements from a source array to a destination range.">bolt/cl/gather.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2functional_8h.html" title="List all the unary and binary functions.">bolt/cl/functional.h</a>&gt;</span></div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> map[10] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};</div>
 <div class="line"><span class="keywordtype">int</span> input[10] = {0, 11, 22, 33, 44, 55, 66, 77, 88, 99};</div>
 <div class="line"><span class="keywordtype">int</span> stencil[10] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};</div>
 <div class="line"><span class="keywordtype">int</span> output[10];</div>
-<div class="line"><a class="code" href="group__CL-gather.html#ga02579433e19378526a0cc6a2ebc0169c" title="This version of gather copies elements from a source array to a destination range according to a spec...">bolt::cl::gather</a>(map, map + 10, stencil, input, output);</div>
+<div class="line"><a class="code" href="group__CL-gather.html#ga845d1270d4425c9623b09f513a3a020b" title="This version of gather_if copies elements from a source array to a destination range according to a s...">bolt::cl::gather_if</a>(map, map + 10, stencil, input, output);</div>
 <div class="line"></div>
-<div class="line"><span class="comment">// output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};</span></div>
+<div class="line"><span class="comment">// output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};</span></div>
 </div><!-- fragment --> 
 </div>
 </div>
@@ -313,7 +314,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIt
       </table>
 </div><div class="memdoc">
 
-<p>This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ]) is <code>true</code>. </p>
+<p>This version of <code>gather_if</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather_if copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ]) is <code>true</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctl</td><td><b>Optional</b> Control structure to control command-queue, debug, tuning, etc.See <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>. </td></tr>
@@ -337,8 +338,8 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIt
   </table>
   </dd>
 </dl>
-<p>The following code snippet demonstrates how to use <code>gather</code> </p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="gather_8h.html" title="gathers elements from a source array to a destination range.">bolt/cl/gather.h</a>&gt;</span></div>
+<p>The following code snippet demonstrates how to use <code>gather_if</code> </p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2gather_8h.html" title="gathers elements from a source array to a destination range.">bolt/cl/gather.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2functional_8h.html" title="List all the unary and binary functions.">bolt/cl/functional.h</a>&gt;</span></div>
 <div class="line"></div>
 <div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>( greater_pred,</div>
@@ -358,16 +359,16 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIt
 <div class="line"><span class="keywordtype">int</span> output[10];</div>
 <div class="line"></div>
 <div class="line">greater_pred is_gt_5;</div>
-<div class="line"><a class="code" href="group__CL-gather.html#ga02579433e19378526a0cc6a2ebc0169c" title="This version of gather copies elements from a source array to a destination range according to a spec...">bolt::cl::gather</a>(map, map + 10, stencil, input, output, is_gt_5);</div>
+<div class="line"><a class="code" href="group__CL-gather.html#ga845d1270d4425c9623b09f513a3a020b" title="This version of gather_if copies elements from a source array to a destination range according to a s...">bolt::cl::gather_if</a>(map, map + 10, stencil, input, output, is_gt_5);</div>
 <div class="line"></div>
-<div class="line"><span class="comment">// output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};</span></div>
+<div class="line"><span class="comment">// output is now {0, 0, 0, 0, 0, 44, 33, 22, 11, 0};</span></div>
 </div><!-- fragment --> 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

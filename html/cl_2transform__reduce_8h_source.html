@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/cl/transform_reduce.h Source File</title>
+<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/cl/transform_reduce.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_088ee0bb765f16a0241a3922f262663f.html">Bolt_Clone_master</a></li><li class="navelem"><a class="el" href="dir_ab60c108fb05608d5d94f823ef24c96e.html">include</a></li><li class="navelem"><a class="el" href="dir_410cc9248f9a37596ab60907133a429a.html">bolt</a></li><li class="navelem"><a class="el" href="dir_8f5fb271328b164d479a60be30ed6ac3.html">cl</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_7bd24fcb403b4a9a7d6ee9bbf740e45c.html">Bolt_Clone_develop</a></li><li class="navelem"><a class="el" href="dir_d1017fc77d40cdf41bf51b649c69d445.html">include</a></li><li class="navelem"><a class="el" href="dir_82df59469531d6ac1bfe1a3d7656a742.html">bolt</a></li><li class="navelem"><a class="el" href="dir_f341d7908918d99d0265620f70a0494f.html">cl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -55,7 +55,7 @@
 </div><!--header-->
 <div class="contents">
 <a href="cl_2transform__reduce_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/***************************************************************************</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">*</span></div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">*   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">*   you may not use this file except in compliance with the License.</span></div>
@@ -75,44 +75,41 @@
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define BOLT_CL_TRANSFORM_REDUCE_H</span></div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#include &lt;<a class="code" href="cl_2bolt_8h.html" title="Define global functions for Bolt CL.">bolt/cl/bolt.h</a>&gt;</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#include &lt;<a class="code" href="cl_2device__vector_8h.html" title="Namespace that captures OpenCL related data types and functions Public header file for the device_con...">bolt/cl/device_vector.h</a>&gt;</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cl_2device__vector_8h.html" title="Namespace that captures OpenCL related data types and functions Public header file for the device_con...">bolt/cl/device_vector.h</a>&quot;</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cl_2functional_8h.html" title="List all the unary and binary functions.">bolt/cl/functional.h</a>&quot;</span></div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &lt;iostream&gt;</span></div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="keyword">namespace </span>bolt {</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    <span class="keyword">namespace </span>cl {</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;        <span class="keyword">template</span>&lt;<span class="keyword">typename</span> InputIterator, <span class="keyword">typename</span> UnaryFunction, <span class="keyword">typename</span> T, <span class="keyword">typename</span> BinaryFunction&gt;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        T <a class="code" href="group__CL-transform__reduce.html#gae58c061918f2819ad9df48a133c63f89" title="transform_reduce fuses transform and reduce operations together, increasing performance by reducing m...">transform_reduce</a>(</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;            control&amp; ctl,</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;            InputIterator first,</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;            InputIterator last,</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;            UnaryFunction transform_op,</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;            T init,</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;            BinaryFunction reduce_op,</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;            <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;         <span class="keyword">template</span>&lt;<span class="keyword">typename</span> InputIterator, <span class="keyword">typename</span> UnaryFunction, <span class="keyword">typename</span> T, <span class="keyword">typename</span> BinaryFunction&gt;</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        T <a class="code" href="group__CL-transform__reduce.html#gae58c061918f2819ad9df48a133c63f89" title="transform_reduce fuses transform and reduce operations together, increasing performance by reducing m...">transform_reduce</a>(</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;            InputIterator first,</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;            InputIterator last,</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;            UnaryFunction transform_op,</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;            T init,</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;            BinaryFunction reduce_op,</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;            <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    };</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;};</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;<span class="preprocessor">#include &lt;bolt/cl/detail/transform_reduce.inl&gt;</span></div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">namespace </span>bolt {</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    <span class="keyword">namespace </span>cl {</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;        <span class="keyword">template</span>&lt;<span class="keyword">typename</span> InputIterator, <span class="keyword">typename</span> UnaryFunction, <span class="keyword">typename</span> T, <span class="keyword">typename</span> BinaryFunction&gt;</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;        T <a class="code" href="group__CL-transform__reduce.html#gae58c061918f2819ad9df48a133c63f89" title="transform_reduce fuses transform and reduce operations together, increasing performance by reducing m...">transform_reduce</a>(</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;            control&amp; ctl,</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;            InputIterator first,</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;            InputIterator last,</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;            UnaryFunction transform_op,</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;            T init,</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;            BinaryFunction reduce_op,</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;            <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;         <span class="keyword">template</span>&lt;<span class="keyword">typename</span> InputIterator, <span class="keyword">typename</span> UnaryFunction, <span class="keyword">typename</span> T, <span class="keyword">typename</span> BinaryFunction&gt;</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        T <a class="code" href="group__CL-transform__reduce.html#gae58c061918f2819ad9df48a133c63f89" title="transform_reduce fuses transform and reduce operations together, increasing performance by reducing m...">transform_reduce</a>(</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;            InputIterator first,</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;            InputIterator last,</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;            UnaryFunction transform_op,</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;            T init,</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;            BinaryFunction reduce_op,</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;            <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    };</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;};</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;<span class="preprocessor">#include &lt;bolt/cl/detail/transform_reduce.inl&gt;</span></div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:19 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:31 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -117,7 +117,7 @@ template&lt;typename InputIterator &gt; </div>
 </div><div class="memdoc">
 
 <p><code>reduce</code> returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the initial value is "0" and the binary operator is "plus&lt;&gt;()". </p>
-<p><code>reduce</code> requires that the binary reduction op ("binary_op") is cummutative. The order in which <code>reduce</code> applies the binary_op is not deterministic.</p>
+<p><code>reduce</code> requires that the binary reduction op ("binary_op") be commutative. The order in which <code>reduce</code> applies the binary_op is not deterministic. If the reduction operator is not commutative then bolt::reduce should not be used. Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.</p>
 <p>The <code>reduce</code> operation is similar the std::accumulate function</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -193,7 +193,7 @@ template&lt;typename InputIterator , typename T &gt; </div>
 </div><div class="memdoc">
 
 <p><code>reduce</code> returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the initial value is "0" and the binary operator is "plus&lt;&gt;()". </p>
-<p><code>reduce</code> requires that the binary reduction op ("binary_op") is cummutative. The order in which <code>reduce</code> applies the binary_op is not deterministic.</p>
+<p><code>reduce</code> requires that the binary reduction op ("binary_op") be commutative. The order in which <code>reduce</code> applies the binary_op is not deterministic. If the reduction operator is not commutative then bolt::reduce should not be used. Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.</p>
 <p>The <code>reduce</code> operation is similar the std::accumulate function</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -277,7 +277,7 @@ template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; <
 </div><div class="memdoc">
 
 <p><code>reduce</code> returns the result of combining all the elements in the specified range using the specified binary_op. The classic example is a summation, where the binary_op is the plus operator. By default, the binary operator is "plus&lt;&gt;()". The version takes a <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> structure as a first argument. </p>
-<p><code>reduce</code> requires that the binary reduction op ("binary_op") is cummutative. The order in which <code>reduce</code> applies the binary_op is not deterministic.</p>
+<p><code>reduce</code> requires that the binary reduction op ("binary_op") be commutative. The order in which <code>reduce</code> applies the binary_op is not deterministic. If the reduction operator is not commutative then bolt::reduce should not be used. Instead, one could use inclusive_scan (which does not require commutativity) and select the last element of the output array.</p>
 <p>The <code>reduce</code> operation is similar the std::accumulate function.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -312,7 +312,7 @@ template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; <
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

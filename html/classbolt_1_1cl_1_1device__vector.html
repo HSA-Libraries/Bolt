@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -89,9 +89,9 @@ typedef ptrdiff_t&#160;</td><td class="memItemRight" valign="bottom"><b>differen
 <tr class="memitem:ab653a8b09f4e2c7bcdaa77864bff281e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab653a8b09f4e2c7bcdaa77864bff281e"></a>
 typedef difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>distance_type</b></td></tr>
 <tr class="separator:ab653a8b09f4e2c7bcdaa77864bff281e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ebd4946e9e64921a64c20a10facd592"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0ebd4946e9e64921a64c20a10facd592"></a>
-typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
-<tr class="separator:a0ebd4946e9e64921a64c20a10facd592"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22d2e80e608a0bd4acf54c79dbc9401d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a22d2e80e608a0bd4acf54c79dbc9401d"></a>
+typedef int&#160;</td><td class="memItemRight" valign="bottom"><b>size_type</b></td></tr>
+<tr class="separator:a22d2e80e608a0bd4acf54c79dbc9401d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6204f6f43a5506367ea2fd69e225e5a3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6204f6f43a5506367ea2fd69e225e5a3"></a>
 typedef boost::shared_array<br class="typebreak"/>
 &lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
@@ -138,14 +138,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0c551cec5c2827064d8c193b6853044c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#a0c551cec5c2827064d8c193b6853044c">device_vector</a> (size_type newSize, const value_type &amp;value=value_type(), cl_mem_flags flags=CL_MEM_READ_WRITE, bool init=true, const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>())</td></tr>
 <tr class="memdesc:a0c551cec5c2827064d8c193b6853044c"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> with the specified number of elements, with a specified initial value.  <a href="#a0c551cec5c2827064d8c193b6853044c"></a><br/></td></tr>
 <tr class="separator:a0c551cec5c2827064d8c193b6853044c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1f808e7079196f70ec996eac9a014ae1"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:a1f808e7079196f70ec996eac9a014ae1"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#a1f808e7079196f70ec996eac9a014ae1">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#adcfa66f58ba75564ab14482c5934ee87">begin</a>, size_type newSize, cl_mem_flags flags=CL_MEM_READ_WRITE, bool init=true, const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &gt;::type *=0)</td></tr>
-<tr class="memdesc:a1f808e7079196f70ec996eac9a014ae1"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#a1f808e7079196f70ec996eac9a014ae1"></a><br/></td></tr>
-<tr class="separator:a1f808e7079196f70ec996eac9a014ae1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adcb6977424f13ec0758b2c74f6b637c1"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:adcb6977424f13ec0758b2c74f6b637c1"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#adcb6977424f13ec0758b2c74f6b637c1">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#adcfa66f58ba75564ab14482c5934ee87">begin</a>, const InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a21179fdc21dd47292b865bd064975fd2">end</a>, cl_mem_flags flags=CL_MEM_READ_WRITE, const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &gt;::type *=0)</td></tr>
-<tr class="memdesc:adcb6977424f13ec0758b2c74f6b637c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#adcb6977424f13ec0758b2c74f6b637c1"></a><br/></td></tr>
-<tr class="separator:adcb6977424f13ec0758b2c74f6b637c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8bcd957389bde0c1261791ca35e65ac"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:ab8bcd957389bde0c1261791ca35e65ac"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#ab8bcd957389bde0c1261791ca35e65ac">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#adcfa66f58ba75564ab14482c5934ee87">begin</a>, size_type newSize, cl_mem_flags flags=CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR, bool init=true, const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &gt;::type *=0)</td></tr>
+<tr class="memdesc:ab8bcd957389bde0c1261791ca35e65ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#ab8bcd957389bde0c1261791ca35e65ac"></a><br/></td></tr>
+<tr class="separator:ab8bcd957389bde0c1261791ca35e65ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa80c78ef354f3a381448fc924e2bc813"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:aa80c78ef354f3a381448fc924e2bc813"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#aa80c78ef354f3a381448fc924e2bc813">device_vector</a> (const InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#adcfa66f58ba75564ab14482c5934ee87">begin</a>, const InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a21179fdc21dd47292b865bd064975fd2">end</a>, cl_mem_flags flags=CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR, const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>(), typename std::enable_if&lt; !std::is_integral&lt; InputIterator &gt;::value &gt;::type *=0)</td></tr>
+<tr class="memdesc:aa80c78ef354f3a381448fc924e2bc813"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> using a range specified by the user.  <a href="#aa80c78ef354f3a381448fc924e2bc813"></a><br/></td></tr>
+<tr class="separator:aa80c78ef354f3a381448fc924e2bc813"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acba05b856ae25b393d0b781cac71599b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#acba05b856ae25b393d0b781cac71599b">device_vector</a> (const ::cl::Buffer &amp;rhs, const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>())</td></tr>
 <tr class="memdesc:acba05b856ae25b393d0b781cac71599b"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> using a pre-initialized buffer supplied by the user.  <a href="#acba05b856ae25b393d0b781cac71599b"></a><br/></td></tr>
 <tr class="separator:acba05b856ae25b393d0b781cac71599b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -268,15 +268,13 @@ template&lt;typename InputIterator &gt; </td></tr>
 <tr class="memitem:ad66deec46898302ffdc24eaebe2e494a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#ad66deec46898302ffdc24eaebe2e494a">assign</a> (size_type newSize, const value_type &amp;value)</td></tr>
 <tr class="memdesc:ad66deec46898302ffdc24eaebe2e494a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns newSize copies of element value.  <a href="#ad66deec46898302ffdc24eaebe2e494a"></a><br/></td></tr>
 <tr class="separator:ad66deec46898302ffdc24eaebe2e494a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa93ab8a97230a8f4f2411b3c2776022"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
-<tr class="memitem:aaa93ab8a97230a8f4f2411b3c2776022"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; !std::is_same<br class="typebreak"/>
-&lt; typename <br class="typebreak"/>
-std::iterator_traits<br class="typebreak"/>
-&lt; InputIterator &gt;::value_type, <br class="typebreak"/>
-size_type &gt;::value, void &gt;<br class="typebreak"/>
-::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#aaa93ab8a97230a8f4f2411b3c2776022">assign</a> (InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#adcfa66f58ba75564ab14482c5934ee87">begin</a>, InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a21179fdc21dd47292b865bd064975fd2">end</a>)</td></tr>
-<tr class="memdesc:aaa93ab8a97230a8f4f2411b3c2776022"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns a range of values to <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a>, replacing all previous elements.  <a href="#aaa93ab8a97230a8f4f2411b3c2776022"></a><br/></td></tr>
-<tr class="separator:aaa93ab8a97230a8f4f2411b3c2776022"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a614b47346e22c88373b694fbe4e87c8b"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:a614b47346e22c88373b694fbe4e87c8b"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if<br class="typebreak"/>
+&lt; !std::is_integral<br class="typebreak"/>
+&lt; InputIterator &gt;::value, void &gt;<br class="typebreak"/>
+::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#a614b47346e22c88373b694fbe4e87c8b">assign</a> (InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#adcfa66f58ba75564ab14482c5934ee87">begin</a>, InputIterator <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a21179fdc21dd47292b865bd064975fd2">end</a>)</td></tr>
+<tr class="memdesc:a614b47346e22c88373b694fbe4e87c8b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns a range of values to <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a>, replacing all previous elements.  <a href="#a614b47346e22c88373b694fbe4e87c8b"></a><br/></td></tr>
+<tr class="separator:a614b47346e22c88373b694fbe4e87c8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6be79cfe0c74aa4593f9164bc9526d75"><td class="memItemLeft" align="right" valign="top">const ::cl::Buffer &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#a6be79cfe0c74aa4593f9164bc9526d75">getBuffer</a> () const </td></tr>
 <tr class="memdesc:a6be79cfe0c74aa4593f9164bc9526d75"><td class="mdescLeft">&#160;</td><td class="mdescRight">A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  <a href="#a6be79cfe0c74aa4593f9164bc9526d75"></a><br/></td></tr>
 <tr class="separator:a6be79cfe0c74aa4593f9164bc9526d75"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -296,7 +294,7 @@ class bolt::cl::device_vector&lt; T &gt;</h3>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">typedef const value_type <a class="el" href="classbolt_1_1cl_1_1device__vector.html">bolt::cl::device_vector</a>&lt; T &gt;::<a class="el" href="classbolt_1_1cl_1_1device__vector.html#a2a53b6416da92e99626e64ff9eb97616">const_reference</a></td>
@@ -314,7 +312,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -349,7 +347,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -414,11 +412,11 @@ If the size of the value is a power of two, the buffer will be filled serially a
 
 </div>
 </div>
-<a class="anchor" id="a1f808e7079196f70ec996eac9a014ae1"></a>
+<a class="anchor" id="ab8bcd957389bde0c1261791ca35e65ac"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -441,7 +439,7 @@ template&lt;typename InputIterator &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">cl_mem_flags&#160;</td>
-          <td class="paramname"><em>flags</em> = <code>CL_MEM_READ_WRITE</code>, </td>
+          <td class="paramname"><em>flags</em> = <code>CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -489,11 +487,11 @@ template&lt;typename InputIterator &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="adcb6977424f13ec0758b2c74f6b637c1"></a>
+<a class="anchor" id="aa80c78ef354f3a381448fc924e2bc813"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -516,7 +514,7 @@ template&lt;typename InputIterator &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">cl_mem_flags&#160;</td>
-          <td class="paramname"><em>flags</em> = <code>CL_MEM_READ_WRITE</code>, </td>
+          <td class="paramname"><em>flags</em> = <code>CL_MEM_READ_WRITE|CL_MEM_USE_HOST_PTR</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -561,7 +559,7 @@ template&lt;typename InputIterator &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -607,7 +605,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -651,11 +649,11 @@ If the size of the value is a power of two, the buffer will be filled serially a
 
 </div>
 </div>
-<a class="anchor" id="aaa93ab8a97230a8f4f2411b3c2776022"></a>
+<a class="anchor" id="a614b47346e22c88373b694fbe4e87c8b"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -663,7 +661,7 @@ template&lt;typename InputIterator &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::enable_if&lt; !std::is_same&lt; typename std::iterator_traits&lt;InputIterator &gt;::value_type, size_type &gt;::value, void&gt;::type <a class="el" href="classbolt_1_1cl_1_1device__vector.html">bolt::cl::device_vector</a>&lt; T &gt;::assign </td>
+          <td class="memname">std::enable_if&lt; !std::is_integral&lt;InputIterator&gt;::value, void&gt;::type <a class="el" href="classbolt_1_1cl_1_1device__vector.html">bolt::cl::device_vector</a>&lt; T &gt;::assign </td>
           <td>(</td>
           <td class="paramtype">InputIterator&#160;</td>
           <td class="paramname"><em>begin</em>, </td>
@@ -703,7 +701,7 @@ template&lt;typename InputIterator &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -732,7 +730,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -761,7 +759,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -790,7 +788,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -819,7 +817,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -849,7 +847,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -879,7 +877,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -909,7 +907,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -938,7 +936,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -968,7 +966,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -998,7 +996,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1027,7 +1025,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1056,7 +1054,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1085,7 +1083,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1120,7 +1118,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1166,7 +1164,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1195,7 +1193,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1224,7 +1222,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1252,7 +1250,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1280,7 +1278,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1329,7 +1327,7 @@ If the container must grow to contain the new value, all iterators and reference
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1384,7 +1382,7 @@ If the container must grow to contain the new value, all iterators and reference
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1413,7 +1411,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1442,7 +1440,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1471,7 +1469,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1505,7 +1503,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1534,7 +1532,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1563,7 +1561,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1592,7 +1590,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1621,7 +1619,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1661,7 +1659,7 @@ The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1cl_1_1devic
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1712,7 +1710,7 @@ If the size of the value is a power of two, the buffer will be filled serially a
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1743,7 +1741,7 @@ The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1cl_1_1devic
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1773,7 +1771,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;typename T&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1804,12 +1802,12 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
+<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:21 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

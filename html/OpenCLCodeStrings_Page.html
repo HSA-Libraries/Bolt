@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -91,7 +91,7 @@ C++ Functors</h1>
 <div class="line">   std::vector&lt;float&gt; y(1000000); <span class="comment">// initialization not shown</span></div>
 <div class="line">   std::vector&lt;float&gt; z(1000000);</div>
 <div class="line">   </div>
-<div class="line">   <a class="code" href="group__amp-transform.html#ga9d6bb9e4f1a01391529fe77c7b2cb2f1">std::transform</a>(x.begin(), x.end(), y.begin(), z.begin(), s);</div>
+<div class="line">   <a class="code" href="group__AMP-transform.html#ga9d6bb9e4f1a01391529fe77c7b2cb2f1">std::transform</a>(x.begin(), x.end(), y.begin(), z.begin(), s);</div>
 <div class="line">};</div>
 </div><!-- fragment --><h1><a class="anchor" id="OclSplitSource_Tools"></a>
 Bolt Tools for Split-Source</h1>
@@ -151,11 +151,11 @@ TypeName</h3>
 <div class="line"><span class="keyword">template</span>&lt;&gt; <span class="keyword">struct </span><a class="code" href="structTypeName.html">TypeName</a>&lt;SaxpyFunctor&gt; { <span class="keyword">static</span> std::string <span class="keyword">get</span>() { <span class="keywordflow">return</span> <span class="stringliteral">&quot;SaxpyFunctor&quot;</span>; }};</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Use convenience function - this produces the same result as above.</span></div>
-<div class="line"><a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>(SaxpyFunctor);</div>
+<div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>(SaxpyFunctor);</div>
 </div><!-- fragment --><p>Because the template specialization syntax can be verbose, Bolt provides the convenience macro BOLT_CREATE_TYPENAME, as shown in the example above. Note that the class name used for BOLT_CREATE_TYPENAME (or the more verbose template specialization equivalent) must be fully instantiated without any template parameters. So: </p>
 <ul>
-<li><code><a class="el" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME(myplus&lt;T&gt;)</a></code> is illegal, but </li>
-<li><code><a class="el" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME(myplus&lt;int&gt;)</a></code> is legal.</li>
+<li><code><a class="el" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME(myplus&lt;T&gt;)</a></code> is illegal, but </li>
+<li><code><a class="el" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME(myplus&lt;int&gt;)</a></code> is legal.</li>
 </ul>
 <h3><a class="anchor" id="ClCode"></a>
 ClCode</h3>
@@ -164,7 +164,7 @@ ClCode</h3>
 </div><!-- fragment --><p>Like the <a class="el" href="structTypeName.html">TypeName</a>, the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> trait can only be defined for fully instanted types without any template parameters.</p>
 <h2><a class="anchor" id="clCode_ReadingFromFile"></a>
 Reading functors from a file</h2>
-<p>The <a class="el" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a> macro described in the previous section implicitly calls <a class="el" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a> and <a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a>, but you can also decide to explicitly call these. One case where this is useful is for complex functors where the code may be best organized in a separate file. The example below shows how to store the functor code in a file, then #include it (to create the host version), and use the Bolt calls to create the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> traits that the Bolt algorithm implementations look for.</p>
+<p>The <a class="el" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a> macro described in the previous section implicitly calls <a class="el" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a> and <a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a>, but you can also decide to explicitly call these. One case where this is useful is for complex functors where the code may be best organized in a separate file. The example below shows how to store the functor code in a file, then #include it (to create the host version), and use the Bolt calls to create the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> traits that the Bolt algorithm implementations look for.</p>
 <p>This is the separate file "saxpy_functor.h": </p>
 <div class="fragment"><div class="line"><span class="comment">// It contains the definition of the functor:</span></div>
 <div class="line"><span class="keyword">struct </span>SaxpyFunctor</div>
@@ -187,7 +187,7 @@ Reading functors from a file</h2>
 <div class="line">std::string mycode = bolt::cl::fileToString(<span class="stringliteral">&quot;saxpy_functor.h&quot;</span>);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Use the explicit Bolt macros to associate the typename and code with the SaxpyFunctor class:</span></div>
-<div class="line"><a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>(SaxpyFunctor);</div>
+<div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>(SaxpyFunctor);</div>
 <div class="line"><a class="code" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a>(SaxpyFunctor, mycode);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Instantiate the class, and pass it to the Bolt function:</span></div>
@@ -202,7 +202,7 @@ Reading functors from a file</h2>
 <div class="line">};</div>
 </div><!-- fragment --><h2><a class="anchor" id="clCode_Templates"></a>
 Templated Classes</h2>
-<p>The BOLT_FUNCTOR, <a class="el" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>, and <a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a> macros use C++ traits; thus, they require fully instantiated classes as parameters. Bolt, however, does support templated functors using techniques described in this section.</p>
+<p>The BOLT_FUNCTOR, <a class="el" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>, and <a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a> macros use C++ traits; thus, they require fully instantiated classes as parameters. Bolt, however, does support templated functors using techniques described in this section.</p>
 <p><a class="el" href="group__ClCode.html#ga73fe90c6484b9cc8ac8e872723c7fbe3">BOLT_CODE_STRING</a> is a macro that expands to create a host-side version of the functor; it also returns a string that later can be manually associated with the class.</p>
 <p>The last argument to every Bolt algorithm API call is an optional parameter <code>cl_code</code>, which contains a code string that is passed to the OpenCL compiler. The cl_code string is pre-prended to the code generated by Bolt, so cl_code can define classes or symbols that later are referenced by the functor. As seen in the following example, cl_code parameter is also useful in the case of templated functors.</p>
 <div class="fragment"><div class="line"><span class="comment">// Example of defining a templated class that works with Bolt</span></div>
@@ -227,7 +227,7 @@ Templated Classes</h2>
 <div class="line">);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Pass a fully instantiated class to BOLT_CREATE_TYPENAME:</span></div>
-<div class="line"><a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>(InRange&lt;float&gt;);</div>
+<div class="line"><a class="code" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>(InRange&lt;float&gt;);</div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">void</span> testCountIf(<span class="keywordtype">int</span> aSize) </div>
 <div class="line">{</div>
@@ -263,11 +263,11 @@ Conclusion</h1>
 <li>When the functor is more complex and is best expressed in a separate file, or to improve the ability to debug by eliminating code compression into a single line, place the code in a separate file, as described in <a class="el" href="OpenCLCodeStrings_Page.html#clCode_ReadingFromFile">Reading functors from a file</a>. </li>
 <li>For templated classes, use the technique described in <a class="el" href="OpenCLCodeStrings_Page.html#clCode_Templates">Templated Classes</a>.</li>
 </ul>
-<p>This section also described how Bolt uses C++ traits, including the <a class="el" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a> and <a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a> macros for low-level control (see <a class="el" href="OpenCLCodeStrings_Page.html#clCode_Traits">TypeName and ClCode Traits</a> section). Finally, the cl_code parameter is the optional last argument for every Bolt function; it can be used to pre-pend any code string to the code that is passed to the OpenCL&trade; compiler. </p>
+<p>This section also described how Bolt uses C++ traits, including the <a class="el" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a> and <a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a> macros for low-level control (see <a class="el" href="OpenCLCodeStrings_Page.html#clCode_Traits">TypeName and ClCode Traits</a> section). Finally, the cl_code parameter is the optional last argument for every Bolt function; it can be used to pre-pend any code string to the code that is passed to the OpenCL&trade; compiler. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:31 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

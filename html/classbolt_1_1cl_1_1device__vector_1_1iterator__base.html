@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -101,9 +101,18 @@ Public Member Functions</h2></td></tr>
 template&lt;typename OtherContainer &gt; </td></tr>
 <tr class="memitem:a28d1ebad860e2f391a9988ba259b7033"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>iterator_base</b> (const <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; OtherContainer &gt; &amp;rhs)</td></tr>
 <tr class="separator:a28d1ebad860e2f391a9988ba259b7033"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae77e263a96203dd70ff74603eee28d8b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae77e263a96203dd70ff74603eee28d8b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>iterator_base</b> (value_type *ptr)</td></tr>
+<tr class="separator:ae77e263a96203dd70ff74603eee28d8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9141a91b202e948b96051e8e82418ac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac9141a91b202e948b96051e8e82418ac"></a>
 <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;rhs)</td></tr>
 <tr class="separator:ac9141a91b202e948b96051e8e82418ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:accfc0ed48e9895e77ff7dfb5c06b2e5c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="accfc0ed48e9895e77ff7dfb5c06b2e5c"></a>
+<a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>base</b> ()</td></tr>
+<tr class="separator:accfc0ed48e9895e77ff7dfb5c06b2e5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16f2459b793f0b6636cd194900e7b859"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a16f2459b793f0b6636cd194900e7b859"></a>
+const <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>base</b> () const </td></tr>
+<tr class="separator:a16f2459b793f0b6636cd194900e7b859"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb34f27bbe3edf4a3a667d6fa7361fa5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb34f27bbe3edf4a3a667d6fa7361fa5"></a>
 <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+=</b> (const difference_type &amp;n)</td></tr>
 <tr class="separator:afb34f27bbe3edf4a3a667d6fa7361fa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -116,6 +125,9 @@ const <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.ht
 <tr class="memitem:a8e66302e58f14b962c6ef70ffe6d4526"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e66302e58f14b962c6ef70ffe6d4526"></a>
 Container &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getContainer</b> () const </td></tr>
 <tr class="separator:a8e66302e58f14b962c6ef70ffe6d4526"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55a68b4a15cd03d09acc13563a201e23"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55a68b4a15cd03d09acc13563a201e23"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>setKernelBuffers</b> (int arg_num,::cl::Kernel &amp;kernel) const </td></tr>
+<tr class="separator:a55a68b4a15cd03d09acc13563a201e23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5dfad5092bffd49cd425880e2a613bae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5dfad5092bffd49cd425880e2a613bae"></a>
 const <a class="el" href="structbolt_1_1cl_1_1device__vector_1_1iterator__base_1_1Payload.html">Payload</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gpuPayload</b> () const </td></tr>
 <tr class="separator:a5dfad5092bffd49cd425880e2a613bae"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,12 +169,12 @@ class bolt::cl::device_vector&lt; T &gt;::iterator_base&lt; Container &gt;</h3>
 <dl class="bug"><dt><b><a class="el" href="bug.html#_bug000003">Bug:</a></b></dt><dd>operator[] with <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> iterators result in a compile-time error when accessed for reading. Writing with operator[] appears to be OK. Workarounds: either use the operator[] on the <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator. </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index is used in clSetKernelArg(), which does not accept size_t parameters </dd></dl>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
+<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:21 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -59,9 +59,11 @@
 <a href="#friends">Friends</a> &#124;
 <a href="classbolt_1_1cl_1_1counting__iterator-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">bolt::cl::counting_iterator&lt; value_type &gt; Class Template Reference</div>  </div>
+<div class="title">bolt::cl::counting_iterator&lt; value_type &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__CL-CountingIterator.html">CL-CountingIterator</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p><code>#include &lt;<a class="el" href="cl_2iterator_2counting__iterator_8h_source.html">counting_iterator.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for bolt::cl::counting_iterator&lt; value_type &gt;:</div>
 <div class="dyncontent">
@@ -78,74 +80,121 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aacce85ee6e1d40fc09c82b98bd5fd1bc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aacce85ee6e1d40fc09c82b98bd5fd1bc"></a>
+<tr class="memitem:gaacce85ee6e1d40fc09c82b98bd5fd1bc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaacce85ee6e1d40fc09c82b98bd5fd1bc"></a>
 typedef boost::iterator_facade<br class="typebreak"/>
 &lt; <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a><br class="typebreak"/>
 &lt; value_type &gt;, value_type, <br class="typebreak"/>
 <a class="el" href="structbolt_1_1cl_1_1counting__iterator__tag.html">counting_iterator_tag</a>, <br class="typebreak"/>
 value_type, int &gt;<br class="typebreak"/>
 ::difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>difference_type</b></td></tr>
-<tr class="separator:aacce85ee6e1d40fc09c82b98bd5fd1bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:gaacce85ee6e1d40fc09c82b98bd5fd1bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga392971d5e10e43666cb7be51934b278d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga392971d5e10e43666cb7be51934b278d"></a>
+typedef <a class="el" href="structbolt_1_1cl_1_1counting__iterator__tag.html">counting_iterator_tag</a>&#160;</td><td class="memItemRight" valign="bottom"><b>iterator_category</b></td></tr>
+<tr class="separator:ga392971d5e10e43666cb7be51934b278d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga298201355b1d4010052d041a265acf2b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga298201355b1d4010052d041a265acf2b"></a>
+typedef <br class="typebreak"/>
+std::random_access_iterator_tag&#160;</td><td class="memItemRight" valign="bottom"><b>memory_system</b></td></tr>
+<tr class="separator:ga298201355b1d4010052d041a265acf2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2e7d3e5e46984a46d19e59ee93d10570"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga2e7d3e5e46984a46d19e59ee93d10570"></a>
+typedef value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>pointer</b></td></tr>
+<tr class="separator:ga2e7d3e5e46984a46d19e59ee93d10570"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:abd78168e961e6c4c77bb52afdf765794"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abd78168e961e6c4c77bb52afdf765794"></a>
+<tr class="memitem:gabd78168e961e6c4c77bb52afdf765794"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gabd78168e961e6c4c77bb52afdf765794"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>counting_iterator</b> (value_type init, const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>())</td></tr>
-<tr class="separator:abd78168e961e6c4c77bb52afdf765794"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad152b1d90bb0c0545d29e38c7a1a6b72"><td class="memTemplParams" colspan="2"><a class="anchor" id="ad152b1d90bb0c0545d29e38c7a1a6b72"></a>
+<tr class="separator:gabd78168e961e6c4c77bb52afdf765794"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad152b1d90bb0c0545d29e38c7a1a6b72"><td class="memTemplParams" colspan="2"><a class="anchor" id="gad152b1d90bb0c0545d29e38c7a1a6b72"></a>
 template&lt;typename OtherType &gt; </td></tr>
-<tr class="memitem:ad152b1d90bb0c0545d29e38c7a1a6b72"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>counting_iterator</b> (const <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a>&lt; OtherType &gt; &amp;rhs)</td></tr>
-<tr class="separator:ad152b1d90bb0c0545d29e38c7a1a6b72"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeb3f7a23408f30c048e7b032082c28d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeb3f7a23408f30c048e7b032082c28d0"></a>
+<tr class="memitem:gad152b1d90bb0c0545d29e38c7a1a6b72"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>counting_iterator</b> (const <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a>&lt; OtherType &gt; &amp;rhs)</td></tr>
+<tr class="separator:gad152b1d90bb0c0545d29e38c7a1a6b72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf9dffd57a66eea6b8786d6a3555520d6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaf9dffd57a66eea6b8786d6a3555520d6"></a>
+value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>getPointer</b> ()</td></tr>
+<tr class="separator:gaf9dffd57a66eea6b8786d6a3555520d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2437ed531866f5dca7dde94eca3aeb8c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga2437ed531866f5dca7dde94eca3aeb8c"></a>
+const value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>getPointer</b> () const </td></tr>
+<tr class="separator:ga2437ed531866f5dca7dde94eca3aeb8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaeb3f7a23408f30c048e7b032082c28d0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaeb3f7a23408f30c048e7b032082c28d0"></a>
 <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a>&lt; value_type &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a>&lt; value_type &gt; &amp;rhs)</td></tr>
-<tr class="separator:aeb3f7a23408f30c048e7b032082c28d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad2a4101777751eb90b90695e1db5731e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2a4101777751eb90b90695e1db5731e"></a>
+<tr class="separator:gaeb3f7a23408f30c048e7b032082c28d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad2a4101777751eb90b90695e1db5731e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gad2a4101777751eb90b90695e1db5731e"></a>
 <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a>&lt; value_type &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+=</b> (const difference_type &amp;n)</td></tr>
-<tr class="separator:ad2a4101777751eb90b90695e1db5731e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe5e8338057a88cf6484089d2b0c6db7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe5e8338057a88cf6484089d2b0c6db7"></a>
+<tr class="separator:gad2a4101777751eb90b90695e1db5731e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabe5e8338057a88cf6484089d2b0c6db7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gabe5e8338057a88cf6484089d2b0c6db7"></a>
 const <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a><br class="typebreak"/>
 &lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+</b> (const difference_type &amp;n) const </td></tr>
-<tr class="separator:abe5e8338057a88cf6484089d2b0c6db7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a02a2218a9acbc0e9b84f3c1d7eaddb98"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a02a2218a9acbc0e9b84f3c1d7eaddb98"></a>
+<tr class="separator:gabe5e8338057a88cf6484089d2b0c6db7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga02a2218a9acbc0e9b84f3c1d7eaddb98"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga02a2218a9acbc0e9b84f3c1d7eaddb98"></a>
 const ::cl::Buffer &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getBuffer</b> () const </td></tr>
-<tr class="separator:a02a2218a9acbc0e9b84f3c1d7eaddb98"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2681281d2b49d3849a22bcc9a466030"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2681281d2b49d3849a22bcc9a466030"></a>
+<tr class="separator:ga02a2218a9acbc0e9b84f3c1d7eaddb98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa2681281d2b49d3849a22bcc9a466030"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaa2681281d2b49d3849a22bcc9a466030"></a>
 const <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a><br class="typebreak"/>
 &lt; value_type &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getContainer</b> () const </td></tr>
-<tr class="separator:aa2681281d2b49d3849a22bcc9a466030"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a0232d2cd117ae8e1261d90bd010ca1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a0232d2cd117ae8e1261d90bd010ca1"></a>
+<tr class="separator:gaa2681281d2b49d3849a22bcc9a466030"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1feebc0aa073d302b3f5991a17795f47"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga1feebc0aa073d302b3f5991a17795f47"></a>
+const <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a><br class="typebreak"/>
+&lt; value_type &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>base</b> () const </td></tr>
+<tr class="separator:ga1feebc0aa073d302b3f5991a17795f47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1a0232d2cd117ae8e1261d90bd010ca1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga1a0232d2cd117ae8e1261d90bd010ca1"></a>
 <a class="el" href="structbolt_1_1cl_1_1counting__iterator_1_1Payload.html">Payload</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gpuPayload</b> () const </td></tr>
-<tr class="separator:a1a0232d2cd117ae8e1261d90bd010ca1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01ddcf5dec788cc2e0b6150070ecdbaa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a01ddcf5dec788cc2e0b6150070ecdbaa"></a>
+<tr class="separator:ga1a0232d2cd117ae8e1261d90bd010ca1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga01ddcf5dec788cc2e0b6150070ecdbaa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga01ddcf5dec788cc2e0b6150070ecdbaa"></a>
 const difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>gpuPayloadSize</b> () const </td></tr>
-<tr class="separator:a01ddcf5dec788cc2e0b6150070ecdbaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a486457f6491f216f0bd19e5639751e8f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a486457f6491f216f0bd19e5639751e8f"></a>
+<tr class="separator:ga01ddcf5dec788cc2e0b6150070ecdbaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5261ac7c1aedb24c8bb37fd0b42e9a43"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga5261ac7c1aedb24c8bb37fd0b42e9a43"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>setKernelBuffers</b> (int arg_num,::cl::Kernel &amp;kernel) const </td></tr>
+<tr class="separator:ga5261ac7c1aedb24c8bb37fd0b42e9a43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga486457f6491f216f0bd19e5639751e8f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga486457f6491f216f0bd19e5639751e8f"></a>
 difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>distance_to</b> (const <a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a>&lt; value_type &gt; &amp;rhs) const </td></tr>
-<tr class="separator:a486457f6491f216f0bd19e5639751e8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:ga486457f6491f216f0bd19e5639751e8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a8fd4aa1dfba6b5547a22575a333cc572"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8fd4aa1dfba6b5547a22575a333cc572"></a>
+<tr class="memitem:ga8fd4aa1dfba6b5547a22575a333cc572"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga8fd4aa1dfba6b5547a22575a333cc572"></a>
 difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>m_Index</b></td></tr>
-<tr class="separator:a8fd4aa1dfba6b5547a22575a333cc572"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:ga8fd4aa1dfba6b5547a22575a333cc572"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:ac09f73e325921cc50ebcd96bed0f8096"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac09f73e325921cc50ebcd96bed0f8096"></a>
+<tr class="memitem:gac09f73e325921cc50ebcd96bed0f8096"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gac09f73e325921cc50ebcd96bed0f8096"></a>
 class&#160;</td><td class="memItemRight" valign="bottom"><b>boost::iterator_core_access</b></td></tr>
-<tr class="separator:ac09f73e325921cc50ebcd96bed0f8096"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90c8f86ac3325a7de1999d3069680ffd"><td class="memTemplParams" colspan="2"><a class="anchor" id="a90c8f86ac3325a7de1999d3069680ffd"></a>
+<tr class="separator:gac09f73e325921cc50ebcd96bed0f8096"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga90c8f86ac3325a7de1999d3069680ffd"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga90c8f86ac3325a7de1999d3069680ffd"></a>
 template&lt;typename &gt; </td></tr>
-<tr class="memitem:a90c8f86ac3325a7de1999d3069680ffd"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>counting_iterator</b></td></tr>
-<tr class="separator:a90c8f86ac3325a7de1999d3069680ffd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga90c8f86ac3325a7de1999d3069680ffd"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>counting_iterator</b></td></tr>
+<tr class="separator:ga90c8f86ac3325a7de1999d3069680ffd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/cl/iterator/<a class="el" href="counting__iterator_8h_source.html">counting_iterator.h</a></li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><h3>template&lt;typename value_type&gt;<br/>
+class bolt::cl::counting_iterator&lt; value_type &gt;</h3>
+
+<p><a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a> iterates a range with sequential values.</p>
+<p>The following demonstrates how to use a <code><a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a></code>.</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;bolt/cl/counting_iterator.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2transform_8h.html" title="Applies a binary function to each pair of elements from two input sequences.">bolt/cl/transform.h</a>&gt;</span></div>
+<div class="line">...</div>
+<div class="line"></div>
+<div class="line">std::vector&lt;<span class="keywordtype">int</span>&gt; vecSrc( 5 );</div>
+<div class="line">std::vector&lt;int&gt; vecDest( 5 );</div>
+<div class="line"></div>
+<div class="line"><a class="code" href="group__AMP-filling.html#gabc37258baf6eeec15c0f98a9f6eb33b0" title="Fill assigns the value of value to each element in the range [first,last].">std::fill</a>( vecSrc.begin( ), vecSrc.end( ), 10 );</div>
+<div class="line"></div>
+<div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> ctrl = <a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">control::getDefault</a>( );</div>
+<div class="line">...</div>
+<div class="line">bolt::cl::counting_iterator&lt; <span class="keywordtype">int</span> &gt; count5( 5 );</div>
+<div class="line"><a class="code" href="group__CL-transform.html#gad8ce30746808fd07c75a7e4e3d8099eb" title="This version of transform applies a unary operation on input sequences and stores the result in the c...">bolt::cl::transform</a>( ctrl, vecSrc.begin( ), vecSrc.end( ), count5, vecDest.begin( ), bolt::cl::plus&lt; int &gt;( ) );</div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Output:</span></div>
+<div class="line"><span class="comment">// vecDest = { 15, 16, 17, 18, 19 }</span></div>
+<div class="line"></div>
+<div class="line"><span class="comment">// counting_iterator can save bandwidth when used instead of a range of values.</span></div>
+</div><!-- fragment --> </div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/cl/iterator/<a class="el" href="cl_2iterator_2counting__iterator_8h_source.html">counting_iterator.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:21 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

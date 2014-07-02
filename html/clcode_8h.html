@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/cl/clcode.h File Reference</title>
+<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/cl/clcode.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_088ee0bb765f16a0241a3922f262663f.html">Bolt_Clone_master</a></li><li class="navelem"><a class="el" href="dir_ab60c108fb05608d5d94f823ef24c96e.html">include</a></li><li class="navelem"><a class="el" href="dir_410cc9248f9a37596ab60907133a429a.html">bolt</a></li><li class="navelem"><a class="el" href="dir_8f5fb271328b164d479a60be30ed6ac3.html">cl</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_7bd24fcb403b4a9a7d6ee9bbf740e45c.html">Bolt_Clone_develop</a></li><li class="navelem"><a class="el" href="dir_d1017fc77d40cdf41bf51b649c69d445.html">include</a></li><li class="navelem"><a class="el" href="dir_82df59469531d6ac1bfe1a3d7656a742.html">bolt</a></li><li class="navelem"><a class="el" href="dir_f341d7908918d99d0265620f70a0494f.html">cl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -88,8 +88,8 @@ Macros</h2></td></tr>
 <tr class="separator:ga73fe90c6484b9cc8ac8e872723c7fbe3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae450d86ddb8074c855fff0379253dcac"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#gae450d86ddb8074c855fff0379253dcac">BOLT_HOST_DEVICE_DEFINITION</a>(...)&#160;&#160;&#160;&quot;namespace bolt { namespace cl {\n&quot; STRINGIFY_CODE( __VA_ARGS__ ) &quot;\n } } \n&quot; ; __VA_ARGS__;</td></tr>
 <tr class="separator:gae450d86ddb8074c855fff0379253dcac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gae47f88b0e8fbb3d374821aac54c5c872"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>(Type)&#160;&#160;&#160;template&lt;&gt; struct <a class="el" href="structTypeName.html">TypeName</a>&lt; Type &gt; { static std::string get( ) { return #Type; } };</td></tr>
-<tr class="separator:gae47f88b0e8fbb3d374821aac54c5c872"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga46a8cfa98b81bd4c20a6b41918ceefde"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga46a8cfa98b81bd4c20a6b41918ceefde">BOLT_CREATE_TYPENAME</a>(...)&#160;&#160;&#160;template&lt;&gt; struct <a class="el" href="structTypeName.html">TypeName</a>&lt; __VA_ARGS__ &gt; { static std::string get( ) { return #__VA_ARGS__; } };</td></tr>
+<tr class="separator:ga46a8cfa98b81bd4c20a6b41918ceefde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga312e9c961b61fc4bc77bf7308ed675c6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga312e9c961b61fc4bc77bf7308ed675c6">BOLT_CREATE_CLCODE</a>(Type, CODE_STRING)</td></tr>
 <tr class="separator:ga312e9c961b61fc4bc77bf7308ed675c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8b9cbe9b8afde5a23262c5f25e3436c2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2">BOLT_TEMPLATE_REGISTER_NEW_TYPE</a>(CONTAINER, OLDTYPE, NEWTYPE)</td></tr>
@@ -98,8 +98,15 @@ Macros</h2></td></tr>
 <tr class="memitem:ga012279644d3227bf7ff71dc62c4635b7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga012279644d3227bf7ff71dc62c4635b7">BOLT_TEMPLATE_REGISTER_NEW_ITERATOR</a>(CONTAINER, OLDTYPE, NEWTYPE)</td></tr>
 <tr class="memdesc:ga012279644d3227bf7ff71dc62c4635b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">This macro specializes a template iterator with a new type using the template definition of a previously defined iterator type  This is a convenience macro to specialize an iterator for a new type, using the generic template definition from a previosly defined iterator.  <a href="group__ClCode.html#ga012279644d3227bf7ff71dc62c4635b7"></a><br/></td></tr>
 <tr class="separator:ga012279644d3227bf7ff71dc62c4635b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_DEFINE</b>(DefineName, D,...)</td></tr>
+<tr class="memitem:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga925a11b78f3aaa1661ef1e34bfbcf9b8">BOLT_CREATE_DEFINE</a>(DefineName, D,...)</td></tr>
+<tr class="memdesc:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">This macro defines a macro on the kernel code.  <a href="group__ClCode.html#ga925a11b78f3aaa1661ef1e34bfbcf9b8"></a><br/></td></tr>
 <tr class="separator:ga925a11b78f3aaa1661ef1e34bfbcf9b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaeacf4c833ce7cf2adf2bde23f3c6fb44"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#gaeacf4c833ce7cf2adf2bde23f3c6fb44">BOLT_TEMPLATE_REGISTER_NEW_TRANSFORM_ITERATOR</a>(FUNCTOR, DATATYPE)</td></tr>
+<tr class="memdesc:gaeacf4c833ce7cf2adf2bde23f3c6fb44"><td class="mdescLeft">&#160;</td><td class="mdescRight">This macro creates a <a class="el" href="structTypeName.html">TypeName</a> and the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> data structure for the transform iterator associated with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm  This macro creates a <a class="el" href="structTypeName.html">TypeName</a> and the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> data structure for the transform iterator associated with FUNCTOR and DATA_TYPE. The use of this macro is necessary if transform iterator is used in the algorithm.  <a href="group__ClCode.html#gaeacf4c833ce7cf2adf2bde23f3c6fb44"></a><br/></td></tr>
+<tr class="separator:gaeacf4c833ce7cf2adf2bde23f3c6fb44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga981889f6ad38f372e3b25ebd87393a1a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga981889f6ad38f372e3b25ebd87393a1a">BOLT_TEMPLATE_REGISTER_NEW_PERMUTATION_ITERATOR</a>(ELEMENT_ITERATOR, INDEX_ITERATOR)</td></tr>
+<tr class="memdesc:ga981889f6ad38f372e3b25ebd87393a1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This Macro creates a <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> for the permutation iterator.  A Permutation iterator is associated with an ELEMENT_ITERATOR and INDEX_ITERATOR. This Macro creates a <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> and <a class="el" href="structTypeName.html">TypeName</a> for the permutation iterator. Note that the data type associated with the element and index iterators must be declared within the BOLT_FUNCTOR macro. Only device vector iterators can be used with permutation iterators. Both the iterators has to be either std iterators or device vector iterators. Combination of the two is not supported.  <a href="group__ClCode.html#ga981889f6ad38f372e3b25ebd87393a1a"></a><br/></td></tr>
+<tr class="separator:ga981889f6ad38f372e3b25ebd87393a1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga2478d544fdd6b2cb0b1104ee5378a177"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>(T,...)</td></tr>
 <tr class="separator:ga2478d544fdd6b2cb0b1104ee5378a177"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7f21e1fb33d54ecc5adaeca8b4a05b45"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ClCode.html#ga7f21e1fb33d54ecc5adaeca8b4a05b45">BOLT_TEMPLATE_FUNCTOR1</a>(CONTAINER, TYPE1,...)</td></tr>
@@ -120,7 +127,7 @@ Macros</h2></td></tr>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:31 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

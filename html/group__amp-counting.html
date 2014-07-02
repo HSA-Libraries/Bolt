@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: Amp-counting</title>
+<title>Bolt: AMP-counting</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -43,7 +43,7 @@
   <div class="summary">
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">Amp-counting<div class="ingroups"><a class="el" href="group__reductions.html">Reductions</a></div></div>  </div>
+<div class="title">AMP-counting<div class="ingroups"><a class="el" href="group__reductions.html">Reductions</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
@@ -52,7 +52,7 @@ Functions</h2></td></tr>
 <tr class="memitem:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
 <tr class="memitem:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structbolt_1_1amp_1_1iterator__traits.html">bolt::amp::iterator_traits</a><br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4">bolt::amp::count</a> (control &amp;ctl, InputIterator first, InputIterator last, const EqualityComparable &amp;value)</td></tr>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4">bolt::amp::count</a> (control &amp;ctl, InputIterator first, InputIterator last, const EqualityComparable &amp;value)</td></tr>
 <tr class="memdesc:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count</code> counts the number of elements in the specified range which compare equal to the specified <code>value</code>.  <a href="#gad3782886c9fe9bc57a9c1a9fedca9ea4"></a><br/></td></tr>
 <tr class="separator:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0befd872f303bae2f526397a0a331cf5"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga0befd872f303bae2f526397a0a331cf5"></a>
@@ -64,7 +64,7 @@ template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
 <tr class="memitem:ga1f99b47f7420737186c5deebfba5c6f6"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
 <tr class="memitem:ga1f99b47f7420737186c5deebfba5c6f6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structbolt_1_1amp_1_1iterator__traits.html">bolt::amp::iterator_traits</a><br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6">bolt::amp::count_if</a> (control &amp;ctl, InputIterator first, InputIterator last, Predicate predicate=<a class="el" href="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html">bolt::amp::detail::CountIfEqual</a>&lt; int &gt;())</td></tr>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__AMP-counting.html#ga1f99b47f7420737186c5deebfba5c6f6">bolt::amp::count_if</a> (control &amp;ctl, InputIterator first, InputIterator last, Predicate predicate=<a class="el" href="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html">bolt::amp::detail::CountIfEqual</a>&lt; int &gt;())</td></tr>
 <tr class="memdesc:ga1f99b47f7420737186c5deebfba5c6f6"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count_if</code> counts the number of elements in the specified range for which the specified <code>predicate</code> is <code>true</code>.  <a href="#ga1f99b47f7420737186c5deebfba5c6f6"></a><br/></td></tr>
 <tr class="separator:ga1f99b47f7420737186c5deebfba5c6f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac2fa9d1e677ed42ee1f8265754ae5f44"><td class="memTemplParams" colspan="2"><a class="anchor" id="gac2fa9d1e677ed42ee1f8265754ae5f44"></a>
@@ -134,7 +134,7 @@ template&lt;typename InputIterator , typename EqualityComparable &gt; </div>
 <p>Example: </p>
 <div class="fragment"><div class="line"><span class="keywordtype">int</span> a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};</div>
 <div class="line"></div>
-<div class="line"><span class="keywordtype">size_t</span> countOf42 = <a class="code" href="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4" title="count counts the number of elements in the specified range which compare equal to the specified value...">bolt::amp::count</a> (A, A+14, 42);</div>
+<div class="line"><span class="keywordtype">size_t</span> countOf42 = <a class="code" href="group__AMP-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4" title="count counts the number of elements in the specified range which compare equal to the specified value...">bolt::amp::count</a> (A, A+14, 42);</div>
 <div class="line"><span class="comment">// countOf42 contains 4.</span></div>
 </div><!-- fragment --> 
 </div>
@@ -214,7 +214,7 @@ template&lt;typename InputIterator , typename Predicate &gt; </div>
 <div class="line">};</div>
 <div class="line"></div>
 <div class="line">   <span class="keywordtype">int</span> a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};</div>
-<div class="line">   <span class="keywordtype">int</span> boltCount = <a class="code" href="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6" title="count_if counts the number of elements in the specified range for which the specified predicate is tr...">bolt::amp::count_if</a> (a, a+14, InRange&lt;int&gt;(1,60)) ;</div>
+<div class="line">   <span class="keywordtype">int</span> boltCount = <a class="code" href="group__AMP-counting.html#ga1f99b47f7420737186c5deebfba5c6f6" title="count_if counts the number of elements in the specified range for which the specified predicate is tr...">bolt::amp::count_if</a> (a, a+14, InRange&lt;int&gt;(1,60)) ;</div>
 <div class="line">   <span class="comment">// boltCount 11 in range 1-60.</span></div>
 </div><!-- fragment --><p>Example to show how to use UDD type for count. </p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>UDD { </div>
@@ -238,14 +238,14 @@ template&lt;typename InputIterator , typename Predicate &gt; </div>
 <div class="line">  myUDD.a = 3;</div>
 <div class="line">  myUDD.b = 5;</div>
 <div class="line">  <span class="comment">// Initialize boltInput</span></div>
-<div class="line">  <span class="keywordtype">size_t</span> boltCount = <a class="code" href="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4" title="count counts the number of elements in the specified range which compare equal to the specified value...">bolt::amp::count</a>(boltInput.begin(), boltInput.end(), myUDD);</div>
+<div class="line">  <span class="keywordtype">size_t</span> boltCount = <a class="code" href="group__AMP-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4" title="count counts the number of elements in the specified range which compare equal to the specified value...">bolt::amp::count</a>(boltInput.begin(), boltInput.end(), myUDD);</div>
 </div><!-- fragment --> 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

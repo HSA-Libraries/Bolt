@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -53,6 +53,7 @@
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -75,13 +76,16 @@ Inheritance diagram for bolt::amp::device_vector&lt; T, CONT &gt;::reverse_itera
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af12b66e5c7a0654d44176438050fcb46"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af12b66e5c7a0654d44176438050fcb46"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>reverse_iterator_base</b> (Container &amp;lhs, size_type index)</td></tr>
-<tr class="separator:af12b66e5c7a0654d44176438050fcb46"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d3384c59029bf4c06dcab7ec33d3390"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8d3384c59029bf4c06dcab7ec33d3390"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>reverse_iterator_base</b> (Container &amp;lhs, int index)</td></tr>
+<tr class="separator:a8d3384c59029bf4c06dcab7ec33d3390"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9fc8819baeca4cfab60dca881b7d7039"><td class="memTemplParams" colspan="2"><a class="anchor" id="a9fc8819baeca4cfab60dca881b7d7039"></a>
 template&lt;typename OtherContainer &gt; </td></tr>
 <tr class="memitem:a9fc8819baeca4cfab60dca881b7d7039"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>reverse_iterator_base</b> (const <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a>&lt; OtherContainer &gt; &amp;lhs)</td></tr>
 <tr class="separator:a9fc8819baeca4cfab60dca881b7d7039"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a654cda18318f6eb588c0e3708ccf268e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a654cda18318f6eb588c0e3708ccf268e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>reverse_iterator_base</b> (const <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a> &amp;lhs)</td></tr>
+<tr class="separator:a654cda18318f6eb588c0e3708ccf268e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a226c49d8eba67f3b491d2123d11c66b9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a226c49d8eba67f3b491d2123d11c66b9"></a>
 <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a><br class="typebreak"/>
 &lt; Container &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a>&lt; Container &gt; &amp;lhs)</td></tr>
@@ -94,15 +98,42 @@ template&lt;typename OtherContainer &gt; </td></tr>
 const <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a><br class="typebreak"/>
 &lt; Container &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+</b> (const difference_type &amp;n) const </td></tr>
 <tr class="separator:a68820a8b3dfe301a11e40892b8634e30"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d7808d8331e6a2cf0194104b69696dc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d7808d8331e6a2cf0194104b69696dc"></a>
-size_type&#160;</td><td class="memItemRight" valign="bottom"><b>getIndex</b> () const </td></tr>
-<tr class="separator:a7d7808d8331e6a2cf0194104b69696dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d226b9b0ee3eca36bd0ddc9acce8871"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6d226b9b0ee3eca36bd0ddc9acce8871"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getIndex</b> () const </td></tr>
+<tr class="separator:a6d226b9b0ee3eca36bd0ddc9acce8871"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2b6a207e6732615169b10ee873d3dff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2b6a207e6732615169b10ee873d3dff"></a>
 Container &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getContainer</b> () const </td></tr>
 <tr class="separator:ad2b6a207e6732615169b10ee873d3dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7aba0396c70e14f2f085e61a04c53c03"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7aba0396c70e14f2f085e61a04c53c03"></a>
 difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>distance_to</b> (const <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a>&lt; Container &gt; &amp;lhs) const </td></tr>
 <tr class="separator:a7aba0396c70e14f2f085e61a04c53c03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad03bed76b8bdbe37593d0b33ac4fbbb4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad03bed76b8bdbe37593d0b33ac4fbbb4"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>advance</b> (difference_type n)</td></tr>
+<tr class="separator:ad03bed76b8bdbe37593d0b33ac4fbbb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6262d19db3b0604ac4458fe7480c9415"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6262d19db3b0604ac4458fe7480c9415"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>increment</b> ()</td></tr>
+<tr class="separator:a6262d19db3b0604ac4458fe7480c9415"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1033cec5ce20c50a1bb37dc11008be2b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1033cec5ce20c50a1bb37dc11008be2b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>decrement</b> ()</td></tr>
+<tr class="separator:a1033cec5ce20c50a1bb37dc11008be2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc494c40253df06d1091f0cafaf37759"><td class="memTemplParams" colspan="2"><a class="anchor" id="abc494c40253df06d1091f0cafaf37759"></a>
+template&lt;typename OtherContainer &gt; </td></tr>
+<tr class="memitem:abc494c40253df06d1091f0cafaf37759"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>equal</b> (const <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a>&lt; OtherContainer &gt; &amp;lhs) const </td></tr>
+<tr class="separator:abc494c40253df06d1091f0cafaf37759"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ee4ae6c1151b21dd8c9f12666418ed8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2ee4ae6c1151b21dd8c9f12666418ed8"></a>
+value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (int x) const restrict(cpu</td></tr>
+<tr class="separator:a2ee4ae6c1151b21dd8c9f12666418ed8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aced6185f4e0571ac66d69a101d300535"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aced6185f4e0571ac66d69a101d300535"></a>
+value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator*</b> () const restrict(cpu</td></tr>
+<tr class="separator:aced6185f4e0571ac66d69a101d300535"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a2b8f11348f4c39715b292f8ffaec6cba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2b8f11348f4c39715b292f8ffaec6cba"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>m_Index</b></td></tr>
+<tr class="separator:a2b8f11348f4c39715b292f8ffaec6cba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23b4b8331fcdd315958b1e47787b2c91"><td class="memItemLeft" align="right" valign="top">value_type&#160;</td><td class="memItemRight" valign="bottom"><b>amp</b></td></tr>
+<tr class="separator:a23b4b8331fcdd315958b1e47787b2c91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
@@ -118,7 +149,7 @@ template&lt;typename &gt; </td></tr>
 <tr class="separator:a34a15cd4c87ae8cf7606bd2cefb64b0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt;<br/>
+<div class="textblock"><h3>template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt;<br/>
 template&lt;typename Container&gt;<br/>
 class bolt::amp::device_vector&lt; T, CONT &gt;::reverse_iterator_base&lt; Container &gt;</h3>
 
@@ -127,13 +158,32 @@ class bolt::amp::device_vector&lt; T, CONT &gt;::reverse_iterator_base&lt; Conta
 <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/ReverseIterator.html">http://www.sgi.com/tech/stl/ReverseIterator.html</a> </dd>
 <dd>
 <a href="http://www.sgi.com/tech/stl/RandomAccessIterator.html">http://www.sgi.com/tech/stl/RandomAccessIterator.html</a> </dd></dl>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="a23b4b8331fcdd315958b1e47787b2c91"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array_view&gt; </div>
+<div class="memtemplate">
+template&lt;typename Container&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">value_type <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">reverse_iterator_base</a>&lt; Container &gt;::amp</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">{</div>
+<div class="line">            <span class="keywordflow">return</span> m_Container[m_Index - x]</div>
+</div><!-- fragment -->
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

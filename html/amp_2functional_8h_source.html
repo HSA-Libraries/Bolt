@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/amp/functional.h Source File</title>
+<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/amp/functional.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">1.2</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_088ee0bb765f16a0241a3922f262663f.html">Bolt_Clone_master</a></li><li class="navelem"><a class="el" href="dir_ab60c108fb05608d5d94f823ef24c96e.html">include</a></li><li class="navelem"><a class="el" href="dir_410cc9248f9a37596ab60907133a429a.html">bolt</a></li><li class="navelem"><a class="el" href="dir_5551449d2a21b7b74970b4cc013ddd69.html">amp</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_7bd24fcb403b4a9a7d6ee9bbf740e45c.html">Bolt_Clone_develop</a></li><li class="navelem"><a class="el" href="dir_d1017fc77d40cdf41bf51b649c69d445.html">include</a></li><li class="navelem"><a class="el" href="dir_82df59469531d6ac1bfe1a3d7656a742.html">bolt</a></li><li class="navelem"><a class="el" href="dir_e0116eebaf0c0d90847593bab4a7bef8.html">amp</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -55,7 +55,7 @@
 </div><!--header-->
 <div class="contents">
 <a href="amp_2functional_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/***************************************************************************</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">*</span></div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">*   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">*   you may not use this file except in compliance with the License.</span></div>
@@ -219,44 +219,50 @@
 <div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;    };</div>
 <div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;</div>
 <div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00171"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1less.html">  171</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1less.html">less</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
+<div class="line"><a name="l00171"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1identity.html">  171</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1identity.html">identity</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1unary__function.html">unary_function</a>&lt;T,T&gt;</div>
 <div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;    {</div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &lt; rhs;}</div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;        T operator()(<span class="keyword">const</span> T &amp;x) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> x;}</div>
 <div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;    };</div>
 <div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;</div>
 <div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00177"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1greater__equal.html">  177</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1greater__equal.html">greater_equal</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
+<div class="line"><a name="l00177"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1less.html">  177</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1less.html">less</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
 <div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;    {</div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &gt;= rhs;}</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &lt; rhs;}</div>
 <div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;    };</div>
 <div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;</div>
 <div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00183"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1less__equal.html">  183</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1less__equal.html">less_equal</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
+<div class="line"><a name="l00183"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1greater__equal.html">  183</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1greater__equal.html">greater_equal</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
 <div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;    {</div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &lt;= rhs;}</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &gt;= rhs;}</div>
 <div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;    };</div>
 <div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;</div>
 <div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00189"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1logical__and.html">  189</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1logical__and.html">logical_and</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
+<div class="line"><a name="l00189"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1less__equal.html">  189</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1less__equal.html">less_equal</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
 <div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;    {</div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &amp;&amp; rhs;}</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &lt;= rhs;}</div>
 <div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;    };</div>
 <div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
 <div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00195"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1logical__or.html">  195</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1logical__or.html">logical_or</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
+<div class="line"><a name="l00195"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1logical__and.html">  195</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1logical__and.html">logical_and</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
 <div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;    {</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs || rhs;}</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs &amp;&amp; rhs;}</div>
 <div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;    };</div>
 <div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;</div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;</div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;};</div>
-<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;};</div>
-<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;</div>
-<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a name="l00201"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1logical__or.html">  201</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1logical__or.html">logical_or</a> : <span class="keyword">public</span> <a class="code" href="structbolt_1_1amp_1_1binary__function.html">binary_function</a>&lt;T,T,T&gt;</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;    {</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;lhs, <span class="keyword">const</span> T &amp;rhs) <span class="keyword">const</span> restrict(cpu,amp) {<span class="keywordflow">return</span> lhs || rhs;}</div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;    };</div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;</div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;</div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;};</div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;};</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 11 2013 14:17:19 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 2 2014 12:04:31 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>
