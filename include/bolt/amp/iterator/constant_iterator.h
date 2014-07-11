@@ -148,10 +148,10 @@ namespace amp {
             }
 
             // Pre-increment
-            constant_iterator< value_type > operator++ ( ) const
+            constant_iterator< value_type > operator++ ( )
             {
+                advance( 1 );
                 constant_iterator< value_type > result( *this );
-                result.advance( 1 );
                 return result;
             }
 

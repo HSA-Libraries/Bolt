@@ -333,7 +333,7 @@ void serial_gather_if(InputIterator1 mapfirst,
 		}
     }
 
-// Input is a fancy iterator
+// Map is a fancy iterator
     template< typename InputIterator1,
               typename InputIterator2,
               typename InputIterator3,
@@ -397,7 +397,71 @@ void serial_gather_if(InputIterator1 mapfirst,
             dvResult.data( );
         }
     }
-	
+
+// Input is a fancy iterator
+     template< typename InputIterator1,
+               typename InputIterator2,
+               typename InputIterator3,
+               typename OutputIterator,
+               typename Predicate >
+     void gather_if_pick_iterator( bolt::amp::control &ctl,
+                                   const InputIterator1& mapFirst,
+                                   const InputIterator1& mapLast,
+                                   const InputIterator2& stencil,
+                                   const InputIterator3& fancyInput,
+                                   const OutputIterator& result,
+                                   const Predicate& pred,
+                                   std::random_access_iterator_tag,
+                                   std::random_access_iterator_tag,
+                                   bolt::amp::fancy_iterator_tag )
+     {
+ 
+         typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+         typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+         typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
+         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+         int sz = static_cast<int> (std::distance( mapFirst, mapLast ));
+         if (sz == 0)
+             return;
+ 
+         // Use host pointers memory since these arrays are only read once - no benefit to copying.
+         bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+         if(runMode == bolt::amp::control::Automatic)
+         {
+            runMode = ctl.getDefaultPathToRun();
+         }
+ 		
+         if( runMode == bolt::amp::control::SerialCpu )
+         {
+            serial_gather_if (mapFirst, mapLast, stencil, fancyInput, result, pred );
+         }
+         else if( runMode == bolt::amp::control::MultiCoreCpu )
+         {
+ #if defined( ENABLE_TBB )
+             bolt::btbb::gather_if( mapFirst, mapLast, stencil, fancyInput, result, pred );
+ #else
+             throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+ #endif
+         }
+         else
+         {
+             // Use host pointers memory since these arrays are only read once - no benefit to copying.
+             // Map the input iterator to a device_vector
+ 		    device_vector< iType2, concurrency::array_view> dvStencil( stencil, sz, false, ctl );
+ 		    device_vector< iType1, concurrency::array_view> dvMap( mapFirst, sz, false, ctl );
+             // Map the output iterator to a device_vector
+ 		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+             gather_if_enqueue( ctl,
+                                dvMap.begin( ),
+                                dvMap.end( ),
+                                dvStencil.begin( ),
+                                fancyInput,
+                                dvResult.begin( ),
+                                pred );
+             // This should immediately map/unmap the buffer
+             dvResult.data( );
+         }
+     }
 	// Device Vectors
 
     // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
@@ -472,6 +536,76 @@ void serial_gather_if(InputIterator1 mapfirst,
         }
     }
 
+ // Device vectors with input as fancy
+ 
+     template< typename DVInputIterator1,
+               typename DVInputIterator2,
+               typename DVInputIterator3,
+               typename DVOutputIterator,
+               typename Predicate >
+     void gather_if_pick_iterator( bolt::amp::control &ctl,
+                                   const DVInputIterator1& map_first,
+                                   const DVInputIterator1& map_last,
+                                   const DVInputIterator2& stencil,
+                                   const DVInputIterator3& inputFancy,
+                                   const DVOutputIterator& result,
+                                   const Predicate& pred,
+                                   bolt::amp::device_vector_tag,
+                                   bolt::amp::device_vector_tag,
+                                   bolt::amp::fancy_iterator_tag )
+     {
+ 
+         typedef typename std::iterator_traits< DVInputIterator1 >::value_type iType1;
+         typedef typename std::iterator_traits< DVInputIterator2 >::value_type iType2;
+         typedef typename std::iterator_traits< DVInputIterator3 >::value_type iType3;
+         typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+ 
+         int sz = static_cast<int >(std::distance( map_first, map_last ));
+         if( sz == 0 )
+             return;
+ 
+         bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+         if(runMode == bolt::amp::control::Automatic)
+         {
+              runMode = ctl.getDefaultPathToRun();
+         }
+ 		
+         if( runMode == bolt::amp::control::SerialCpu )
+         {		   
+             typename bolt::amp::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
+             typename bolt::amp::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
+             typename bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+ 
+ #if defined( _WIN32 )
+             serial_gather_if(&mapPtr[ map_first.m_Index ], &mapPtr[ map_last.m_Index ], &stenPtr[ stencil.m_Index ],
+                  inputFancy, stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), pred );
+ 
+ #else
+              serial_gather_if( &mapPtr[ map_first.m_Index ], &mapPtr[ map_last.m_Index ], &stenPtr[ stencil.m_Index ],
+                  inputFancy, &resPtr[ result.m_Index ], pred );
+ #endif
+         }
+         else if( runMode == bolt::amp::control::MultiCoreCpu )
+         {
+ #if defined( ENABLE_TBB )
+           {
+            typename bolt::amp::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
+            typename bolt::amp::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
+            typename bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+ 
+            bolt::btbb::gather_if( &mapPtr[ map_first.m_Index ], &mapPtr[ map_last.m_Index ], &stenPtr[ stencil.m_Index ],
+                  inputFancy, &resPtr[ result.m_Index ], pred );
+           }
+ #else
+              throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+ #endif
+         }
+         else
+         {
+             gather_if_enqueue( ctl, map_first, map_last, stencil, inputFancy, result, pred );
+         }
+     }
+ 
 ////////////////////////////////////////////////////////////////////
 // Gather pick iterator
 ////////////////////////////////////////////////////////////////////
