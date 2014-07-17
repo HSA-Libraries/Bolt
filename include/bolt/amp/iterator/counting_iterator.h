@@ -146,6 +146,7 @@ namespace amp {
             counting_iterator< value_type > operator++ ( )
             {
                 advance( 1 );
+                counting_iterator< value_type > result( *this );
                 return *this;
             }
 

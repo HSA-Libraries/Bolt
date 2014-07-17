@@ -187,7 +187,7 @@ namespace bolt
                 const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
-                  std::transform(first1, last1, first2, result, f);
+                  serial::binary_transform(first1, last1, first2, result, f);
                   return;
                 }
                 else if (runMode == bolt::amp::control::MultiCoreCpu)
