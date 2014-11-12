@@ -2817,16 +2817,11 @@ TEST(Copy, MultiCoreFancyRandomIntFloat)
 
 int main(int argc, char* argv[])
 {
-    
-    bool can_use_doubles = concurrency::accelerator().supports_double_precision;
-    std::cout << "can_use_doubles = " << can_use_doubles << "\n";
-
-
-    //Register our minidump generating logic
+    //  Register our minidump generating logic
 #if defined(_WIN32)
     bolt::miniDumpSingleton::enableMiniDumps( );
 #endif
-    
+
     // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )
     TCHAR logPath[ MAX_PATH ];

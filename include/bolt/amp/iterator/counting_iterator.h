@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 #pragma once
-#if !defined( BOLT_AMP_COUNTING_ITERATOR_H )
-#define BOLT_AMP_COUNTING_ITERATOR_H
+#if !defined( BOLT_CL_COUNTING_ITERATOR_H )
+#define BOLT_CL_COUNTING_ITERATOR_H
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 
@@ -114,29 +114,12 @@ namespace amp {
                 return result;
             }
 
-			const counting_iterator< value_type > operator- ( const difference_type & n ) const
-            {
-                counting_iterator< value_type > result( *this );
-                result.advance( -n );
-                return result;
-            }
-
             const counting_iterator< value_type > & getBuffer( const_iterator itr ) const
             {
                 return *this;
             }
             
 
-			value_type* getPointer()
-            {
-                return &m_initValue;
-            }
-
-            const value_type* getPointer() const
-            {
-                return &m_initValue;
-            }
-			
             const counting_iterator< value_type > & getContainer( ) const
             {
                 return *this;
@@ -226,7 +209,7 @@ namespace amp {
 
             value_type operator[](int x) const restrict(cpu,amp)
             {
-              value_type temp = m_initValue + x;
+              value_type temp = x + m_initValue;
               return temp;
             }
 

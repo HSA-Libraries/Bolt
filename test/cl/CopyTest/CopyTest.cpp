@@ -19,7 +19,6 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 #define TEST_LARGE_BUFFERS 0
-#define OPENCL_CPU_PATH 0
 
 #pragma warning(disable: 4244) // Disabling possible loss of data warning
 #if defined (_WIN32)
@@ -39,8 +38,6 @@
 
 #include "common/stdafx.h"
 #include "common/myocl.h"
-
-#include "bolt/BoltLog.h"
 
 #define BOLT_TEST_MAX_FAILURES 1
 #include "test_common.h"
@@ -3300,52 +3297,6 @@ int main(int argc, char* argv[])
     ////  Set the standard OpenCL wait behavior to help debugging
     //bolt::cl::control& myControl = bolt::cl::control::getDefault( );
     //myControl.waitMode( bolt::cl::control::NiceWait );
-
-	//  Query OpenCL for available platforms
-    cl_int err = CL_SUCCESS;
-
-    // Platform vector contains all available platforms on system
-    std::vector< cl::Platform > platforms;
-    //std::cout << "HelloCL!\nGetting Platform Information\n";
-    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
-
-    //  Do stuff with the platforms
-    std::vector<cl::Platform>::iterator i;
-    if(platforms.size() > 0)
-    {
-        for(i = platforms.begin(); i != platforms.end(); ++i)
-        {
-            if(!strcmp((*i).getInfo<CL_PLATFORM_VENDOR>(&err).c_str(), "Advanced Micro Devices, Inc."))
-            {
-                break;
-            }
-        }
-    }
-    bolt::cl::V_OPENCL( err, "Platform::getInfo() failed" );
-
-    // Device info
-    std::vector< cl::Device > devices;
-    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
-
-	cl_uint userDevice = 0;
-
-#if(OPENCL_CPU_PATH == 1)
-	MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0, 1);
-	bolt::cl::control& myControl = bolt::cl::control(oclcpu._queue); 
-	myControl.setWaitMode( bolt::cl::control::NiceWait );
-    myControl.setForceRunMode( bolt::cl::control::OpenCL );
-    std::string strDeviceName =   myControl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
-#else
-	cl::Context myContext( devices.at( userDevice ) );
-    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
-    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
-	std::string strDeviceName =  bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
-#endif
-
-
-    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
-
-    std::cout << "Device under test : " << strDeviceName << std::endl;
 
     int retVal = RUN_ALL_TESTS( );
 

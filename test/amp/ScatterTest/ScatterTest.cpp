@@ -31,9 +31,8 @@
 #include <boost/config.hpp>
 #include "common/test_common.h"
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 0
-#define TEMPORARY_DISABLE_STD_DV_TEST_CASES 0
 
 //BOLT_FUNCTOR( is_even,
 struct is_even{
@@ -2845,7 +2844,6 @@ TEST( HostMemory_Int, MulticoreScatter )
 
 }
 
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_Int, Scatter_deviceInput )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2922,7 +2920,6 @@ TEST( HostMemory_Int, MulticoreScatter_deviceInput )
 
 }
 
-
 TEST( HostMemory_Int, Scatter_deviceMap )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2946,7 +2943,6 @@ TEST( HostMemory_Int, Scatter_deviceMap )
 
 
 }
-
 TEST( HostMemory_Int, SerialScatter_deviceMap )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2997,8 +2993,6 @@ TEST( HostMemory_Int, MulticoreScatter_deviceMap )
 
 
 }
-#endif
-
 
 TEST( HostMemory_Int, Scatter_fancyInput )
 {    	
@@ -3520,8 +3514,6 @@ TEST( HostMemory_Float, MulticoreScatter )
     EXPECT_EQ(exp_result, result);
 }
 
-
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_Float, Scatter_deviceInput )
 {
     float n_input[10] =  {0.5f,1.5f,2.5f,3.5f,4.5f,5.5f,6.5f,7.5f,8.5f,9.5f};
@@ -3664,7 +3656,6 @@ TEST( HostMemory_Float, MulticoreScatter_deviceMap )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
-#endif
 
 TEST( HostMemory_Float, Scatter_fancyInput )
 {    	

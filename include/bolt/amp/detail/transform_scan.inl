@@ -32,8 +32,6 @@
 #include "bolt/amp/iterator/iterator_traits.h"
 #include <amp.h>
 
-#include "bolt/amp/iterator/addressof.h"
-
 #ifdef ENABLE_TBB
 #include "bolt/btbb/transform.h"
 #include "bolt/btbb/scan.h"
@@ -50,225 +48,47 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-namespace serial{
-
-template<
-    typename InputIterator,
-    typename OutputIterator,
-    typename UnaryFunction,
-    typename T,
-    typename BinaryFunction >
-typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value), void
-                           >::type
-transform_scan(
-    bolt::amp::control &ctl,
-    const InputIterator& first,
-    const InputIterator& last,
-    const OutputIterator& result,
-    const UnaryFunction& unary_op,
-    const T& init,
-	const bool& inclusive,
-    const BinaryFunction& binary_op)
+    template<
+    typename oType,
+    typename BinaryFunction,
+    typename T>
+oType*
+Serial_Scan(
+    oType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryFunction binary_op,
+    const bool Incl,
+    const T &init)
 {
-
-	size_t sz = (last - first);
-    if (sz == 0)
-           return;
-
-	typedef typename std::iterator_traits<InputIterator>::value_type iType;
-    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-
-
-	oType  sum, temp;
-
-
-	if(inclusive)
-	{
-         *result = static_cast<oType>(unary_op( *first ) ); // assign value
-         sum = *result;
+    oType  sum, temp;
+    if(Incl){
+      *result = *values; // assign value
+      sum = *values;
     }
-    else 
-	{
-         temp = static_cast<oType>(unary_op( *first ) );
-         *result = (oType)init;
-         sum = binary_op( *result, temp);  
+    else {
+        temp = *values;
+       *result = (oType)init;
+       sum = binary_op( *result, temp);
     }
-
-    for ( unsigned int index= 1; index<sz; index++)
+    for ( unsigned int i= 1; i<num; i++)
     {
-         oType currentValue =  static_cast<oType>(unary_op( *(first + index) ) ); // convertible
-         if (inclusive)
-         {
-             oType r = binary_op( sum, currentValue);
-             *(result + index) = r;
-             sum = r;
-         }
-         else // new segment
-         {
-             *(result + index) = sum;
-             sum = binary_op( sum, currentValue);
-	  
-         }
-    }
-       
-	return;
-
-}
-
-
-
-template<
-    typename InputIterator,
-    typename OutputIterator,
-    typename UnaryFunction,
-    typename T,
-    typename BinaryFunction >
-typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                         bolt::amp::device_vector_tag
-                                     >::value), void
-                           >::type
-transform_scan(
-    bolt::amp::control &ctl,
-    const InputIterator& first,
-    const InputIterator& last,
-    const OutputIterator& result,
-    const UnaryFunction& unary_op,
-    const T& init,
-	const bool& inclusive,
-    const BinaryFunction& binary_op)
-{
-	    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-
-	    size_t sz = (last - first);
-       
-        auto mapped_fst_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::iterator_category(), 
-                                                        ctl, first);
-        auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                        ctl, result);
-
-
-		oType  sum, temp;
-
-
-		if(inclusive)
-		{
-		  *mapped_res_itr = static_cast<oType>(unary_op(*mapped_fst_itr) );
-          sum =  *mapped_res_itr; 
-        }
-        else 
-		{
-		   temp =  static_cast<oType>( unary_op( *(mapped_fst_itr) ));
-		   *mapped_res_itr = static_cast<oType>( init );
-		   sum = binary_op( *mapped_res_itr, temp);
-        }
-
-        for ( unsigned int index= 1; index<sz; ++index)
+        oType currentValue = *(values + i); // convertible
+        if (Incl)
         {
-          oType currentValue =  static_cast<oType>( unary_op( *(mapped_fst_itr+index) ) ); 
-          if (inclusive)
-          {
-              oType r = binary_op( sum, currentValue);
-			  *(mapped_res_itr + index) = r;
-              sum = r;
-          }
-          else // new segment
-          {
-			  *(mapped_res_itr + index) = sum;
-              sum = binary_op( sum, currentValue);
-          }
+            oType r = binary_op( sum, currentValue);
+            *(result + i) = r;
+            sum = r;
         }
+        else // new segment
+        {
+            *(result + i) = sum;
+            sum = binary_op( sum, currentValue);
 
-        return ;
-
+        }
+    }
+    return result;
 }
-
-
-}//end of namespace serial
-
-
-#ifdef ENABLE_TBB
-namespace btbb
-{
-
-template<
-    typename InputIterator,
-    typename OutputIterator,
-    typename UnaryFunction,
-    typename T,
-    typename BinaryFunction >
-typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value), void
-                           >::type
-transform_scan(
-    bolt::amp::control &ctl,
-    const InputIterator& first,
-    const InputIterator& last,
-    const OutputIterator& result,
-    const UnaryFunction& unary_op,
-    const T& init,
-	const bool& inclusive,
-    const BinaryFunction& binary_op)
-    {
-		bolt::btbb::transform(first, last, result, unary_op);
-        int sz = static_cast<int>( std::distance (first, last));
-        if (sz == 0)
-            return;
-		if(inclusive)
-			bolt::btbb::inclusive_scan( result, result  + sz,  result, binary_op);
-		else
-			bolt::btbb::exclusive_scan( result,  result  + sz , result, init, binary_op);
-        return;
-
-	}
-
-template<
-    typename InputIterator,
-    typename OutputIterator,
-    typename UnaryFunction,
-    typename T,
-    typename BinaryFunction >
-typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                                     >::value), void
-                           >::type
-transform_scan(
-    bolt::amp::control &ctl,
-    const InputIterator& first,
-    const InputIterator& last,
-    const OutputIterator& result,
-    const UnaryFunction& unary_op,
-    const T& init,
-	const bool& inclusive,
-    const BinaryFunction& binary_op)
-    {
-		size_t sz = (last - first);
-
-       
-        auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator>::
-			                                            iterator_category(), 
-                                                        ctl, first);
-        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::
-			                                            iterator_category(), 
-                                                        ctl, result);
-        bolt::btbb::transform(mapped_first_itr, mapped_first_itr + (int)sz, mapped_result_itr, unary_op);
-
-		if(inclusive)
-			bolt::btbb::inclusive_scan( mapped_result_itr, mapped_result_itr  + (int)sz,  mapped_result_itr, binary_op);
-		else
-			bolt::btbb::exclusive_scan( mapped_result_itr,  mapped_result_itr  + (int)sz , mapped_result_itr, init, binary_op);            
-       
-        return;
-
-	}
-
-}//end of namespace btbb
-#endif
-
-
-namespace amp{
 
 //  All calls to transform_scan end up here, unless an exception was thrown
 //  This is the function that sets up the kernels to compile (once only) and execute
@@ -278,19 +98,16 @@ template<
     typename UnaryFunction,
     typename T,
     typename BinaryFunction >
-typename std::enable_if< std::is_same< typename std::iterator_traits< DVOutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                                     >::value
-                       >::type
-transform_scan(
+void
+transform_scan_enqueue(
     control &ctl,
     const DVInputIterator& first,
     const DVInputIterator& last,
     const DVOutputIterator& result,
     const UnaryFunction& unary_op,
     const T& init_T,
-	const bool& inclusive,
-    const BinaryFunction& binary_op)
+    const BinaryFunction& binary_op,
+    const bool& inclusive = true )
 {
 
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
@@ -668,19 +485,18 @@ transform_scan(
 }   //end of transform_scan_enqueue( )
 
 
-    template
-	<
+/*!
+* \brief This overload is called strictly for non-device_vector iterators
+* \details This template function overload is used to seperate device_vector iterators from all other iterators
+*/
+template<
     typename InputIterator,
     typename OutputIterator,
     typename UnaryFunction,
     typename T,
-    typename BinaryFunction 
-    >
-    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                       >::type
-    transform_scan(
+    typename BinaryFunction >
+OutputIterator 
+transform_scan_pick_iterator(
     control &ctl,
     const InputIterator& first,
     const InputIterator& last,
@@ -688,51 +504,172 @@ transform_scan(
     const UnaryFunction& unary_op,
     const T& init,
     const bool& inclusive,
-    const BinaryFunction& binary_op)
-    {
- 
-	    typedef typename std::iterator_traits< InputIterator >::value_type iType;
-        typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-	    
-	    
-        int sz = static_cast< int >( std::distance( first, last ) );
-       
-		// Map the output iterator to a device_vector
-        device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+    const BinaryFunction& binary_op,
+	std::random_access_iterator_tag,
+	std::random_access_iterator_tag )
+{
+    typedef typename std::iterator_traits< InputIterator >::value_type iType;
+    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+    //static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
-		// Map the input iterator to a device_vector
-		// Use host pointers memory since these arrays are only read once - no benefit to copying.
-        // Map the input iterator to a device_vector
-		auto dvInput_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator >::iterator_category( ), first, sz, false, ctl );
-		amp::transform_scan( ctl, dvInput_itr, dvInput_itr+sz, dvOutput.begin(), unary_op, init, inclusive, binary_op  );
+    int numElements = static_cast< int >( std::distance( first, last ) );
+    if( numElements == 0 )
+        return result;
+
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
+	
+    if (runMode == bolt::amp::control::Automatic)
+    {
+		runMode = ctl.getDefaultPathToRun();
+	}
+    
+    if( runMode == bolt::amp::control::SerialCpu )
+    {
+	   
+        serial::unary_transform(first, last, result, unary_op);
+        Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
+        return result + numElements;
+    }
+    else if( runMode == bolt::amp::control::MultiCoreCpu )
+    {
+        #ifdef ENABLE_TBB
+		    
+             if(inclusive)
+               {
+                  bolt::btbb::transform(first, last, result, unary_op);
+                  return bolt::btbb::inclusive_scan(result, result+numElements, result, binary_op);
+               }
+               else
+               {
+                  bolt::btbb::transform(first, last, result, unary_op);
+                  return bolt::btbb::exclusive_scan(result, result+numElements, result, init, binary_op);
+               }
+
+        #else
+                throw std::runtime_error("The MultiCoreCpu version of Transform_scan is not enabled to be built! \n");
+        #endif
+
+        return result + numElements;
+
+    }
+    else
+    {
+		
+		 // Map the input iterator to a device_vector
+        device_vector< iType, concurrency::array_view > dvInput( first, last, false, ctl );
+        device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
+
+        //Now call the actual AMP algorithm
+        transform_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), unary_op, init, binary_op, inclusive );
        
         // This should immediately map/unmap the buffer
         dvOutput.data( );
-	    
-        return ;
-     }
 
-}//end of amp namespace
+    }
+    return result + numElements;
+}
 
 
-    
-    template
-	<
+
+/*!
+* \brief This overload is called strictly for non-device_vector iterators
+* \details This template function overload is used to seperate device_vector iterators from all other iterators
+*/
+template<
+    typename DVInputIterator,
+    typename DVOutputIterator,
+    typename UnaryFunction,
+    typename T,
+    typename BinaryFunction >
+DVOutputIterator
+transform_scan_pick_iterator(
+    control &ctl,
+    const DVInputIterator& first,
+    const DVInputIterator& last,
+    const DVOutputIterator& result,
+    const UnaryFunction& unary_op,
+    const T& init,
+    const bool& inclusive,
+    const BinaryFunction& binary_op,
+	bolt::amp::device_vector_tag,
+	bolt::amp::device_vector_tag )
+{
+    typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+    typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+
+    int numElements = static_cast< int >( std::distance( first, last ) );
+    if( numElements < 1 )
+        return result;
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
+	if (runMode == bolt::amp::control::Automatic)
+    {
+		runMode = ctl.getDefaultPathToRun();
+	}
+
+    if( runMode == bolt::amp::control::SerialCpu )
+    {
+	  
+        typename bolt::amp::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+        typename bolt::amp::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
+
+#if defined(_WIN32)
+        std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index + numElements], stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
+#else
+
+        std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index + numElements], &ResultBuffer[ result.m_Index], unary_op);
+#endif
+        Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
+        return result + numElements;
+    }
+    else if( runMode == bolt::amp::control::MultiCoreCpu )
+    {
+        #ifdef ENABLE_TBB
+			 
+            typename bolt::amp::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+            typename bolt::amp::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
+
+            if(inclusive)
+               {
+                 bolt::btbb::transform( &InputBuffer[ first.m_Index ], &InputBuffer[ first.m_Index ]+numElements ,  &ResultBuffer[ first.m_Index ], unary_op);
+                 bolt::btbb::inclusive_scan( &ResultBuffer[ first.m_Index ],  &ResultBuffer[ first.m_Index ] + numElements, &ResultBuffer[ result.m_Index], binary_op);
+               }
+               else
+               {
+                 bolt::btbb::transform( &InputBuffer[ first.m_Index ], &InputBuffer[ first.m_Index ]+numElements ,  &ResultBuffer[ first.m_Index ], unary_op);
+                 bolt::btbb::exclusive_scan(  &ResultBuffer[ first.m_Index ],  &ResultBuffer[ first.m_Index ] + numElements, &ResultBuffer[ result.m_Index], init, binary_op);
+               }
+
+
+        #else
+                throw std::runtime_error("The MultiCoreCpu version of Transform_scan is not enabled to be built!\n");
+        #endif
+
+        return result + numElements;
+
+    }
+
+    else
+    {
+        //Now call the actual amp algorithm
+        transform_scan_enqueue( ctl, first, last, result, unary_op, init, binary_op, inclusive );
+
+    }
+    return result + numElements;
+}
+
+
+/*!
+* \brief This overload is called strictly for non-device_vector iterators
+* \details This template function overload is used to seperate device_vector iterators from all other iterators
+*/
+template<
     typename InputIterator,
     typename OutputIterator,
     typename UnaryFunction,
     typename T,
-    typename BinaryFunction 
-    >
-    typename std::enable_if< 
-               !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value ),
-               OutputIterator
-                           >::type
-    transform_scan(
+    typename BinaryFunction >
+OutputIterator 
+transform_scan_pick_iterator(
     control &ctl,
     const InputIterator& first,
     const InputIterator& last,
@@ -740,85 +677,136 @@ transform_scan(
     const UnaryFunction& unary_op,
     const T& init,
     const bool& inclusive,
-    const BinaryFunction& binary_op)
+    const BinaryFunction& binary_op,
+	bolt::amp::fancy_iterator_tag,
+	std::random_access_iterator_tag	)
+{
+    typedef typename std::iterator_traits< InputIterator >::value_type iType;
+    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+
+    int numElements = static_cast< int >( std::distance( first, last ) );
+    if( numElements == 0 )
+        return result;
+
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
+	
+    if (runMode == bolt::amp::control::Automatic)
     {
+		runMode = ctl.getDefaultPathToRun();
+	}
+    
+    if( runMode == bolt::amp::control::SerialCpu )
+    {
+	   
+        serial::unary_transform(first, last, result, unary_op);
+        Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
+        return result + numElements;
+    }
+    else if( runMode == bolt::amp::control::MultiCoreCpu )
+    {
+        #ifdef ENABLE_TBB
+		    
+             if(inclusive)
+               {
+                  bolt::btbb::transform(first, last, result, unary_op);
+                  return bolt::btbb::inclusive_scan(result, result+numElements, result, binary_op);
+               }
+               else
+               {
+                  bolt::btbb::transform(first, last, result, unary_op);
+                  return bolt::btbb::exclusive_scan(result, result+numElements, result, init, binary_op);
+               }
+
+        #else
+                throw std::runtime_error("The MultiCoreCpu version of Transform_scan is not enabled to be built! \n");
+        #endif
+
+        return result + numElements;
+
+    }
+    else
+    {
+		 //Now call the actual amp algorithm
+        transform_scan_enqueue( ctl, first, last, result, unary_op, init, binary_op, inclusive );
+    }
+    return result + numElements;
+}
 
 
-	    typedef typename std::iterator_traits< InputIterator >::value_type iType;
-        typedef typename std::iterator_traits< OutputIterator >::value_type oType;
 
-
-        unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-        if( numElements == 0 )
-            return result;
-
-        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
-
-        if( runMode == bolt::amp::control::Automatic )
-        {
-            runMode = ctl.getDefaultPathToRun();
-        }
-        if( runMode == bolt::amp::control::SerialCpu )
-        {
-	    	serial::transform_scan(ctl, first, last, result, unary_op, init, inclusive, binary_op );
-            return result + numElements;
-        }
-        else if( runMode == bolt::amp::control::MultiCoreCpu )
-        {
-            #ifdef ENABLE_TBB
-	    		 btbb::transform_scan(ctl, first, last, result, unary_op, init, inclusive, binary_op );
-            #else
-                 throw std::runtime_error("The MultiCoreCpu version of Transform_scan is not enabled to be built! \n");
-            #endif
-	    
-            return result + numElements;
-	    
-        }
-        else
-		{
-	    	amp::transform_scan(ctl, first, last, result, unary_op, init, inclusive, binary_op);
-        }
-            return result + numElements;
-    };
-
-
-
-    template
-	<
+template<
     typename InputIterator,
     typename OutputIterator,
     typename UnaryFunction,
     typename T,
-    typename BinaryFunction 
-	>
-    typename std::enable_if< 
-               (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value ),
-               OutputIterator
-                           >::type
-    transform_scan(
-    bolt::amp::control& ctl,
+    typename BinaryFunction >
+OutputIterator
+transform_scan_detect_random_access(
+    control &ctl,
     const InputIterator& first,
     const InputIterator& last,
     const OutputIterator& result,
     const UnaryFunction& unary_op,
     const T& init,
     const bool& inclusive,
-    const BinaryFunction& binary_op)
-    {
-       //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-       //  to a temporary buffer.  Should we?
-	    static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     std::input_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     bolt::amp::fancy_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
+    const BinaryFunction& binary_op,
+    std::random_access_iterator_tag,
+	std::random_access_iterator_tag )
+{
+    return detail::transform_scan_pick_iterator( ctl, first, last, result, unary_op, init, inclusive, binary_op, 
+												typename std::iterator_traits< InputIterator >::iterator_category( ),
+												typename std::iterator_traits< OutputIterator >::iterator_category( ) );
+};
+template<
+    typename InputIterator,
+    typename OutputIterator,
+    typename UnaryFunction,
+    typename T,
+    typename BinaryFunction >
+OutputIterator
+transform_scan_detect_random_access(
+    control& ctl,
+    const InputIterator& first,
+    const InputIterator& last,
+    const OutputIterator& result,
+    const UnaryFunction& unary_op,
+    const T& init,
+    const bool& inclusive,
+    const BinaryFunction& binary_op,
+    std::input_iterator_tag,
+	std::input_iterator_tag )
+{
+    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert( std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+};
 
-    };
+template<
+    typename InputIterator,
+    typename OutputIterator,
+    typename UnaryFunction,
+    typename T,
+    typename BinaryFunction >
+OutputIterator
+transform_scan_detect_random_access(
+    control& ctl,
+    const InputIterator& first,
+    const InputIterator& last,
+    const OutputIterator& result,
+    const UnaryFunction& unary_op,
+    const T& init,
+    const bool& inclusive,
+    const BinaryFunction& binary_op,
+    std::random_access_iterator_tag, bolt::amp::fancy_iterator_tag  )
+{
+    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+	static_assert( std::is_same< OutputIterator, bolt::amp::fancy_iterator_tag >::value , "It is not possible to output to fancy iterators; they are not mutable" );
+};
+
+
+
+
 
     /*!   \}  */
 } //namespace detail
@@ -840,15 +828,19 @@ transform_scan(
         UnaryFunction unary_op,
         BinaryFunction binary_op)
     {
-        using bolt::amp::transform_inclusive_scan;
-        return transform_inclusive_scan(
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        oType init; memset(&init, 0, sizeof(oType) );
+        return detail::transform_scan_detect_random_access(
             control::getDefault( ),
             first,
             last,
             result,
             unary_op,
-            binary_op
-           );
+            init,
+            true, // inclusive
+            binary_op,
+            typename std::iterator_traits< InputIterator >::iterator_category( ),
+			typename std::iterator_traits< OutputIterator >::iterator_category( ) );
     }
 
     template<
@@ -867,8 +859,7 @@ transform_scan(
     {
         typedef typename std::iterator_traits<OutputIterator>::value_type oType;
         oType init; memset(&init, 0, sizeof(oType) );
-		using bolt::amp::detail::transform_scan;
-        return detail::transform_scan(
+        return detail::transform_scan_detect_random_access(
             ctl,
             first,
             last,
@@ -876,7 +867,9 @@ transform_scan(
             unary_op,
             init,
             true, // inclusive
-            binary_op);
+            binary_op,
+            typename std::iterator_traits< InputIterator >::iterator_category( ),
+			typename std::iterator_traits< OutputIterator >::iterator_category( ) );
     }
 
     //////////////////////////////////////////
@@ -897,16 +890,17 @@ transform_scan(
         T init,
         BinaryFunction binary_op )
     {
-        using bolt::amp::transform_exclusive_scan;
-
-        return transform_exclusive_scan(
-            bolt::amp::control::getDefault( ),
+        return detail::transform_scan_detect_random_access(
+            control::getDefault( ),
             first,
             last,
             result,
             unary_op,
             init,
-            binary_op);
+            false, // exclusive
+            binary_op,
+            typename std::iterator_traits< InputIterator >::iterator_category( ),
+			typename std::iterator_traits< OutputIterator >::iterator_category( ) );
     }
 
     template<
@@ -925,9 +919,7 @@ transform_scan(
         T init,
         BinaryFunction binary_op)
     {
-         using bolt::amp::detail::transform_scan;
-
-         return detail::transform_scan(
+        return detail::transform_scan_detect_random_access(
             ctl,
             first,
             last,
@@ -935,7 +927,9 @@ transform_scan(
             unary_op,
             init,
             false, // exclusive
-            binary_op);
+            binary_op,
+            typename std::iterator_traits< InputIterator >::iterator_category( ),
+			typename std::iterator_traits< OutputIterator >::iterator_category( ) );
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

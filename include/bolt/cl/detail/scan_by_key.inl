@@ -918,7 +918,7 @@ namespace detail
 			if( runMode == bolt::cl::control::SerialCpu )
 			{
 				#if defined(BOLT_DEBUG_LOG)
-					dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_by_key::SERIAL_CPU");
+					dblog->CodePathTaken(BOLTLOG::BOLT_SCAN_BY_KEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_by_key::SERIAL_CPU");
 				#endif
 	    		serial::scan_by_key(ctl, first1, last1, first2, result, init, binary_pred, binary_funct, inclusive );
 				return result + numElements;
@@ -927,7 +927,8 @@ namespace detail
 			{
 				#ifdef ENABLE_TBB
 	    			#if defined(BOLT_DEBUG_LOG)
-						dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan_by_key::MULTICORE_CPU");
+						dblog->CodePathTaken(BOLTLOG::BOLT_SCAN_BY_KEY,BOLTLOG::BOLT_MULTICORE_CPU,
+	    					"::Scan_by_key::MULTICORE_CPU");
 					#endif
 	    			btbb::scan_by_key(ctl, first1, last1, first2, result, init, binary_pred, binary_funct, inclusive );
 				#else
@@ -940,7 +941,7 @@ namespace detail
 			else
 			{
 				#if defined(BOLT_DEBUG_LOG)
-					dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_by_key::OPENCL_GPU");
+					dblog->CodePathTaken(BOLTLOG::BOLT_SCAN_BY_KEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_by_key::OPENCL_GPU");
 				#endif
 	    	
 	    		cl::scan_by_key(ctl, first1, last1, first2, result, init, binary_pred, binary_funct, inclusive, user_code );

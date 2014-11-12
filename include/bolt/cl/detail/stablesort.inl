@@ -23,9 +23,11 @@
 //TBB Includes
 #include "bolt/btbb/stable_sort.h"
 #endif
-#include "bolt/cl/sort.h"
+
 #define BOLT_CL_STABLESORT_CPU_THRESHOLD 256
-#define STABLESORT_ALG_BRANCH_POINT (1<<20)
+
+#include "bolt/cl/sort.h"
+
 namespace bolt {
 namespace cl {
 
@@ -33,21 +35,39 @@ namespace detail
 {
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void radix_sort_int_enqueue(control &ctl,
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       unsigned int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+sort_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code);
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void radix_sort_uint_enqueue(control &ctl,
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+sort_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code);
 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if<
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value
+   || std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value
+    )
+                       >::type
+sort_enqueue(control &ctl,
+             const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+             const StrictWeakOrdering& comp, const std::string& cl_code);
 
-enum stableSortTypes { stableSort_iValueType, stableSort_iIterType, stableSort_oValueType, stableSort_oIterType,
-    stableSort_lessFunction, stableSort_end };
 
-class StableSort_KernelTemplateSpecializer : public KernelTemplateSpecializer
-{
+    enum stableSortTypes { stableSort_iValueType, stableSort_iIterType, stableSort_oValueType, stableSort_oIterType,
+        stableSort_lessFunction, stableSort_end };
+
+    class StableSort_KernelTemplateSpecializer : public KernelTemplateSpecializer
+    {
     public:
         StableSort_KernelTemplateSpecializer() : KernelTemplateSpecializer( )
         {
@@ -82,12 +102,42 @@ class StableSort_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
             return templateSpecializationString;
         }
-};
+    };
 
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void merge_sort_enqueue(control &ctrl,
+
+template< typename DVRandomAccessIterator, typename StrictWeakOrdering >
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       unsigned int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+stablesort_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code)
+{
+    bolt::cl::detail::sort_enqueue(ctl, first, last, comp, cl_code);
+    return;
+}
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+stablesort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code)
+{
+    bolt::cl::detail::sort_enqueue(ctl, first, last, comp, cl_code);
+    return;
+}
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if<
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
+      std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value  )
+                       >::type
+stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+             const StrictWeakOrdering& comp, const std::string& cl_code)
 {
     cl_int l_Error;
     cl_uint vecSize = static_cast< cl_uint >( std::distance( first, last ) );
@@ -189,7 +239,7 @@ void merge_sort_enqueue(control &ctrl,
     size_t vecPow2 = (vecSize & (vecSize-1));
     numMerges += vecPow2? 1: 0;
 
-	device_vector< iType >       tmpBuffer( vecSize, iType(), CL_MEM_READ_WRITE, false, ctrl );
+	device_vector< iType >       tmpBuffer( vecSize);
 	ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
      // Size of scratch buffer
     V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
@@ -268,52 +318,6 @@ void merge_sort_enqueue(control &ctrl,
     }
 
     return;
-} //end of merge_sort
-
-template< typename DVRandomAccessIterator, typename StrictWeakOrdering >
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
-                                       unsigned int
-                                     >::value
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-stablesort_enqueue(control &ctl,
-             DVRandomAccessIterator first, DVRandomAccessIterator last,
-             StrictWeakOrdering comp, const std::string& cl_code)
-{
-    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
-    if(szElements > STABLESORT_ALG_BRANCH_POINT)
-        bolt::cl::detail::radix_sort_uint_enqueue(ctl, first, last,comp,cl_code);
-    else
-        bolt::cl::detail::merge_sort_enqueue(ctl, first, last,comp,cl_code);
-    return;
-}
-
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
-                                       int
-                                     >::value
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-stablesort_enqueue(control &ctl,
-             DVRandomAccessIterator first, DVRandomAccessIterator last,
-             StrictWeakOrdering comp, const std::string& cl_code)
-{
-    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
-    if(szElements > STABLESORT_ALG_BRANCH_POINT)
-        bolt::cl::detail::radix_sort_int_enqueue(ctl, first, last,comp,cl_code);
-    else
-        bolt::cl::detail::merge_sort_enqueue(ctl, first, last,comp,cl_code);
-    return;
-}
-
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-typename std::enable_if<
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value ||
-      std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value  )
-                       >::type
-stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-             const StrictWeakOrdering& comp, const std::string& cl_code)
-{
-    bolt::cl::detail::merge_sort_enqueue(ctrl, first, last, comp, cl_code);
-    return;
 }
 
 
@@ -369,7 +373,7 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
         #if defined(BOLT_DEBUG_LOG)
         dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort::OPENCL_GPU");
         #endif
-
+						
         device_vector< Type > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
 
         //Now call the actual cl algorithm
@@ -535,5 +539,4 @@ void stablesort_detect_random_access( control &ctl,
 }//namespace bolt::cl
 }//namespace bolt
 
-#undef STABLESORT_ALG_BRANCH_POINT
 #endif

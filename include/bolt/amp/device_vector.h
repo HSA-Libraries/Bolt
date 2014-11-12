@@ -515,7 +515,7 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-			m_devMemory = tmp;
+			m_devMemory = tmp.view_as(tmp.get_extent());
 		}
 		if(discard)
 			m_devMemory.discard_data();
@@ -565,7 +565,7 @@ private:
     /*! \brief A constructor that creates a new device_vector using a pre-initialized array supplied by the user.
     *   \param cont An concurrency::array object.
     */
-    device_vector( arrayview_type &cont): m_Size(cont.get_extent().size()), m_devMemory(cont)
+    device_vector( arrayview_type &cont): m_Size(cont.get_extent().size()), m_devMemory( cont.view_as(cont.get_extent()))
     {
     };
 
@@ -596,7 +596,7 @@ private:
         {
 			concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 			concurrency::array_view<value_type> tmp = arrayview_type( ext, reinterpret_cast< value_type* >(&begin[ 0 ])  );
-	        m_devMemory = tmp;
+	        m_devMemory = tmp.view_as(tmp.get_extent());
 		}
 		if(discard)
 			m_devMemory.discard_data();

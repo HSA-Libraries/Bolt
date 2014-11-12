@@ -49,12 +49,10 @@ include_directories(
 
 add_subdirectory( BinarySearchTest )
 add_subdirectory( PairTest )
-add_subdirectory( ForEachTest )
 add_subdirectory( GenerateTest )
 add_subdirectory( FillTest )
 add_subdirectory( InnerProductTest )
 add_subdirectory( CopyTest )
-add_subdirectory( CopyIfTest )
 add_subdirectory( MinElementTest )
 add_subdirectory( MergeTest )
 add_subdirectory( MaxElementTest )

@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 #pragma once
-#if !defined( BOLT_AMP_PERMUTATION_ITERATOR_H )
-#define BOLT_AMP_PERMUTATION_ITERATOR_H
+#if !defined( BOLT_CL_PERMUTATION_ITERATOR_H )
+#define BOLT_CL_PERMUTATION_ITERATOR_H
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 #include "bolt/amp/iterator/counting_iterator.h"

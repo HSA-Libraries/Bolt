@@ -30,7 +30,6 @@
 
 #include <array>
 #include <algorithm>
-#include "bolt/amp/iterator/constant_iterator.h"
 
 #define TEST_DOUBLE 1
 
@@ -1478,38 +1477,6 @@ TEST (sanity_transform_inclusive_scan_epr400104, intEle){
 	}
 }
 
-
-
-TEST(ScanTest, constant_iterator)
-{
-    const int length = 1<<10;
-
-    int value = 100;
-    std::vector< int > svInVec1( length );
-    std::vector< int > svInVec2( length );
-    
-    std::vector< int > svOutVec( length );
-    std::vector< int > stlOut( length );
-
-    
-    bolt::amp::constant_iterator<int> constIter1 (value);
-    bolt::amp::constant_iterator<int> constIter2 (10);
-
-	bolt::amp::square<int> sqInt;
-    bolt::amp::plus<int> pls;
-    int n = (int) 1 + rand()%10;
-
-    bolt::amp::transform_inclusive_scan( constIter1, constIter1 + length, svOutVec.begin(), sqInt, pls );
-    
-    std::vector<int> const_vector(length,value);
-	std::transform(   const_vector.begin(), const_vector.end(),  const_vector.begin(), sqInt);
-    std::partial_sum(const_vector.begin(), const_vector.end(), stlOut.begin(), pls);
-    
-    for(int i =0; i< length; i++)
-    {
-      EXPECT_EQ( svOutVec[i], stlOut[i]);
-    }
-}
 
 
 int _tmain(int argc, _TCHAR* argv[])

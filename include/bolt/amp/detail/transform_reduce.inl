@@ -41,340 +41,361 @@
 
 namespace bolt {
 
-namespace amp {
+  namespace amp {
 
-namespace  detail {
+    namespace  detail {
+
+		 template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
+        oType transform_reduce_enqueue( control& ctl,
+                                        const DVInputIterator& first,
+                                        const DVInputIterator& last,
+                                        const UnaryFunction& transform_op,
+                                        const oType& init,
+                                        const BinaryFunction& binary_op )
+        {
+                typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+                const int szElements = static_cast< int >( std::distance( first, last ) );
 
 
-namespace serial{
 
 
-template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-    oType transform_reduce(control& ctl,
+				int max_ComputeUnits = 32;
+				int numTiles = max_ComputeUnits*32;	/* Max no. of WG for Tahiti(32 compute Units) and 32 is the tuning factor that gives good performance*/
+				int length = (_T_REDUCE_WAVEFRONT_SIZE * numTiles);
+				length = szElements < length ? szElements : length;
+				unsigned int residual = length % _T_REDUCE_WAVEFRONT_SIZE;
+				length = residual ? (length + _T_REDUCE_WAVEFRONT_SIZE - residual): length ;
+				numTiles = static_cast< int >((szElements/_T_REDUCE_WAVEFRONT_SIZE)>= numTiles?(numTiles):
+									(std::ceil( static_cast< float >( szElements ) / _T_REDUCE_WAVEFRONT_SIZE) ));
+				
+				concurrency::array<oType, 1> result(numTiles);
+				concurrency::extent< 1 > inputExtent(length);
+				concurrency::tiled_extent< _T_REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< _T_REDUCE_WAVEFRONT_SIZE >();
+
+                // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
+                // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
+
+                try
+                {
+                    concurrency::parallel_for_each(ctl.getAccelerator().default_view,
+                                                   tiledExtentReduce,
+                                                    [ first,
+                                                    szElements,
+                                                    length,
+                                                    transform_op,
+                                                    &result,
+                                                    binary_op ]
+                                                   ( concurrency::tiled_index<_T_REDUCE_WAVEFRONT_SIZE> t_idx ) restrict(amp)
+                    {
+						int gx = t_idx.global[0];
+						int gloId = gx;
+						tile_static oType scratch[_T_REDUCE_WAVEFRONT_SIZE];
+						//  Initialize local data store
+						unsigned int tileIndex = t_idx.local[0];
+
+						oType accumulator;
+						if (gloId < szElements)
+						{
+							accumulator = transform_op(first[gx]);
+							gx += length;
+						}
+						
+
+						// Loop sequentially over chunks of input vector, reducing an arbitrary size input
+						// length into a length related to the number of workgroups
+						while (gx < szElements)
+						{
+							oType element = transform_op(first[gx]);
+							accumulator = binary_op(accumulator, element);
+							gx += length;
+						}
+                        
+						scratch[tileIndex] = accumulator;
+						t_idx.barrier.wait();
+
+						unsigned int tail = szElements - (t_idx.tile[0] * _T_REDUCE_WAVEFRONT_SIZE);
+
+						_T_REDUCE_STEP(tail, tileIndex, 128);
+						_T_REDUCE_STEP(tail, tileIndex, 64);
+						_T_REDUCE_STEP(tail, tileIndex, 32);
+						_T_REDUCE_STEP(tail, tileIndex, 16);
+						_T_REDUCE_STEP(tail, tileIndex, 8);
+						_T_REDUCE_STEP(tail, tileIndex, 4);
+						_T_REDUCE_STEP(tail, tileIndex, 2);
+						_T_REDUCE_STEP(tail, tileIndex, 1);
+
+
+						//  Abort threads that are passed the end of the input vector
+						if (gloId >= szElements)
+							return;
+
+                      //  Write only the single reduced value for the entire workgroup
+                      if (tileIndex == 0)
+                      {
+                          result[t_idx.tile[ 0 ]] = scratch[0];
+                      }
+
+                    });
+                     
+					oType acc = static_cast<oType>(init);
+					std::vector<oType> *cpuPointerReduce = new std::vector<oType>(numTiles);
+					concurrency::copy(result, (*cpuPointerReduce).begin());
+					for(int i = 0; i < numTiles; ++i)
+					{
+						acc = binary_op(acc, (*cpuPointerReduce)[i]);
+					}
+					delete cpuPointerReduce;
+
+					return acc;
+                }
+                catch(std::exception &e)
+                {
+                      std::cout << "Exception while calling bolt::amp::reduce parallel_for_each " ;
+                      std::cout<< e.what() << std::endl;
+                      throw std::exception();
+                }
+
+        };
+
+
+		  // This template is called by the non-detail versions of transform_reduce, it already assumes
+        // random access iterators
+        // This is called strictly for any non-device_vector iterator
+        template< typename InputIterator,
+                  typename UnaryFunction,
+                  typename oType,
+                  typename BinaryFunction >
+        oType
+        transform_reduce_pick_iterator(
+            control &c,
             const InputIterator& first,
             const InputIterator& last,
             const UnaryFunction& transform_op,
             const oType& init,
             const BinaryFunction& reduce_op,
-			bolt::amp::device_vector_tag)
-    {
+			std::random_access_iterator_tag )
+        {
+            typedef std::iterator_traits<InputIterator>::value_type iType;
+            int szElements = static_cast< int >(last - first);
+            if (szElements == 0)
+                    return init;
 
-		       typedef std::iterator_traits<InputIterator>::value_type iType;
+            bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+			if (runMode == bolt::amp::control::Automatic)
+			{
+				runMode = c.getDefaultPathToRun();
+			}
 
-		       typename bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+            if (runMode == bolt::amp::control::SerialCpu)
+            {
+                //Create a temporary array to store the transform result;
+                //throw std::exception( "transform_reduce device_vector CPU device not implemented" );
+                std::vector<oType> output(szElements);
+                std::transform(first, last, output.begin(),transform_op);
+                return std::accumulate(output.begin(), output.end(), init, reduce_op);
+            }
+            else if (runMode == bolt::amp::control::MultiCoreCpu)
+            {
+#ifdef ENABLE_TBB
+
+                    return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
+#else
+                    throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built.");
+                    return init;
+#endif
+                 }
+            else
+            {
+                // Map the input iterator to a device_vector
+                device_vector< iType, concurrency::array_view > dvInput( first, last, false, c );
+
+                return  transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op );
+            }
+        };
+
+        // This template is called by the non-detail versions of transform_reduce,
+        // it already assumes random access iterators
+        // This is called strictly for iterators that are derived from device_vector< T >::iterator
+        template< typename DVInputIterator,
+                  typename UnaryFunction,
+                  typename oType,
+                  typename BinaryFunction >
+        oType 
+        transform_reduce_pick_iterator(
+            control &c,
+            const DVInputIterator& first,
+            const DVInputIterator& last,
+            const UnaryFunction& transform_op,
+            const oType& init,
+            const BinaryFunction& reduce_op,
+			bolt::amp::device_vector_tag )
+        {
+            typedef std::iterator_traits<DVInputIterator>::value_type iType;
+            int szElements = static_cast< int >(last - first);
+            if (szElements == 0)
+                    return init;
+
+            bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+			if (runMode == bolt::amp::control::Automatic)
+			{
+				runMode = c.getDefaultPathToRun();
+			}
+            if (runMode == bolt::amp::control::SerialCpu)
+            {
+
+			   typename bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
                std::vector< oType > result ( last.m_Index - first.m_Index );
 
                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], result.begin(), transform_op );
 
                return std::accumulate(  result.begin(), result.end(), init, reduce_op );
-    }
 
-
-
-	template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-    oType transform_reduce(control& ctl,
-           const InputIterator& first,
-           const InputIterator& last,
-           const UnaryFunction& transform_op,
-           const oType& init,
-           const BinaryFunction& reduce_op,
-		   std::random_access_iterator_tag)
-    {
-		          size_t szElements = (last - first);
-
-	              //Create a temporary array to store the transform result;
-                  std::vector<oType> output(szElements);
-                  std::transform(first, last, output.begin(),transform_op);
-                  return std::accumulate(output.begin(), output.end(), init, reduce_op);
-    }
-
-
-}
+            }
+            else if (runMode == bolt::amp::control::MultiCoreCpu)
+            {
 
 #ifdef ENABLE_TBB
-namespace btbb{
+           
+			    typename  bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+
+				return  bolt::btbb::transform_reduce(  &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
+				                                       transform_op,init,reduce_op);
+
+#else
+               throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
+               return init;
+#endif
+            }
+            else
+            {
+				 return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );
+            }
+        };
 
 
-template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-    oType transform_reduce(control& ctl,
+		 // This template is called by the non-detail versions of transform_reduce, it already assumes
+        // random access iterators
+        // This is called strictly for any non-device_vector iterator
+        template< typename InputIterator,
+                  typename UnaryFunction,
+                  typename oType,
+                  typename BinaryFunction >
+        oType
+        transform_reduce_pick_iterator(
+            control &c,
             const InputIterator& first,
             const InputIterator& last,
             const UnaryFunction& transform_op,
             const oType& init,
             const BinaryFunction& reduce_op,
-			bolt::amp::device_vector_tag)
-    {
+			bolt::amp::fancy_iterator_tag )
+        {
+            typedef std::iterator_traits<InputIterator>::value_type iType;
+            int szElements = static_cast< int >(last - first);
+            if (szElements == 0)
+                    return init;
 
-		       typedef std::iterator_traits<InputIterator>::value_type iType;
+            bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+			if (runMode == bolt::amp::control::Automatic)
+			{
+				runMode = c.getDefaultPathToRun();
+			}
 
-		       typename bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
-
-			   oType output = bolt::btbb::transform_reduce( &firstPtr[ first.m_Index ],&firstPtr[ last.m_Index ],transform_op,
-					  init, reduce_op);
-		              	
-		       return output;
-
-    }
-
-
-
-	template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-    oType transform_reduce(control& ctl,
-           const InputIterator& first,
-           const InputIterator& last,
-           const UnaryFunction& transform_op,
-           const oType& init,
-           const BinaryFunction& reduce_op,
-		   std::random_access_iterator_tag)
-    {
-		       return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
-    }
-
-
-}
-#endif
-
-namespace amp{
-
-	template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-    oType transform_reduce(control& ctl,
-        const DVInputIterator& first,
-        const DVInputIterator& last,
-        const UnaryFunction& transform_op,
-        const oType& init,
-        const BinaryFunction& binary_op,
-		bolt::amp::device_vector_tag)
-    {
-		    typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
-            const int szElements = static_cast< int >( std::distance( first, last ) );
-
-			int max_ComputeUnits = 32;
-			int numTiles = max_ComputeUnits*32;	/* Max no. of WG for Tahiti(32 compute Units) and 32 is the tuning factor that gives good performance*/
-			int length = (_T_REDUCE_WAVEFRONT_SIZE * numTiles);
-			length = szElements < length ? szElements : length;
-			unsigned int residual = length % _T_REDUCE_WAVEFRONT_SIZE;
-			length = residual ? (length + _T_REDUCE_WAVEFRONT_SIZE - residual): length ;
-			numTiles = static_cast< int >((szElements/_T_REDUCE_WAVEFRONT_SIZE)>= numTiles?(numTiles):
-								(std::ceil( static_cast< float >( szElements ) / _T_REDUCE_WAVEFRONT_SIZE) ));
-			
-			concurrency::array<oType, 1> result(numTiles);
-			concurrency::extent< 1 > inputExtent(length);
-			concurrency::tiled_extent< _T_REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< _T_REDUCE_WAVEFRONT_SIZE >();
-
-            // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
-            // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
-
-            try
+            if (runMode == bolt::amp::control::SerialCpu)
             {
-                concurrency::parallel_for_each(ctl.getAccelerator().default_view,
-                                               tiledExtentReduce,
-                                                [ first,
-                                                szElements,
-                                                length,
-                                                transform_op,
-                                                &result,
-                                                binary_op ]
-                                               ( concurrency::tiled_index<_T_REDUCE_WAVEFRONT_SIZE> t_idx ) restrict(amp)
-                {
-		             int gx = t_idx.global[0];
-		             int gloId = gx;
-		             tile_static oType scratch[_T_REDUCE_WAVEFRONT_SIZE];
-		             //  Initialize local data store
-		             unsigned int tileIndex = t_idx.local[0];
-		             
-		             oType accumulator;
-		             if (gloId < szElements)
-		             {
-		             	accumulator = transform_op(first[gx]);
-		             	gx += length;
-		             }
-		             
-		             
-		             // Loop sequentially over chunks of input vector, reducing an arbitrary size input
-		             // length into a length related to the number of workgroups
-		             while (gx < szElements)
-		             {
-		             	oType element = transform_op(first[gx]);
-		             	accumulator = binary_op(accumulator, element);
-		             	gx += length;
-		             }
-                             
-		             scratch[tileIndex] = accumulator;
-		             t_idx.barrier.wait();
-		             
-		             unsigned int tail = szElements - (t_idx.tile[0] * _T_REDUCE_WAVEFRONT_SIZE);
-		             
-		             _T_REDUCE_STEP(tail, tileIndex, 128);
-		             _T_REDUCE_STEP(tail, tileIndex, 64);
-		             _T_REDUCE_STEP(tail, tileIndex, 32);
-		             _T_REDUCE_STEP(tail, tileIndex, 16);
-		             _T_REDUCE_STEP(tail, tileIndex, 8);
-		             _T_REDUCE_STEP(tail, tileIndex, 4);
-		             _T_REDUCE_STEP(tail, tileIndex, 2);
-		             _T_REDUCE_STEP(tail, tileIndex, 1);
-
-
-			         //  Abort threads that are passed the end of the input vector
-			         if (gloId >= szElements)
-			         	return;
-			         
-                           //  Write only the single reduced value for the entire workgroup
-                           if (tileIndex == 0)
-                           {
-                               result[t_idx.tile[ 0 ]] = scratch[0];
-                           }
-
-                });
-                 
-		        oType acc = static_cast<oType>(init);
-		        std::vector<oType> *cpuPointerReduce = new std::vector<oType>(numTiles);
-		        concurrency::copy(result, (*cpuPointerReduce).begin());
-		        for(int i = 0; i < numTiles; ++i)
-		        {
-		        	acc = binary_op(acc, (*cpuPointerReduce)[i]);
-		        }
-		        delete cpuPointerReduce;
-		        
-		        return acc;
+                //Create a temporary array to store the transform result;
+                //throw std::exception( "transform_reduce device_vector CPU device not implemented" );
+                std::vector<oType> output(szElements);
+                std::transform(first, last, output.begin(),transform_op);
+                return std::accumulate(output.begin(), output.end(), init, reduce_op);
             }
-            catch(std::exception &e)
+            else if (runMode == bolt::amp::control::MultiCoreCpu)
             {
-                  std::cout << "Exception while calling bolt::amp::reduce parallel_for_each " ;
-                  std::cout<< e.what() << std::endl;
-                  throw std::exception();
-            }
+#ifdef ENABLE_TBB
 
-	}
-
-
-
-	template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-    oType transform_reduce(control& ctl,
-        const InputIterator& first,
-        const InputIterator& last,
-        const UnaryFunction& transform_op,
-        const oType& init,
-        const BinaryFunction& reduce_op,
-		std::random_access_iterator_tag)
-    {
-
-        typedef typename std::iterator_traits<InputIterator>::value_type  iType;
-       	          
-        // Map the input iterator to a device_vector
-        device_vector< iType, concurrency::array_view > dvInput( first, last, false, ctl );
-
-        return transform_reduce( ctl, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op, bolt::amp::device_vector_tag() );
-
-    }
-
-
-    template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-    oType transform_reduce(control& ctl,
-        const InputIterator& first,
-        const InputIterator& last,
-        const UnaryFunction& transform_op,
-        const oType& init,
-        const BinaryFunction& reduce_op,
-	    bolt::amp::fancy_iterator_tag)
-    {
-        return transform_reduce(ctl, first, last, transform_op, init, reduce_op, bolt::amp::device_vector_tag() );  
-    }
-
-}// end of namespace amp
-	
-    // Wrapper that uses default control class, iterator interface
-    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
-	typename std::enable_if< 
-            !(std::is_same< typename std::iterator_traits< InputIterator>::iterator_category, 
-                            std::input_iterator_tag 
-                        >::value), T
-                        >::type
-    transform_reduce( control& ctl, const InputIterator& first, const InputIterator& last,
-        const UnaryFunction& transform_op,
-        const T& init,const BinaryFunction& reduce_op)
-    {
-                typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                size_t szElements = static_cast<size_t>(std::distance(first, last) );
-                if (szElements == 0)
-                        return init;
-			      
-                bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::amp::control::Automatic)
-                {
-                    runMode = ctl.getDefaultPathToRun();
-                }
-                if (runMode == bolt::amp::control::SerialCpu)
-                {
-                    return serial::transform_reduce(ctl,  first, last, transform_op, init, reduce_op, 
-						typename std::iterator_traits<InputIterator>::iterator_category() );
-                }
-                else if (runMode == bolt::amp::control::MultiCoreCpu)
-                {
-#ifdef ENABLE_TBB      
-				    return  btbb::transform_reduce( ctl, first, last, transform_op, init, reduce_op, 
-						typename std::iterator_traits<InputIterator>::iterator_category() );
+                    return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
 #else
-
-                    throw std::runtime_error( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");
-				    return init;
-
+                    throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built.");
+                    return init;
 #endif
-                }
-                return  amp::transform_reduce( ctl, first, last, transform_op, init, reduce_op, 
-					typename std::iterator_traits<InputIterator>::iterator_category() );
-    };
+                 }
+            else
+            {
+				return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );
+            }
+        };
+
+		//  The following two functions disallow non-random access functions
+        // Wrapper that uses default control class, iterator interface
+        template< typename InputIterator,
+                  typename UnaryFunction,
+                  typename T,
+                  typename BinaryFunction >
+        T transform_reduce_detect_random_access( control &ctl,
+                                                 const InputIterator& first,
+                                                 const InputIterator& last,
+                                                 const UnaryFunction& transform_op,
+                                                 const T& init,
+                                                 const BinaryFunction& reduce_op,
+                                                 std::input_iterator_tag )
+        {
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+            //  to a temporary buffer.  Should we?
+            static_assert( false, "Bolt only supports random access iterator types" );
+        };
+
+        // Wrapper that uses default control class, iterator interface
+        template< typename InputIterator,
+                  typename UnaryFunction,
+                  typename T,
+                  typename BinaryFunction >
+        T transform_reduce_detect_random_access( control& ctl,
+                                                 const InputIterator& first,
+                                                 const InputIterator& last,
+                                                 const UnaryFunction& transform_op,
+                                                 const T& init,
+                                                 const BinaryFunction& reduce_op,
+                                                 std::random_access_iterator_tag )
+        {
+            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, 
+													typename std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
 
 
-        
-	template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
-    typename std::enable_if< 
-            (std::is_same< typename std::iterator_traits< InputIterator>::iterator_category, 
-                            std::input_iterator_tag 
-                        >::value), T
-                        >::type
-    transform_reduce(control &ctl, const InputIterator& first, const InputIterator& last,
-        const UnaryFunction& transform_op,
-        const T& init, const BinaryFunction& reduce_op )
-    {
-                //TODO - Shouldn't we support transform for input_iterator_tag also. 
-                static_assert( std::is_same< typename std::iterator_traits< InputIterator>::iterator_category, 
-                                            std::input_iterator_tag >::value , 
-                                "Input vector cannot be of the type input_iterator_tag" );
-    }
+    };// end of namespace detail
 
+	    // The following two functions are visible in .h file
+        // Wrapper that user passes a control class
+        template< typename InputIterator,
+                  typename UnaryFunction,
+                  typename T,
+                  typename BinaryFunction >
+        T transform_reduce( control& ctl,
+                            InputIterator first,
+                            InputIterator last,
+                            UnaryFunction transform_op,
+                            T init,
+                            BinaryFunction reduce_op )
+        {
+            return detail::transform_reduce_detect_random_access( ctl, first, last, transform_op, init, reduce_op,
+              typename std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
 
-
-};// end of namespace detail
-
-	// The following two functions are visible in .h file
-    // Wrapper that user passes a control class
-    template< typename InputIterator,
-              typename UnaryFunction,
-              typename T,
-              typename BinaryFunction >
-    T transform_reduce( control& ctl,
-                        InputIterator first,
-                        InputIterator last,
-                        UnaryFunction transform_op,
-                        T init,
-                        BinaryFunction reduce_op )
-    {
-        return detail::transform_reduce( ctl, first, last, transform_op, init, reduce_op);
-    };
-
-    // Wrapper that generates default control class
-    template< typename InputIterator,
-              typename UnaryFunction,
-              typename T,
-              typename BinaryFunction >
-    T transform_reduce( InputIterator first,
-                        InputIterator last,
-                        UnaryFunction transform_op,
-                        T init,
-                        BinaryFunction reduce_op )
-    {
-        return transform_reduce( control::getDefault(), first, last, transform_op, init, reduce_op);
-    };
+        // Wrapper that generates default control class
+        template< typename InputIterator,
+                  typename UnaryFunction,
+                  typename T,
+                  typename BinaryFunction >
+        T transform_reduce( InputIterator first,
+                            InputIterator last,
+                            UnaryFunction transform_op,
+                            T init,
+                            BinaryFunction reduce_op )
+        {
+            return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op,
+                                                                                                    init, reduce_op,
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
 
   };// end of namespace amp
 };// end of namespace bolt

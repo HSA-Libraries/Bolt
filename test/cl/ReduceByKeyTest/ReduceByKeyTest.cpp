@@ -20,11 +20,8 @@
 #define UDD 1
 #define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 0
-#define OPENCL_CPU_PATH 0
 
 //#include "common/stdafx.h"
-#include "common/myocl.h"
-#include "common/myocl.cpp"
 #include <vector>
 //#include <array>
 #include "bolt/cl/bolt.h"
@@ -32,8 +29,6 @@
 #include "bolt/cl/reduce_by_key.h"
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
-
-#include "bolt/BoltLog.h"
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
@@ -2785,19 +2780,11 @@ int _tmain(int argc, _TCHAR* argv[])
     std::vector< cl::Device > devices;
     bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
 
-#if(OPENCL_CPU_PATH == 1)
-	MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0, 1);
-	bolt::cl::control& myControl = bolt::cl::control(oclcpu._queue); 
-	myControl.setWaitMode( bolt::cl::control::NiceWait );
-    myControl.setForceRunMode( bolt::cl::control::OpenCL );
-    std::string strDeviceName =   myControl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
-#else
-	cl::Context myContext( devices.at( userDevice ) );
+    cl::Context myContext( devices.at( userDevice ) );
     cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
     bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
-	std::string strDeviceName =  bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
-#endif
 
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;

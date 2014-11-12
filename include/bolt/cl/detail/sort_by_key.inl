@@ -26,6 +26,17 @@
 * The derived work adds support for descending sort and signed integers. 
 * Performance optimizations were provided for the AMD GCN architecture. 
 * 
+*  Besides this following publications were referred: 
+*  1. "Parallel Scan For Stream Architectures"  
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
+*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
+*     Duane Merrill and Andrew Grimshaw
+*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
+*  3. The SHOC Benchmark Suite 
+*     https://github.com/vetter/shoc
+*
 ***************************************************************************/
 
 #pragma once
@@ -40,22 +51,46 @@
 
 #include "bolt/cl/stablesort_by_key.h"
 
-#include "bolt/BoltLog.h"
-
-#define SORT_BY_KEY_ALG_BRANCH_POINT (1<<20)
 #define BITONIC_SORT_WGSIZE 64
 #define DEBUG 1
 namespace bolt {
 namespace cl {
 
 namespace detail {
+ 
 
-template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-void
-merge_sort_by_key_enqueue( control& ctrl,
-                            const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
-                            const DVRandomAccessIterator2 values_first,
-                            const StrictWeakOrdering& comp, const std::string& cl_code );
+	 template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
+                         DVKeys keys_first, DVKeys keys_last,
+                         DVValues values_first,
+                         StrictWeakOrdering comp, const std::string& cl_code);
+
+	 template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           unsigned int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
+                         DVKeys keys_first, DVKeys keys_last,
+                         DVValues values_first,
+                         StrictWeakOrdering comp, const std::string& cl_code);
+
+  template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if<
+        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
+           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
+         )
+                           >::type
+    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
+                        const DVKeys& keys_last, const DVValues& values_first,
+                        const StrictWeakOrdering& comp, const std::string& cl_code);
+
+	
+
 
 enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
                      sort_by_key_valueValueType, sort_by_key_valueIterType,
@@ -211,9 +246,26 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         }
     }
 
+ template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
+    typename std::enable_if<
+        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
+           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
+         )
+                           >::type
+    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
+                        const DVKeys& keys_last, const DVValues& values_first,
+                        const StrictWeakOrdering& comp, const std::string& cl_code)
+    {
+        stablesort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
+        return;
+    }// END of sort_by_key_enqueue
 
     template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    void radix_sort_by_key_uint_enqueue( control &ctl,
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           unsigned int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
                          DVKeys keys_first, DVKeys keys_last,
                          DVValues values_first,
                          StrictWeakOrdering comp, const std::string& cl_code)
@@ -229,8 +281,6 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
     int szElements = orig_szElements;
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-    if (computeUnits > 32 )
-        computeUnits = 32;
     cl_int l_Error = CL_SUCCESS;
 
     std::vector<std::string> typeNames( sort_by_key_end );
@@ -432,7 +482,11 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
 
     template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    void radix_sort_by_key_int_enqueue( control &ctl,
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
+                                           int
+                                         >::value
+                           >::type  /*If enabled then this typename will be evaluated to void*/
+    sort_by_key_enqueue( control &ctl,
                          DVKeys keys_first, DVKeys keys_last,
                          DVValues values_first,
                          StrictWeakOrdering comp, const std::string& cl_code)
@@ -448,8 +502,6 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
     int szElements = orig_szElements;
 
     int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-    if (computeUnits > 32 )
-        computeUnits = 32;
     cl_int l_Error = CL_SUCCESS;
 
     std::vector<std::string> typeNames( sort_by_key_end );
@@ -741,53 +793,6 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
     return;
 }
 
-
-    template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    typename std::enable_if<
-           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
-                           >::type
-    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
-                        const DVKeys& keys_last, const DVValues& values_first,
-                        const StrictWeakOrdering& comp, const std::string& cl_code)
-    {
-        size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
-        if(szElements > SORT_BY_KEY_ALG_BRANCH_POINT)
-            bolt::cl::detail::radix_sort_by_key_int_enqueue(ctl, keys_first, keys_last, values_first, comp,cl_code);
-        else        
-            bolt::cl::detail::merge_sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
-        return;    
-    }// END of sort_by_key_enqueue -> int
-
-    template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    typename std::enable_if<
-            std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value
-                           >::type
-    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
-                        const DVKeys& keys_last, const DVValues& values_first,
-                        const StrictWeakOrdering& comp, const std::string& cl_code)
-    {
-        size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
-        if(szElements > SORT_BY_KEY_ALG_BRANCH_POINT)
-            bolt::cl::detail::radix_sort_by_key_uint_enqueue(ctl, keys_first, keys_last, values_first, comp,cl_code);
-        else        
-            bolt::cl::detail::merge_sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
-        return;    
-    }// END of sort_by_key_enqueue - > uint
-
-    template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    typename std::enable_if<
-        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
-           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
-         )
-                           >::type
-    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
-                        const DVKeys& keys_last, const DVValues& values_first,
-                        const StrictWeakOrdering& comp, const std::string& cl_code)
-    {
-        bolt::cl::detail::merge_sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
-        return;
-    }// END of sort_by_key_enqueue
-
     //Fancy iterator specialization
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
     void sort_by_key_pick_iterator(control &ctl, DVRandomAccessIterator1 keys_first,
@@ -1051,5 +1056,5 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 };
 
 
-#undef SORT_BY_KEY_ALG_BRANCH_POINT
+
 #endif

@@ -24,7 +24,6 @@
 #include "bolt/amp/fill.h"
 #include "bolt/unicode.h"
 #include "bolt/amp/functional.h"
-#include "bolt/amp/iterator/counting_iterator.h"
 
 #include <gtest/gtest.h>
 #include <type_traits>
@@ -3071,54 +3070,6 @@ TEST(ReduceByKeyPairUDDTest, MultiCore_UDDFloatIntTest)
 }
 #endif
 
-
-TEST( StdVectCountingIterator, withCountingIterator)
-{
-	int mySize = 1024;
-
-    std::vector<int> stdInput(mySize);
-	std::vector<int> keys(mySize);
-    bolt::amp::counting_iterator<int> first(0);
-    bolt::amp::counting_iterator<int> last = first +  mySize;
-
-	int key = 1;
-	for (int i = 0; i < mySize; i++)
-    {
-        if(std::rand()%5 == 1) key++;
-        keys[i] = key;
-        stdInput[i] = i;
-    }
-
-	std::vector< int > koutput( mySize );
-    std::vector< int > voutput( mySize );
-    std::vector< int > krefOutput( mySize );
-    std::vector< int > vrefOutput( mySize );
-
-	bolt::amp::equal_to<int> binary_predictor;
-    bolt::amp::plus<int> binary_operator;
-
-	typedef std::pair<std::vector<int>::iterator,std::vector<int>::iterator> StdPairIterator;
-	typedef bolt::amp::pair<std::vector<int>::iterator,std::vector<int>::iterator> BoltPairIterator;
-
-
-    StdPairIterator stlout =  gold_reduce_by_key( keys.begin(),
-                        keys.end(),
-                        stdInput.begin(),
-                        krefOutput.begin(),
-                        vrefOutput.begin(),
-                        binary_operator);
-    BoltPairIterator boltout = bolt::amp::reduce_by_key(
-        keys.begin(),
-        keys.end(),
-        first,
-        koutput.begin(),
-        voutput.begin(),
-        binary_predictor,
-        binary_operator);
-
-    cmpArrays(krefOutput, koutput);
-    cmpArrays(vrefOutput, voutput);
-}
 
 
 int _tmain(int argc, _TCHAR* argv[])

@@ -26,7 +26,6 @@
 #include "bolt/amp/iterator/iterator_traits.h"
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
-#include "bolt/amp/iterator/addressof.h"
 
 #ifdef ENABLE_TBB
     #include "bolt/btbb/scatter.h"
@@ -39,262 +38,72 @@ namespace detail {
 
 
 /* Begin-- Serial Implementation of the scatter and scatter_if routines */
-namespace serial{
 
 template<typename InputIterator1,
          typename InputIterator2,
          typename OutputIterator>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-scatter( bolt::amp::control &ctl,
-              InputIterator1 first1,
-              InputIterator1 last1,
-              InputIterator2 map,
-              OutputIterator result)
-{
-	typedef std::iterator_traits< OutputIterator >::value_type oType;
 
-    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-    if (sz == 0)
-        return;
-
-	auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                        ctl, first1);
-    auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                        ctl, map);
-    auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                        ctl, result);
-
-	for (int iter = 0; iter<(int)sz; iter++)
-                *(mapped_result_itr +*(mapped_first2_itr + iter)) = (oType) *(mapped_first1_itr + iter);
-
-    return;
-}
-
-
-template< typename InputIterator1,
-           typename InputIterator2,
-           typename OutputIterator>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-scatter( bolt::amp::control &ctl,
-              InputIterator1 first1,
-              InputIterator1 last1,
-              InputIterator2 map,
-              OutputIterator result)
-{
+void gold_scatter_enqueue (InputIterator1 first1,
+                           InputIterator1 last1,
+                           InputIterator2 map,
+                           OutputIterator result)
+    {
        int numElements = static_cast< int >( std::distance( first1, last1 ) );
 
 	   for (int iter = 0; iter<(int)numElements; iter++)
                 *(result+*(map + iter)) = *(first1 + iter);
-}
-
-
-
-template< typename InputIterator1,
-           typename InputIterator2,
-           typename InputIterator3,
-           typename OutputIterator,
-           typename Predicate>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-scatter_if (bolt::amp::control &ctl,
-                 InputIterator1 first1,
-                 InputIterator1 last1,
-                 InputIterator2 map,
-                 InputIterator3 stencil,
-                 OutputIterator result,
-                 Predicate pred)
-{
-	typedef std::iterator_traits< OutputIterator >::value_type oType;
-
-    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-    if (sz == 0)
-        return;
-
-	auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                        ctl, first1);
-    auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                        ctl, map);
-	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   ctl, stencil);
-    auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                        ctl, result);
-
-	for(int iter = 0; iter< (int)sz; iter++)
-    {
-          if(pred(*(mapped_first3_itr + iter) ) != 0)
-		       *(mapped_result_itr + *(mapped_first2_itr + (iter -0))) = (oType) *(mapped_first1_itr + iter);
     }
 
+ template< typename InputIterator1,
+           typename InputIterator2,
+           typename InputIterator3,
+           typename OutputIterator >
+void gold_scatter_if_enqueue (InputIterator1 first1,
+                              InputIterator1 last1,
+                              InputIterator2 map,
+                              InputIterator3 stencil,
+                              OutputIterator result)
+   {
+       int numElements = static_cast< int >( std::distance( first1, last1 ) );
+       for(int iter = 0; iter<numElements; iter++)
+        {
+             if(stencil[iter] == 1)
+                  result[*(map+(iter - 0))] = first1[iter];
+             }
+   }
 
-    return;
-}
-
-
-template< typename InputIterator1,
+ template< typename InputIterator1,
            typename InputIterator2,
            typename InputIterator3,
            typename OutputIterator,
            typename Predicate>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-scatter_if (bolt::amp::control &ctl,
-                 InputIterator1 first1,
-                 InputIterator1 last1,
-                 InputIterator2 map,
-                 InputIterator3 stencil,
-                 OutputIterator result,
-                 Predicate pred)
-{
+void gold_scatter_if_enqueue (InputIterator1 first1,
+                              InputIterator1 last1,
+                              InputIterator2 map,
+                              InputIterator3 stencil,
+                              OutputIterator result,
+                              Predicate pred)
+   {
        int numElements = static_cast< int >( std::distance( first1, last1 ) );
 	   for (int iter = 0; iter< numElements; iter++)
-       {
+        {
              if(pred(stencil[iter]) != 0)
                   result[*(map+(iter))] = first1[iter];
-       }
-}
+             }
+   }
 
-
-}//end of namespace serial
-
-
-#ifdef ENABLE_TBB
-namespace btbb{
-
-template< typename InputIterator1,
-           typename InputIterator2,
-           typename InputIterator3,
-           typename OutputIterator,
-           typename Predicate>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-scatter_if (bolt::amp::control &ctl,
-                 InputIterator1 first1,
-                 InputIterator1 last1,
-                 InputIterator2 map,
-                 InputIterator3 stencil,
-                 OutputIterator result,
-                 Predicate pred)
-{
-    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-    if (sz == 0)
-        return;
-
-    auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                   ctl, first1);
-    auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                   ctl, map);
-	auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator3>::iterator_category(), 
-                                                   ctl, stencil);
-    auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                   ctl, result);
-
-	bolt::btbb::scatter_if(mapped_first1_itr, mapped_first1_itr+sz, mapped_first2_itr, mapped_first3_itr, mapped_result_itr, pred);
-
-    return;  
-}
-
-template< typename InputIterator1,
-           typename InputIterator2,
-           typename InputIterator3,
-           typename OutputIterator,
-           typename Predicate>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-scatter_if (bolt::amp::control &ctl,
-                 InputIterator1 first1,
-                 InputIterator1 last1,
-                 InputIterator2 map,
-                 InputIterator3 stencil,
-                 OutputIterator result,
-                 Predicate pred)
-{
-       bolt::btbb::scatter_if(first1, last1, map, stencil, result, pred);
-}
-
-
-template<typename InputIterator1,
-         typename InputIterator2,
-         typename OutputIterator>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-scatter( bolt::amp::control &ctl,
-              InputIterator1 first1,
-              InputIterator1 last1,
-              InputIterator2 map,
-              OutputIterator result)
-{
-    typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-    if (sz == 0)
-        return;
-   
-	auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                        ctl, first1);
-    auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                        ctl, map);
-    auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                        ctl, result);
-
-	bolt::btbb::scatter(mapped_first1_itr, mapped_first1_itr+sz, mapped_first2_itr, mapped_result_itr);
-
-    return;
-}
-
-
-template<typename InputIterator1,
-         typename InputIterator2,
-         typename OutputIterator>
-typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-scatter( bolt::amp::control &ctl,
-              InputIterator1 first1,
-              InputIterator1 last1,
-              InputIterator2 map,
-              OutputIterator result)
-{
-    bolt::btbb::scatter(first1, last1, map, result);
-}
-
-}//end of namespace btbb
-#endif
-
-namespace amp{
+ /* End-- Serial Implementation of the scatter and scatter_if routines */
+ 
+////////////////////////////////////////////////////////////////////
+// ScatterIf enqueue
+////////////////////////////////////////////////////////////////////
 
     template< typename DVInputIterator1,
               typename DVInputIterator2,
               typename DVInputIterator3,
               typename DVOutputIterator,
               typename Predicate >
-	typename std::enable_if< std::is_same< typename std::iterator_traits< DVOutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                                     >::value
-                       >::type
-    scatter_if( bolt::amp::control &ctl,
+    void scatter_if_enqueue( bolt::amp::control &ctl,
                              const DVInputIterator1& first1,
                              const DVInputIterator1& last1,
                              const DVInputIterator2& map,
@@ -336,15 +145,13 @@ namespace amp{
 		result.getContainer().getBuffer(result, szElements).synchronize();
     };
 
-
+////////////////////////////////////////////////////////////////////
+// Scatter enqueue
+////////////////////////////////////////////////////////////////////
     template< typename DVInputIterator1,
               typename DVInputIterator2,
               typename DVOutputIterator >
-    typename std::enable_if< std::is_same< typename std::iterator_traits< DVOutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                                     >::value
-                       >::type
-    scatter( bolt::amp::control &ctl,
+    void scatter_enqueue( bolt::amp::control &ctl,
                           const DVInputIterator1& first1,
                           const DVInputIterator1& last1,
                           const DVInputIterator2& map,
@@ -378,110 +185,112 @@ namespace amp{
 		result.getContainer().getBuffer(result, szElements).synchronize();
 	};
 
+////////////////////////////////////////////////////////////////////
+// Enqueue ends
+////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////
+// ScatterIf pick iterator
+////////////////////////////////////////////////////////////////////
 
-	template< typename InputIterator1,
-              typename MapIterator,
-              typename InputIterator3,
-              typename OutputIterator,
-              typename Predicate >
-	typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                       >::type
-    scatter_if( bolt::amp::control &ctl,
-                const InputIterator1& first1,
-                const InputIterator1& last1,
-                const MapIterator& map,
-                const InputIterator3& stencil,
-                const OutputIterator& result,
-                const Predicate& pred)
-    {
-  
+// Host vectors
 
-        int sz = static_cast<int>( std::distance( first1, last1 ) );
-		typedef std::iterator_traits< OutputIterator >::value_type oType;
-		device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
-
-		// Map the input iterator to a device_vector
-		auto dvMap_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< MapIterator >::iterator_category( ),  map, sz, false, ctl );
-		auto dvStencil_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator3 >::iterator_category( ), stencil, sz, false, ctl);
-		auto dvInput_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator1 >::iterator_category( ),  first1, sz, false, ctl );
-		amp::scatter_if( ctl,
-                            dvInput_itr,
-                            dvInput_itr+sz,
-							dvMap_itr,
-                            dvStencil_itr,
-                            dvResult.begin( ),
-                            pred);
-
-
-        // This should immediately map/unmap the buffer
-        dvResult.data( );
-       
-    }
-
-
-	template< typename InputIterator,
-              typename MapIterator,
-              typename OutputIterator>
-	typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                       >::type
-    scatter( bolt::amp::control &ctl,
-             const InputIterator& first1,
-             const InputIterator& last1,
-             const MapIterator& map,
-             const OutputIterator& result)
-    {
-  
-
-        int sz = static_cast<int>( std::distance( first1, last1 ) );
-		typedef std::iterator_traits< OutputIterator >::value_type oType;
-
-        // Map the result iterator to a device_vector
-		device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
-
-        // Map the input iterator to a device_vector
-		auto dvMap_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< MapIterator >::iterator_category( ),  map, sz, false, ctl );
-		auto dvInput_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator >::iterator_category( ),  first1, sz, false, ctl );
-		amp::scatter( ctl,
-                            dvInput_itr,
-                            dvInput_itr+sz,
-							dvMap_itr,
-                            dvResult.begin( ));
-
-        // This should immediately map/unmap the buffer
-        dvResult.data( );
-
-       
-    }
-
-}//end of namespace amp
-
-	template< typename InputIterator1,
+    /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+        \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
+        *  iterators.  This overload is called strictly for non-device_vector iterators
+    */
+    template< typename InputIterator1,
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-	          typename Predicate>
-    typename std::enable_if< 
-               !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value ),
-               void
-                           >::type
-    scatter_if( bolt::amp::control& ctl,
-                const InputIterator1& first1,
-                const InputIterator1& last1,
-                const InputIterator2& map,
-                const InputIterator3& stencil,
-                const OutputIterator& result,
-                const Predicate& pred)
-    {   
-		int sz = static_cast<int>( std::distance( first1, last1 ) );
+              typename Predicate >
+    void scatter_if_pick_iterator( bolt::amp::control &ctl,
+                                   const InputIterator1& first1,
+                                   const InputIterator1& last1,
+                                   const InputIterator2& map,
+                                   const InputIterator3& stencil,
+                                   const OutputIterator& result,
+                                   const Predicate& pred,
+                                   std::random_access_iterator_tag,
+                                   std::random_access_iterator_tag,
+                                   std::random_access_iterator_tag )
+    {
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+
+        int sz = static_cast< int >(std::distance( first1, last1 ));
+
+        if (sz == 0)
+            return;
+
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
+		
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+            gold_scatter_if_enqueue(first1, last1, map, stencil, result, pred);
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+           bolt::btbb::scatter_if(first1, last1, map, stencil, result, pred);
+#else
+          throw std::runtime_error( "The MultiCoreCpu version of scatter_if is not enabled to be built! \n" );
+
+#endif
+
+        }
+        else
+        {
+          // Map the input iterator to a device_vector
+		  device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+		  device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+		  device_vector< iType3, concurrency::array_view> dvStencil( stencil, sz, false, ctl );
+
+          // Map the output iterator to a device_vector	  
+		  device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+          scatter_if_enqueue( ctl,
+                              dvInput.begin( ),
+                              dvInput.end( ),
+                              dvMap.begin( ),
+                              dvStencil.begin( ),
+                              dvResult.begin( ),
+                              pred );
+
+          // This should immediately map/unmap the buffer
+          dvResult.data( );
+        }
+    }
+
+
+// Stencil is a fancy iterator
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename InputIterator3,
+              typename OutputIterator,
+              typename Predicate >
+    void scatter_if_pick_iterator( bolt::amp::control &ctl,
+                                   const InputIterator1& first1,
+                                   const InputIterator1& last1,
+                                   const InputIterator2& map,
+                                   const InputIterator3& stencilFancyIter,
+                                   const OutputIterator& result,
+                                   const Predicate& pred,
+                                   std::random_access_iterator_tag,
+                                   std::random_access_iterator_tag,
+                                   bolt::amp::fancy_iterator_tag )
+    {
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        int sz = static_cast< int >(std::distance( first1, last1 ));
         if (sz == 0)
             return;
 
@@ -493,83 +302,64 @@ namespace amp{
         }
         if( runMode == bolt::amp::control::SerialCpu )
         {
-		    serial::scatter_if(ctl, first1, last1, map, stencil, result, pred);
+            gold_scatter_if_enqueue(first1, last1, map, stencilFancyIter, result, pred);
         }
         else if( runMode == bolt::amp::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-            btbb::scatter_if(ctl, first1, last1, map, stencil, result, pred);
+            bolt::btbb::scatter_if(first1, last1, map, stencilFancyIter, result, pred);
 #else
             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
 #endif
+            return;
         }
         else
         {
-            amp::scatter_if(ctl, first1, last1, map, stencil, result, pred);
+            // Use host pointers memory since these arrays are only read once - no benefit to copying.
+            // Map the input iterator to a device_vector
+		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+
+            // Map the output iterator to a device_vector
+		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+
+            scatter_if_enqueue( ctl,
+                                dvInput.begin( ),
+                                dvInput.end( ),
+                                dvMap.begin(),
+                                stencilFancyIter,
+                                dvResult.begin( ),
+                                pred );
+
+            // This should immediately map/unmap the buffer
+            dvResult.data( );
         }
+    }
 
-       
-    };
-
-
-	template< typename InputIterator1,
+// Input is a fancy iterator
+    template< typename InputIterator1,
               typename InputIterator2,
               typename InputIterator3,
               typename OutputIterator,
-	          typename Predicate>
-    // Wrapper that uses default ::bolt::amp::control class, iterator interface
-    typename std::enable_if< 
-               (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value ),
-               void
-                           >::type
-    scatter_if( bolt::amp::control& ctl,
-                     const InputIterator1& first1,
-                     const InputIterator1& last1,
-                     const InputIterator2& map,
-                     const InputIterator3& stencil,
-                     const OutputIterator& result,
-                     const Predicate& pred,
-                     const std::string& user_code )
+              typename Predicate >
+    void scatter_if_pick_iterator( bolt::amp::control &ctl,
+                                  const InputIterator1& fancyIterfirst,
+                                  const InputIterator1& fancyIterlast,
+                                  const InputIterator2& map,
+                                  const InputIterator3& stencil,
+                                  const OutputIterator& result,
+                                  const Predicate& pred,
+                                  bolt::amp::fancy_iterator_tag,
+                                  std::random_access_iterator_tag,
+                                  std::random_access_iterator_tag )
     {
-		//TODO: map cannot be a constant iterator! Throw compilation error for such a case.
-        // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-        // to a temporary buffer.  Should we?
 
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     std::input_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     bolt::amp::fancy_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
-    };
-
-
-
-
-    template< typename InputIterator1,
-              typename InputIterator2,
-              typename OutputIterator>
-	typename std::enable_if< 
-               !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value ),
-               void
-                           >::type
-    scatter( bolt::amp::control& ctl,
-             const InputIterator1& first1,
-             const InputIterator1& last1,
-             const InputIterator2& map,
-             const OutputIterator& result )
-    {
-       	
-        int sz = static_cast<int>( std::distance( first1, last1 ) );
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        int sz = static_cast< int >(std::distance( fancyIterfirst, fancyIterlast ));
         if (sz == 0)
             return;
 
@@ -577,55 +367,708 @@ namespace amp{
         bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
         if(runMode == bolt::amp::control::Automatic)
         {
-             runMode = ctl.getDefaultPathToRun();
+           runMode = ctl.getDefaultPathToRun();
         }
-	  
         if( runMode == bolt::amp::control::SerialCpu )
-		{
-		    serial::scatter(ctl, first1, last1, map, result);
+        {
+            gold_scatter_if_enqueue(fancyIterfirst, fancyIterlast, map, stencil, result, pred);
         }
         else if( runMode == bolt::amp::control::MultiCoreCpu )
         {
-#if defined( ENABLE_TBB )           	   
-            btbb::scatter(ctl, first1, last1, map, result);  
+#if defined( ENABLE_TBB )
+            bolt::btbb::scatter_if(fancyIterfirst, fancyIterlast, map, stencil, result, pred);
 #else
             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
 #endif
         }
-        else 			
-            amp::scatter(ctl, first1, last1, map, result);
+        else
+        {
+            // Use host pointers memory since these arrays are only read once - no benefit to copying.
+            // Map the input iterator to a device_vector
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+		    device_vector< iType3, concurrency::array_view> dvStencil( stencil, sz, false, ctl );
+
+            // Map the output iterator to a device_vector
+		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+
+            scatter_if_enqueue( ctl,
+                               fancyIterfirst,
+                               fancyIterlast,
+                               dvMap.begin( ),
+                               dvStencil.begin( ),
+                               dvResult.begin( ),
+                               pred );
+
+            // This should immediately map/unmap the buffer
+            dvResult.data( );
+        }
     }
+
+// Device Vectors
+
+    // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+    // This is called strictly for iterators that are derived from device_vector< T >::iterator
+    template< typename DVInputIterator1,
+              typename DVInputIterator2,
+              typename DVInputIterator3,
+              typename DVOutputIterator,
+              typename Predicate >
+    void scatter_if_pick_iterator( bolt::amp::control &ctl,
+                                   const DVInputIterator1& first1,
+                                   const DVInputIterator1& last1,
+                                   const DVInputIterator2& map,
+                                   const DVInputIterator3& stencil,
+                                   const DVOutputIterator& result,
+                                   const Predicate& pred,
+                                   bolt::amp::device_vector_tag,
+                                   bolt::amp::device_vector_tag,
+                                   bolt::amp::device_vector_tag )
+    {
+
+        typedef typename std::iterator_traits< DVInputIterator1 >::value_type iType1;
+        typedef typename std::iterator_traits< DVInputIterator2 >::value_type iType2;
+        typedef typename std::iterator_traits< DVInputIterator3 >::value_type iType3;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+
+        int sz = static_cast< int >(std::distance( first1, last1 ));
+        if( sz == 0 )
+            return;
+
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+             runMode = ctl.getDefaultPathToRun();
+        }
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+			
+            typename bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+            typename bolt::amp::device_vector< iType2 >::pointer mapPtr =  map.getContainer( ).data( );
+            typename bolt::amp::device_vector< iType3 >::pointer stenPtr =  stencil.getContainer( ).data( );
+            typename bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+
+#if defined( _WIN32 )
+            gold_scatter_if_enqueue(&firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], &mapPtr[ map.m_Index ],
+                 &stenPtr[ stencil.m_Index ], stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), pred );
+
+#else
+            gold_scatter_if_enqueue( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                &mapPtr[ map.m_Index ], &stenPtr[ stencil.m_Index ], &resPtr[ result.m_Index ], pred );
+#endif
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+		   	
+            // Call MC
+#if defined( ENABLE_TBB )
+            {
+			
+                typename bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                typename bolt::amp::device_vector< iType2 >::pointer mapPtr =  map.getContainer( ).data( );
+                typename bolt::amp::device_vector< iType3 >::pointer stenPtr =  stencil.getContainer( ).data( );
+                typename bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+
+                bolt::btbb::scatter_if( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                &mapPtr[ map.m_Index ], &stenPtr[ stencil.m_Index ], &resPtr[ result.m_Index ], pred );
+            }
+#else
+             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+#endif
+        }
+        else
+        {
+			
+            scatter_if_enqueue( ctl, first1, last1, map, stencil, result, pred );
+        }
+    }
+
+////////////////////////////////////////////////////////////////////
+// Scatter pick iterator
+////////////////////////////////////////////////////////////////////
+
+// Host vectors
+
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename OutputIterator >
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const InputIterator1& first1,
+                                const InputIterator1& last1,
+                                const InputIterator2& map,
+                                const OutputIterator& result,
+                                std::random_access_iterator_tag,
+                                std::random_access_iterator_tag )
+    {
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+
+        int sz = static_cast< int >(std::distance( first1, last1 ));
+
+        if (sz == 0)
+            return;
+
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
+		
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+		    
+            gold_scatter_enqueue(first1, last1, map, result);
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+                bolt::btbb::scatter(first1, last1, map, result);
+#else
+                 throw std::runtime_error( "The MultiCoreCpu version of scatter_if is not enabled to be built! \n" );
+
+#endif
+        }
+
+        else
+        {
+			
+          // Map the input iterator to a device_vector
+		  device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+		  device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+
+          // Map the output iterator to a device_vector
+		  device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+          scatter_enqueue( ctl,
+                           dvInput.begin( ),
+                           dvInput.end( ),
+                           dvMap.begin( ),
+                           dvResult.begin( ) );
+
+          // This should immediately map/unmap the buffer
+          dvResult.data( );
+        }
+    }
+
+// Input is a fancy iterator
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename OutputIterator >
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const InputIterator1& firstFancy,
+                                const InputIterator1& lastFancy,
+                                const InputIterator2& map,
+                                const OutputIterator& result,
+                                bolt::amp::fancy_iterator_tag,
+                                std::random_access_iterator_tag )
+    {
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        int sz = static_cast< int >(std::distance( firstFancy, lastFancy ));
+        if (sz == 0)
+            return;
+
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+          runMode = ctl.getDefaultPathToRun();
+        }
+		
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+             gold_scatter_enqueue(firstFancy, lastFancy, map, result);
+
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+            bolt::btbb::scatter(firstFancy, lastFancy, map, result);
+#else
+            throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+
+#endif
+        }
+        else
+        {
+		  
+            // Use host pointers memory since these arrays are only read once - no benefit to copying.
+            // Map the input iterator to a device_vector
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+            // Map the output iterator to a device_vector
+		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+
+            scatter_enqueue( ctl,
+                                firstFancy,
+                                lastFancy,
+                                dvMap.begin(),
+                                dvResult.begin( ));
+
+            // This should immediately map/unmap the buffer
+            dvResult.data( );
+        }
+    }
+
+
+// Map is a fancy iterator
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename OutputIterator>
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const InputIterator1& first1,
+                                const InputIterator1& last1,
+                                const InputIterator2& mapFancy,
+                                const OutputIterator& result,
+                                std::random_access_iterator_tag,
+                                 bolt::amp::fancy_iterator_tag )
+    {
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        int sz = static_cast< int >(std::distance( first1, last1 ));
+        if (sz == 0)
+            return;
+
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+          runMode = ctl.getDefaultPathToRun();
+        }
+		
+        if( runMode == bolt::amp::control::SerialCpu )
+        {		    
+            gold_scatter_enqueue(first1, last1, mapFancy, result);
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+            bolt::btbb::scatter(first1, last1, mapFancy, result);
+#else
+            throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+
+#endif
+        }
+        else
+        {			
+            // Use host pointers memory since these arrays are only read once - no benefit to copying.
+            // Map the input iterator to a device_vector
+		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+
+            // Map the output iterator to a device_vector
+		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+
+            scatter_enqueue( ctl,
+                                dvInput.begin( ),
+                                dvInput.end( ),
+                                mapFancy,
+                                dvResult.begin( ));
+
+            // This should immediately map/unmap the buffer
+            dvResult.data( );
+        }
+    }
+
+// Device Vectors
+    template< typename DVInputIterator1,
+              typename DVInputIterator2,
+              typename DVOutputIterator >
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const DVInputIterator1& first1,
+                                const DVInputIterator1& last1,
+                                const DVInputIterator2& map,
+                                const DVOutputIterator& result,
+                                bolt::amp::device_vector_tag,
+                                bolt::amp::device_vector_tag )
+    {
+
+        typedef typename std::iterator_traits< DVInputIterator1 >::value_type iType1;
+        typedef typename std::iterator_traits< DVInputIterator2 >::value_type iType2;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+
+        int sz = static_cast< int >(std::distance( first1, last1 ));
+        if( sz == 0 )
+            return;
+
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+             runMode = ctl.getDefaultPathToRun();
+        }		
+        if( runMode == bolt::amp::control::SerialCpu )
+        {		    		
+            typename bolt::amp::device_vector< iType1 >::pointer InputBuffer  =  first1.getContainer( ).data( );
+            typename bolt::amp::device_vector< iType2 >::pointer MapBuffer    =  map.getContainer( ).data( );
+            typename bolt::amp::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+            gold_scatter_enqueue(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ],
+            &ResultBuffer[ result.m_Index ]);
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+
+#if defined( ENABLE_TBB )
+            {
+              typename bolt::amp::device_vector< iType1 >::pointer InputBuffer   =  first1.getContainer( ).data( );
+              typename bolt::amp::device_vector< iType2 >::pointer MapBuffer     =  map.getContainer( ).data( );
+              typename bolt::amp::device_vector< oType >::pointer ResultBuffer   =  result.getContainer( ).data( );
+                bolt::btbb::scatter(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ],
+                &ResultBuffer[ result.m_Index ]);
+            }
+#else
+             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+#endif
+         }
+        else
+        {
+            scatter_enqueue( ctl,
+                             first1,
+                             last1,
+                             map,
+                             result );
+        }
+    }
+
+// Input fancy ; Map DV
+    template< typename FancyIterator,
+              typename DVMapIterator,
+              typename DVOutputIterator >
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const FancyIterator& firstFancy,
+                                const FancyIterator& lastFancy,
+                                const DVMapIterator& map,
+                                const DVOutputIterator& result,
+                                bolt::amp::fancy_iterator_tag,
+                                bolt::amp::device_vector_tag )
+    {
+
+        typedef typename std::iterator_traits< FancyIterator >::value_type iType1;
+        typedef typename std::iterator_traits< DVMapIterator >::value_type iType2;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+
+        int sz = static_cast< int >(std::distance( firstFancy, lastFancy ));
+        if( sz == 0 )
+            return;
+
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+             runMode = ctl.getDefaultPathToRun();
+        }
+        if( runMode == bolt::amp::control::SerialCpu )
+        {			
+            typename bolt::amp::device_vector< iType2 >::pointer MapBuffer    =  map.getContainer( ).data( );
+            typename bolt::amp::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+            gold_scatter_enqueue(firstFancy, lastFancy, &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+            {
+                typename bolt::amp::device_vector< iType2 >::pointer MapBuffer =  map.getContainer( ).data( );
+                typename bolt::amp::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
+
+                bolt::btbb::scatter(firstFancy, lastFancy, &MapBuffer[ map.m_Index ],&ResultBuffer[ result.m_Index ]);
+            }
+#else
+             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+#endif
+        }
+        else
+        {			
+            scatter_enqueue( ctl,
+                             firstFancy,
+                             lastFancy,
+                             map,
+                             result );
+        }
+    }
+
+// Map fancy ; Input DV
+    template< typename DVInputIterator,
+              typename FancyMapIterator,
+              typename DVOutputIterator >
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const DVInputIterator& first1,
+                                const DVInputIterator& last1,
+                                const FancyMapIterator& mapFancy,
+                                const DVOutputIterator& result,
+                                bolt::amp::device_vector_tag,
+                                bolt::amp::fancy_iterator_tag )
+    {
+        typedef typename std::iterator_traits< DVInputIterator >::value_type iType1;
+        typedef typename std::iterator_traits< FancyMapIterator >::value_type iType2;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+
+        int sz = static_cast< int >(std::distance( first1, last1 ));
+        if( sz == 0 )
+            return;
+
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+             runMode = ctl.getDefaultPathToRun();
+        }
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+            typename bolt::amp::device_vector< iType1 >::pointer InputBuffer    =  first1.getContainer( ).data( );
+            typename bolt::amp::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+            gold_scatter_enqueue( &InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], mapFancy,
+                                                                         &ResultBuffer[ result.m_Index ]);
+
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+            {
+                typename bolt::amp::device_vector< iType1 >::pointer InputBuffer    =  first1.getContainer( ).data( );
+                typename bolt::amp::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+                bolt::btbb::scatter( &InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], mapFancy,
+                                                                            &ResultBuffer[ result.m_Index ]);
+            }
+#else
+             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+#endif
+        }
+        else
+        {
+            scatter_enqueue( ctl,
+                             first1,
+                             last1,
+                             mapFancy,
+                             result );
+        }
+    }
+
+// Input DV ; Map random access
+    template< typename DVInputIterator,
+              typename MapIterator,
+              typename OutputIterator >
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const DVInputIterator& first,
+                                const DVInputIterator& last,
+                                const MapIterator& map,
+                                const OutputIterator& result,
+                                bolt::amp::device_vector_tag,
+                                std::random_access_iterator_tag )
+    {
+        typedef typename std::iterator_traits<DVInputIterator>::value_type iType1;
+        typedef typename std::iterator_traits<MapIterator>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        int sz = static_cast< int >(std::distance( first, last ));
+        if (sz == 0)
+            return;
+
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+          runMode = ctl.getDefaultPathToRun();
+        }
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+            typename bolt::amp::device_vector< iType1 >::pointer InputBuffer    =  first.getContainer( ).data( );
+            gold_scatter_enqueue( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ], map,result);
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+            {
+                typename bolt::amp::device_vector< iType1 >::pointer InputBuffer    =  first.getContainer( ).data( );
+                bolt::btbb::scatter( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ],map, result);
+            }
+#else
+            throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+
+#endif
+        }
+        else
+        {
+            // Use host pointers memory since these arrays are only read once - no benefit to copying.
+            // Map the map iterator to a device_vector
+		    device_vector< iType2, concurrency::array_view> dvMap( map, sz, false, ctl );
+            // Map the output iterator to a device_vector
+		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+
+            scatter_enqueue( ctl,
+                             first,
+                             last,
+                             dvMap.begin(),
+                             dvResult.begin( ) );
+
+            // This should immediately map/unmap the buffer
+            dvResult.data( );
+        }
+    }
+
+// DV Map ; RA Input
+    template< typename InputIterator,
+              typename DVMapIterator,
+              typename OutputIterator>
+    void scatter_pick_iterator( bolt::amp::control &ctl,
+                                const InputIterator& first1,
+                                const InputIterator& last1,
+                                const DVMapIterator& map,
+                                const OutputIterator& result,
+                                std::random_access_iterator_tag,
+                                bolt::amp::device_vector_tag )
+    {
+        typedef typename std::iterator_traits<InputIterator>::value_type iType1;
+        typedef typename std::iterator_traits<DVMapIterator>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+        int sz = static_cast< int >(std::distance( first1, last1 ));
+        if (sz == 0)
+            return;
+
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+          runMode = ctl.getDefaultPathToRun();
+        }
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+           typename bolt::amp::device_vector< iType2 >::pointer mapBuffer    =  map.getContainer( ).data( );
+           gold_scatter_enqueue(first1, last1, &mapBuffer[ map.m_Index ], result);
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+            {
+                typename bolt::amp::device_vector< iType2 >::pointer mapBuffer    =  map.getContainer( ).data( );
+                bolt::btbb::scatter(first1, last1, &mapBuffer[ map.m_Index ], result);
+            }
+#else
+            throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
+
+#endif
+        }
+        else
+        {				
+            // Use host pointers memory since these arrays are only read once - no benefit to copying.
+            // Map the input iterator to a device_vector
+		    device_vector< iType1, concurrency::array_view> dvInput( first1, last1, false, ctl );
+            // Map the result iterator to a device_vector
+		    device_vector< oType, concurrency::array_view> dvResult( result, sz, false, ctl );
+
+            scatter_enqueue( ctl,
+                             dvInput.begin(),
+                             dvInput.end(),
+                             map,
+                             dvResult.begin( ));
+
+            // This should immediately map/unmap the buffer
+            dvResult.data( );
+        }
+    }
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////
+// ScatterIf detect random access
+////////////////////////////////////////////////////////////////////
+
+
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename InputIterator3,
+              typename OutputIterator,
+              typename Predicate >
+    void scatter_if_detect_random_access( bolt::amp::control& ctl,
+                                          const InputIterator1& first1,
+                                          const InputIterator1& last1,
+                                          const InputIterator2& map,
+                                          const InputIterator3& stencil,
+                                          const OutputIterator& result,
+                                          const Predicate& pred,
+                                          std::random_access_iterator_tag,
+                                          std::random_access_iterator_tag,
+                                          std::random_access_iterator_tag )
+    {
+       scatter_if_pick_iterator( ctl,
+                                 first1,
+                                 last1,
+                                 map,
+                                 stencil,
+                                 result,
+                                 pred,
+                                 typename  std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                 typename  std::iterator_traits< InputIterator2 >::iterator_category( ),
+                                 typename  std::iterator_traits< InputIterator3 >::iterator_category( ));
+    };
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////
+// Scatter detect random access
+////////////////////////////////////////////////////////////////////
 
 
 
     template< typename InputIterator1,
               typename InputIterator2,
-              typename OutputIterator>
-	typename std::enable_if< 
-               (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value ),
-               void
-                           >::type
-    scatter( bolt::amp::control& ctl,
-             const InputIterator1& first1,
-             const InputIterator1& last1,
-             const InputIterator2& map,
-             const OutputIterator& result )
+              typename OutputIterator >
+    void scatter_detect_random_access( bolt::amp::control& ctl,
+                                       const InputIterator1& first1,
+                                       const InputIterator1& last1,
+                                       const InputIterator2& map,
+                                       const OutputIterator& result,
+                                       std::random_access_iterator_tag,
+                                       std::random_access_iterator_tag )
     {
-		//TODO: map cannot be a constant iterator! Throw compilation error for such a case.
+       scatter_pick_iterator( ctl,
+                              first1,
+                              last1,
+                              map,
+                              result,
+                              typename  std::iterator_traits< InputIterator1 >::iterator_category( ),
+                              typename  std::iterator_traits< InputIterator2 >::iterator_category( ) );
+    };
 
-        //static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
-		static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     std::input_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     bolt::amp::fancy_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
-    }
+
+    // Wrapper that uses default ::bolt::amp::control class, iterator interface
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename InputIterator3,
+              typename OutputIterator,
+              typename Predicate >
+    void scatter_if_detect_random_access( bolt::amp::control& ctl,
+                                          const InputIterator1& first1,
+                                          const InputIterator1& last1,
+                                          const InputIterator2& map,
+                                          const InputIterator3& stencil,
+                                          const OutputIterator& result,
+                                          const Predicate& pred,
+                                          std::input_iterator_tag,
+                                          std::input_iterator_tag,
+                                          std::input_iterator_tag )
+    {
+            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+            // to a temporary buffer.  Should we?
+
+            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+    };
+
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename OutputIterator>
+    void scatter_detect_random_access( bolt::amp::control& ctl,
+                                       const InputIterator1& first1,
+                                       const InputIterator1& last1,
+                                       const InputIterator2& map,
+                                       const OutputIterator& result,
+                                       std::input_iterator_tag,
+                                       std::input_iterator_tag )
+    {
+            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+    };
 
 } //End of detail namespace
 
@@ -641,11 +1084,13 @@ void scatter( bolt::amp::control& ctl,
               InputIterator2 map,
               OutputIterator result )
 {
-   detail::scatter( ctl,
-                    first1,
-                    last1,
-                    map,
-                    result);
+    detail::scatter_detect_random_access( ctl,
+                                          first1,
+                                          last1,
+                                          map,
+                                          result,
+                                          typename  std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                          typename  std::iterator_traits< InputIterator2 >::iterator_category( ) );
 }
 
 template< typename InputIterator1,
@@ -656,11 +1101,13 @@ void scatter( InputIterator1 first1,
               InputIterator2 map,
               OutputIterator result )
 {
-    scatter( control::getDefault( ),
-             first1,
-             last1,
-             map,
-             result);
+    detail::scatter_detect_random_access( control::getDefault( ),
+                                          first1,
+                                          last1,
+                                          map,
+                                          result,
+                                          typename  std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                          typename  std::iterator_traits< InputIterator2 >::iterator_category( ) );
 }
 
 
@@ -679,13 +1126,13 @@ void scatter_if( bolt::amp::control& ctl,
                  OutputIterator result )
 {
     typedef typename  std::iterator_traits<InputIterator3>::value_type stencilType;
-    detail::scatter_if( ctl,
-                        first1,
-                        last1,
-                        map,
-                        stencil,
-                        result,
-                        bolt::amp::identity <stencilType> ( ));
+    scatter_if( ctl,
+                first1,
+                last1,
+                map,
+                stencil,
+                result,
+                bolt::amp::identity <stencilType> ( ));
 }
 
 template< typename InputIterator1,
@@ -698,12 +1145,13 @@ void scatter_if( InputIterator1 first1,
                  InputIterator3 stencil,
                  OutputIterator result)
 {
-    scatter_if( control::getDefault( ),
-		        first1,
+    typedef typename  std::iterator_traits<InputIterator3>::value_type stencilType;
+    scatter_if( first1,
                 last1,
                 map,
                 stencil,
-                result );
+                result,
+                bolt::amp::identity <stencilType> ( ) );
 }
 
 template< typename InputIterator1,
@@ -719,13 +1167,16 @@ void scatter_if( bolt::amp::control& ctl,
                  OutputIterator result,
                  Predicate pred )
 {
-    detail::scatter_if( ctl,
-                        first1,
-                        last1,
-                        map,
-                        stencil,
-                        result,
-                        pred);
+    detail::scatter_if_detect_random_access( ctl,
+                                             first1,
+                                             last1,
+                                             map,
+                                             stencil,
+                                             result,
+                                             pred,
+                                             typename  std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                             typename  std::iterator_traits< InputIterator2 >::iterator_category( ),
+                                             typename  std::iterator_traits< InputIterator3 >::iterator_category( ) );
 }
 
 template< typename InputIterator1,
@@ -740,13 +1191,16 @@ void scatter_if( InputIterator1 first1,
                  OutputIterator result,
                  Predicate pred )
 {
-    scatter_if( control::getDefault( ),
-                first1,
-                last1,
-                map,
-                stencil,
-                result,
-                pred);
+    detail::scatter_if_detect_random_access( control::getDefault( ),
+                                             first1,
+                                             last1,
+                                             map,
+                                             stencil,
+                                             result,
+                                             pred,
+                                             typename  std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                             typename  std::iterator_traits< InputIterator2 >::iterator_category( ),
+                                             typename  std::iterator_traits< InputIterator3 >::iterator_category( ));
 }
 
 

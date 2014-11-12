@@ -482,9 +482,6 @@ namespace cl
             {
                 itLowerBound->second.inUse = true;
                 buffPointer buffPtr( &(itLowerBound->second.buffBuff), UnlockBuffer( *this, itLowerBound ) );
-				::cl::Buffer &tmp = *buffPtr;
-				if( host_ptr!= NULL)
-					m_commandQueue.enqueueWriteBuffer(tmp,false,0,reqSize,host_ptr);
                 return buffPtr;
             }
 

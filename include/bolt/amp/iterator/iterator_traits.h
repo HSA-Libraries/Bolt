@@ -28,7 +28,6 @@
 namespace bolt {
 namespace amp {
 
-
     template< typename iterator >
     struct iterator_traits
     {
@@ -59,14 +58,11 @@ namespace amp {
         typedef const T* pointer;
         typedef const T& reference;
     };
-	
-     struct fancy_iterator_tag: public std::random_access_iterator_tag
+
+    struct fancy_iterator_tag : public std::random_access_iterator_tag
     {
-        
     };
 
-	
-	
 }
 };
 

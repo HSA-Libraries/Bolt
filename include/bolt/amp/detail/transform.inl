@@ -34,799 +34,723 @@
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/device_vector.h"
 #include "bolt/amp/iterator/iterator_traits.h"
-#include "bolt/amp/iterator/addressof.h"
 
 #ifdef ENABLE_TBB
     #include "bolt/btbb/transform.h"
 #endif
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace bolt
 {
-namespace amp
-{
-namespace detail
-{
-            
-namespace serial{
-
-
-
-	template<typename InputIterator1, typename InputIterator2, typename Stencil, typename OutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-    binary_transform_if( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,  Stencil& s,  OutputIterator& result,  BinaryFunction& f,  Predicate &p)
+    namespace amp
     {
-            typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-            if (sz == 0)
-                return;
-
-		
-            auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                           ctl, first1);
-            auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                           ctl, first2);
-			auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<Stencil>::iterator_category(), 
-                                                           ctl, s);
-            auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                           ctl, result);
-
-			
-            for(int index=0; index < (int)(sz); index++)
+        namespace detail
+        {
+            namespace serial
             {
-				if(p(mapped_first3_itr[index]))
-                   *(mapped_result_itr + index) = f( *(mapped_first1_itr+index), *(mapped_first2_itr+index) );
-				else
-				   *(mapped_result_itr + index) = *(mapped_first1_itr+index);
+
+                template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+                void binary_transform( const InputIterator1& first1, const InputIterator1& last1,
+                                    const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f)
+                {
+                    size_t sz = (last1 - first1);
+                    if (sz == 0)
+                        return;
+                    for(int index=0; index < (int)(sz); index++)
+                    {
+                        *(result + index) = f( *(first1+index), *(first2+index) );
+                    }
+                }
+
+                template<typename Iterator, typename OutputIterator, typename UnaryFunction>
+                void unary_transform( Iterator& first, Iterator& last,
+                                OutputIterator& result, UnaryFunction& f )
+                {
+                    size_t sz = (last - first);
+                    if (sz == 0)
+                        return;
+                    for(int index=0; index < (int)(sz); index++)
+                    {
+                        *(result + index) = f( *(first+index) );
+                    }
+        
+                    return;
+                }
             }
-          
-            return;
-    }
 
-
-	template<typename InputIterator1, typename InputIterator2, typename Stencil, typename OutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-    binary_transform_if( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,   Stencil& s,  OutputIterator& result,  BinaryFunction& f,  Predicate &p)
-    {
-        size_t sz = (last1 - first1);
-        if (sz == 0)
-            return;
-        for(int index=0; index < (int)(sz); index++)
-        {
-			if(p(s[index]))
-             *(result + index) = f( *(first1+index), *(first2+index) );
-			else
-              *(result + index) = *(first1+index);
-        }
-    }
-
-
-
-    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-    binary_transform( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,  OutputIterator& result,  BinaryFunction& f)
-    {
-            typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-            if (sz == 0)
-                return;
-
-		
-            auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                           ctl, first1);
-            auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                           ctl, first2);
-            auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                           ctl, result);
-
-			
-            for(int index=0; index < (int)(sz); index++)
+           
+            template< typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction >
+            void transform_enqueue( bolt::amp::control &ctl,
+                                    const DVInputIterator1& first1,
+                                    const DVInputIterator1& last1,
+                                    const DVInputIterator2& first2,
+                                    const DVOutputIterator& result,
+                                    const BinaryFunction& f)
             {
-                *(mapped_result_itr + index) = f( *(mapped_first1_itr+index), *(mapped_first2_itr+index) );
+                concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+
+                typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
+                typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
+                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+
+                const int szElements =  static_cast< int >( std::distance( first1, last1 ) );
+
+                const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
+
+                concurrency::extent< 1 > inputExtent(leng);
+
+                try
+                {
+
+                    concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+                    {
+                        int globalId = idx[ 0 ];
+
+                        if( globalId >= szElements)
+                        return;
+
+                        result[globalId] = f(first1[globalId],first2[globalId]);
+                    });
+                }
+
+			    catch(std::exception &e)
+                {
+
+                      std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
+
+                      return;
+                }
+            };
+
+            template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
+            void transform_unary_enqueue(bolt::amp::control &ctl,
+                                         const DVInputIterator& first,
+                                         const DVInputIterator& last,
+                                         const DVOutputIterator& result,
+                                         const UnaryFunction& f)
+            {
+
+               typedef std::iterator_traits< DVInputIterator >::value_type iType;
+               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+
+
+                const int szElements =  static_cast< int >( std::distance( first, last ) );
+                concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+
+                const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
+
+                concurrency::extent< 1 > inputExtent(leng);
+
+                try
+                {
+
+                    concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+                    {
+                        int globalId = idx[ 0 ];
+
+                        if( globalId >= szElements)
+                        return;
+
+                        result[globalId] = f(first[globalId]);
+                    });
+                }
+
+			    catch(std::exception &e)
+                {
+
+                      std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
+
+                      return;
+                }
             }
-          
-            return;
-    }
 
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+             void transform_pick_iterator(bolt::amp::control &ctl,
+              const InputIterator1& first1,
+              const InputIterator1& last1,
+              const InputIterator2& first2,
+              const OutputIterator& result,
+              const BinaryFunction& f,
+              bolt::amp::fancy_iterator_tag,
+              bolt::amp::device_vector_tag)
+            {
+                typedef std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef std::iterator_traits<InputIterator2>::value_type iType2;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
+                int sz = static_cast<int>(last1 - first1);
+                if (sz == 0)
+                  return;
+                // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if (runMode == bolt::amp::control::SerialCpu)
+                {
+                  serial::binary_transform(first1, last1, first2, result, f);
+                  return;
+                }
+                else if (runMode == bolt::amp::control::MultiCoreCpu)
+                {
+#if defined( ENABLE_TBB )
 
-	template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-    binary_transform( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,  OutputIterator& result,  BinaryFunction& f)
-    {
-        size_t sz = (last1 - first1);
-        if (sz == 0)
-            return;
-        for(int index=0; index < (int)(sz); index++)
-        {
-            *(result + index) = f( *(first1+index), *(first2+index) );
-        }
-    }
-
-
-
-    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
-	typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-    unary_transform( bolt::amp::control &ctl, Iterator& first, Iterator& last,
-                    OutputIterator& result, UnaryFunction& f )
-    {
-        size_t sz = (last - first);
-        if (sz == 0)
-            return;
-        for(int index=0; index < (int)(sz); index++)
-        {
-            *(result + index) = f( *(first+index) );
-        }
-
-        return;
-    }
-
-	template<typename Iterator, typename OutputIterator, typename UnaryFunction>
-	typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-    unary_transform( bolt::amp::control &ctl, Iterator& first, Iterator& last,
-                    OutputIterator& result, UnaryFunction& f )
-    {
-        size_t sz = (last - first);
-        if (sz == 0)
-            return;
-     
-		auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<Iterator>::iterator_category(), 
-                                                        ctl, first);
-        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category() , 
-                                                        ctl, result);
-
-
-        for(int index=0; index < (int)(sz); index++)
-        {
-            *(mapped_result_itr + index) = f( *(mapped_first_itr+index) );
-        }
-       
-        return ;
-    }
-
-
-}//end of namespace serial
-
-#ifdef ENABLE_TBB
-namespace btbb{
-
-
-	
-	template<typename InputIterator1, typename InputIterator2, typename Stencil, typename OutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-    binary_transform_if( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,  Stencil& s,  OutputIterator& result,  BinaryFunction& f,  Predicate &p)
-    {
-            typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-            if (sz == 0)
-                return;
-
-		
-            auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                           ctl, first1);
-            auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                           ctl, first2);
-			auto mapped_first3_itr = create_mapped_iterator(typename std::iterator_traits<Stencil>::iterator_category(), 
-                                                           ctl, s);
-            auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                           ctl, result);
-
-			
-            bolt::btbb::transform_if(mapped_first1_itr, mapped_first1_itr+(int)sz, mapped_first2_itr,mapped_first3_itr, mapped_result_itr, f, p);
-          
-            return;
-    }
-
-
-	template<typename InputIterator1, typename InputIterator2, typename Stencil, typename OutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                           >::value
-                           >::type
-    binary_transform_if( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,   Stencil& s,  OutputIterator& result,  BinaryFunction& f,  Predicate &p)
-    {
-        bolt::btbb::transform_if(first1, last1, first2, s, result, f, p);
-    }
-
-
-
-    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-	typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                                     >::value
-                       >::type
-    binary_transform( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,  OutputIterator& result,  BinaryFunction& f)
-    {
-        typename std::iterator_traits<InputIterator1>::difference_type sz = (last1 - first1);
-        if (sz == 0)
-            return;
-
-        auto mapped_first1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
-                                                           ctl, first1);
-        auto mapped_first2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
-                                                           ctl, first2);
-        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                           ctl, result);
-
-
-        bolt::btbb::transform(mapped_first1_itr, mapped_first1_itr+(int)sz, mapped_first2_itr, mapped_result_itr, f);
-
-        return;
-    }
-
-	template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-	typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                       >::type
-    binary_transform( bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                         InputIterator2& first2,  OutputIterator& result,  BinaryFunction& f)
-    {
-        bolt::btbb::transform(first1, last1, first2, result, f);
-    }
-
-
-    template<typename Iterator, typename OutputIterator, typename UnaryFunction>
-	typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                        bolt::amp::device_vector_tag
-                                     >::value
-                       >::type
-    unary_transform( bolt::amp::control &ctl, Iterator& first, Iterator& last,
-                    OutputIterator& result, UnaryFunction& f )
-    {
-        typename std::iterator_traits<Iterator>::difference_type sz = (last - first);
-        if (sz == 0)
-            return;
-
-
-		auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<Iterator>::iterator_category(), 
-                                                        ctl, first);
-        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
-                                                        ctl, result);
-
-
-        bolt::btbb::transform(mapped_first_itr, mapped_first_itr+(int)sz,  mapped_result_itr, f);
-
-        return;
-    }
-
-	template<typename Iterator, typename OutputIterator, typename UnaryFunction>
-	typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                       >::type
-    unary_transform( bolt::amp::control &ctl, Iterator& first, Iterator& last,
-                    OutputIterator& result, UnaryFunction& f )
-    {
-        bolt::btbb::transform(first, last, result, f);
-    }
-
-}//end of namespace btbb
+                  bolt::btbb::transform(first1, last1, first2, result, f);
+#else
+                  throw std::exception("The MultiCoreCpu version of transform is not enabled to be built.");
 #endif
+                  return;
+                }
+                else
+                {
+                  // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                  transform_enqueue(ctl, first1, last1, first2, result, f);
+                }
+              }
 
-namespace amp{
-
-    /*! \brief This template function overload is used strictly for device_vector and AMP implementations. 
-        \detail 
-    */
-    template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< DVOutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-    binary_transform( ::bolt::amp::control &ctl,  DVInputIterator1 first1,  DVInputIterator1 last1,
-                       DVInputIterator2 first2,  DVOutputIterator& result,  BinaryFunction& f)
-           
-    {
-        concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-
-        typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
-        typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
-        typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-
-        const int szElements =  static_cast< int >( std::distance( first1, last1 ) );
-
-        const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
-
-        concurrency::extent< 1 > inputExtent(leng);
-
-        try
-        {
-
-            concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+             void transform_pick_iterator(bolt::amp::control &ctl,
+              const InputIterator1& first1,
+              const InputIterator1& last1,
+              const InputIterator2& first2,
+              const OutputIterator& result,
+              const BinaryFunction& f,
+              bolt::amp::device_vector_tag,
+              bolt::amp::fancy_iterator_tag)
             {
-                int globalId = idx[ 0 ];
+                typedef std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef std::iterator_traits<InputIterator2>::value_type iType2;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
+                int sz = static_cast<int>(last1 - first1);
+                if (sz == 0)
+                  return;
+                // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if (runMode == bolt::amp::control::SerialCpu)
+                {
+                   bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                   bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-                if( globalId >= szElements)
-                return;
+#if defined( _WIN32 )
 
-                result[globalId] = f(first1[globalId],first2[globalId]);
-            });
-        }
-
-		catch(std::exception &e)
-        {
-
-              std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
-
-              return;
-        }
-    }
-
-
-
-
-	/*! \brief This template function overload is used strictly std random access vectors and AMP implementations. 
-        \detail 
-    */
-    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                           >::type
-    binary_transform( ::bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                       InputIterator2& first2,  OutputIterator& result,  BinaryFunction& f)
-    {
-
-        int sz = static_cast<int>(last1 - first1);
-
-        typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
-
-		// Use host pointers memory since these arrays are only read once - no benefit to copying.
-        // Map the input iterator to a device_vector
-
-		auto dvInput1_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator1 >::iterator_category( ), first1, sz, false, ctl );
-        auto dvInput2_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator2 >::iterator_category( ), first2, sz, false, ctl);
-     
-
-        // Map the output iterator to a device_vector
-        device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
-
-		amp::binary_transform( ctl, dvInput1_itr, dvInput1_itr+sz, dvInput2_itr, dvOutput.begin(), f );
-
-        // This should immediately map/unmap the buffer
-        dvOutput.data( );
-		return;
-
-    }
-
-
-	template<typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction>
-    typename std::enable_if< std::is_same< typename std::iterator_traits< DVOutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                                     >::value
-                       >::type
-    unary_transform( ::bolt::amp::control &ctl,  DVInputIterator first,  DVInputIterator last,
-     DVOutputIterator& result,  UnaryFunction& f)
-    {
-          
-        typedef std::iterator_traits< DVInputIterator >::value_type iType;
-        typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-
-
-        const int szElements =  static_cast< int >( std::distance( first, last ) );
-        concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-
-        const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
-
-        concurrency::extent< 1 > inputExtent(leng);
-
-        try
-        {
-
-            concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
-            {
-                int globalId = idx[ 0 ];
-
-                if( globalId >= szElements)
-                return;
-
-                result[globalId] = f(first[globalId]);
-            });
-        }
-
-		catch(std::exception &e)
-        {
-
-               std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
-
-               return;
-        }
-    }
-
-
-	/*! \brief This template function overload is used strictly std random access vectors and AMP implementations. 
-        \detail 
-    */
-    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                           >::type
-    unary_transform( ::bolt::amp::control &ctl,  InputIterator& first,  InputIterator& last,
-     OutputIterator& result,  UnaryFunction& f)
-    {
-        int sz = static_cast<int>(last - first);
-        if (sz == 0)
-            return;
-        typedef typename std::iterator_traits<InputIterator>::value_type  iType;
-        typedef typename std::iterator_traits<OutputIterator>::value_type oType;   
-
-		auto dvInput_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator >::iterator_category( ), first, sz, false, ctl );
-        device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
-
-		amp::unary_transform(ctl, dvInput_itr, dvInput_itr+sz, dvOutput.begin(), f);
-
-		dvOutput.data( );
-		return;
-
-    }
-
-
-	
-    /*! \brief This template function overload is used strictly for device_vector and AMP implementations. 
-        \detail 
-    */
-    template<typename DVInputIterator1, typename DVInputIterator2, typename DVInputIterator3, typename DVOutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< DVOutputIterator >::iterator_category ,
-                                       bolt::amp::device_vector_tag
-                           >::value
-                           >::type
-    binary_transform_if( ::bolt::amp::control &ctl,  DVInputIterator1 first1,   DVInputIterator1 last1,
-                        DVInputIterator2 first2,   DVInputIterator3 stencil, DVOutputIterator& result,  BinaryFunction& f,  Predicate  pred)
-           
-    {
-
-		concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-
-        typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
-        typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
-		typedef std::iterator_traits< DVInputIterator3 >::value_type iType3;
-        typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-
-        const int szElements =  static_cast< int >( std::distance( first1, last1 ) );
-
-        const unsigned int leng =  szElements + TRANSFORM_WAVEFRNT_SIZE - (szElements % TRANSFORM_WAVEFRNT_SIZE);
-
-        concurrency::extent< 1 > inputExtent(leng);
-
-        try
-        {
-
-            concurrency::parallel_for_each(av,  inputExtent, [=](concurrency::index<1> idx) restrict(amp)
-            {
-                int globalId = idx[ 0 ];
-
-                if( globalId >= szElements)
+                  std::transform( &firstPtr[ first1.m_Index ], &firstPtr[first1.m_Index +  sz ], first2,
+                  stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
+#else
+                   std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ first1.m_Index + sz ],
+                                    first2, &resPtr[ result.m_Index ], f );
+#endif
                    return;
-
-				if(pred(stencil[globalId]))
-                     result[globalId] = f(first1[globalId],first2[globalId]);
-				else
-					 result[globalId] = first1[globalId];
-            });
-        }
-
-		catch(std::exception &e)
-        {
-
-              std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
-
-              return;
-        }
-
-
-
-
-		return;
-
-    }
-
-
-
-
-	/*! \brief This template function overload is used strictly std random access vectors and AMP implementations. 
-        \detail 
-    */
-    template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                           >::type
-    binary_transform_if( ::bolt::amp::control &ctl,  InputIterator1& first1,  InputIterator1& last1,
-                        InputIterator2& first2,  InputIterator3& stencil,  OutputIterator& result,  BinaryFunction& f,  Predicate  pred)
-    {
-
-        int sz = static_cast<int>(last1 - first1);
-
-        typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
-
-		// Use host pointers memory since these arrays are only read once - no benefit to copying.
-        // Map the input iterator to a device_vector
-
-		auto dvInput1_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator1 >::iterator_category( ), first1, sz, false, ctl );
-		auto dvInput2_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator2 >::iterator_category( ), first2, sz, false, ctl );
-		auto dvInput3_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator3 >::iterator_category( ), stencil, sz, false, ctl );
-        device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
-
-        amp::binary_transform_if( ctl, dvInput1_itr, dvInput1_itr + sz, dvInput2_itr, dvInput3_itr, dvOutput.begin(), f, pred  );
-
-        // This should immediately map/unmap the buffer
-        dvOutput.data( );
-		return;
-
-    }
-
-
-}//namespace amp
-
-
-	/*! \brief This template function overload is used strictly for device vectors and std random access vectors. 
-        \detail Here we branch out into the SerialCpu, MultiCore TBB or The AMP code paths. 
-    */
-    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-    typename std::enable_if< 
-             !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value) 
-                           >::type
-    binary_transform(::bolt::amp::control& ctl,  InputIterator1& first1,  InputIterator1& last1, 
-                      InputIterator2& first2,  OutputIterator& result,  BinaryFunction& f)
-    {
-        const int sz =  static_cast< int >( std::distance( first1, last1 )); 
-        if (sz == 0)
-            return;
-
-        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-        if(runMode == bolt::amp::control::Automatic)
-        {
-           runMode = ctl.getDefaultPathToRun();
-        }
-		
-        if( runMode == bolt::amp::control::SerialCpu )
-        {
-            serial::binary_transform(ctl, first1, last1, first2, result, f );
-            return;
-        }
-        else if( runMode == bolt::amp::control::MultiCoreCpu )
-        {
+                }
+                else if (runMode == bolt::amp::control::MultiCoreCpu)
+                {
 #if defined( ENABLE_TBB )
-            btbb::binary_transform(ctl, first1, last1, first2, result, f);
+                  bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                  bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+                  bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ first1.m_Index + sz ],
+                                        first2, &resPtr[ result.m_Index ],f);
+
 #else
-            throw std::runtime_error( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+                 throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
-            return;
-        }
-        else
-        {
-            amp::binary_transform( ctl, first1, last1, first2, result, f );
-            return;
-        }       
-        return;
-    }
-    
-
-     
-    /*! \brief This template function overload is used to seperate input_iterator and fancy_iterator as 
-        destination iterators from all other iterators
-        \detail This template function overload is used to seperate input_iterator and fancy_iterator as 
-        destination iterators from all other iterators. We enable this overload and should result 
-        in a compilation failure.
-    */
-    // TODO - test the below code path
-    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value 
-                           >::type
-    binary_transform(::bolt::amp::control& ctl,  InputIterator1& first1,  InputIterator1& last1, 
-                      InputIterator2& first2,  OutputIterator& result,  BinaryFunction& f)
-    {
-        //TODO - Shouldn't we support transform for input_iterator_tag also. 
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     std::input_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     bolt::amp::fancy_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
-    }
+                 return;
+                }
+                else
+                {
+                  // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                  transform_enqueue(ctl, first1, last1, first2, result, f);
+                }
+              }
 
 
-
-	 /*! \brief This template function overload is used strictly for device vectors and std random access vectors. 
-        \detail Here we branch out into the SerialCpu, MultiCore TBB or The AMP code paths. 
-    */
-    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-    typename std::enable_if< 
-             !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value) 
-                           >::type
-    unary_transform(::bolt::amp::control& ctl, InputIterator& first,
-         InputIterator& last,  OutputIterator& result,  UnaryFunction& f)
-    {
-        const int sz =  static_cast< int >( std::distance( first, last ) );
-        if (sz == 0)
-            return;
-
-        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-        if(runMode == bolt::amp::control::Automatic)
-        {
-           runMode = ctl.getDefaultPathToRun();
-        }
-		
-        if( runMode == bolt::amp::control::SerialCpu )
-        {
-            serial::unary_transform(ctl, first, last, result, f );
-            return;
-        }
-        else if( runMode == bolt::amp::control::MultiCoreCpu )
-        {
+             /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+                \detail This template is called by the non-detail versions of transform, it already assumes random access
+             *  iterators.  This overload is called strictly for non-device_vector iterators
+            */
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_pick_iterator( bolt::amp::control &ctl,
+                                     const InputIterator1& first1,
+                                     const InputIterator1& last1,
+                                     const InputIterator2& first2,
+                                     const OutputIterator& result,
+                                     const BinaryFunction& f,
+                                     std::random_access_iterator_tag,
+                                     std::random_access_iterator_tag)
+            {
+                typedef std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef std::iterator_traits<InputIterator2>::value_type iType2;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
+                int sz = static_cast<int>(last1 - first1);
+                if (sz == 0)
+                    return;
+                // Use host pointers memory since these arrays are only read once - no benefit to copying.
+               const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+               if( runMode == bolt::amp::control::SerialCpu )
+               {
+                    std::transform( first1, last1, first2, result, f );
+                    return;
+               }
+               else if( runMode == bolt::amp::control::MultiCoreCpu )
+               {
 #if defined( ENABLE_TBB )
-          
-            btbb::unary_transform(ctl, first, last, result, f);
+
+                    bolt::btbb::transform(first1,last1,first2,result,f);
 #else
-            throw std::runtime_error( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
-            return;
-        }
-        else
-        {
-            amp::unary_transform( ctl, first, last, result, f );
-            return;
-        }       
-        return;
-    }
-    
+                    return;
+               }
+               else
+               {
+                    // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                    // Map the input iterator to a device_vector
+                    //device_vector< iType > dvInput( first1, last1, ctl );
+                    device_vector< iType1, concurrency::array_view > dvInput( first1, last1, false, ctl );
+                    //device_vector< iType > dvInput2( first2, sz, true, ctl );
+                    device_vector< iType2, concurrency::array_view > dvInput2( first2, sz, false, ctl );
+                    // Map the output iterator to a device_vector
+                    //device_vector< oType > dvOutput( result, sz, false, ctl );
+                    device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+                    transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), dvOutput.begin( ), f  );
+                    // This should immediately map/unmap the buffer
+                    dvOutput.data( );
+               }
+            }
 
-          
-    /*! \brief This template function overload is used to seperate input_iterator and fancy_iterator as destination iterators from all other iterators
-        \detail This template function overload is used to seperate input_iterator and fancy_iterator as destination iterators from all other iterators. 
-                We enable this overload and should result in a compilation failure.
-    */
-    // TODO - test the below code path
-    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value 
-                           >::type
-    unary_transform(::bolt::amp::control& ctl,  InputIterator& first1,
-         InputIterator& last1,  OutputIterator& result,  UnaryFunction& f)
-    {
-        //TODO - Shouldn't we support transform for input_iterator_tag also. 
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     std::input_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     bolt::amp::fancy_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
-    }
-
-
-
-
-		/*! \brief This template function overload is used strictly for device vectors and std random access vectors. 
-        \detail Here we branch out into the SerialCpu, MultiCore TBB or The AMP code paths. 
-    */
-    template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< 
-             !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value) 
-                           >::type
-    binary_transform_if(::bolt::amp::control& ctl,   InputIterator1& first1,  InputIterator1& last1, 
-                       InputIterator2& first2,  InputIterator3& stencil,  OutputIterator& result,  BinaryFunction& f,  Predicate  pred)
-    {
-        const int sz =  static_cast< int >( std::distance( first1, last1 )); 
-        if (sz == 0)
-            return;
-
-        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-        if(runMode == bolt::amp::control::Automatic)
-        {
-           runMode = ctl.getDefaultPathToRun();
-        }
-		
-        if( runMode == bolt::amp::control::SerialCpu )
-        {
-            serial::binary_transform_if(ctl, first1, last1, first2, stencil, result, f, pred );
-            return;
-        }
-        else if( runMode == bolt::amp::control::MultiCoreCpu )
-        {
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_pick_iterator( bolt::amp::control &ctl,
+                                     const InputIterator1& first1,
+                                     const InputIterator1& last1,
+                                     const InputIterator2& first2,
+                                     const OutputIterator& result,
+                                     const BinaryFunction& f,
+                                     bolt::amp::fancy_iterator_tag,
+                                     std::random_access_iterator_tag)
+            {
+                typedef std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef std::iterator_traits<InputIterator2>::value_type iType2;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
+                int sz = static_cast<int>(last1 - first1);
+                if (sz == 0)
+                    return;
+                // Use host pointers memory since these arrays are only read once - no benefit to copying.
+               const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+               if( runMode == bolt::amp::control::SerialCpu )
+               {
+                    std::transform( first1, last1, first2, result, f );
+                    return;
+               }
+               else if( runMode == bolt::amp::control::MultiCoreCpu )
+               {
 #if defined( ENABLE_TBB )
-            btbb::binary_transform_if(ctl, first1, last1, first2, stencil, result, f, pred);
+
+                    bolt::btbb::transform(first1,last1,first2,result,f);
 #else
-            throw std::runtime_error( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
-            return;
-        }
-        else
-        {
-            amp::binary_transform_if( ctl, first1, last1, first2, stencil, result, f, pred );
-            return;
-        }       
-        return;
-    }
-    
+                    return;
+               }
+               else
+               {
+                    // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                    // Map the input iterator to a device_vector
+                    device_vector< iType2, concurrency::array_view > dvInput2( first2, sz, false, ctl );
+                    // Map the output iterator to a device_vector
+                    device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+                    transform_enqueue( ctl, first1, last1, dvInput2.begin( ), dvOutput.begin( ), f  );
+                    // This should immediately map/unmap the buffer
+                    dvOutput.data( );
+               }
+            }
 
-     
-    /*! \brief This template function overload is used to seperate input_iterator and fancy_iterator as 
-        destination iterators from all other iterators
-        \detail This template function overload is used to seperate input_iterator and fancy_iterator as 
-        destination iterators from all other iterators. We enable this overload and should result 
-        in a compilation failure.
-    */
-    template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
-    typename std::enable_if< 
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::amp::fancy_iterator_tag >::value 
-                           >::type
-    binary_transform_if(::bolt::amp::control& ctl,  InputIterator1& first1, InputIterator1& last1, 
-                      InputIterator2& first2,  InputIterator3& stencil,OutputIterator& result,  BinaryFunction& f,  Predicate  pred)
-    {
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     std::input_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     bolt::amp::fancy_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
-    }
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_pick_iterator( bolt::amp::control &ctl,
+                                     const InputIterator1& first1,
+                                     const InputIterator1& last1,
+                                     const InputIterator2& first2,
+                                     const OutputIterator& result,
+                                     const BinaryFunction& f,
+                                     std::random_access_iterator_tag,
+                                     bolt::amp::fancy_iterator_tag)
+            {
+                typedef std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef std::iterator_traits<InputIterator2>::value_type iType2;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
+                int sz = static_cast<int>(last1 - first1);
+                if (sz == 0)
+                    return;
+                // Use host pointers memory since these arrays are only read once - no benefit to copying.
+               const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+               if( runMode == bolt::amp::control::SerialCpu )
+               {
+                    std::transform( first1, last1, first2, result, f );
+                    return;
+               }
+               else if( runMode == bolt::amp::control::MultiCoreCpu )
+               {
+#if defined( ENABLE_TBB )
+
+                    bolt::btbb::transform(first1,last1,first2,result,f);
+#else
+                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
+#endif
+                    return;
+               }
+               else
+               {
+                    // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                    // Map the input iterator to a device_vector
+                    //device_vector< iType > dvInput( first1, last1, ctl );
+                    device_vector< iType1, concurrency::array_view > dvInput( first1, last1, false, ctl );
+                    // Map the output iterator to a device_vector
+                    device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+                    transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), first2, dvOutput.begin( ), f  );
+                    // This should immediately map/unmap the buffer
+                    dvOutput.data( );
+               }
+            }
 
 
+            // This template is called by the non-detail versions of transform, it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
+            void transform_pick_iterator( bolt::amp::control &ctl,
+                                     const DVInputIterator1& first1,
+                                     const DVInputIterator1& last1,
+                                     const DVInputIterator2& first2,
+                                     const DVOutputIterator& result,
+                                     const BinaryFunction& f,
+                                     bolt::amp::device_vector_tag,
+                                     bolt::amp::device_vector_tag)
+            {
+               typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
+               typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
+               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-}//end of namespace detail
+               int sz = static_cast<int>(std::distance( first1, last1 ));
+               if( sz == 0 )
+                    return;
+
+               const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+
+               if( runMode == bolt::amp::control::SerialCpu )
+               {
+                   bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                   bolt::amp::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
+                   bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+
+#if defined( _WIN32 )
+                  std::transform( &firstPtr[ first1.m_Index ], &firstPtr[first1.m_Index +  sz ], &secPtr[ first2.m_Index ],
+                  stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
+#else
+                   std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ first1.m_Index + sz ], &secPtr[ first2.m_Index ], &resPtr[ result.m_Index ], f );
+#endif
+                   return;
+              }
+              else if( runMode == bolt::amp::control::MultiCoreCpu )
+              {
+
+#if defined( ENABLE_TBB )
+                  bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                  bolt::amp::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
+                  bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+                  bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ first1.m_Index + sz ],&secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f);
+
+#else
+                 throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
+#endif
+                 return;
+              }
+              else
+              {
+                  transform_enqueue( ctl, first1, last1, first2, result, f  );
+              }
+
+            }
+
+
+            /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+                \detail This template is called by the non-detail versions of transform, it already assumes random access
+             *  iterators.  This overload is called strictly for non-device_vector iterators
+            */
+            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+            void transform_unary_pick_iterator( bolt::amp::control &ctl,
+                                           const InputIterator& first,
+                                           const InputIterator& last,
+                                           const OutputIterator& result,
+                                           const UnaryFunction& f,
+                                           std::random_access_iterator_tag)
+            {
+                typedef std::iterator_traits<InputIterator>::value_type iType;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
+                int sz = static_cast<int>(last - first);
+                if (sz == 0)
+                    return;
+                const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+                if( runMode == bolt::amp::control::SerialCpu )
+                {
+                   std::transform( first, last, result, f );
+                   return;
+                }
+                else if( runMode == bolt::amp::control::MultiCoreCpu )
+                {
+#if defined( ENABLE_TBB )
+
+                    bolt::btbb::transform(first, last, result, f);
+
+#else
+                   throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
+#endif
+                  return;
+                }
+                else
+                {
+                   // Use host pointers memory since these arrays are only read once - no benefit to copying.
+
+                   // Map the input iterator to a device_vector
+                   //device_vector< iType > dvInput( first, last, ctl );
+                   device_vector< iType, concurrency::array_view > dvInput( first, last, false, ctl );
+
+                   // Map the output iterator to a device_vector
+                   //device_vector< oType > dvOutput( result, sz, false, ctl );
+                   device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+
+                   transform_unary_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), f );
+
+                   // This should immediately map/unmap the buffer
+                   dvOutput.data( );
+                }
+            }
+
+            // This template is called by the non-detail versions of transform, it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction>
+            void transform_unary_pick_iterator( bolt::amp::control &ctl,
+                                           const DVInputIterator& first,
+                                           const DVInputIterator& last,
+                                           const DVOutputIterator& result,
+                                           const UnaryFunction& f,
+                                           bolt::amp::device_vector_tag)
+            {
+
+              typedef std::iterator_traits< DVInputIterator >::value_type iType;
+              typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+
+              int sz = static_cast<int>(std::distance( first, last ));
+              if( sz == 0 )
+                  return;
+
+              const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+
+              //  TBB does not have an equivalent for two input iterator std::transform
+             if( (runMode == bolt::amp::control::SerialCpu) )
+             {
+                 bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+                 bolt::amp::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
+
+#if defined( _WIN32 )
+
+                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ first.m_Index + sz ],
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
+#else
+                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ first1.m_Index + sz ], &resPtr[ result.m_Index ], f );
+#endif
+                return;
+             }
+             else if( (runMode == bolt::amp::control::MultiCoreCpu) )
+             {
+
+#if defined( ENABLE_TBB )
+                bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+                bolt::amp::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
+
+                bolt::btbb::transform( &firstPtr[ first.m_Index ],  &firstPtr[ first.m_Index  + sz ], &resPtr[ result.m_Index], f);
+#else
+                throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
+#endif
+                return;
+             }
+             else
+             {
+                transform_unary_enqueue( ctl, first, last, result, f);
+             }
+         };
+
+
+         template<typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction>
+         void transform_unary_pick_iterator( bolt::amp::control &ctl,
+                                           const DVInputIterator& first,
+                                           const DVInputIterator& last,
+                                           const DVOutputIterator& result,
+                                           const UnaryFunction& f,
+                                           bolt::amp::fancy_iterator_tag)
+            {
+
+              typedef std::iterator_traits< DVInputIterator >::value_type iType;
+              typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+
+              int sz = std::distance( first, last );
+              if( sz == 0 )
+                  return;
+
+              const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+
+              //  TBB does not have an equivalent for two input iterator std::transform
+             if( (runMode == bolt::amp::control::SerialCpu) )
+             {
+                serial::unary_transform( first, last, result, f );
+                return;
+             }
+             else if( (runMode == bolt::amp::control::MultiCoreCpu) )
+             {
+
+#if defined( ENABLE_TBB )
+
+                bolt::btbb::transform( first, last, result, f);
+#else
+                throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
+#endif
+                return;
+             }
+             else
+             {
+                transform_unary_enqueue( ctl, first, last, result, f);
+             }
+         };
+
+
+             // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::input_iterator_tag,
+                                                 std::input_iterator_tag)
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
+
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::input_iterator_tag,
+                                                 std::random_access_iterator_tag)
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
+
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::random_access_iterator_tag,
+                                                 std::input_iterator_tag)
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
+
+
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::random_access_iterator_tag,
+                                                 std::random_access_iterator_tag)
+            {
+                transform_pick_iterator( ctl, first1, last1, first2, result, f,
+                                         std::iterator_traits< InputIterator1 >::iterator_category(),
+                                         std::iterator_traits< InputIterator2 >::iterator_category());
+            }
+
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access(bolt::amp::control& ctl,
+              const InputIterator1& first1,
+              const InputIterator1& last1,
+              const InputIterator2& first2,
+              const OutputIterator& result,
+              const BinaryFunction& f,
+              bolt::amp::fancy_iterator_tag,
+              std::random_access_iterator_tag)
+            {
+              transform_pick_iterator( ctl, first1, last1, first2, result, f,
+                                       std::iterator_traits< InputIterator1 >::iterator_category(),
+                                       std::iterator_traits< InputIterator2 >::iterator_category());
+            }
+
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access(bolt::amp::control& ctl,
+              const InputIterator1& first1,
+              const InputIterator1& last1,
+              const InputIterator2& first2,
+              const OutputIterator& result,
+              const BinaryFunction& f,
+              std::random_access_iterator_tag,
+              bolt::amp::fancy_iterator_tag)
+            {
+              transform_pick_iterator( ctl, first1, last1, first2, result, f,
+                                       std::iterator_traits< InputIterator1 >::iterator_category(),
+                                       std::iterator_traits< InputIterator2 >::iterator_category());
+            }
+
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+            void transform_unary_detect_random_access( bolt::amp::control& ctl,
+                                                       const InputIterator& first1,
+                                                       const InputIterator& last1,
+                                                       const OutputIterator& result,
+                                                       const UnaryFunction& f,
+                                                       std::input_iterator_tag )
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
+
+            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+            void transform_unary_detect_random_access( bolt::amp::control& ctl,
+                                                       const InputIterator& first1,
+                                                       const InputIterator& last1,
+                                                       const OutputIterator& result,
+                                                       const UnaryFunction& f,
+                                                       std::random_access_iterator_tag )
+            {
+                transform_unary_pick_iterator( ctl, first1, last1, result, f,
+                                               std::iterator_traits< InputIterator >::iterator_category() );
+            }
+
+            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+            void transform_unary_detect_random_access( bolt::amp::control& ctl,
+                                                       const InputIterator& first1,
+                                                       const InputIterator& last1,
+                                                       const OutputIterator& result,
+                                                       const UnaryFunction& f,
+                                                       bolt::amp::fancy_iterator_tag )
+            {
+                transform_unary_pick_iterator( ctl, first1, last1, result, f,
+                                               std::iterator_traits< InputIterator >::iterator_category() );
+            }
+
+
+        };//end of namespace detail
 
 
         //////////////////////////////////////////
@@ -841,10 +765,15 @@ namespace amp{
                        OutputIterator result,
                        BinaryFunction f )
         {
-			  using bolt::amp::detail::binary_transform;
-              binary_transform( ctl, first1, last1, first2, result, f );
-
-        }
+            detail::transform_detect_random_access( ctl,
+                                                   first1,
+                                                   last1,
+                                                   first2,
+                                                   result,
+                                                   f,
+                                                   std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                                   std::iterator_traits< InputIterator2 >::iterator_category( ));
+        };
 
 
         // default control, two-input transform, std:: iterator
@@ -855,9 +784,15 @@ namespace amp{
                         OutputIterator result,
                         BinaryFunction f )
         {
-              using bolt::amp::transform;
-              transform( control::getDefault(), first1, last1, first2, result, f);
-        }
+            detail::transform_detect_random_access( control::getDefault(),
+                                                    first1,
+                                                    last1,
+                                                    first2,
+                                                    result,
+                                                    f,
+                                                    std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                                    std::iterator_traits< InputIterator2 >::iterator_category( ) );
+        };
 
         // default control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
@@ -867,9 +802,13 @@ namespace amp{
                         OutputIterator result,
                         UnaryFunction f )
         {
-              //using ::bolt::amp::detail::unary_transform;
-              ::bolt::amp::detail::unary_transform( ctl, first1, last1, result, f);
-        }
+            detail::transform_unary_detect_random_access( ctl,
+                                                          first1,
+                                                          last1,
+                                                          result,
+                                                          f,
+                                                          std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
 
         // default control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
@@ -878,156 +817,15 @@ namespace amp{
                         OutputIterator result,
                         UnaryFunction f )
         {
-              using bolt::amp::transform;
-              ::bolt::amp::transform( control::getDefault(), first1, last1, result, f );
-        }
+            detail::transform_unary_detect_random_access( control::getDefault(),
+                                                          first1,
+                                                          last1,
+                                                          result,
+                                                          f,
+                                                          std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
 
-
-		//////////////////////////////////////////
-        //  TransformIf overloads
-        //////////////////////////////////////////
-
-
-
-		template<typename UnaryFunction, typename Predicate, typename iType, typename oType>
-        struct unary_transform_if_functor
-        {
-          __declspec(align(4)) UnaryFunction unary_op;
-          __declspec(align(4)) Predicate pred;
-	    
-          unary_transform_if_functor(UnaryFunction unary_op, Predicate pred)
-            : unary_op(unary_op), pred(pred)
-          {}
-	    
-	    
-          oType operator()(iType &temp) const restrict(amp,cpu)
-          {
-	    	oType res;
-            if(pred(temp))
-                res = unary_op(temp);
-	    	else
-	    		res = temp;
-	    	return res;
-          }
-	    
-        }; // end unary_transform_if_functor
-
-
-		template<typename UnaryFunction, typename Predicate, typename iType, typename oType, typename S>
-        struct unary_transform_if_stencil_functor
-        {
-          __declspec(align(4)) UnaryFunction unary_op;
-          __declspec(align(4)) Predicate pred;
-	    
-          unary_transform_if_stencil_functor(UnaryFunction unary_op, Predicate pred)
-            : unary_op(unary_op), pred(pred)
-          {}
-	    
-	    
-          oType operator()(iType &temp, S &stencil) const restrict(amp,cpu)
-          {
-	    	oType res;
-	    
-	    	if(pred(stencil))
-                res = unary_op(temp);
-	    	else
-	    		res = temp;
-	    	return res;
-	    
-          }
-
-        }; // end unary_transform_if_stencil_functor
-
-
-		template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
-        OutputIterator transform_if( bolt::amp::control& ctl,
-                       InputIterator1 first1,
-                       InputIterator1 last1,
-                       InputIterator2 first2,
-					   InputIterator3 stencil,
-                       OutputIterator result,
-                       BinaryFunction f,
-					   Predicate  	pred)
-        {
-              bolt::amp::detail::binary_transform_if( ctl, first1, last1, first2, stencil, result, f, pred );
-			  return result;
-
-        }
-
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
-        OutputIterator transform_if( InputIterator1 first1,
-                        InputIterator1 last1,
-                        InputIterator2 first2,
-						InputIterator3 stencil, 
-                        OutputIterator result,
-                        BinaryFunction f,
-						Predicate  	pred)
-        {
-              return transform_if( control::getDefault(), first1, last1, first2, stencil, result, f, pred);
-        }
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename UnaryFunction, typename Predicate>
-        OutputIterator transform_if( bolt::amp::control& ctl,
-                        InputIterator first1,
-                        InputIterator last1,
-                        OutputIterator result,
-                        UnaryFunction f,
-						Predicate  	pred)
-        {
-			  typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
-			  typedef typename std::iterator_traits<InputIterator>::value_type  iType;
-		      typedef unary_transform_if_functor<UnaryFunction,Predicate, iType, oType> UnaryTransformIfFunctor;
-
-			  bolt::amp::transform(ctl,
-                     first1,
-                     last1,
-					 result,
-                     UnaryTransformIfFunctor(f, pred));
-			  return result;
-        }
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename UnaryFunction, typename Predicate>
-        OutputIterator transform_if( InputIterator first1,
-                        InputIterator last1,
-                        OutputIterator result,
-                        UnaryFunction f,
-						Predicate  	pred)
-        {
-              return transform_if( control::getDefault(), first1, last1, result, f, pred );
-        }
-
-
-		template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename UnaryFunction, typename Predicate>
-		OutputIterator  transform_if (bolt::amp::control& ctl, InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result, UnaryFunction op, Predicate pred)
-		{
-			 typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
-			 typedef typename std::iterator_traits<InputIterator1>::value_type  iType;
-		     typedef typename std::iterator_traits<InputIterator2>::value_type  sType;
-		     typedef unary_transform_if_stencil_functor<UnaryFunction,Predicate, iType, oType, sType> UnaryTransformIfFunctor;
-
-			 bolt::amp::transform(ctl,
-                     first,
-                     last,
-					 stencil,
-					 result,
-                     UnaryTransformIfFunctor(op, pred));
-			 return result;
-		}
-
-		template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename UnaryFunction, typename Predicate>
-		OutputIterator  transform_if (InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result, UnaryFunction op, Predicate pred)
-		{
-			 return transform_if (control::getDefault(), first, last, stencil, result, op, pred);
-		}
-
-
-
-
-    } //end of namespace amp
-} //end of namespace bolt
+    }; //end of namespace amp
+}; //end of namespace bolt
 
 #endif // AMP_TRANSFORM_INL

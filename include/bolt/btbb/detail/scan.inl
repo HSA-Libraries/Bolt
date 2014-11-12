@@ -157,7 +157,7 @@ OutputIterator
                return result + numElements;
     }
 
-   // }
+    }
 
 
 
@@ -177,8 +177,7 @@ OutputIterator
 		exclusive_scan( first, last, result, iType());
     }
 
-}//end of btbb
+}
 
-}//end of bolt
 
 #endif // BTBB_SCAN_INL

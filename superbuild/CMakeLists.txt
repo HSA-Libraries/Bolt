@@ -1,19 +1,19 @@
-############################################################################
-#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+############################################################################                                                                                     
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
+#                                                                                    
+#   Licensed under the Apache License, Version 2.0 (the "License");   
+#   you may not use this file except in compliance with the License.                 
+#   You may obtain a copy of the License at                                          
+#                                                                                    
+#       http://www.apache.org/licenses/LICENSE-2.0                      
+#                                                                                    
+#   Unless required by applicable law or agreed to in writing, software              
+#   distributed under the License is distributed on an "AS IS" BASIS,              
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+#   See the License for the specific language governing permissions and              
+#   limitations under the License.                                                   
 
-############################################################################
+############################################################################                                                                                     
 
 # We require 2.8.10 because of the added support to download from https URL's
 cmake_minimum_required( VERSION 2.8.10 )
@@ -32,7 +32,7 @@ if( NOT DEFINED Bolt.SuperBuild_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_MINOR )
-    set( Bolt.SuperBuild_VERSION_MINOR 3 )
+    set( Bolt.SuperBuild_VERSION_MINOR 2 )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_PATCH )
@@ -74,12 +74,12 @@ else()
 endif()
 
 # Various options below on configuring the build, and how to generate the solution files
-# Only Visual Studio may build Bolt with C++AMP as of now
+# Only Visual Studio may build Bolt with C++AMP as of now 
 if( MSVC )
   set(Bolt_AMP_default ON)
 else()
   set(Bolt_AMP_default OFF)
-endif()
+endif() 
 
 
 option( BUILD_Boost "Install and Compile Boost as an external dependency" ON )
@@ -112,7 +112,7 @@ endif( )
 # If the user selects, download, uncompress, and setup Doxygen
 if( BUILD_Doxygen )
     message( STATUS "Setting up Doxygen external..." )
-    include( ExternalDoxygen )
+    include( ExternalDoxygen )  
     set( DOXYGEN_ROOT ${binary_dir} )
     message( STATUS "DOXYGEN_ROOT configured as: " ${DOXYGEN_ROOT} )
     list( APPEND Bolt.Dependencies Doxygen )
@@ -139,7 +139,7 @@ if( BUILD_TBB )
     #    message( STATUS "TBB is found installed in the path:" ${TBB_ROOT} )
     #    list( APPEND Bolt.Dependencies TBB )
         list( APPEND Bolt.Cmake.Args -DBUILD_TBB=TRUE )
-    #else ( )
+    #else ( ) 
     #    message( STATUS "Setting up TBB external..." )
     #    include( ExternalTBB )
     #    message( STATUS "TBB_ROOT configured as: " ${TBB_ROOT} )
@@ -151,14 +151,14 @@ endif( )
 # If the user selects, download, uncompress, and setup Doxygen
 if( BUILD_Bolt )
     message( STATUS "Setting up Bolt external..." )
-
+    
     # Below is a fancy CMake command to download, build and install Boost on the users computer
     ExternalProject_Add(
         Bolt
         DEPENDS ${Bolt.Dependencies}
         SOURCE_DIR ${PROJECT_SOURCE_DIR}/..
         BINARY_DIR Bolt-build
-        CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL} -DBUILD_examples=${BUILD_Examples} -DBUILD_StripSymbols=${BUILD_StripSymbols} -DBolt_VERSION_MAJOR=${Bolt.SuperBuild_VERSION_MAJOR} -DBolt_VERSION_MINOR=${Bolt.SuperBuild_VERSION_MINOR} -DBolt_VERSION_PATCH=${Bolt.SuperBuild_VERSION_PATCH}
+        CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL} -DBUILD_examples=${BUILD_Examples} -DBUILD_StripSymbols=${BUILD_StripSymbols} -DBolt_VERSION_MAJOR=${Bolt.SuperBuild_VERSION_MAJOR} -DBolt_VERSION_MINOR=${Bolt.SuperBuild_VERSION_MINOR} -DBolt_VERSION_PATCH=${Bolt.SuperBuild_VERSION_PATCH} 
         INSTALL_COMMAND ""
     )
 endif( )

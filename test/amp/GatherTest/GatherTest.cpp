@@ -27,11 +27,8 @@
 #include <boost/iterator/permutation_iterator.hpp>
 #include "common/test_common.h"
 #include <array>
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 0
-
-#define TEMPORARY_DISABLE_STD_DV_TEST_CASES 0
-
 
 //BOLT_FUNCTOR( is_even,
 struct is_even{
@@ -1694,7 +1691,6 @@ TEST( HostMemory_int, MulticoreGather_Fancy_input )
     EXPECT_EQ(exp_result, result);
 }
 
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_int, Gather_device_Input )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -1767,7 +1763,6 @@ TEST( HostMemory_int, MulticoreGather_device_Input )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
-#endif
 
 TEST(DeviceMemory_Int, Gather )
 {
@@ -1985,7 +1980,6 @@ TEST(DeviceMemory_Int, MulticoreGather_Fancy_Input )
 
 }
 
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( DeviceMemory_Int, Gather_StdInput_Stdresult )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2055,7 +2049,6 @@ TEST( DeviceMemory_Int, MulticoreGather_StdInput_Stdresult )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
      EXPECT_EQ(exp_result, result);
 }
-#endif
 
 TEST_P(HostMemory_IntStdVector, Gather)
 {
@@ -2443,7 +2436,6 @@ TEST( HostMemory_Float, MulticoreGather_Fancy_input )
     EXPECT_EQ(exp_result, result);
 }
 
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_Float, Gather_device_Input )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2516,7 +2508,6 @@ TEST( HostMemory_Float, MulticoreGather_device_Input )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
-#endif
 
 TEST(DeviceMemory_Float, Gather )
 {
@@ -2722,7 +2713,6 @@ TEST(DeviceMemory_Float, MulticoreGather_Fancy_Input )
     //cmpArrays( exp_result, result );
 }
 
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( DeviceMemory_Float, Gather_StdInput_Stdresult )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -2792,7 +2782,7 @@ TEST( DeviceMemory_Float, MulticoreGather_StdInput_Stdresult )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
      EXPECT_EQ(exp_result, result);
 }
-#endif
+
 
 #if(TEST_DOUBLE == 1)
 TEST( HostMemory_Double, Gather )
@@ -2999,7 +2989,6 @@ TEST( HostMemory_Double, MulticoreGather_Fancy_input )
     EXPECT_EQ(exp_result, result);
 }
 
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( HostMemory_Double, Gather_device_Input )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -3069,7 +3058,6 @@ TEST( HostMemory_Double, MulticoreGather_device_Input )
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
-#endif
 
 TEST(DeviceMemory_Double, Gather )
 {
@@ -3275,7 +3263,6 @@ TEST(DeviceMemory_Double, MulticoreGather_Fancy_Input )
     cmpArrays( exp_result, result );
 }
 
-#if(TEMPORARY_DISABLE_STD_DV_TEST_CASES == 1)
 TEST( DeviceMemory_Double, Gather_StdInput_Stdresult )
 {
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
@@ -3346,7 +3333,7 @@ TEST( DeviceMemory_Double, MulticoreGather_StdInput_Stdresult )
      EXPECT_EQ(exp_result, result);
 }
 #endif
-#endif
+
 
 TEST_P(HostMemory_UDDTestInt2, SerialGather_IfPredicate)
 {

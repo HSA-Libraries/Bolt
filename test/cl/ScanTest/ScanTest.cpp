@@ -28,8 +28,6 @@
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
 
-#include "bolt/BoltLog.h"
-
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
@@ -38,7 +36,7 @@ namespace po = boost::program_options;
 
 #define SERIAL_TBB_OFFSET 0
 
-#define OPENCL_CPU_PATH 0
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
@@ -3185,24 +3183,6 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 //here
 
 
-TEST (sanity_exclusive_scan__simple_epr377210, withIntWiCtrl)
-{
-	int myStdArray[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-	int myBoltArray[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-	
-	//TAKE_AMP_CONTROL_PATH
-	bolt::cl::control& my_amp_ctl= bolt::cl::control::getDefault();
-	my_amp_ctl.setForceRunMode(bolt::cl::control::Automatic);
-	
-	bolt::cl::exclusive_scan(my_amp_ctl, myBoltArray, myBoltArray + 10, myBoltArray);
-	::std::partial_sum(myStdArray, myStdArray + 10, myStdArray);
-
-	for (int i = 1; i < 10; i++){
-	   EXPECT_EQ (myStdArray[i-1], myBoltArray[i]);
-	}
-}
-
-
 /* TEST(Scan, cpuQueue)
 {
     MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
@@ -3365,21 +3345,11 @@ int _tmain(int argc, _TCHAR* argv[])
     std::vector< cl::Device > devices;
     bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
 
-    
-
-#if(OPENCL_CPU_PATH == 1)
-	MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0, 1);
-	bolt::cl::control& myControl = bolt::cl::control(oclcpu._queue); 
-	myControl.setWaitMode( bolt::cl::control::NiceWait );
-    myControl.setForceRunMode( bolt::cl::control::OpenCL );
-    std::string strDeviceName =   myControl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
-#else
-	cl::Context myContext( devices.at( userDevice ) );
+    cl::Context myContext( devices.at( userDevice ) );
     cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
     bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
-	std::string strDeviceName =  bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
-#endif
 
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
