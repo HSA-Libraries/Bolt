@@ -443,8 +443,7 @@ namespace cl{
                 {
 #ifdef ENABLE_TBB
                     #if defined(BOLT_DEBUG_LOG)
-                    dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"
-						::Transform_Reduce::MULTICORE_CPU");
+                    dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Reduce::MULTICORE_CPU");
                     #endif
 				      
 				    return  btbb::transform_reduce( ctl, first, last, transform_op, init, reduce_op, user_code,
@@ -457,8 +456,7 @@ namespace cl{
 #endif
                 }
                 #if defined(BOLT_DEBUG_LOG)
-                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_OPENCL_GPU,
-					"::Transform_Reduce::OPENCL_GPU");
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Transform_Reduce::OPENCL_GPU");
                 #endif
                 return  cl::transform_reduce( ctl, first, last, transform_op, init, reduce_op, user_code,
 					typename std::iterator_traits<InputIterator>::iterator_category() );

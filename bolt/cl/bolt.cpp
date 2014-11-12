@@ -48,6 +48,7 @@
 #include "bolt/sort_kernels.hpp"
 #include "bolt/sort_uint_kernels.hpp"
 #include "bolt/sort_int_kernels.hpp"
+#include "bolt/sort_float_kernels.hpp"
 #include "bolt/sort_common_kernels.hpp"
 #include "bolt/sort_by_key_kernels.hpp"
 #include "bolt/sort_by_key_int_kernels.hpp"

@@ -183,6 +183,49 @@ namespace bolt
                        InputIterator2 first2,
                        OutputIterator result,
                        BinaryFunction op);
+
+
+
+
+
+
+		//Transform If Variants...
+
+
+		template<typename InputIterator, typename OutputIterator, typename UnaryFunction, typename Predicate>
+        OutputIterator transform_if(control &ctl,
+                       InputIterator first,
+                       InputIterator last,
+                       OutputIterator result,
+                       UnaryFunction op,
+					   Predicate  	pred );
+
+        template<typename InputIterator, typename OutputIterator, typename UnaryFunction, typename Predicate>
+        OutputIterator transform_if(InputIterator first,
+                       InputIterator last,
+                       OutputIterator result,
+                       UnaryFunction op,
+					   Predicate  	pred);
+
+		template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename UnaryFunction, typename Predicate>
+		OutputIterator  transform_if (InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result, UnaryFunction op, Predicate pred); 
+
+
+		template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename UnaryFunction, typename Predicate>
+		OutputIterator  transform_if (control &ctl, InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result, UnaryFunction op, Predicate pred); 
+
+
+
+		template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
+		OutputIterator  transform_if (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2,
+                       InputIterator3 stencil, OutputIterator result, BinaryFunction op, Predicate pred); 
+
+		template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
+		OutputIterator  transform_if (control &ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 first2,
+                       InputIterator3 stencil, OutputIterator result, BinaryFunction op, Predicate pred); 
+
+
+
      /*!   \}  */
 
 	}//amp namespace ends

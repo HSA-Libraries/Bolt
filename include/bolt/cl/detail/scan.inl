@@ -59,12 +59,12 @@
 
 #ifdef BOLT_PROFILER_ENABLED
 #define BOLT_PROFILER_START_TRIAL \
-    aProfiler.setName("Scan"); \
-    aProfiler.startTrial(); \
-    aProfiler.setStepName("Origin"); \
-    aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+	aProfiler.setName("Scan"); \
+	aProfiler.startTrial(); \
+	aProfiler.setStepName("Origin"); \
+	aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #define BOLT_PROFILER_STOP_TRIAL \
-    aProfiler.stopTrial();
+	aProfiler.stopTrial();
 #else
 #define BOLT_PROFILER_START_TRIAL
 #define BOLT_PROFILER_STOP_TRIAL
@@ -85,8 +85,8 @@ namespace detail
 			typename T,
 			typename BinaryFunction >
 			typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::cl::device_vector_tag
-                                     >::value), void
+									   bolt::cl::device_vector_tag
+									 >::value), void
 			>::type
 
 			scan(
@@ -164,10 +164,10 @@ namespace detail
 			typename T,
 			typename BinaryFunction >
 			typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value), void
-            >::type
-            scan(
+									   std::random_access_iterator_tag
+									 >::value), void
+			>::type
+			scan(
 			::bolt::cl::control &ctl, 
 			const InputIterator& first,
 			const InputIterator& last,
@@ -225,8 +225,8 @@ namespace detail
 			typename T,
 			typename BinaryFunction >
 			typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       bolt::cl::device_vector_tag
-                                     >::value), void
+									   bolt::cl::device_vector_tag
+									 >::value), void
 			>::type
 
 			scan(
@@ -282,9 +282,9 @@ namespace detail
 			typename T,
 			typename BinaryFunction >
 			typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value), void
-           >::type
+									   std::random_access_iterator_tag
+									 >::value), void
+		   >::type
 		   scan(
 		   ::bolt::cl::control &ctl, 
 			const InputIterator& first,
@@ -293,7 +293,7 @@ namespace detail
 			const T& init,
 			const bool& inclusive,
 			const BinaryFunction& binary_op)
-	        {
+			{
 				int sz = static_cast<int>( std::distance (first, last));
 				if (sz == 0)
 					return;
@@ -358,8 +358,7 @@ namespace detail
 					"local "  + typeNames[scan_iIterType] + "::value_type * lds,\n"
 					"global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
 					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray,\n"
-					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray1,\n"
-					"int exclusive\n"
+					"const uint load_per_wg\n"
 					");\n\n"
 
 					"// Template specialization\n"
@@ -383,11 +382,10 @@ namespace detail
 					"global " + typeNames[scan_iValueType] + "* input,\n"
 					""        + typeNames[scan_iIterType] + " input_iter,\n"
 					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray,\n"
-					"global " + typeNames[scan_iIterType] + "::value_type * preSumArray1,\n"
 					"local  " + typeNames[scan_iIterType] + "::value_type * lds,\n"
 					"const uint vecSize,\n"
+					"const uint load_per_wg,\n"
 					"global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
-					"int exclusive,\n"
 					 ""        + typeNames[scan_initType] + " identity\n"
 					");\n\n";
 		#endif
@@ -422,10 +420,7 @@ namespace detail
 			#endif
 				cl_int l_Error = CL_SUCCESS;
 				cl_uint doExclusiveScan = inclusive ? 0 : 1;
-				const int numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-				const int numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
-				const int workGroupSize = HSAWAVES*WAVESIZE;
-
+				
 				/**********************************************************************************
 				 * Type Names - used in KernelTemplateSpecializer
 				 *********************************************************************************/
@@ -464,6 +459,10 @@ namespace detail
 				oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
 				oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
 				oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
+				if(!inclusive)
+					oss << " -DEXCLUSIVE=" << 1;
+				else
+					oss << " -DEXCLUSIVE=" << 0;
 
 				oss << " -DUSE_AMD_HSA=" << USE_AMD_HSA;
 				compileOptions = oss.str();
@@ -492,17 +491,6 @@ namespace detail
 				 *********************************************************************************/
 				//  Ceiling function to bump the size of input to the next whole wavefront size
 				cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
-
-				size_t numElementsRUP = numElements;
-				size_t modWgSize = (numElementsRUP & ((kernel0_WgSize*2)-1));
-							if( modWgSize )
-							{
-					numElementsRUP &= ~modWgSize;
-					numElementsRUP += (kernel0_WgSize*2);
-				}
-
-				cl_uint numWorkGroupsK0 = static_cast< cl_uint >( numElementsRUP / (kernel0_WgSize*2) );//2 element per work item
-
 
 				// Create buffer wrappers so we can access the host functors, for read or writing in the kernel
 				ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
@@ -684,25 +672,24 @@ namespace detail
 				// for profiling
 				::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
 
-							//  Ceiling function to bump the size of the sum array to the next whole wavefront size
-				typename device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
-				modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
-							if( modWgSize )
-							{
-								sizeScanBuff &= ~modWgSize;
-								sizeScanBuff += (kernel0_WgSize*2);
-							}
+			cl_uint computeUnits = ctrl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+			unsigned int wgComputeUnit = (computeUnits*64); //64 boosts up the performance
 
-				control::buffPointer preSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
-				control::buffPointer preSumArray1 = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
-				//::cl::Buffer userFunctor( ctrl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
-				//::cl::Buffer preSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-				//::cl::Buffer postSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+			unsigned int load_per_wg = numElements % wgComputeUnit?((numElements/wgComputeUnit)+1):(numElements/wgComputeUnit);
 
+			size_t modWgSize = (load_per_wg & ((kernel0_WgSize)-1));
+			if( modWgSize )
+			{
+				load_per_wg &= ~modWgSize;
+				load_per_wg += (kernel0_WgSize);
+			}
 
-							/**********************************************************************************
-							 *  Kernel 0
-							 *********************************************************************************/
+			unsigned int no_workgrs = numElements % load_per_wg?((numElements/load_per_wg)+1):(numElements/load_per_wg);
+			control::buffPointer preSumArray = ctrl.acquireBuffer( (no_workgrs)*sizeof( iType ) );
+
+			/**********************************************************************************
+			 *  Kernel 0
+			 *********************************************************************************/
 			#ifdef BOLT_PROFILER_ENABLED
 			size_t k0e_stepNum, k0s_stepNum, k0_stepNum, k1s_stepNum, k1_stepNum, k2s_stepNum, k2_stepNum, ret_stepNum;
 			aProfiler.nextStep();
@@ -711,17 +698,15 @@ namespace detail
 			#endif
 				 typename InputIterator::Payload first_payload = first.gpuPayload( );
 
-				ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize *2 ) * sizeof( iType ) );
+				ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize  ) * sizeof( iType ) );
 				V_OPENCL( kernels[ 0 ].setArg( 0, first.base().getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
 				V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ),&first_payload ), "Error setting a kernel argument" );
-
 				V_OPENCL( kernels[ 0 ].setArg( 2, init_T ),                 "Error setting argument for kernels[ 0 ]" ); // Initial value used for exclusive scan
 				V_OPENCL( kernels[ 0 ].setArg( 3, numElements ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
 				V_OPENCL( kernels[ 0 ].setArg( 4, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
 				V_OPENCL( kernels[ 0 ].setArg( 5, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
 				V_OPENCL( kernels[ 0 ].setArg( 6, *preSumArray ),           "Error setting argument for kernels[ 0 ]" ); // Output per block sum buffer
-				V_OPENCL( kernels[ 0 ].setArg( 7, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block
-				V_OPENCL( kernels[ 0 ].setArg( 8, doExclusiveScan ),        "Error setting argument for scanKernels[ 0 ]" ); // Exclusive scan?
+				V_OPENCL( kernels[ 0 ].setArg( 7, load_per_wg ),            "Error setting argument for kernels[ 0 ]" ); // load per work group
 
 			#ifdef BOLT_PROFILER_ENABLED
 			aProfiler.nextStep();
@@ -743,22 +728,23 @@ namespace detail
 				l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
 					kernels[ 0 ],
 								::cl::NullRange,
-					::cl::NDRange( numElementsRUP/2 ),
+								::cl::NDRange( no_workgrs * kernel0_WgSize  ),
 								::cl::NDRange( kernel0_WgSize ),
 								NULL,
 								&kernel0Event);
-							V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
+
+					V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
+
 
 							/**********************************************************************************
 							 *  Kernel 1
 							 *********************************************************************************/
-					ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize ) * sizeof( iType ) );
-							cl_uint workPerThread = static_cast< cl_uint >( (sizeScanBuff) / kernel1_WgSize  );
-					workPerThread = workPerThread ? workPerThread : 1;
+				
+				cl_uint workPerThread = static_cast< cl_uint >( no_workgrs % kernel1_WgSize?((no_workgrs/kernel1_WgSize)+1):(no_workgrs/kernel1_WgSize) );
 
 				V_OPENCL( kernels[ 1 ].setArg( 0, *preSumArray ),   "Error setting 1st argument for kernels[ 1 ]" );            // Input buffer
 				V_OPENCL( kernels[ 1 ].setArg( 1, init_T ),         "Error setting     argument for kernels[ 1 ]" );   // Initial value used for exclusive scan
-				V_OPENCL( kernels[ 1 ].setArg( 2, numWorkGroupsK0 ),"Error setting 2nd argument for kernels[ 1 ]" );            // Size of scratch buffer
+				V_OPENCL( kernels[ 1 ].setArg( 2, no_workgrs ),		"Error setting 2nd argument for kernels[ 1 ]" );            // Size of scratch buffer
 				V_OPENCL( kernels[ 1 ].setArg( 3, ldsSize, NULL ),  "Error setting 3rd argument for kernels[ 1 ]" );  // Scratch buffer
 				V_OPENCL( kernels[ 1 ].setArg( 4, workPerThread ),  "Error setting 4th argument for kernels[ 1 ]" );           // User provided functor class
 				V_OPENCL( kernels[ 1 ].setArg( 5, *userFunctor ),   "Error setting 5th argument for kernels[ 1 ]" );           // User provided functor class
@@ -788,21 +774,19 @@ namespace detail
 				/**********************************************************************************
 				 *  Kernel 2
 				 *********************************************************************************/
-				
 				typename OutputIterator::Payload result_payload = result.gpuPayload( );
 				typename InputIterator::Payload first2_payload = first.gpuPayload( );
 
 				V_OPENCL( kernels[ 2 ].setArg( 0, result.getContainer().getBuffer()), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
 				V_OPENCL( kernels[ 2 ].setArg( 1, result.gpuPayloadSize( ),&result_payload), "Error setting a kernel argument" );
-				V_OPENCL( kernels[ 2 ].setArg( 2, first.base().getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+				V_OPENCL( kernels[ 2 ].setArg( 2, first.base().getContainer().getBuffer() ),    "Error setting argument for kernels[ 2 ]" ); // Input buffer
 				V_OPENCL( kernels[ 2 ].setArg( 3, first.gpuPayloadSize( ),&first2_payload ), "Error setting a kernel argument" );
 				V_OPENCL( kernels[ 2 ].setArg( 4, *preSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
-				V_OPENCL( kernels[ 2 ].setArg( 5, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block
-				V_OPENCL( kernels[ 2 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-				V_OPENCL( kernels[ 2 ].setArg( 7, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
+				V_OPENCL( kernels[ 2 ].setArg( 5, ldsSize, NULL ),          "Error setting argument for kernels[ 2 ]" ); // Scratch buffer
+				V_OPENCL( kernels[ 2 ].setArg( 6, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
+				V_OPENCL( kernels[ 2 ].setArg( 7, load_per_wg ),        "Error setting argument for scanKernels[ 2 ]" ); // Exclusive scan?
 				V_OPENCL( kernels[ 2 ].setArg( 8, *userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
-				V_OPENCL( kernels[ 2 ].setArg( 9, doExclusiveScan ),        "Error setting argument for scanKernels[ 0 ]" ); // Exclusive scan?
-				V_OPENCL( kernels[ 2 ].setArg( 10, init_T ),                 "Error setting argument for kernels[ 0 ]" ); // Initial value used for exclusive scan
+				V_OPENCL( kernels[ 2 ].setArg( 9, init_T ),                 "Error setting argument for kernels[ 2 ]" ); // Initial value used for exclusive scan
 
 			#ifdef BOLT_PROFILER_ENABLED
 			aProfiler.nextStep();
@@ -821,7 +805,7 @@ namespace detail
 								l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
 								kernels[ 2 ],
 								::cl::NullRange,
-								::cl::NDRange( numElementsRUP ), // remove /2 to return to 1 element per thread
+								::cl::NDRange( no_workgrs * kernel2_WgSize ), 
 								::cl::NDRange( kernel2_WgSize ),
 								NULL,
 								&kernel2Event );
@@ -949,10 +933,10 @@ namespace detail
 				typename T, 
 				typename BinaryFunction >
 				typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
-                                       std::random_access_iterator_tag
-                                     >::value
-                       >::type
-            scan(
+									   std::random_access_iterator_tag
+									 >::value
+					   >::type
+			scan(
 			control &ctrl,
 			const InputIterator& first,
 			const InputIterator& last,
@@ -964,15 +948,15 @@ namespace detail
 			{
 				typedef typename std::iterator_traits< InputIterator >::value_type iType;
 				typedef typename std::iterator_traits< OutputIterator >::value_type oType;	    
-	    
+		
 				int numElements = static_cast< int >( std::distance( first, last ) );
 				if( numElements == 0 )
 					return;
-	    
+		
 				typedef typename bolt::cl::iterator_traits<InputIterator>::pointer pointer;
-            
+			
 				pointer first_pointer = bolt::cl::addressof(first) ;
-	    
+		
 				device_vector< iType > dvInput( first_pointer, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctrl );
 				device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctrl );
 				auto device_iterator_first = bolt::cl::create_device_itr(
@@ -983,120 +967,119 @@ namespace detail
 													last, dvInput.end() );
 				cl::scan(ctrl, device_iterator_first, device_iterator_last, dvOutput.begin(), init, inclusive, binary_op, user_code);
 				dvOutput.data( );
-	    
+		
 				return ;
 			}
 	} //end of namespace cl
-  	
+	
 	template
 	<
-    typename InputIterator,
-    typename OutputIterator,
-    typename T,
-    typename BinaryFunction 
-    >
-    typename std::enable_if< 
-               !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::cl::fancy_iterator_tag >::value ),
-               OutputIterator
-                           >::type
-	scan(
-    bolt::cl::control &ctl,
-    const InputIterator& first,
-    const InputIterator& last,
-    const OutputIterator& result,
-    const T& init,
-    const bool& inclusive,
-    const BinaryFunction& binary_op,
-    const std::string& user_code)
-	  {
-	    typedef typename std::iterator_traits< InputIterator >::value_type iType;
-        typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-
-        unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-        if( numElements == 0 )
-            return result;
-
-        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
-
-        if( runMode == bolt::cl::control::Automatic )
-        {
-            runMode = ctl.getDefaultPathToRun();
-        }
-        #if defined(BOLT_DEBUG_LOG)
-        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
-        #endif
-	    
-        if( runMode == bolt::cl::control::SerialCpu )
-        {
-	        #if defined(BOLT_DEBUG_LOG)
-            dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_SERIAL_CPU,"::Scan::SERIAL_CPU");
-            #endif
-	    	serial::scan(ctl, first, last, result, init, inclusive, binary_op );
-            return result + numElements;
-        }
-        else if( runMode == bolt::cl::control::MultiCoreCpu )
-        {
-            #ifdef ENABLE_TBB
-	    	    #if defined(BOLT_DEBUG_LOG)
-					dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_MULTICORE_CPU,
-	    				"::Scan::MULTICORE_CPU");
-                #endif
-	    		 btbb::scan(ctl, first, last, result, init, inclusive, binary_op );
-            #else
-                 throw std::runtime_error("The MultiCoreCpu version of scan is not enabled to be built! \n");
-            #endif
-	    
-            return result + numElements;
-	    
-        }
-        else
-        {
-	        #if defined(BOLT_DEBUG_LOG)
-				dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_OPENCL_GPU,"::Scan::OPENCL_GPU");
-            #endif
-	    	
-	    	cl::scan(ctl, first, last, result, init, inclusive, binary_op, user_code );
-        }
-            return result + numElements;
-    };
-
-	template
-	<
-    typename InputIterator,
-    typename OutputIterator,
-    typename T,
-    typename BinaryFunction 
-    >
+	typename InputIterator,
+	typename OutputIterator,
+	typename T,
+	typename BinaryFunction 
+	>
 	typename std::enable_if< 
-               (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             std::input_iterator_tag 
-                           >::value ||
-               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                             bolt::cl::fancy_iterator_tag >::value ),
-               OutputIterator
-                           >::type
+			   !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+							 std::input_iterator_tag 
+						   >::value ||
+			   std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+							 bolt::cl::fancy_iterator_tag >::value ),
+			   OutputIterator
+						   >::type
 	scan(
-    bolt::cl::control &ctl,
-    const InputIterator& first,
-    const InputIterator& last,
-    const OutputIterator& result,
-    const T& init,
-    const bool& inclusive,
-    const BinaryFunction& binary_op,
-    const std::string& user_code)
+	bolt::cl::control &ctl,
+	const InputIterator& first,
+	const InputIterator& last,
+	const OutputIterator& result,
+	const T& init,
+	const bool& inclusive,
+	const BinaryFunction& binary_op,
+	const std::string& user_code)
+	  {
+		typedef typename std::iterator_traits< InputIterator >::value_type iType;
+		typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+
+		unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+		if( numElements == 0 )
+			return result;
+
+		bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+
+		if( runMode == bolt::cl::control::Automatic )
+		{
+			runMode = ctl.getDefaultPathToRun();
+		}
+		#if defined(BOLT_DEBUG_LOG)
+		BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+		#endif
+		
+		if( runMode == bolt::cl::control::SerialCpu )
+		{
+			#if defined(BOLT_DEBUG_LOG)
+			dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_SERIAL_CPU,"::Scan::SERIAL_CPU");
+			#endif
+			serial::scan(ctl, first, last, result, init, inclusive, binary_op );
+			return result + numElements;
+		}
+		else if( runMode == bolt::cl::control::MultiCoreCpu )
+		{
+			#ifdef ENABLE_TBB
+				#if defined(BOLT_DEBUG_LOG)
+					dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan::MULTICORE_CPU");
+				#endif
+				 btbb::scan(ctl, first, last, result, init, inclusive, binary_op );
+			#else
+				 throw std::runtime_error("The MultiCoreCpu version of scan is not enabled to be built! \n");
+			#endif
+		
+			return result + numElements;
+		
+		}
+		else
+		{
+			#if defined(BOLT_DEBUG_LOG)
+				dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_OPENCL_GPU,"::Scan::OPENCL_GPU");
+			#endif
+			
+			cl::scan(ctl, first, last, result, init, inclusive, binary_op, user_code );
+		}
+			return result + numElements;
+	};
+
+	template
+	<
+	typename InputIterator,
+	typename OutputIterator,
+	typename T,
+	typename BinaryFunction 
+	>
+	typename std::enable_if< 
+			   (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+							 std::input_iterator_tag 
+						   >::value ||
+			   std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+							 bolt::cl::fancy_iterator_tag >::value ),
+			   OutputIterator
+						   >::type
+	scan(
+	bolt::cl::control &ctl,
+	const InputIterator& first,
+	const InputIterator& last,
+	const OutputIterator& result,
+	const T& init,
+	const bool& inclusive,
+	const BinaryFunction& binary_op,
+	const std::string& user_code)
 	{	
-       //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-       //  to a temporary buffer.  Should we?
-	    static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     std::input_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
-        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
-                                     bolt::cl::fancy_iterator_tag >::value , 
-                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
+	   //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+	   //  to a temporary buffer.  Should we?
+		static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+									 std::input_iterator_tag >::value , 
+					   "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
+		static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+									 bolt::cl::fancy_iterator_tag >::value , 
+					   "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
 
 	};
 }   //namespace detail 
@@ -1107,20 +1090,20 @@ namespace detail
 //////////////////////////////////////////
 
 template< typename InputIterator, 
-	      typename OutputIterator >
+		  typename OutputIterator >
 OutputIterator inclusive_scan(
-    bolt::cl::control &ctrl,
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    const std::string& user_code )
+	bolt::cl::control &ctrl,
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	const std::string& user_code )
 {
-    typedef typename std::iterator_traits<InputIterator>::value_type iType;
+	typedef typename std::iterator_traits<InputIterator>::value_type iType;
 	typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    oType init; memset(&init, 0, sizeof(oType) );
+	oType init; memset(&init, 0, sizeof(oType) );
 	using bolt::cl::detail::scan;
-    return detail::scan(
-           ctrl, 
+	return detail::scan(
+		   ctrl, 
 		   first, 
 		   last, 
 		   result, 
@@ -1131,21 +1114,21 @@ OutputIterator inclusive_scan(
 };
 
 template< typename InputIterator, 
-	      typename OutputIterator, 
+		  typename OutputIterator, 
 		  typename BinaryFunction >
 OutputIterator inclusive_scan(
-    bolt::cl::control &ctrl,
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    BinaryFunction binary_op,
-    const std::string& user_code )
+	bolt::cl::control &ctrl,
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	BinaryFunction binary_op,
+	const std::string& user_code )
 {
 	typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    oType init; memset(&init, 0, sizeof(oType) );
+	oType init; memset(&init, 0, sizeof(oType) );
 	using bolt::cl::detail::scan;
-    return detail::scan(
-           ctrl, 
+	return detail::scan(
+		   ctrl, 
 		   first, 
 		   last, 
 		   result, 
@@ -1157,16 +1140,16 @@ OutputIterator inclusive_scan(
 
 
 template< typename InputIterator,
-	      typename OutputIterator >
+		  typename OutputIterator >
 OutputIterator inclusive_scan(
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    const std::string& user_code )
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	const std::string& user_code )
 {
-    using bolt::cl::inclusive_scan;
+	using bolt::cl::inclusive_scan;
 	return inclusive_scan(
-           control::getDefault( ), 
+		   control::getDefault( ), 
 		   first, 
 		   last, 
 		   result,
@@ -1174,18 +1157,18 @@ OutputIterator inclusive_scan(
 };
 
 template< typename InputIterator, 
-	      typename OutputIterator, 
+		  typename OutputIterator, 
 		  typename BinaryFunction >
 OutputIterator inclusive_scan(
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    BinaryFunction binary_op,
-    const std::string& user_code )
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	BinaryFunction binary_op,
+	const std::string& user_code )
 {
-    using bolt::cl::inclusive_scan;
+	using bolt::cl::inclusive_scan;
 	return inclusive_scan(
-           control::getDefault( ), 
+		   control::getDefault( ), 
 		   first, 
 		   last, 
 		   result, 
@@ -1199,90 +1182,90 @@ OutputIterator inclusive_scan(
 //////////////////////////////////////////
 
 template< typename InputIterator,
-	      typename OutputIterator >
+		  typename OutputIterator >
 OutputIterator exclusive_scan(
-    bolt::cl::control &ctrl,
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    const std::string& user_code ) // assumes addition of numbers
+	bolt::cl::control &ctrl,
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	const std::string& user_code ) // assumes addition of numbers
 {
-    typedef typename std::iterator_traits<InputIterator>::value_type iType;
+	typedef typename std::iterator_traits<InputIterator>::value_type iType;
 	typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    oType init = static_cast< oType >( 0 );
+	oType init = static_cast< oType >( 0 );
 	using bolt::cl::detail::scan;
-    return detail::scan(
-           ctrl, 
+	return detail::scan(
+		   ctrl, 
 		   first, 
 		   last, 
 		   result, 
 		   init, 
 		   false, 
 		   plus< iType >( ),
-           user_code );
+		   user_code );
 };
 
 template< typename InputIterator, 
-	      typename OutputIterator, 
+		  typename OutputIterator, 
 		  typename T >
 OutputIterator exclusive_scan(
-    bolt::cl::control &ctrl,
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    T init,
-    const std::string& user_code )
+	bolt::cl::control &ctrl,
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	T init,
+	const std::string& user_code )
 {
-    typedef typename std::iterator_traits<InputIterator>::value_type iType;
+	typedef typename std::iterator_traits<InputIterator>::value_type iType;
 	using bolt::cl::detail::scan;
-    return detail::scan(
-           ctrl, 
+	return detail::scan(
+		   ctrl, 
 		   first, 
 		   last, 
 		   result,
 		   init, 
 		   false, 
 		   plus< iType >( ),
-           user_code );
+		   user_code );
 };
 
 template< typename InputIterator, 
-	      typename OutputIterator, 
+		  typename OutputIterator, 
 		  typename T, 
 		  typename BinaryFunction >
 OutputIterator exclusive_scan(
-    bolt::cl::control &ctrl,
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    T init,
-    BinaryFunction binary_op,
-    const std::string& user_code )
+	bolt::cl::control &ctrl,
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	T init,
+	BinaryFunction binary_op,
+	const std::string& user_code )
 {
 	using bolt::cl::detail::scan;
-    return detail::scan(
-           ctrl, 
+	return detail::scan(
+		   ctrl, 
 		   first, 
 		   last, 
 		   result, 
 		   init, 
 		   false, 
 		   binary_op,
-           user_code );
+		   user_code );
 };
 
 
 template< typename InputIterator, 
-	      typename OutputIterator >
+		  typename OutputIterator >
 OutputIterator exclusive_scan(
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    const std::string& user_code )
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	const std::string& user_code )
 {
-    using bolt::cl::exclusive_scan;
+	using bolt::cl::exclusive_scan;
 	return exclusive_scan(
-           control::getDefault( ),
+		   control::getDefault( ),
 		   first, 
 		   last, 
 		   result, 
@@ -1290,18 +1273,18 @@ OutputIterator exclusive_scan(
 };
 
 template< typename InputIterator, 
-	      typename OutputIterator, 
+		  typename OutputIterator, 
 		  typename T >
 OutputIterator exclusive_scan(
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    T init,
-    const std::string& user_code )
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	T init,
+	const std::string& user_code )
 {
-    using bolt::cl::exclusive_scan;
+	using bolt::cl::exclusive_scan;
 	return exclusive_scan(
-           control::getDefault( ),
+		   control::getDefault( ),
 		   first, 
 		   last,
 		   result,
@@ -1310,20 +1293,20 @@ OutputIterator exclusive_scan(
 };
 
 template< typename InputIterator, 
-	      typename OutputIterator,
+		  typename OutputIterator,
 		  typename T, 
 		  typename BinaryFunction >
 OutputIterator exclusive_scan(
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result,
-    T init,
-    BinaryFunction binary_op,
-    const std::string& user_code )
+	InputIterator first,
+	InputIterator last,
+	OutputIterator result,
+	T init,
+	BinaryFunction binary_op,
+	const std::string& user_code )
 {
-    using bolt::cl::exclusive_scan;
+	using bolt::cl::exclusive_scan;
 	return exclusive_scan(
-           control::getDefault( ), 
+		   control::getDefault( ), 
 		   first, 
 		   last, 
 		   result, 

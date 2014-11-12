@@ -1973,6 +1973,38 @@ TEST(ScanByKeyEPR392210, constant_iterator)
 }
 
 
+TEST(ScanTest, constant_iterator)
+{
+    const int length = 1<<10;
+
+    int value = 100;
+    std::vector< int > svInVec1( length );
+    std::vector< int > svInVec2( length );
+    
+    std::vector< int > svOutVec( length );
+    std::vector< int > stlOut( length );
+
+     
+
+    bolt::amp::constant_iterator<int> constIter1 (value);
+    bolt::amp::constant_iterator<int> constIter2 (10);
+
+    bolt::amp::plus<int> pls;
+    int n = (int) 1 + rand()%10;
+
+    bolt::amp::inclusive_scan( constIter1, constIter1 + length, svOutVec.begin(), pls );
+    
+    std::vector<int> const_vector(length,value);
+    std::partial_sum(const_vector.begin(), const_vector.end(), stlOut.begin(), pls);
+    
+    for(int i =0; i< length; i++)
+    {
+      EXPECT_EQ( svOutVec[i], stlOut[i]);
+    }
+}
+
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     std::cout << "#######################################################################################" <<std::endl;

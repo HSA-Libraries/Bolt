@@ -31,6 +31,8 @@
 //AsyncProfiler aProfiler("transform_scan");
 #endif
 
+#include "bolt/amp/iterator/addressof.h"
+
 
 #if 0
 #define NUM_PEEK 128
@@ -65,90 +67,264 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
+namespace serial{
+
+    template<
+			typename InputIterator1,
+			typename InputIterator2,
+			typename OutputIterator,
+			typename T,
+			typename BinaryPredicate,
+			typename BinaryFunction >
+			typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                                     >::value), void
+			>::type
+
+			scan_by_key(
+			::bolt::amp::control &ctl, 
+			const InputIterator1& first1,
+			const InputIterator1& last1, 
+			const InputIterator2& first2,
+			const OutputIterator& result,
+			const T& init,
+			const BinaryPredicate& binary_pred,
+			const BinaryFunction& binary_op,
+			const bool& inclusive,
+			const std::string& user_code)
+			{
+	
+				size_t sz = (last1 - first1);
+				
+				typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+				
+				auto mapped_fst1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
+																ctl, first1);
+				auto mapped_fst2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
+																ctl, first2);
+				auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(), 
+																ctl, result);
+
+				if(inclusive)
+				{					
+					// do zeroeth element
+					*mapped_res_itr = (*mapped_fst2_itr); // assign value
+					// scan oneth element and beyond
+					for ( unsigned int i=1; i< sz;  i++)
+					{
+						// load value
+						oType currentValue = *(mapped_fst2_itr +i ); 
+						oType previousValue = *(mapped_res_itr + i -1 );
+
+						// within segment
+						if (binary_pred(mapped_fst1_itr [i], mapped_fst1_itr [i -1]))
+						{
+							oType r = binary_op( previousValue, currentValue);
+							*(mapped_res_itr + i) = r;
+						}
+						else // new segment
+						{
+							*(mapped_res_itr + i) = currentValue;
+						}
+					}
+				}
+				else
+				{
+					oType temp = *mapped_fst2_itr;
+					*mapped_res_itr = static_cast<oType>( init );
+					// scan oneth element and beyond
+					for ( unsigned int i= 1; i<sz; i++)
+					{
+						// load value
+						oType currentValue = temp; // convertible
+						oType previousValue = static_cast<oType>( *(mapped_res_itr + i -1 ));
+
+						// within segment
+						if (binary_pred(mapped_fst1_itr[i], mapped_fst1_itr[i -1]))
+						{
+							temp = *(mapped_fst2_itr + i);
+							oType r = binary_op( previousValue, currentValue);
+							*(mapped_res_itr + i) = r;
+						}
+						else // new segment
+						{
+							 temp = *(mapped_fst2_itr + i);
+							*(mapped_res_itr + i) =  static_cast<oType>(init);
+						}
+				
+				    }		
+			    }
+				 
+				return ;			
+	
+	         }
+
+			template<
+			typename InputIterator1,
+			typename InputIterator2,
+			typename OutputIterator,
+			typename T,
+			typename BinaryPredicate,
+			typename BinaryFunction >
+			typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value), void
+            >::type
+
+			scan_by_key(
+			::bolt::amp::control &ctl, 
+			const InputIterator1& first1,
+			const InputIterator1& last1, 
+			const InputIterator2& first2,
+			const OutputIterator& result,
+			const T& init,
+			const BinaryPredicate& binary_pred,
+			const BinaryFunction& binary_op,
+			const bool& inclusive,
+			const std::string& user_code)
+			{			
+	
+				size_t sz = (last1 - first1);
+
+				typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+				typedef typename std::iterator_traits<InputIterator2>::value_type iType;
+				typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+
+				if(inclusive)
+				{
+					// do zeroeth element
+					*result = *first2; // assign value
+					// scan oneth element and beyond
+					for ( unsigned int i=1; i< sz;  i++)
+					{
+						// load value
+						oType currentValue = *(first2 + i); // convertible
+						oType previousValue = *(result + i - 1);
+
+						// within segment
+						if (binary_pred(*(first1 + i), *(first1 + i - 1)))
+						{
+							oType r = binary_op( previousValue, currentValue);
+							*(result+i) = r;
+						}
+						else // new segment
+						{
+							*(result + i) = currentValue;
+						}
+					}
+				
+				}
+				else
+				{
+					// do zeroeth element
+					//*result = *values; // assign value
+					oType temp = *first2;
+					*result = static_cast<oType>(init);
+					// scan oneth element and beyond
+					for ( unsigned int i= 1; i<sz; i++)
+					{
+						// load value
+						oType currentValue = temp; // convertible
+						oType previousValue = static_cast<oType>(*(result + i -1 ));
+
+						// within segment
+						if (binary_pred(*(first1 + i), *(first1+ i -1 )))
+						{
+							temp = *(first2 + i);
+							oType r = binary_op( previousValue, currentValue);
+							*(result + i) = r;
+						}
+						else // new segment
+						{
+							 temp = *(first2 + i);
+							 *(result + i) = static_cast<oType>(init);
+						}
+					}
+				
+				}
+				return;
+			}
+}//end of namespace serial
+
+#ifdef ENABLE_TBB
+namespace btbb{
 
 template<
     typename InputIterator1,
     typename InputIterator2,
     typename OutputIterator,
+    typename T,
     typename BinaryPredicate,
-    typename BinaryFunction>
-OutputIterator
-Serial_inclusive_scan_by_key(
+    typename BinaryFunction >
+typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value), void
+           >::type
+scan_by_key(
+    bolt::amp::control& ctl,
     InputIterator1 firstKey,
+	InputIterator1 lastKey,
     InputIterator2 values,
     OutputIterator result,
-    unsigned int  num,
+	const T &init,
     const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op)
+    const BinaryFunction binary_funct,
+    const bool& inclusive,
+    const std::string& user_code)
 {
 
-    if ( num < 1 ) return result;
-
-    // zeroth element
-    *result = *values;
-
-    // scan oneth element and beyond
-    for ( unsigned int i = 1; i < num;  i++ )
-    {
-        if ( binary_pred( *( firstKey + i ), *( firstKey + ( i - 1 ) ) ) )
-        {
-            *( result + i ) = binary_op( *( result + ( i - 1 ) ), *( values + i ) );
-        }
-        else
-        {
-            *( result + i ) = *( values + i );
-        }
-    }
-
-    return result;
+	if(inclusive)
+		bolt::btbb::inclusive_scan_by_key( firstKey, lastKey, values, result, binary_pred, binary_funct);
+	else
+		bolt::btbb::exclusive_scan_by_key(firstKey, lastKey, values, result, init, binary_pred, binary_funct);
+	return;
 }
 
 template<
     typename InputIterator1,
     typename InputIterator2,
     typename OutputIterator,
+    typename T,
     typename BinaryPredicate,
-    typename BinaryFunction,
-    typename T>
-OutputIterator
-Serial_exclusive_scan_by_key(
-    InputIterator1 firstKey,
-    InputIterator2 values,
+    typename BinaryFunction >
+typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                        bolt::amp::device_vector_tag
+                                     >::value), void
+           >::type
+scan_by_key(
+    bolt::amp::control& ctl,
+    InputIterator1 first1,
+	InputIterator1 last1,
+    InputIterator2 first2,
     OutputIterator result,
-    unsigned int  num,
+	const T &init,
     const BinaryPredicate binary_pred,
     const BinaryFunction binary_op,
-    const T &init)
+    const bool& inclusive,
+    const std::string& user_code)
 {
-    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-    // do zeroeth element
 
-    oType temp = *values;
-    *result = init;
-    // scan oneth element and beyond
-    for ( unsigned int i= 1; i<num; i++)
-    {
-        // load value
-        oType currentValue = temp; // convertible
-        oType previousValue = result [ i - 1];
-
-        // within segment
-        if (binary_pred(firstKey [ i ],firstKey [ i - 1 ]))
-        {
-            temp = values [ i ];
-            oType r = binary_op( previousValue, currentValue);
-            result [ i ] = r;
-        }
-        else // new segment
-        {
-             temp = values [ i ];
-             result [ i ] = init;
-        }
-    }
-
-    return result;
+	    size_t sz = (last1 - first1);
+		
+		auto mapped_fst1_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(), 
+														ctl, first1);
+		auto mapped_fst2_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(), 
+														ctl, first2);
+		auto mapped_res_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(),
+														ctl, result);
+		if(inclusive)
+			bolt::btbb::inclusive_scan_by_key(mapped_fst1_itr, mapped_fst1_itr + (int)sz, mapped_fst2_itr, mapped_res_itr, binary_pred, binary_op );
+		else
+			bolt::btbb::exclusive_scan_by_key(mapped_fst1_itr, mapped_fst1_itr + (int)sz, mapped_fst2_itr, mapped_res_itr, init, binary_pred, binary_op );
+		
+		return ;	
 }
 
+
+}//end of namespace btbb
+#endif
+
+namespace amp{
 
 //  All calls to scan_by_key end up here, unless an exception was thrown
 //  This is the function that sets up the kernels to compile (once only) and execute
@@ -159,9 +335,12 @@ template<
     typename T,
     typename BinaryPredicate,
     typename BinaryFunction >
-void
-scan_by_key_enqueue(
-    control& ctl,
+typename std::enable_if< std::is_same< typename std::iterator_traits< DVOutputIterator >::iterator_category ,
+									bolt::amp::device_vector_tag
+									>::value
+					>::type
+scan_by_key(
+    bolt::amp::control& ctl,
     const DVInputIterator1& firstKey,
     const DVInputIterator1& lastKey,
     const DVInputIterator2& firstValue,
@@ -169,8 +348,8 @@ scan_by_key_enqueue(
     const T& init,
     const BinaryPredicate& binary_pred,
     const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive )
+	const bool& inclusive,
+    const std::string& user_code)
 {
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
@@ -639,398 +818,167 @@ scan_by_key_enqueue(
     PEEK_AT( output )
 }   //end of scan_by_key_enqueue( )
 
+    template<
+		typename InputIterator1,
+		typename InputIterator2,
+		typename OutputIterator,
+		typename T,
+		typename BinaryPredicate,
+		typename BinaryFunction >
+		typename std::enable_if< std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                std::random_access_iterator_tag
+                                >::value
+                >::type
+		scan_by_key(
+		bolt::amp::control& ctl,
+		const InputIterator1& first1,
+		const InputIterator1& last1,
+		const InputIterator2& first2,
+		const OutputIterator& result,
+		const T& init,
+		const BinaryPredicate& binary_pred,
+		const BinaryFunction& binary_funct,
+		const bool& inclusive, 
+		const std::string& user_code)
+		{
+				 typedef typename std::iterator_traits< OutputIterator >::value_type oType;	    
+	    
+				 int sz = static_cast< int >( std::distance( first1, last1 ) );
+				
+				 // Map the output iterator to a device_vector
+                 device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+	             
+		         // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                 // Map the input iterator to a device_vector
+				 auto dvKeys_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator1 >::iterator_category( ), first1, sz, false, ctl );
+				 auto dvValues_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator2 >::iterator_category( ), first2, sz, false, ctl );
+                 amp::scan_by_key( ctl, dvKeys_itr , dvKeys_itr +sz, dvValues_itr, dvOutput.begin(), init, binary_pred, binary_funct, inclusive, user_code);
+                 // This should immediately map/unmap the buffer
 
-/*!
-* \brief This overload is called strictly for non-device_vector iterators
-* \details This template function overload is used to seperate device_vector iterators from all other iterators
-*/
+                 dvOutput.data( );
+	    
+				 return ; 
+		}
+		
+} //end of namespace amp
+
+
 template<
-    typename InputIterator1,
-    typename InputIterator2,
-    typename OutputIterator,
-    typename T,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-OutputIterator
-scan_by_key_pick_iterator(
-    control& ctl,
-    const InputIterator1& firstKey,
-    const InputIterator1& lastKey,
-    const InputIterator2& firstValue,
-    const OutputIterator& result,
-    const T& init,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive,
-	std::random_access_iterator_tag,
-	std::random_access_iterator_tag )
-{
-    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-    static_assert( std::is_convertible< vType, oType >::value, "InputValue and Output iterators are incompatible" );
+		typename InputIterator1,
+		typename InputIterator2,
+		typename OutputIterator,
+		typename T,
+		typename BinaryPredicate,
+		typename BinaryFunction >
+		
+		typename std::enable_if< 
+				   !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+								 std::input_iterator_tag 
+							   >::value ||
+				   std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+								 bolt::amp::fancy_iterator_tag >::value ),
+				   OutputIterator
+							   >::type
+		scan_by_key(
+		control& ctl,
+		const InputIterator1& first1,
+		const InputIterator1& last1,
+		const InputIterator2& first2,
+		const OutputIterator& result,
+		const T& init,
+		const BinaryPredicate& binary_pred,
+		const BinaryFunction& binary_funct,
+		const bool& inclusive, 
+		const std::string& user_code)
+		{
+			
+			typedef typename std::iterator_traits< InputIterator1 >::value_type kType;			
+			typedef typename std::iterator_traits< InputIterator2 >::value_type iType;
+			typedef typename std::iterator_traits< OutputIterator >::value_type oType;
 
-    int numElements = static_cast< int >( std::distance( firstKey, lastKey ) );
-    if( numElements < 1 )
-        return result;
+			unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+			if( numElements == 0 )
+				return result;
 
+			bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
 
-    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
-
-
-    if( runMode == bolt::amp::control::Automatic )
-    {
-        runMode = ctl.getDefaultPathToRun( );
+			if( runMode == bolt::amp::control::Automatic )
+			{
+				runMode = ctl.getDefaultPathToRun();
+			}
+	    
+			if( runMode == bolt::amp::control::SerialCpu )
+			{
+	    		serial::scan_by_key(ctl, first1, last1, first2, result, init, binary_pred, binary_funct, inclusive, user_code );
+				return result + numElements;
+			}
+			else if( runMode == bolt::amp::control::MultiCoreCpu )
+			{
+				#ifdef ENABLE_TBB
+	    			  btbb::scan_by_key(ctl, first1, last1, first2, result, init, binary_pred, binary_funct, inclusive, user_code );
+				#else
+					  throw std::runtime_error("The MultiCoreCpu version of scan_by_key is not enabled to be built! \n");
+				#endif
+	    
+				return result + numElements;
+	    
+			}
+			else
+			{
+	    		amp::scan_by_key(ctl, first1, last1, first2, result, init, binary_pred, binary_funct, inclusive, user_code );
+			}
+		    return result + numElements;
+	
     }
 
-    #if defined(BOLT_DEBUG_LOG)
-    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
-    #endif
-                
-    if( runMode == bolt::amp::control::SerialCpu )
-    {
-          #if defined(BOLT_DEBUG_LOG)
-          dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
-          #endif
-          if(inclusive){
-          Serial_inclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct);
-       }
-       else{
-          Serial_exclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct, init);
-       }
-       return result + numElements;
-    }
-    else if(runMode == bolt::amp::control::MultiCoreCpu)
-    {
-#ifdef ENABLE_TBB
-      #if defined(BOLT_DEBUG_LOG)
-      dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan_By_Key::MULTICORE_CPU");
-      #endif
-      if (inclusive)
-        return bolt::btbb::inclusive_scan_by_key(firstKey,lastKey,firstValue,result,binary_pred,binary_funct);
-      else
-        return bolt::btbb::exclusive_scan_by_key(firstKey,lastKey,firstValue,result,init,binary_pred,binary_funct);
-
-#else
-        //std::cout << "The MultiCoreCpu version of Scan by key is not enabled." << std ::endl;
-        throw std::runtime_error( "The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
-
-#endif
-    }
-    else
-    {
-        #if defined(BOLT_DEBUG_LOG)
-        dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_By_Key::OPENCL_GPU");
-        #endif
-        
-        device_vector< kType, concurrency::array_view > dvKeys( firstKey, lastKey, false, ctl );
-        device_vector< vType, concurrency::array_view > dvValues( firstValue, numElements, false, ctl );
-	    device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
-
-
-        //Now call the actual cl algorithm
-        scan_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvOutput.begin( ),
-            init, binary_pred, binary_funct, user_code, inclusive );
-
-        // This should immediately map/unmap the buffer
-        dvOutput.data( );
-      }
-
-      return result + numElements;
-}
-
-/*!
-* \brief This overload is called strictly for device_vector iterators
-* \details This template function overload is used to seperate device_vector iterators from all other iterators
-*/
 
     template<
-    typename DVInputIterator1,
-    typename DVInputIterator2,
-    typename DVOutputIterator,
-    typename T,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-DVOutputIterator
-scan_by_key_pick_iterator(
-    control& ctl,
-    const DVInputIterator1& firstKey,
-    const DVInputIterator1& lastKey,
-    const DVInputIterator2& firstValue,
-    const DVOutputIterator& result,
-    const T& init,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive,
-	bolt::amp::device_vector_tag,
-	bolt::amp::device_vector_tag )
-{
-    typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
-    static_assert( std::is_convertible< vType, oType >::value, "InputValue and Output iterators are incompatible" );
-
-    int numElements = static_cast< int >( std::distance( firstKey, lastKey ) );
-    if( numElements < 1 )
-        return result;
-
-    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
-
-    if( runMode == bolt::amp::control::Automatic )
-    {
-        runMode = ctl.getDefaultPathToRun( );
-    }
-
-    #if defined(BOLT_DEBUG_LOG)
-    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
-    #endif
-    
-    if( runMode == bolt::amp::control::SerialCpu )
-    {
-        #if defined(BOLT_DEBUG_LOG)
-        dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
-        #endif
-          
-	  	bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
-		bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
-        bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
-
-        if(inclusive)
-            Serial_inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],
-                                 &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct);
-        else
-            Serial_exclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],
-                             &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct, init);
-
-        return result + numElements;
-
-    }
-    else if( runMode == bolt::amp::control::MultiCoreCpu )
-    {
-#ifdef ENABLE_TBB
-
-            #if defined(BOLT_DEBUG_LOG)
-            dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan_By_Key::MULTICORE_CPU");
-            #endif
-      
-            bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
-		    bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
-            bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
-
-            if (inclusive)
-               bolt::btbb::inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index + numElements],  &scanInputBuffer[ firstValue.m_Index ],
-                                                 &scanResultBuffer[ result.m_Index ], binary_pred,binary_funct);
-            else
-               bolt::btbb::exclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index + numElements],  &scanInputBuffer[ firstValue.m_Index ],
-                                                 &scanResultBuffer[ result.m_Index ],init,binary_pred,binary_funct);
-
-            return result + numElements;
-#else
-                throw std::runtime_error("The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
-
-#endif
-
-     }
-     else{
-     #if defined(BOLT_DEBUG_LOG)
-     dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_By_Key::OPENCL_GPU");
-     #endif
-     //Now call the actual cl algorithm
-              scan_by_key_enqueue( ctl, firstKey, lastKey, firstValue, result,
-                       init, binary_pred, binary_funct, user_code, inclusive );
-     }
-     return result + numElements;
-}
-
-
-/*!
-* \brief This overload is called strictly for non-device_vector iterators
-* \details This template function overload is used to seperate device_vector iterators from all other iterators
-*/
-template<
-    typename InputIterator1,
-    typename InputIterator2,
-    typename OutputIterator,
-    typename T,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-OutputIterator
-scan_by_key_pick_iterator(
-    control& ctl,
-    const InputIterator1& firstKey,
-    const InputIterator1& lastKey,
-    const InputIterator2& firstValue,
-    const OutputIterator& result,
-    const T& init,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive,
-	bolt::amp::fancy_iterator_tag,
-	std::random_access_iterator_tag  )
-{
-    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-
-    int numElements = static_cast< int >( std::distance( firstKey, lastKey ) );
-    if( numElements < 1 )
-        return result;
-
-
-    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
-
-
-    if( runMode == bolt::amp::control::Automatic )
-    {
-        runMode = ctl.getDefaultPathToRun( );
-    }
-
-    #if defined(BOLT_DEBUG_LOG)
-    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
-    #endif
-                
-    if( runMode == bolt::amp::control::SerialCpu )
-    {
-          #if defined(BOLT_DEBUG_LOG)
-          dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
-          #endif
-          if(inclusive){
-          Serial_inclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct);
-       }
-       else{
-          Serial_exclusive_scan_by_key( firstKey, firstValue, result, numElements, binary_pred, binary_funct, init);
-       }
-       return result + numElements;
-    }
-    else if(runMode == bolt::amp::control::MultiCoreCpu)
-    {
-#ifdef ENABLE_TBB
-      #if defined(BOLT_DEBUG_LOG)
-      dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan_By_Key::MULTICORE_CPU");
-      #endif
-      if (inclusive)
-        return bolt::btbb::inclusive_scan_by_key(firstKey,lastKey,firstValue,result,binary_pred,binary_funct);
-      else
-        return bolt::btbb::exclusive_scan_by_key(firstKey,lastKey,firstValue,result,init,binary_pred,binary_funct);
-
-#else
-        //std::cout << "The MultiCoreCpu version of Scan by key is not enabled." << std ::endl;
-        throw std::runtime_error( "The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
-
-#endif
-    }
-    else
-    {
-        #if defined(BOLT_DEBUG_LOG)
-        dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_By_Key::OPENCL_GPU");
-        #endif
-        
-            scan_by_key_enqueue( ctl, firstKey, lastKey, firstValue, result,
-                       init, binary_pred, binary_funct, user_code, inclusive );
-      }
-      return result + numElements;
-}
-
-
-
-/***********************************************************************************************************************
- * Detect Random Access
- ********************************************************************************************************************/
-
-template<
-    typename InputIterator1,
-    typename InputIterator2,
-    typename OutputIterator,
-    typename T,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-OutputIterator
-scan_by_key_detect_random_access(
-    control& ctl,
-    const InputIterator1& firstKey,
-    const InputIterator1& lastKey,
-    const InputIterator2& firstValue,
-    const OutputIterator& result,
-    const T& init,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive,
-    std::random_access_iterator_tag,
-	std::random_access_iterator_tag )
-{
-    return detail::scan_by_key_pick_iterator( ctl, firstKey, lastKey, firstValue, result, init,
-        binary_pred, binary_funct, user_code, inclusive, 
-		typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( ) );
-}
-
-
-template<
-    typename InputIterator1,
-    typename InputIterator2,
-    typename OutputIterator,
-    typename T,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-OutputIterator
-scan_by_key_detect_random_access(
-    control& ctl,
-    const InputIterator1& firstKey,
-    const InputIterator1& lastKey,
-    const InputIterator2& firstValue,
-    const OutputIterator& result,
-    const T& init,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive,
-    std::random_access_iterator_tag, bolt::amp::fancy_iterator_tag )
-{
-    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-    //  to a temporary buffer.  Should we?
-	static_assert( std::is_same< OutputIterator, bolt::amp::fancy_iterator_tag >::value , "It is not possible to output to fancy iterators; they are not mutable" );
-};
-
-
-template<
-    typename InputIterator1,
-    typename InputIterator2,
-    typename OutputIterator,
-    typename T,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-OutputIterator
-scan_by_key_detect_random_access(
-    control& ctl,
-    const InputIterator1& firstKey,
-    const InputIterator1& lastKey,
-    const InputIterator2& firstValue,
-    const OutputIterator& result,
-    const T& init,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive,
-    std::input_iterator_tag, std::input_iterator_tag  )
-{
-    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-    //  to a temporary buffer.  Should we?
-    static_assert(std::is_same< InputIterator1, std::input_iterator_tag >::value  , "Bolt only supports random access iterator types" );
-};
-
+	typename InputIterator1,
+	typename InputIterator2,
+	typename OutputIterator,
+	typename T,
+	typename BinaryPredicate,
+	typename BinaryFunction >
+	
+	typename std::enable_if< 
+              (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+                            std::input_iterator_tag 
+                          >::value ||
+              std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+                            bolt::amp::fancy_iterator_tag >::value ),
+              OutputIterator
+                          >::type
+	scan_by_key(
+	control& ctl,
+	const InputIterator1& first1,
+	const InputIterator1& last1,
+	const InputIterator2& first2,
+	const OutputIterator& result,
+	const T& init,
+	const BinaryPredicate& binary_pred,
+	const BinaryFunction& binary_funct,
+	const bool& inclusive, 
+	const std::string& user_code)
+	{	
+		//  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+		//  to a temporary buffer.  Should we?
+		static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+										std::input_iterator_tag >::value , 
+						"Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
+		static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category, 
+										bolt::amp::fancy_iterator_tag >::value , 
+						"Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
+	
+	}
 
 
     /*!   \}  */
 } //namespace detail
 
-
 /*********************************************************************************************************************
  * Inclusive Segmented Scan
  ********************************************************************************************************************/
+
 template<
     typename InputIterator1,
     typename InputIterator2,
@@ -1047,23 +995,16 @@ inclusive_scan_by_key(
     BinaryFunction  binary_funct,
     const std::string& user_code )
 {
-    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    control& ctl = control::getDefault();
-    oType init; memset(&init, 0, sizeof(oType) );
-    return detail::scan_by_key_detect_random_access(
-        ctl,
-        first1,
-        last1,
-        first2,
-        result,
-        init,
-        binary_pred,
-        binary_funct,
-        user_code,
-        true, // inclusive
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+    using bolt::amp::inclusive_scan_by_key;
+	return inclusive_scan_by_key(
+           control::getDefault( ), 
+		   first1, 
+		   last1,  
+		   first2,
+		   result,
+           binary_pred,
+	       binary_funct,
+		   user_code );
 }
 
 template<
@@ -1080,24 +1021,15 @@ inclusive_scan_by_key(
     BinaryPredicate binary_pred,
     const std::string& user_code )
 {
-    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    control& ctl = control::getDefault();
-    oType init; memset(&init, 0, sizeof(oType) );
-    plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
-        ctl,
-        first1,
-        last1,
-        first2,
-        result,
-        init,
-        binary_pred,
-        binary_funct,
-        user_code,
-        true, // inclusive
-       	typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+    using bolt::amp::inclusive_scan_by_key;
+	return inclusive_scan_by_key(
+           control::getDefault( ), 
+		   first1, 
+		   last1,  
+		   first2,
+		   result,
+           binary_pred,
+		   user_code );
 }
 
 template<
@@ -1112,26 +1044,14 @@ inclusive_scan_by_key(
     OutputIterator  result,
     const std::string& user_code )
 {
-    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
-    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    control& ctl = control::getDefault();
-    oType init; memset(&init, 0, sizeof(oType) );
-    equal_to<kType> binary_pred;
-    plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
-        ctl,
-        first1,
-        last1,
-        first2,
-        result,
-        init,
-        binary_pred,
-        binary_funct,
-        user_code,
-        true, // inclusive
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+    using bolt::amp::inclusive_scan_by_key;
+	return inclusive_scan_by_key(
+           control::getDefault( ), 
+		   first1, 
+		   last1,  
+		   first2,
+		   result,
+		   user_code );
 }
 
 ///////////////////////////// CTRL ////////////////////////////////////////////
@@ -1144,7 +1064,7 @@ template<
     typename BinaryFunction>
 OutputIterator
 inclusive_scan_by_key(
-    control &ctl,
+    bolt::amp::control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -1155,7 +1075,8 @@ inclusive_scan_by_key(
 {
     typedef typename std::iterator_traits<OutputIterator>::value_type oType;
     oType init; memset(&init, 0, sizeof(oType) );
-    return detail::scan_by_key_detect_random_access(
+	using bolt::amp::detail::scan_by_key;
+    return detail::scan_by_key(
         ctl,
         first1,
         last1,
@@ -1164,12 +1085,10 @@ inclusive_scan_by_key(
         init,
         binary_pred,
         binary_funct,
-        user_code,
         true, // inclusive
-       	typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+        user_code); 
 }
+
 
 template<
     typename InputIterator1,
@@ -1178,7 +1097,7 @@ template<
     typename BinaryPredicate>
 OutputIterator
 inclusive_scan_by_key(
-    control &ctl,
+    bolt::amp::control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -1189,7 +1108,8 @@ inclusive_scan_by_key(
     typedef typename std::iterator_traits<OutputIterator>::value_type oType;
     oType init; memset(&init, 0, sizeof(oType) );
     plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
+	using bolt::amp::detail::scan_by_key;
+    return detail::scan_by_key(
         ctl,
         first1,
         last1,
@@ -1198,11 +1118,8 @@ inclusive_scan_by_key(
         init,
         binary_pred,
         binary_funct,
-        user_code,
         true, // inclusive
-       	typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+        user_code );
 }
 
 template<
@@ -1211,7 +1128,7 @@ template<
     typename OutputIterator>
 OutputIterator
 inclusive_scan_by_key(
-    control &ctl,
+    bolt::amp::control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -1223,7 +1140,8 @@ inclusive_scan_by_key(
     oType init; memset(&init, 0, sizeof(oType) );
     equal_to<kType> binary_pred;
     plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
+	using bolt::amp::detail::scan_by_key;
+    return detail::scan_by_key(
         ctl,
         first1,
         last1,
@@ -1232,11 +1150,8 @@ inclusive_scan_by_key(
         init,
         binary_pred,
         binary_funct,
-        user_code,
         true, // inclusive
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+        user_code);
 }
 
 
@@ -1264,21 +1179,17 @@ exclusive_scan_by_key(
     BinaryFunction  binary_funct,
     const std::string& user_code )
 {
-    control& ctl = control::getDefault();
-    return detail::scan_by_key_detect_random_access(
-        ctl,
-        first1,
-        last1,
-        first2,
-        result,
-        init,
-        binary_pred,
-        binary_funct,
-        user_code,
-        false, // exclusive
-       	typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+    using bolt::amp::exclusive_scan_by_key;
+	return exclusive_scan_by_key(
+           control::getDefault( ), 
+		   first1, 
+		   last1,  
+		   first2,
+		   result,
+		   init,
+		   binary_pred,
+		   binary_funct,
+		   user_code );
 }
 
 template<
@@ -1297,23 +1208,16 @@ exclusive_scan_by_key(
     BinaryPredicate binary_pred,
     const std::string& user_code )
 {
-    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    control& ctl = control::getDefault();
-    plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
-        ctl,
-        first1,
-        last1,
-        first2,
-        result,
-        init,
-        binary_pred,
-        binary_funct,
-        user_code,
-        false, // exclusive
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+    using bolt::amp::exclusive_scan_by_key;
+	return exclusive_scan_by_key(
+           control::getDefault( ), 
+		   first1, 
+		   last1,  
+		   first2,
+		   result,
+		   init,
+		   binary_pred,
+		   user_code );
 }
 
 template<
@@ -1330,25 +1234,15 @@ exclusive_scan_by_key(
     T               init,
     const std::string& user_code )
 {
-    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
-    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    control& ctl = control::getDefault();
-    equal_to<kType> binary_pred;
-    plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
-        ctl,
-        first1,
-        last1,
-        first2,
-        result,
-        init,
-        binary_pred,
-        binary_funct,
-        user_code,
-        false, // exclusive
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-	);
+    using bolt::amp::exclusive_scan_by_key;
+	return exclusive_scan_by_key(
+           control::getDefault( ), 
+		   first1, 
+		   last1,  
+		   first2,
+		   result,
+		   init,
+		   user_code );
 }
 
 template<
@@ -1363,25 +1257,14 @@ exclusive_scan_by_key(
     OutputIterator  result,
     const std::string& user_code )
 {
-    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
-    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
-    control& ctl = control::getDefault();
-    equal_to<kType> binary_pred;
-    plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
-        ctl,
-        first1,
-        last1,
-        first2,
-        result,
-        0,
-        binary_pred,
-        binary_funct,
-        user_code,
-        false, // exclusive
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+    using bolt::amp::exclusive_scan_by_key;
+	return exclusive_scan_by_key(
+           control::getDefault( ), 
+		   first1, 
+		   last1,  
+		   first2,
+		   result,
+		   user_code );
 }
 
 ///////////////////////////// CTRL ////////////////////////////////////////////
@@ -1395,7 +1278,7 @@ template<
     typename BinaryFunction>
 OutputIterator
 exclusive_scan_by_key(
-    control &ctl,
+    bolt::amp::control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -1405,7 +1288,8 @@ exclusive_scan_by_key(
     BinaryFunction  binary_funct,
     const std::string& user_code )
 {
-    return detail::scan_by_key_detect_random_access(
+    using bolt::amp::detail::scan_by_key;
+    return detail::scan_by_key(
         ctl,
         first1,
         last1,
@@ -1414,11 +1298,8 @@ exclusive_scan_by_key(
         init,
         binary_pred,
         binary_funct,
-        user_code,
         false, // exclusive
-       	typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+        user_code ); 
 }
 
 template<
@@ -1429,7 +1310,7 @@ template<
     typename BinaryPredicate>
 OutputIterator
 exclusive_scan_by_key(
-    control &ctl,
+    bolt::amp::control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -1440,7 +1321,8 @@ exclusive_scan_by_key(
 {
     typedef typename std::iterator_traits<OutputIterator>::value_type oType;
     plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
+	using bolt::amp::detail::scan_by_key;
+    return detail::scan_by_key(
         ctl,
         first1,
         last1,
@@ -1449,11 +1331,8 @@ exclusive_scan_by_key(
         init,
         binary_pred,
         binary_funct,
-        user_code,
         false, // exclusive
-       	typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+        user_code ); 
 }
 
 template<
@@ -1463,7 +1342,7 @@ template<
     typename T>
 OutputIterator
 exclusive_scan_by_key(
-    control &ctl,
+    bolt::amp::control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -1475,7 +1354,8 @@ exclusive_scan_by_key(
     typedef typename std::iterator_traits<OutputIterator>::value_type oType;
     equal_to<kType> binary_pred;
     plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
+	using bolt::amp::detail::scan_by_key;
+    return detail::scan_by_key(
         ctl,
         first1,
         last1,
@@ -1484,11 +1364,8 @@ exclusive_scan_by_key(
         init,
         binary_pred,
         binary_funct,
-        user_code,
         false, // exclusive
-       	typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+        user_code); 
 }
 
 template<
@@ -1497,7 +1374,7 @@ template<
     typename OutputIterator>
 OutputIterator
 exclusive_scan_by_key(
-    control &ctl,
+    bolt::amp::control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -1506,26 +1383,24 @@ exclusive_scan_by_key(
 {
     typedef typename std::iterator_traits<InputIterator1>::value_type kType;
     typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+	oType init; memset(&init, 0, sizeof(oType) );
     equal_to<kType> binary_pred;
     plus<oType> binary_funct;
-    return detail::scan_by_key_detect_random_access(
+	using bolt::amp::detail::scan_by_key;
+    return detail::scan_by_key(
         ctl,
         first1,
         last1,
         first2,
         result,
-        0,
+        init,
         binary_pred,
         binary_funct,
-        user_code,
         false, // exclusive
-		typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator >::iterator_category( )
-    ); // return
+        user_code); 
 }
 
-
-} //namespace cl
+   } //namespace amp
 } //namespace bolt
 
 #endif
