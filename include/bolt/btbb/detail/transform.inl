@@ -18,6 +18,7 @@
 /*! \file bolt/amp/transform.h
 	\brief  Applies a specific function object to each element pair in the specified input ranges.
 */
+#include "tbb/task_scheduler_init.h"
 
 #pragma once
 #if !defined( BOLT_BTBB_TRANSFORM_INL )
@@ -132,6 +133,36 @@ namespace bolt
 	};
 
 
+	template<typename InputIterator1, typename InputIterator2, typename Stencil, typename OutputIterator, typename BinaryFunction, typename Predicate>
+     struct Transform_If {
+
+               Transform_If  () {}
+
+				void operator()( InputIterator1 first, InputIterator1 last, InputIterator2 first2, Stencil s, OutputIterator result, BinaryFunction op, Predicate p)
+                {
+					typename std::iterator_traits<InputIterator1>::difference_type n = (last - first);
+
+                    tbb::parallel_for(  tbb::blocked_range<int>(0, (int) n) ,
+                        [&] (const tbb::blocked_range<int> &r) -> void
+                        {
+                              
+                              for(int i = r.begin(); i!=r.end(); i++)
+                              {
+                                 
+								  if(p(s[i]))
+                                   *(result+i) = op(*(first+i), *(first2+i));
+								  else
+									*(result+i) = *(first+i);
+                              }   
+                          
+                        });
+
+                }
+
+
+     };
+
+
 		template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
 		void transform(InputIterator first,
 					   InputIterator last,
@@ -160,6 +191,27 @@ namespace bolt
 					tbb::simple_partitioner( ) );
 
 		}
+
+
+		template<typename InputIterator1, typename InputIterator2, typename Stencil, typename OutputIterator, typename BinaryFunction, typename Predicate>
+		void transform_if(InputIterator1 first1, InputIterator1 last1,
+                        InputIterator2 first2,  Stencil& s, OutputIterator result, BinaryFunction f, Predicate p)
+		{
+
+			   //Gets the number of concurrent threads supported by the underlying platform
+               //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+
+               //This allows TBB to choose the number of threads to spawn.
+               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+
+               //Explicitly setting the number of threads to spawn
+               //tbb::task_scheduler_init((int) concurentThreadsSupported);
+
+               Transform_If <InputIterator1, InputIterator2, Stencil, OutputIterator, BinaryFunction, Predicate> transform_if;
+               transform_if(first1, last1, first2, s, result, f, p);
+		}
+
+
 
 	}
 }

@@ -86,6 +86,7 @@ namespace bolt {
         extern const std::string stablesort_by_key_kernels;
         extern const std::string sort_uint_kernels;
         extern const std::string sort_int_kernels;
+        extern const std::string sort_float_kernels;
         extern const std::string sort_common_kernels;
         extern const std::string sort_by_key_kernels;
         extern const std::string sort_by_key_int_kernels;

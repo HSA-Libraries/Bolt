@@ -24,6 +24,8 @@
 #include "bolt/miniDump.h"
 #include "bolt/cl/gather.h"
 
+#include "bolt/BoltLog.h"
+
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
 #include <boost/range/algorithm/transform.hpp>
@@ -32,6 +34,7 @@
 #define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 0
 #define TEMPORARY_DISABLE_STD_DV_TEST_CASES 0
+#define OPENCL_CPU_PATH 0
 
 BOLT_FUNCTOR( is_even,
 struct is_even{
@@ -761,6 +764,7 @@ TEST_P(DeviceMemory_IntBoltdVector, MulticoreGather_IfPredicate)
 //
 //    EXPECT_EQ(exp_result, result);
 //}
+
 TEST( HostMemory_Float, SerialGatherIfPredicate )
 {
     // VS2012 doesn't support initializer list
@@ -3496,6 +3500,29 @@ TEST( DeviceMemory_Double, MulticoreGather_StdInput_Stdresult )
 #endif
 #endif
 
+TEST_P(HostMemory_UDDTestInt2, Gather_IfPredicate)
+{
+    std::vector<Int2> input( myStdVectSize);   
+    std::vector<Int2> exp_result(myStdVectSize);    
+    std::vector<Int2> result ( myStdVectSize);
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i].a =  i + 2 * i;
+            input[i].b = i + 3 * i;
+            stencil[i] = i + 5 * 1;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    is_even iepred;
+
+     bolt::cl::gather_if(map.begin(), map.end(), stencil.begin(), input.begin(), exp_result.begin(), iepred );
+     bolt::cl::gather_if( map.begin(), map.end(), stencil.begin(), input.begin(), result.begin(), iepred  );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
 TEST_P(HostMemory_UDDTestInt2, SerialGather_IfPredicate)
 {
     std::vector<Int2> input( myStdVectSize);   
@@ -3545,6 +3572,29 @@ TEST_P(HostMemory_UDDTestInt2, MulticoreGather_IfPredicate)
     EXPECT_EQ(exp_result, result);
 }
 
+TEST_P(HostMemory_UDDTestIntFloat, Gather_IfPredicate)
+{
+    std::vector<IntFloat> input( myStdVectSize);   
+    std::vector<IntFloat> exp_result(myStdVectSize);    
+    std::vector<IntFloat> result ( myStdVectSize);
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i].a =  i + 2 * i;
+            input[i].b = (float)(i + 3 * i);
+            stencil[i] = i + 5 * 1;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    is_even iepred;
+    bolt::cl::gather_if( map.begin(), map.end(), stencil.begin(), input.begin(), exp_result.begin(), iepred );
+    bolt::cl::gather_if( map.begin(), map.end(), stencil.begin(), input.begin(), result.begin(), iepred  );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
 TEST_P(HostMemory_UDDTestIntFloat, SerialGather_IfPredicate)
 {
     std::vector<IntFloat> input( myStdVectSize);   
@@ -3590,6 +3640,26 @@ TEST_P(HostMemory_UDDTestIntFloat, MulticoreGather_IfPredicate)
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
      bolt::cl::gather_if(ctl, map.begin(), map.end(), stencil.begin(), input.begin(), exp_result.begin(), iepred );
      bolt::cl::gather_if( map.begin(), map.end(), stencil.begin(), input.begin(), result.begin(), iepred  );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_UDDTestInt2, Gather)
+{
+    std::vector<Int2> input( myStdVectSize);   
+    std::vector<Int2> exp_result(myStdVectSize);    
+    std::vector<Int2> result ( myStdVectSize);
+    std::vector<int> map (myStdVectSize,0);   
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i].a =  i + 2 * i;
+            input[i].b = i + 3 * i;            
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    bolt::cl::gather( map.begin(), map.end(), input.begin(), exp_result.begin());
+    bolt::cl::gather( map.begin(), map.end(), input.begin(), result.begin());
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
@@ -3929,6 +3999,53 @@ int main(int argc, char* argv[])
     //bolt::cl::control& myControl = bolt::cl::control::getDefault( );
     //myControl.waitMode( bolt::cl::control::NiceWait );
     //myControl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb
+
+
+	//  Query OpenCL for available platforms
+    cl_int err = CL_SUCCESS;
+
+    // Platform vector contains all available platforms on system
+    std::vector< cl::Platform > platforms;
+    //std::cout << "HelloCL!\nGetting Platform Information\n";
+    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
+
+    //  Do stuff with the platforms
+    std::vector<cl::Platform>::iterator i;
+    if(platforms.size() > 0)
+    {
+        for(i = platforms.begin(); i != platforms.end(); ++i)
+        {
+            if(!strcmp((*i).getInfo<CL_PLATFORM_VENDOR>(&err).c_str(), "Advanced Micro Devices, Inc."))
+            {
+                break;
+            }
+        }
+    }
+    bolt::cl::V_OPENCL( err, "Platform::getInfo() failed" );
+
+    // Device info
+    std::vector< cl::Device > devices;
+    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
+
+	cl_uint userDevice = 0;
+
+#if(OPENCL_CPU_PATH == 1)
+	MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0, 1);
+	bolt::cl::control& myControl = bolt::cl::control(oclcpu._queue); 
+	myControl.setWaitMode( bolt::cl::control::NiceWait );
+    myControl.setForceRunMode( bolt::cl::control::OpenCL );
+    std::string strDeviceName =   myControl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+#else
+	cl::Context myContext( devices.at( userDevice ) );
+    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
+	std::string strDeviceName =  bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+#endif
+
+
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+    std::cout << "Device under test : " << strDeviceName << std::endl;
 
     int retVal = RUN_ALL_TESTS( );
 

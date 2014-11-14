@@ -124,7 +124,7 @@
 const std::streamsize colWidth = 26;
 
 #ifndef DATA_TYPE   
-    #define DATA_TYPE float
+    #define DATA_TYPE unsigned int
 #endif
 
 #include "data_type.h"
@@ -390,10 +390,8 @@ void executeFunctionType(
     {
     case f_merge:
         { 
-           /* for(int i =0;i<input1.size();i++)
-                std::cout<<input1[i]<<" ";
-            std::cout<<"\n";*/
-            std::cout <<  functionNames[f_merge] << std::endl;
+
+            //std::cout << functionNames[f_merge] << std::endl;
 #if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
             bolt::BENCH_BEND::sort( ctrl, input2.begin( ), input2.end( ), binaryPredLt);
@@ -425,7 +423,7 @@ void executeFunctionType(
         {
             bool tmp;
             typename VectorType::value_type val;
-            std::cout <<  functionNames[f_binarysearch] << std::endl;
+            //std::cout <<  functionNames[f_binarysearch] << std::endl;
 #if (BOLT_BENCHMARK == 1)
             bolt::BENCH_BEND::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
 #if BENCHMARK_CL_AMP == AMP_BENCH
@@ -460,7 +458,7 @@ void executeFunctionType(
         {
             typename VectorType::value_type tmp;
             tmp=0;
-            std::cout <<  functionNames[f_transformreduce] << std::endl;
+            //std::cout <<  functionNames[f_transformreduce] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -482,7 +480,7 @@ void executeFunctionType(
 
     case f_stablesort:
         {
-            std::cout <<  functionNames[f_stablesort] << std::endl;
+            //std::cout <<  functionNames[f_stablesort] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 VectorType inputBackup = input1;
@@ -503,7 +501,7 @@ void executeFunctionType(
 
     case f_stablesortbykey:
         {
-            std::cout <<  functionNames[f_stablesortbykey] << std::endl;
+            //std::cout <<  functionNames[f_stablesortbykey] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 VectorType inputBackup = input1;
@@ -524,7 +522,7 @@ void executeFunctionType(
 
     case f_sort:
         {
-            std::cout <<  functionNames[f_sort] << std::endl;
+            //std::cout <<  functionNames[f_sort] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 VectorType inputBackup = input1;
@@ -545,7 +543,7 @@ void executeFunctionType(
 
     case f_sortbykey:
         {
-            std::cout <<  functionNames[f_sortbykey] << std::endl;
+            //std::cout <<  functionNames[f_sortbykey] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 VectorType inputBackup = input1;
@@ -568,7 +566,7 @@ void executeFunctionType(
         {
             typename VectorType::value_type tmp;
             tmp=0;
-            std::cout <<  functionNames[f_reduce] << std::endl;
+            //std::cout <<  functionNames[f_reduce] << std::endl;
 
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
@@ -589,9 +587,9 @@ void executeFunctionType(
 
     case f_reducebykey:
         {
-                VectorType keys1(input1.size());
+            VectorType keys1(input1.size());
 
-            std::cout <<  functionNames[f_reducebykey] << std::endl;
+            //std::cout <<  functionNames[f_reducebykey] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -613,7 +611,7 @@ void executeFunctionType(
 
     case f_maxelement:
         {
-            std::cout <<  functionNames[f_maxelement] << std::endl;
+            //std::cout <<  functionNames[f_maxelement] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -635,7 +633,7 @@ void executeFunctionType(
 
     case f_minelement:
         {
-            std::cout <<  functionNames[f_minelement] << std::endl;
+            //std::cout <<  functionNames[f_minelement] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -662,7 +660,7 @@ void executeFunctionType(
     case f_fill:
         {
             typename VectorType::value_type tmp;
-            std::cout <<  functionNames[f_fill] << std::endl;
+            //std::cout <<  functionNames[f_fill] << std::endl;
 
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
@@ -684,7 +682,7 @@ void executeFunctionType(
     case f_count:
         {
             typename VectorType::value_type tmp;
-            std::cout <<  functionNames[f_count] << std::endl;
+            //std::cout <<  functionNames[f_count] << std::endl;
 
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
@@ -705,7 +703,7 @@ void executeFunctionType(
 
     case f_generate:
         {
-            std::cout <<  functionNames[f_generate] << std::endl;
+            //std::cout <<  functionNames[f_generate] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -727,7 +725,7 @@ void executeFunctionType(
         { 
             typename VectorType::value_type tmp;
             tmp=10;
-            std::cout <<  functionNames[f_innerproduct] << std::endl;
+            //std::cout <<  functionNames[f_innerproduct] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -747,7 +745,7 @@ void executeFunctionType(
 
     case f_copy:
         {
-            std::cout <<  functionNames[f_copy] << std::endl;
+            //std::cout <<  functionNames[f_copy] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -767,7 +765,7 @@ void executeFunctionType(
 
     case f_unarytransform:
         {
-            std::cout <<  functionNames[f_unarytransform] << std::endl;
+            //std::cout <<  functionNames[f_unarytransform] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -787,7 +785,7 @@ void executeFunctionType(
 
     case f_binarytransform:
         {
-            std::cout <<  functionNames[f_binarytransform] << std::endl;
+            //std::cout <<  functionNames[f_binarytransform] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -807,7 +805,7 @@ void executeFunctionType(
 
     case f_scan:
         {
-            std::cout <<  functionNames[f_scan] << std::endl;
+            //std::cout <<  functionNames[f_scan] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -828,7 +826,7 @@ void executeFunctionType(
 
     case f_scanbykey:
         {
-            std::cout <<  functionNames[f_scanbykey] << std::endl;
+            //std::cout <<  functionNames[f_scanbykey] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -851,7 +849,7 @@ void executeFunctionType(
 
     case f_transformscan:
         {
-            std::cout <<  functionNames[f_transformscan] << std::endl;
+            //std::cout <<  functionNames[f_transformscan] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -873,7 +871,7 @@ void executeFunctionType(
 
     case f_gather:
         {
-            std::cout <<  functionNames[f_gather] << std::endl;
+            //std::cout <<  functionNames[f_gather] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -893,7 +891,7 @@ void executeFunctionType(
 
     case f_scatter:
         {
-            std::cout <<  functionNames[f_scatter] << std::endl;
+            //std::cout <<  functionNames[f_scatter] << std::endl;
             for (size_t iter = 0; iter < iterations+1; iter++)
             {
                 myTimer.Start( testId );
@@ -912,7 +910,7 @@ void executeFunctionType(
         break;
 
         default:
-            std::cout << "\nUnsupported function = " << function <<"\n"<< std::endl;
+            std::cout << "\nUnsupported function = " << function <<"... Benchmark didn't run\n"<< std::endl;
             break;
     } // switch
 
@@ -1592,13 +1590,21 @@ int main( int argc, char* argv[] )
         ctrl.setCommandQueue( myQueue );
         strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
         bolt::BENCH_BEND::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+        std::cout << "Benchmarking for OpenCL Backend \n";
 #elif BENCHMARK_CL_AMP == AMP_BENCH
         if (runMode == 3) // GPU
         {
             ctrl.setForceRunMode( bolt::BENCH_BEND::control::Gpu );
             strDeviceName = "GPU";
         }
+        std::cout << "Benchmarking for AMP Backend \n";
 #endif
+        std::cout << "   Device      - " << strDeviceName << std::endl;
+        std::cout << "   Function    - " << functionNames[routine] << std::endl; 
+        std::cout << "   Memory Type - " << (hostMemory?"Host Memory": "Device Memory") << std::endl;
+        std::cout << "   Buffer Size - " << length << std::endl;
+        std::cout << "   Iterations  - " << iterations << std::endl;
+        std::cout << "   DATA TYPE   - " << typeid(DATA_TYPE).name() << std::endl;
     }
 #endif
     //std::cout << "Device: " << strDeviceName << std::endl;

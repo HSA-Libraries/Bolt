@@ -101,7 +101,7 @@ namespace bolt {
          *  of copying on the GPU is not guaranteed.
          *
 
-         * \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
+         *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
          *  \param first Beginning of the source copy sequence.
          *  \param n  Number of elements to copy.
          *  \param result Beginning of the destination sequence.
@@ -146,6 +146,157 @@ namespace bolt {
             OutputIterator result);
 
         /*!   \}  */
+
+/*! \addtogroup stream_compaction
+ *  \{
+ */
+
+
+/*! This version of \p copy_if copies elements from the range <tt>[first,last)</tt>
+ *  to a range beginning at \ presult, except that any element which causes \p pred
+ *  to be \p pred to be \c false is not copied.
+ *
+ *  More precisely, for every integer \c n such that <tt>0 <= n < last-first</tt>,
+ *  \p copy_if performs the assignment <tt>*result = *(first+n)</tt> and \p result
+ *  is advanced one position if <tt>pred(*(first+n))</tt>. Otherwise, no assignment
+ *  occurs and \p result is not advanced.
+ *
+ *  The algorithm's execution is parallelized as determined by \p system.
+ *
+ *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
+ *  \param first The beginning of the sequence from which to copy.
+ *  \param last The end of the sequence from which to copy.
+ *  \param result The beginning of the sequence into which to copy.
+ *  \param pred The predicate to test on every value of the range <tt>[first, last)</tt>.
+ *  \return <tt>result + n</tt>, where \c n is equal to the number of times \p pred
+ *          evaluated to \c true in the range <tt>[first, last)</tt>.
+ *
+ *  \tparam InputIterator is a model of <a href="http://www.sgi.com/tech/stl/InputIterator.html">Input Iterator</a>,
+ *                        and \p InputIterator's \c value_type is convertible to \p Predicate's \c argument_type.
+ *  \tparam OutputIterator is a model of <a href="http://www.sgi.com/tech/stl/OutputIterator.html">Output Iterator</a>.
+ *  \tparam Predicate is a model of <a href="http://www.sgi.com/tech/stl/Predicate.html">Predicate</a>.
+ *
+ *  \pre The ranges <tt>[first, last)</tt> and <tt>[result, result + (last - first))</tt> shall not overlap.
+ *
+ *  The following code snippet demonstrates how to use \p copy_if to perform stream compaction
+ *
+ *  \code
+ *  #include <bolt/amp/copy.h>
+ *  ...
+ *  struct is_even
+ *  {
+ *    bool operator()(const int x)
+ *    {
+ *      return (x % 2) == 0;
+ *    }
+ *  };
+ *  ...
+ *  const int N = 6;
+ *  int V[N] = {-2, 0, -1, 0, 1, 2};
+ *  int result[4];
+ *
+ *  bolt::amp::copy_if(V, V + N, result, is_even());
+ *
+ *  // V remains {-2, 0, -1, 0, 1, 2}
+ *  // result is now {-2, 0, 0, 2}
+ *  \endcode
+ *
+ *  \see \c remove_copy_if
+ */
+template<typename DerivedPolicy, typename InputIterator, typename OutputIterator, typename Predicate>
+OutputIterator copy_if(const bolt::amp::control &ctl,
+                         InputIterator first,
+                         InputIterator last,
+                         OutputIterator result,
+                         Predicate pred);
+
+template<typename InputIterator,
+         typename OutputIterator,
+         typename Predicate>
+  OutputIterator copy_if(InputIterator first,
+                         InputIterator last,
+                         OutputIterator result,
+                         Predicate pred);
+
+
+/*! This version of \p copy_if copies elements from the range <tt>[first,last)</tt>
+ *  to a range beginning at \p result, except that any element whose corresponding stencil
+ *  element causes \p pred to be \c false is not copied.
+ *
+ *  More precisely, for every integer \c n such that <tt>0 <= n < last-first</tt>,
+ *  \p copy_if performs the assignment <tt>*result = *(first+n)</tt> and \p result
+ *  is advanced one position if <tt>pred(*(stencil+n))</tt>. Otherwise, no assignment
+ *  occurs and \p result is not advanced.
+ *
+ *  The algorithm's execution is parallelized as determined by \p exec.
+ *
+ *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
+ *  \param first The beginning of the sequence from which to copy.
+ *  \param last  The end of the sequence from which to copy.
+ *  \param stencil The beginning of the stencil sequence.
+ *  \param result The beginning of the sequence into which to copy.
+ *  \param pred   The predicate to test on every value of the range <tt>[stencil, stencil + (last-first))</tt>.
+ *  \return <tt>result + n</tt>, where \c n is equal to the number of times \p pred
+ *          evaluated to \c true in the range <tt>[stencil, stencil + (last-first))</tt>.
+ *
+ *  \tparam DerivedPolicy The name of the derived execution policy.
+ *  \tparam InputIterator1 is a model of <a href="http://www.sgi.com/tech/stl/InputIterator.html">Input Iterator</a>.
+ *  \tparam InputIterator2 is a model of <a href="http://www.sgi.com/tech/stl/InputIterator.html">Input Iterator</a>,
+ *                         and \p InputIterator2's \c value_type is convertible to \p Predicate's \c argument_type.
+ *  \tparam OutputIterator is a model of <a href="http://www.sgi.com/tech/stl/OutputIterator">Output Iterator</a>.
+ *  \tparam Predicate is a model of <a href="http://www.sgi.com/tech/stl/Predicate.html">Predicate</a>.
+ *
+ *  \pre The ranges <tt>[first, last)</tt> and <tt>[result, result + (last - first))</tt> shall not overlap.
+ *  \pre The ranges <tt>[stencil, stencil + (last - first))</tt> and <tt>[result, result + (last - first))</tt> shall not overlap.
+ *
+ *
+ *  \code
+ *  #include <bolt/amp/copy.h>
+ *  #include <bolt/amp/execution_policy.h>
+ *  ...
+ *  struct is_even
+ *  {
+ *    bool operator()(const int x)
+ *    {
+ *      return (x % 2) == 0;
+ *    }
+ *  };
+ *  
+ *  int N = 6;
+ *  int data[N]    = { 0, 1,  2, 3, 4, 5};
+ *  int stencil[N] = {-2, 0, -1, 0, 1, 2};
+ *  int result[4];
+ *
+ *  bolt::amp::copy_if(data, data + N, stencil, result, is_even());
+ *
+ *  // data remains    = { 0, 1,  2, 3, 4, 5};
+ *  // stencil remains = {-2, 0, -1, 0, 1, 2};
+ *  // result is now     { 0, 1,  3, 5}
+ *  \endcode
+ *
+ *  \see \c remove_copy_if
+ */
+
+template<typename DerivedPolicy, typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+OutputIterator copy_if(const bolt::amp::control &ctl,
+                         InputIterator1 first,
+                         InputIterator1 last,
+                         InputIterator2 stencil,
+                         OutputIterator result,
+                         Predicate pred);
+
+template<typename InputIterator1,
+         typename InputIterator2,
+         typename OutputIterator,
+         typename Predicate>
+  OutputIterator copy_if(InputIterator1 first,
+                         InputIterator1 last,
+                         InputIterator2 stencil,
+                         OutputIterator result,
+                         Predicate pred);
+
+/*! \} // end stream_compaction
+ */
     };
 };
 

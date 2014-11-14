@@ -263,4 +263,100 @@ cmpArrays( typename bolt::amp::device_vector<T1> &ref, typename bolt::amp::devic
       return ::testing::AssertionSuccess( );
 }
 
+
+
+template <typename int N=2<<28>
+class TestBuffer
+{
+    public:
+    int *randomValues;
+    TestBuffer()
+    {
+        int large_store_sz = N; 
+        randomValues = new int[large_store_sz];
+        std::cout << "Initializing Random value Store\n";
+        for(int i=0; i<large_store_sz; i++ )
+        {
+            randomValues[i] = rand()*rand(); 
+        }
+        std::cout << "Finished initializing Random value Store\n";
+    }
+
+    template <typename Container>
+    typename std::enable_if< std::is_same<typename std::iterator_traits<typename Container::iterator>::iterator_category,
+                                 std::random_access_iterator_tag
+                                >::value
+                  >::type
+    fill_value(Container &cont, typename std::iterator_traits<typename Container::iterator>::value_type value)
+    {
+        typedef typename Container::iterator iterator;
+        iterator begin = cont.begin();
+        iterator end   = cont.end();
+        while( begin != end )
+        {
+            *begin = value;
+            begin++;
+        }
+    }
+
+    template <typename Container>
+    typename std::enable_if< std::is_same<typename std::iterator_traits<typename Container::iterator>::iterator_category,
+                                 bolt::amp::device_vector_tag
+                                >::value
+                  >::type
+    fill_value(Container &cont, typename std::iterator_traits<typename Container::iterator>::value_type value)
+    {
+        typedef typename Container::iterator iterator;
+        iterator begin = cont.begin();
+        iterator end   = cont.end();
+        size_t sz = cont.size();
+        typedef typename std::iterator_traits<iterator>::value_type value_type;
+        value_type *mapped_ptr = cont.data();
+        std::fill_n(stdext::make_checked_array_iterator( randomValues, sz), sz, value );
+    }
+
+    template <typename Container>
+    typename std::enable_if< std::is_same<typename std::iterator_traits<typename Container::iterator>::iterator_category,
+                                 std::random_access_iterator_tag
+                                >::value
+                  >::type
+    init(Container &cont)
+    {
+        typedef typename Container::iterator iterator;
+        iterator begin = cont.begin();
+        iterator end   = cont.end();
+        size_t sz = cont.size();
+        std::copy(randomValues, randomValues + sz, cont.begin());
+    }
+
+    template <typename Container>
+    typename std::enable_if< std::is_same<typename std::iterator_traits<typename Container::iterator>::iterator_category,
+                                          bolt::amp::device_vector_tag
+                                         >::value
+                           >::type
+    init(Container &cont)
+    {
+        typedef typename Container::iterator iterator;
+        iterator begin = cont.begin();
+        iterator end   = cont.end();
+        size_t sz = cont.size();
+        typedef typename std::iterator_traits<iterator>::value_type value_type;
+        value_type *mapped_ptr = cont.data();
+        std::copy_n(randomValues, sz, stdext::make_checked_array_iterator( mapped_ptr, sz) );
+    }
+
+    template <typename value_type>
+    void init (value_type * input, int length)
+    {
+        std::copy_n(randomValues, length, stdext::make_checked_array_iterator( input, length) );
+    }
+
+    ~TestBuffer()
+    {
+        delete randomValues;
+    }
+};
+
+
+
 #endif

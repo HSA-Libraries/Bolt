@@ -12,7 +12,7 @@
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *   See the License for the specific language governing permissions and
 *   limitations under the License.
-*
+
 ***************************************************************************/
 
 /***************************************************************************
@@ -26,12 +26,12 @@
 * The derived work adds support for descending sort and signed integers.
 * Performance optimizations were provided for the AMD GCN architecture.
 *
-*  Besides this following publications were referred: 
-*  1. "Parallel Scan For Stream Architectures"  
-*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
+*  Besides this following publications were referred:
+*  1. "Parallel Scan For Stream Architectures"
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia.
 *     Duane Merrill and Andrew Grimshaw
 *    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
-*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
+*  2. "Revisiting Sorting for GPGPU Stream Architectures"
 *     Duane Merrill and Andrew Grimshaw
 *    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
 *
@@ -47,10 +47,13 @@
 #endif
 
 #include "bolt/cl/stablesort.h"
-#define BOLT_UINT_MAX 0xFFFFFFFFU
-#define BOLT_UINT_MIN 0x0U
-#define BOLT_INT_MAX 0x7FFFFFFF
-#define BOLT_INT_MIN 0x80000000
+
+#define DISABLE_BITONIC_SORT
+#define SORT_ALG_BRANCH_POINT (1<<20)
+#define BOLT_UINT_MAX   0xFFFFFFFFU
+#define BOLT_UINT_MIN   0x0U
+#define BOLT_INT_MAX    0x7FFFFFFF
+#define BOLT_INT_MIN    0x80000000
 
 #define BITONIC_SORT_WGSIZE 64
 /* \brief - SORT_CPU_THRESHOLD should be atleast 2 times the BITONIC_SORT_WGSIZE*/
@@ -61,34 +64,14 @@ namespace cl {
 
 namespace detail {
 
-template< typename DVRandomAccessIterator, typename StrictWeakOrdering >
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
-                                       unsigned int
-                                     >::value
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-stablesort_enqueue(control &ctl,
-             DVRandomAccessIterator first, DVRandomAccessIterator last,
-             StrictWeakOrdering comp, const std::string& cl_code);
-
-template< typename DVRandomAccessIterator, typename StrictWeakOrdering >
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
-                                       int
-                                     >::value
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-stablesort_enqueue(control &ctl,
-             DVRandomAccessIterator first, DVRandomAccessIterator last,
-             StrictWeakOrdering comp, const std::string& cl_code);
-
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-typename std::enable_if<
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value ||
-      std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value  )
-                       >::type
-stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-             const StrictWeakOrdering& comp, const std::string& cl_code);
+void merge_sort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code);
 
 enum sortTypes {sort_iValueType, sort_iIterType, sort_StrictWeakOrdering, sort_end };
 
+#if !defined (DISABLE_BITONIC_SORT)
 class BitonicSort_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
 public:
@@ -113,6 +96,7 @@ public:
             return templateSpecializationString;
         }
 };
+#endif //DISABLE_BITONIC_SORT
 
 class RadixSort_Int_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -170,6 +154,25 @@ public:
     }
 };
 
+class RadixSort_Float_KernelTemplateSpecializer : public KernelTemplateSpecializer
+{
+private:
+    int _radix;
+public:
+    RadixSort_Float_KernelTemplateSpecializer() : KernelTemplateSpecializer()
+    {
+        addKernelName("flipFloat");
+        addKernelName("inverseFlipFloat");
+    }
+
+    const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
+    {
+        const std::string templateSpecializationString = "\n //RadixSort_Float_KernelTemplateSpecializer\n";
+        return templateSpecializationString;
+    }
+};
+
+#if !defined(DISABLE_BITONIC_SORT)
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 void sort_enqueue_non_powerOf2(control &ctl,
                                const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
@@ -181,17 +184,14 @@ void sort_enqueue_non_powerOf2(control &ctl,
     bolt::cl::detail::stablesort_enqueue(ctl, first, last, comp, cl_code);
     return;
 }// END of sort_enqueue_non_powerOf2
+#endif
 
 /*********************************************************************
  * RADIX SORT ALGORITHM FOR unsigned integers.
  *********************************************************************/
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
-                                       unsigned int
-                                     >::value
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-sort_enqueue(control &ctl,
+void radix_sort_uint_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code)
 {
@@ -398,16 +398,257 @@ sort_enqueue(control &ctl,
     return;
 }
 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+void radix_sort_float_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code)
+{
+    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
+    const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
+                         //local array of 16 elements in the histogram kernel.
+
+    const int RADICES = (1 << RADIX); //Values handeled by each work-item?
+
+    int szElements = static_cast<int>(std::distance(first, last));
+
+    int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+    if (computeUnits > 32 )
+        computeUnits = 32;
+    cl_int l_Error = CL_SUCCESS;
+
+    //static std::vector< ::cl::Kernel > radixSortUintKernels;
+    //static std::vector< ::cl::Kernel > radixSortCommonKernels;
+    std::vector<std::string> typeNames( sort_end );
+    typeNames[sort_iValueType]         = TypeName< T >::get( );
+    typeNames[sort_iIterType]          = TypeName< DVRandomAccessIterator >::get( );
+    typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
+
+    std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
+
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    /*\TODO - Do CPU specific kernel work group size selection here*/
+
+    std::string compileOptions;
+    //std::ostringstream oss;
+    RadixSort_Common_KernelTemplateSpecializer radix_common_kts;
+    std::vector< ::cl::Kernel > commonKernels = bolt::cl::getKernels(
+        ctl,
+        typeNames,
+        &radix_common_kts,
+        typeDefinitions,
+        sort_common_kernels,
+        compileOptions);
+
+    RadixSort_Uint_KernelTemplateSpecializer radix_uint_kts;
+    std::vector< ::cl::Kernel > uintKernels = bolt::cl::getKernels(
+        ctl,
+        typeNames,
+        &radix_uint_kts,
+        typeDefinitions,
+        sort_uint_kernels,
+        compileOptions);
+
+    RadixSort_Float_KernelTemplateSpecializer radix_float_kts;
+    std::vector< ::cl::Kernel > floatKernels = bolt::cl::getKernels(
+        ctl,
+        typeNames,
+        &radix_float_kts,
+        typeDefinitions,
+        sort_float_kernels,
+        compileOptions);
+
+    int localSize  = 256;
+    int wavefronts = 8;
+    int numGroups = computeUnits * wavefronts;
+
+    device_vector< T > dvSwapInputData( szElements, 0, CL_MEM_READ_WRITE, false, ctl);
+    device_vector< T > dvHistogramBins( (localSize * RADICES), 0, CL_MEM_READ_WRITE, false, ctl);
+
+    ::cl::Buffer clInputData = first.getContainer().getBuffer();
+    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
+    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
+
+    //Float Specific kernels
+    ::cl::Kernel flipFloatKernel;
+    ::cl::Kernel inverseFlipFloatKernel;
+
+    ::cl::Kernel histKernel;
+    ::cl::Kernel permuteKernel;
+    ::cl::Kernel scanLocalKernel;
+
+    flipFloatKernel = floatKernels[0];
+    inverseFlipFloatKernel = floatKernels[1];
+    if(comp(2,3))
+    {
+        /*Ascending Sort*/
+        histKernel = commonKernels[0];
+        scanLocalKernel = commonKernels[4];
+        permuteKernel = uintKernels[0];
+    }
+    else
+    {
+        /*Descending Sort*/
+        histKernel = commonKernels[1];
+        scanLocalKernel = commonKernels[4];
+        permuteKernel = uintKernels[1];
+    }
+
+        int swap = 0;
+        const int ELEMENTS_PER_WORK_ITEM = 4;
+        int blockSize = (int)(ELEMENTS_PER_WORK_ITEM*localSize);//set at 1024
+        int nBlocks = (int)(szElements + blockSize-1)/(blockSize);
+        struct b3ConstData
+        {
+            int m_n;
+            int m_nWGs;
+            int m_startBit;
+            int m_nBlocksPerWG;
+        };
+        b3ConstData cdata;
+
+        cdata.m_n = (int)szElements;
+        cdata.m_nWGs = (int)numGroups;
+        //cdata.m_startBit = shift; //Shift value is set inside the for loop.
+        cdata.m_nBlocksPerWG = (int)(nBlocks + numGroups - 1)/numGroups;
+        if(nBlocks < numGroups)
+        {
+            cdata.m_nBlocksPerWG = 1;
+            numGroups = nBlocks;
+            cdata.m_nWGs = numGroups;
+        }
+
+    //Set Histogram kernel arguments
+    V_OPENCL( histKernel.setArg(1, clHistData), "Error setting a kernel argument" );
+
+    //Set Scan kernel arguments
+    V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
+    V_OPENCL( scanLocalKernel.setArg(1, (int)numGroups), "Error setting a kernel argument" );
+    V_OPENCL( scanLocalKernel.setArg(2, localSize * 2 * sizeof(T),NULL), "Error setting a kernel argument" );
+
+    //Set Permute kernel arguments
+    V_OPENCL( permuteKernel.setArg(1, clHistData), "Error setting a kernel argument" );
+
+    //First Launch the float flip kernel.
+    V_OPENCL( flipFloatKernel.setArg(0, clInputData), "Error setting a kernel argument" );
+    V_OPENCL( flipFloatKernel.setArg(1, cdata), "Error setting a kernel argument" );
+    l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                        flipFloatKernel,
+                        ::cl::NullRange,
+                        ::cl::NDRange(numGroups*localSize),
+                        ::cl::NDRange(localSize), //This mul will be removed when permute is optimized
+                        NULL,
+                        NULL);
+    //std::cout << "Total numOfGroups = " << numGroups << "\n";
+    //Then sort the data as if they were an unsigned ints.
+    for(int bits = 0; bits < (sizeof(T) * 8); bits += RADIX)
+    {
+        //Launch Kernel
+        cdata.m_startBit = bits;
+        //Histogram Kernel
+        V_OPENCL( histKernel.setArg(2, cdata), "Error setting a kernel argument" );
+        if (swap == 0)
+            V_OPENCL( histKernel.setArg(0, clInputData), "Error setting a kernel argument" );
+        else
+            V_OPENCL( histKernel.setArg(0, clSwapData), "Error setting a kernel argument" );
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                            histKernel,
+                            ::cl::NullRange,
+                            ::cl::NDRange(numGroups*localSize),
+                            ::cl::NDRange(localSize), //This mul will be removed when permute is optimized
+                            NULL,
+                            NULL);
+//#define DEBUG_ENABLED
+#if defined(DEBUG_ENABLED)
+        {
+            V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+
+            unsigned int * temp = dvHistogramBins.data().get();
+            V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+            //DEBUG LOOP
+            printf("Un-Scanned result\n");
+            for (int jj=0;jj<(numGroups* RADICES);jj++)
+            {
+                printf(" %d", temp[jj] );
+            }
+            printf("\n\n");
+        }
+
+#endif
+
+        //Launch Local Scan Kernel
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                            scanLocalKernel,
+                            ::cl::NullRange,
+                            ::cl::NDRange(localSize),
+                            ::cl::NDRange(localSize), //This mul will be removed when permute is optimized
+                            NULL,
+                            NULL);
+
+        //Launch Permute Kernel
+#if defined(DEBUG_ENABLED)
+        {
+            V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+
+            unsigned int * temp = dvHistogramBins.data().get();
+            V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+            //DEBUG LOOP
+            printf("Scanned result\n");
+            for (int jj=0;jj<(numGroups* RADICES);jj++)
+            {
+                printf(" %d", temp[jj] );
+            }
+            printf("\n\n");
+        }
+
+#endif
+        V_OPENCL( permuteKernel.setArg(3, cdata), "Error setting a kernel argument" );
+        if (swap == 0)
+        {
+            V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
+            V_OPENCL( permuteKernel.setArg(2, clSwapData), "Error setting kernel argument" );
+        }
+        else
+        {
+            V_OPENCL( permuteKernel.setArg(0, clSwapData), "Error setting kernel argument" );
+            V_OPENCL( permuteKernel.setArg(2, clInputData), "Error setting kernel argument" );
+        }
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                            permuteKernel,
+                            ::cl::NullRange,
+                            ::cl::NDRange(numGroups*localSize),
+                            ::cl::NDRange(localSize),
+                            NULL,
+                            NULL);
+        /*For swapping the buffers*/
+        swap = swap? 0: 1;
+    }
+
+    //Now flip back the data to represent the actual float
+    V_OPENCL( inverseFlipFloatKernel.setArg(0, clInputData), "Error setting a kernel argument" );
+    V_OPENCL( inverseFlipFloatKernel.setArg(1, cdata), "Error setting a kernel argument" );
+    l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                        inverseFlipFloatKernel,
+                        ::cl::NullRange,
+                        ::cl::NDRange(numGroups*localSize),
+                        ::cl::NDRange(localSize), //This mul will be removed when permute is optimized
+                        NULL,
+                        NULL);
+
+    V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+    return;
+}
 
 /*********************************************************************
  * RADIX SORT ALGORITHM FOR signed integers.
  *********************************************************************/
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
-                                       int
-                                     >::value
-                       >::type   /*If enabled then this typename will be evaluated to void*/
-sort_enqueue(control &ctl,
+void radix_sort_int_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code)
 {
@@ -708,15 +949,79 @@ sort_enqueue(control &ctl,
 
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       unsigned int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+sort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code)
+{
+    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
+    if(szElements > SORT_ALG_BRANCH_POINT)
+        bolt::cl::detail::radix_sort_uint_enqueue(ctl, first, last,comp,cl_code);
+    else
+        bolt::cl::detail::merge_sort_enqueue(ctl, first, last,comp,cl_code);
+
+    return;
+}
+
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+sort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code)
+{
+    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
+    if(szElements > SORT_ALG_BRANCH_POINT)
+        bolt::cl::detail::radix_sort_int_enqueue(ctl, first, last,comp,cl_code);
+    else
+        bolt::cl::detail::merge_sort_enqueue(ctl, first, last,comp,cl_code);
+
+    return;
+}
+
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       float
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+sort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code)
+{
+    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
+    //std::cout << " inside sort float enqueue\n";
+    if(szElements > SORT_ALG_BRANCH_POINT)
+        bolt::cl::detail::radix_sort_float_enqueue(ctl, first, last,comp,cl_code);
+    else
+        bolt::cl::detail::merge_sort_enqueue(ctl, first, last,comp,cl_code);
+
+    return;
+}
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if<
     !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value
    || std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value
+   || std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,        float >::value
     )
                        >::type
 sort_enqueue(control &ctl,
              const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
              const StrictWeakOrdering& comp, const std::string& cl_code)
 {
+
+#if defined(DISABLE_BITONIC_SORT)
+    cl_int l_Error = CL_SUCCESS;
+    ::bolt::cl::detail::merge_sort_enqueue(ctl,first,last,comp,cl_code);
+    return;
+#else
     cl_int l_Error = CL_SUCCESS;
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     size_t szElements = static_cast< size_t >( std::distance( first, last ) );
@@ -816,6 +1121,7 @@ sort_enqueue(control &ctl,
     V_OPENCL( l_Error, "bitonicSortEvent failed to wait" );*/
     V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     return;
+#endif
 }// END of sort_enqueue
 
 //Device Vector specialization
@@ -1018,6 +1324,6 @@ void sort(control &ctl,
 }
 };
 
-
-
+#undef DISABLE_BITONIC_SORT
+#undef SORT_ALG_BRANCH_POINT
 #endif
