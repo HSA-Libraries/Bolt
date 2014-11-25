@@ -170,6 +170,7 @@ set( clBolt.Runtime.clFiles
         sort_uint_kernels.cl
         sort_by_key_uint_kernels.cl
         sort_int_kernels.cl
+        sort_float_kernels.cl
         sort_by_key_int_kernels.cl
         sort_by_key_kernels.cl
     )
@@ -195,6 +196,7 @@ set( tbb.Runtime.Headers
     ${tbb.Include.Dir}/stable_sort_by_key.h
     ${tbb.Include.Dir}/transform.h
     ${tbb.Include.Dir}/transform_reduce.h
+	${tbb.Include.Dir}/for_each.h
     )
 
 set( tbb.Runtime.Headers.Detail
@@ -218,6 +220,7 @@ set( tbb.Runtime.Headers.Detail
     ${tbb.Include.Dir}/detail/stable_sort_by_key.inl
     ${tbb.Include.Dir}/detail/transform.inl
     ${tbb.Include.Dir}/detail/transform_reduce.inl
+	${tbb.Include.Dir}/detail/for_each.inl
     )
 
 # Create a list of .cl files that we would like to be a part of the IDE

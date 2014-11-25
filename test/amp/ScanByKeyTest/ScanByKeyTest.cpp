@@ -4686,6 +4686,48 @@ TEST (ABB, ExclTestLong)
 // paste from above
 
 
+TEST( StdVectCountingIterator, withCountingIterator)
+{
+	int mySize = 1024;
+
+    std::vector<int> stdInput(mySize);
+	std::vector<int> keys(mySize);
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+	int key = 1;
+	for (int i = 0; i < mySize; i++)
+    {
+        if(std::rand()%5 == 1) key++;
+        keys[i] = key;
+        stdInput[i] = i;
+    }
+
+	std::vector< int > refOutput( mySize );
+    std::vector< int > boltOutput( mySize );
+
+	bolt::amp::equal_to<int> eq; 
+    bolt::amp::plus<int> mM3; 
+
+
+    gold_scan_by_key( keys.begin(),
+                      keys.end(),
+                      stdInput.begin(),
+                      refOutput.begin(),
+                      mM3);
+    bolt::amp::inclusive_scan_by_key(
+        keys.begin(),
+        keys.end(),
+        first,
+        boltOutput.begin(),
+        eq,
+        mM3);
+
+    cmpArrays(refOutput, boltOutput);
+
+}
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	

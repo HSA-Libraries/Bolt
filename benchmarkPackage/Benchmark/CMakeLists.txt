@@ -33,12 +33,6 @@ set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
                 set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
 endif()
 
-# Set project specific compile and link options
-if( MSVC )
-set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
-                set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
-endif()
-
 if(BUILD_TBB)
     target_link_libraries( Bolt.Bench.Benchmark ${BOLT_LIBRARIES} ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} ${TBB_LIBRARIES} )
 else (BUILD_TBB)

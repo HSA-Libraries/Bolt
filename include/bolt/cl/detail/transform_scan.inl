@@ -349,8 +349,7 @@ namespace cl{
                 "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
                 "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp,\n"
                 "global " + typeNames[transformScan_oValueType] + "* preSumArray,\n"
-                "global " + typeNames[transformScan_oValueType] + "* preSumArray1,\n"
-                "int exclusive\n"
+				"const uint load_per_wg\n"
                 ");\n\n"
 		       
                 "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -373,12 +372,11 @@ namespace cl{
                 "global " + typeNames[transformScan_iValueType] + "* input_ptr,\n"
                 ""        + typeNames[transformScan_iIterType] + " input_iter,\n"
                 "global " + typeNames[transformScan_oValueType] + "* preSumArray,\n"
-                "global " + typeNames[transformScan_oValueType] + "* preSumArray1,\n"
                 "local "  + typeNames[transformScan_oValueType] + "* lds,\n"
                 "const uint vecSize,\n"
+				"const uint load_per_wg,\n"
                 "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
                 "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp,\n"
-                "int exclusive,\n"
                 ""        + typeNames[transformScan_initType] + " identity\n"
                 ");\n\n";
 
@@ -461,6 +459,11 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
     oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
     oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
+
+	if(!inclusive)
+		oss << " -DEXCLUSIVE=" << 1;
+	else
+		oss << " -DEXCLUSIVE=" << 0;
     compileOptions = oss.str();
 
     /**********************************************************************************
@@ -478,33 +481,11 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 
     // for profiling
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
-    cl_uint doExclusiveScan = inclusive ? 0 : 1;
     // Set up shape of launch grid and buffers:
-    int computeUnits     = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    int wgPerComputeUnit =  ctl.getWGPerComputeUnit( );
-    int resultCnt = computeUnits * wgPerComputeUnit;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
-    typename device_vector< iType >::size_type sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
-    if( modWgSize )
-    {
-        sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += (kernel0_WgSize*2);
-    }
-    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / (kernel0_WgSize*2) );
-
-
-    //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    typename device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
-    modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
-    if( modWgSize )
-    {
-        sizeScanBuff &= ~modWgSize;
-        sizeScanBuff += (kernel0_WgSize*2);
-    }
-
+    
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
     ALIGNED( 256 ) UnaryFunction aligned_unary_op( unary_op );
     control::buffPointer unaryBuffer = ctl.acquireBuffer( sizeof( aligned_unary_op ),
@@ -513,11 +494,20 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     control::buffPointer binaryBuffer = ctl.acquireBuffer( sizeof( aligned_binary_op ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_op );
 
+	cl_uint computeUnits = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+	unsigned int wgComputeUnit = (computeUnits*64); //64 boosts up the performance
 
-    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
-    control::buffPointer preSumArray1 = ctl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
+	unsigned int load_per_wg = numElements % wgComputeUnit?((numElements/wgComputeUnit)+1):(numElements/wgComputeUnit);
+
+	size_t modWgSize = (load_per_wg & ((kernel0_WgSize)-1));
+	if( modWgSize )
+	{
+		load_per_wg &= ~modWgSize;
+		load_per_wg += (kernel0_WgSize);
+	}
+	unsigned int no_workgrs = numElements % load_per_wg?((numElements/load_per_wg)+1):(numElements/load_per_wg);
+	control::buffPointer preSumArray = ctl.acquireBuffer( (no_workgrs)*sizeof( iType ) );
     cl_uint ldsSize;
-
 
     /**********************************************************************************
      *  Kernel 0
@@ -531,8 +521,7 @@ aProfiler.setStepName("Setup Kernel 0");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    ldsSize  = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( iType ) );
-
+    ldsSize  = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( iType ) );
     typename InputIterator::Payload firs_payload = first.gpuPayload( );
 
     V_OPENCL( kernels[0].setArg( 0, first.base().getContainer().getBuffer()),
@@ -544,8 +533,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     V_OPENCL( kernels[0].setArg( 5, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 6, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 7, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg( 8, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg( 9, doExclusiveScan ),     "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+	V_OPENCL( kernels[0].setArg( 8, load_per_wg ),          "Error setArg kernels[ 0 ]" ); // load per work group
 
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -560,7 +548,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff/2 ),
+        ::cl::NDRange( no_workgrs * kernel0_WgSize ),
         ::cl::NDRange( kernel0_WgSize ),
         NULL,
         &kernel0Event);
@@ -584,13 +572,10 @@ aProfiler.setStepName("Setup Kernel 1");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize ) * sizeof( iType ) );
-    cl_int workPerThread = static_cast< cl_uint >( (sizeScanBuff) / kernel1_WgSize  );
-    workPerThread = workPerThread ? workPerThread : 1;
+	cl_uint workPerThread = static_cast< cl_uint >( no_workgrs % kernel1_WgSize?((no_workgrs/kernel1_WgSize)+1):(no_workgrs/kernel1_WgSize));
 
-
-    V_OPENCL( kernels[1].setArg( 0, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
-    V_OPENCL( kernels[1].setArg( 1, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
+	V_OPENCL( kernels[1].setArg( 0, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
+    V_OPENCL( kernels[1].setArg( 1, no_workgrs ),			"Error setArg kernels[ 1 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[1].setArg( 2, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
     V_OPENCL( kernels[1].setArg( 3, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
     V_OPENCL( kernels[1].setArg( 4, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
@@ -632,13 +617,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     V_OPENCL( kernels[2].setArg( 2, first.base().getContainer().getBuffer() ),"Error setArg kernels[ 0 ]" );//I/P bffr
     V_OPENCL( kernels[2].setArg( 3, first.gpuPayloadSize( ),&first_payload  ),"Error setting a kernel argument");
     V_OPENCL( kernels[2].setArg( 4, *preSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 5, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[2].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[2].setArg( 7, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[2].setArg( 5, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[2].setArg( 6, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
+	V_OPENCL( kernels[2].setArg( 7, load_per_wg ),        "Error setting argument for scanKernels[ 2 ]" ); // Exclusive scan?
     V_OPENCL( kernels[2].setArg( 8, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[2].setArg( 9, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
-    V_OPENCL( kernels[2].setArg( 10, doExclusiveScan ),     "Error setArg kernels[ 0 ]" ); // Exclusive scan?
-    V_OPENCL( kernels[2].setArg( 11, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
+    V_OPENCL( kernels[2].setArg( 10, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
@@ -652,7 +636,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[2],
         ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
+        ::cl::NDRange( no_workgrs * kernel2_WgSize ),
         ::cl::NDRange( kernel2_WgSize ),
         NULL,
         &kernel2Event );
@@ -836,8 +820,7 @@ aProfiler.setArchitecture(strDeviceName);
         {
             #ifdef ENABLE_TBB
 	    	     #if defined(BOLT_DEBUG_LOG)
-                 dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_MULTICORE_CPU,
-	    			 "::Transform_Scan::MULTICORE_CPU");
+                 dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Scan::MULTICORE_CPU");
                  #endif
 	    		 btbb::transform_scan(ctl, first, last, result, unary_op, init, inclusive, binary_op );
             #else

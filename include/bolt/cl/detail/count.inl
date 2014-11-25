@@ -370,7 +370,7 @@ namespace cl{
 
 	}
 
-
+	//TODO won't work for transform iterator with std::vectors...come back and fix it
 	template<typename InputIterator, typename Predicate>
     typename bolt::cl::iterator_traits<InputIterator>::difference_type
         count(bolt::cl::control &ctl,

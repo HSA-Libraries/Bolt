@@ -10,10 +10,10 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 
 ### Windows
 
-1. Visual Studio 2010 onwards (VS2012 onwards for C++ AMP)
+1. Visual Studio 2010 onwards (VS2012 for C++ AMP)
 2. Tested with 32/64 bit Windows® 7/8 and Windows® Blue
-3. CMake 2.8.12
-4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See <a href=https://hsa-libraries.github.io/Bolt/html/buildingTBB.html>Building Bolt with TBB</a>.
+3. CMake 2.8.10
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
 5. APP SDK 2.8 or onwards.
 
 *Note:* If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
@@ -21,10 +21,10 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 ### Linux
 
 1. GCC 4.6.3 and above
-2. Tested with OpenSuse 13.1 64-bit, RHEL 6.4 32/64 bit, Ubuntu 13.10 64-bit
-3. CMake 2.8.12
-4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See <a href=https://hsa-libraries.github.io/Bolt/html/buildingTBB.html>Building Bolt with TBB</a>.
-5. APP SDK 2.8 onwards.
+2. Tested with OpenSuse 12.3, RHEL 6.4 64bit, RHEL 6.3 32bit, Ubuntu 13.4
+3. CMake 2.8.10
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+5. APP SDK 2.8 or onwards.
 
 *Note:* Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application building else user has to build Bolt from source with GCC 4.6.3 or higher.
 
@@ -47,9 +47,11 @@ The latest Catalyst driver contains the most recent OpenCL runtime. Recommended 
 +	R-Series
 
 <strong><em> AMD Radeon™ HD Graphics </em></strong>
-+ 7900 Series (7990, 7970, 7950)
++   7900 Series (7990, 7970, 7950)
 +	7800 Series (7870, 7850)
 +	7700 Series (7770, 7750)
+
+<strong><em> AMD Radeon™ HD Graphics </em></strong>
 +	6900 Series (6990, 6970, 6950)
 +	6800 Series (6870, 6850)
 +	6700 Series (6790 , 6770, 6750)
@@ -58,13 +60,10 @@ The latest Catalyst driver contains the most recent OpenCL runtime. Recommended 
 +	6400 Series (6450)
 +	6xxxM Series
 
-<strong><em> AMD Radeon™ Rx 2xx Graphics </em></strong>
-+ R9 2xx Series
-+ R8 2xx Series
-+ R7 2xx Series
 
 
-Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/opencl-zone/opencl-libraries/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
+
+Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
 
 
 ## Examples

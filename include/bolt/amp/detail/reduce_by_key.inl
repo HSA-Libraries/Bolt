@@ -46,6 +46,8 @@ namespace detail
 *   \{
 */
 
+namespace serial{
+
 
 template<
     typename InputIterator1,
@@ -113,7 +115,177 @@ gold_reduce_by_key_enqueue( InputIterator1 keys_first,
     //return std::pair(keys_output+1, values_output+1);
     return count;
 }
-    
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator1,
+    typename OutputIterator2,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator1 >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value &&
+						  std::is_same< typename std::iterator_traits< OutputIterator2 >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value), unsigned int
+                           >::type
+reduce_by_key( ::bolt::amp::control &ctl, 
+               InputIterator1 keys_first,
+               InputIterator1 keys_last,
+               InputIterator2 values_first,
+               OutputIterator1 keys_output,
+               OutputIterator2 values_output,
+               BinaryPredicate binary_pred,
+               BinaryFunction binary_op )
+{
+
+    return gold_reduce_by_key_enqueue( keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op );
+}
+
+
+
+template<
+    typename DVInputIterator1,
+    typename DVInputIterator2,
+    typename DVOutputIterator1,
+    typename DVOutputIterator2,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+typename std::enable_if< (std::is_same< typename std::iterator_traits< DVOutputIterator1 >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                                     >::value &&
+                         std::is_same< typename std::iterator_traits< DVOutputIterator1 >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                                     >::value),
+					     unsigned int
+                       >::type
+reduce_by_key(
+    ::bolt::amp::control &ctl, 
+    DVInputIterator1& keys_first,
+    DVInputIterator1& keys_last,
+    DVInputIterator2& values_first,
+    DVOutputIterator1& keys_output,
+    DVOutputIterator2& values_output,
+    BinaryPredicate& binary_pred,
+    BinaryFunction& binary_op)
+{
+
+    unsigned int  numElements = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+
+    auto mapped_keyfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator1>::
+	                                          iterator_category(), 
+                                                    ctl, keys_first);
+	auto mapped_valfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator2>::
+	                                          iterator_category(), 
+                                                    ctl, values_first);
+    auto mapped_keyresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator1>::
+	                                          iterator_category(), 
+                                                    ctl, keys_output);
+	auto mapped_valresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator2>::
+	                                          iterator_category(), 
+                                                    ctl, values_output);
+
+	unsigned int sizeOfOut = gold_reduce_by_key_enqueue( mapped_keyfirst_itr, mapped_keyfirst_itr+ numElements,
+                                       mapped_valfirst_itr, mapped_keyresult_itr,
+                                       mapped_valresult_itr, binary_pred, binary_op);
+
+    return  sizeOfOut;
+
+}
+
+   
+} // end of namespace serial
+
+
+#ifdef ENABLE_TBB
+namespace btbb{
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator1,
+    typename OutputIterator2,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator1 >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value &&
+						  std::is_same< typename std::iterator_traits< OutputIterator2 >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value), unsigned int
+                           >::type
+reduce_by_key( ::bolt::amp::control &ctl, 
+               InputIterator1 keys_first,
+               InputIterator1 keys_last,
+               InputIterator2 values_first,
+               OutputIterator1 keys_output,
+               OutputIterator2 values_output,
+               BinaryPredicate binary_pred,
+               BinaryFunction binary_op )
+{
+
+    return bolt::btbb::reduce_by_key( keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op );
+}
+
+
+
+template<
+    typename DVInputIterator1,
+    typename DVInputIterator2,
+    typename DVOutputIterator1,
+    typename DVOutputIterator2,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+typename std::enable_if< (std::is_same< typename std::iterator_traits< DVOutputIterator1 >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                                     >::value &&
+                         std::is_same< typename std::iterator_traits< DVOutputIterator1 >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                                     >::value),
+					     unsigned int
+                       >::type
+reduce_by_key(
+    ::bolt::amp::control &ctl, 
+    DVInputIterator1& keys_first,
+    DVInputIterator1& keys_last,
+    DVInputIterator2& values_first,
+    DVOutputIterator1& keys_output,
+    DVOutputIterator2& values_output,
+    BinaryPredicate& binary_pred,
+    BinaryFunction& binary_op)
+{
+
+
+    unsigned int  numElements = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+
+	auto mapped_keyfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator1>::
+	                                          iterator_category(), 
+                                                    ctl, keys_first);
+	auto mapped_valfirst_itr = create_mapped_iterator(typename std::iterator_traits<DVInputIterator2>::
+	                                          iterator_category(), 
+                                                    ctl, values_first);
+    auto mapped_keyresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator1>::
+	                                          iterator_category(), 
+                                                    ctl, keys_output);
+	auto mapped_valresult_itr = create_mapped_iterator(typename std::iterator_traits<DVOutputIterator2>::
+	                                          iterator_category(), 
+                                                    ctl, values_output);
+
+	unsigned int sizeOfOut = bolt::btbb::reduce_by_key( mapped_keyfirst_itr, mapped_keyfirst_itr + numElements,
+                                       mapped_valfirst_itr, mapped_keyresult_itr,
+                                       mapped_valresult_itr, binary_pred, binary_op);
+
+    return  sizeOfOut;
+
+}
+
+   
+} // end of namespace btbb
+#endif
+
+
+namespace amp{
 
 //  All calls to reduce_by_key end up here, unless an exception was thrown
 //  This is the function that sets up the kernels to compile (once only) and execute
@@ -124,8 +296,14 @@ template<
     typename DVOutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction >
-unsigned int
-reduce_by_key_enqueue(
+typename std::enable_if< (std::is_same< typename std::iterator_traits< DVOutputIterator1 >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                                     >::value &&
+						  std::is_same< typename std::iterator_traits< DVOutputIterator2 >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                                     >::value), unsigned int
+                           >::type
+reduce_by_key(
     control& ctl,
     const DVInputIterator1& keys_first,
     const DVInputIterator1& keys_last,
@@ -604,7 +782,7 @@ reduce_by_key_enqueue(
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
   {
 
-     int gloId = t_idx.global[ 0 ];
+    int gloId = t_idx.global[ 0 ];
     int groId = t_idx.tile[ 0 ];
     int locId = t_idx.local[ 0 ];
     int wgSize = kernel1_WgSize;
@@ -837,14 +1015,9 @@ reduce_by_key_enqueue(
 	unsigned int count_number_of_sections = 0;
     count_number_of_sections = tempArray.section(numElements-1, 1)[0];
     return count_number_of_sections;
-}   //end of reduce_by_key_enqueue( )
+}   
 
 
-
-/*!
-* \brief This overload is called strictly for non-device_vector iterators
-* \details This template function overload is used to seperate device_vector iterators from all other iterators
-*/
 template<
     typename InputIterator1,
     typename InputIterator2,
@@ -852,8 +1025,14 @@ template<
     typename OutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction >
-bolt::amp::pair<OutputIterator1, OutputIterator2>
-reduce_by_key_pick_iterator(
+ typename std::enable_if< (std::is_same< typename std::iterator_traits< OutputIterator1 >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value &&
+						  std::is_same< typename std::iterator_traits< OutputIterator2 >::iterator_category ,
+                                       std::random_access_iterator_tag
+                                     >::value), unsigned int
+                           >::type
+reduce_by_key(
     control& ctl,
     const InputIterator1& keys_first,
     const InputIterator1& keys_last,
@@ -861,215 +1040,37 @@ reduce_by_key_pick_iterator(
     const OutputIterator1& keys_output,
     const OutputIterator2& values_output,
     const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_op,
-	std::random_access_iterator_tag,
-	std::random_access_iterator_tag )
+    const BinaryFunction& binary_op)
 {
 
-    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< OutputIterator1 >::value_type koType;
-    typedef typename std::iterator_traits< OutputIterator2 >::value_type voType;
-    static_assert( std::is_convertible< vType, voType >::value, "InputValue and Output iterators are incompatible" );
+	 int sz = static_cast<int>(keys_last - keys_first);
+   	 
+	 
+	 typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
+     typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
+     typedef typename std::iterator_traits< OutputIterator1 >::value_type koType;
+     typedef typename std::iterator_traits< OutputIterator2 >::value_type voType;
+			
+	 // Map the output iterator to a device_vector
+     device_vector< koType, concurrency::array_view > dvKOutput( keys_output, sz, true, ctl );
+     device_vector< voType, concurrency::array_view > dvVOutput( values_output, sz, true, ctl );
+	   
+	 // Map the input iterator to a device_vector
+	 // Use host pointers memory since these arrays are only read once - no benefit to copying.
+     // Map the input iterator to a device_vector
+	 auto dvKeys_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator1 >::iterator_category( ), keys_first, sz, false, ctl );
+	 auto dvValues_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< InputIterator2 >::iterator_category( ), values_first, sz, false, ctl );
+     unsigned int sizeOfOut = amp::reduce_by_key( ctl, dvKeys_itr , dvKeys_itr +sz, dvValues_itr, dvKOutput.begin( ), dvVOutput.begin( ), binary_pred, binary_op);
 
-    int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
-    if( numElements == 1 )
-        return  bolt::amp::make_pair( keys_last, values_first+numElements );
+     // This should immediately map/unmap the buffer
+     dvKOutput.data( );
+     dvVOutput.data( );
 
-    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-    if(runMode == bolt::amp::control::Automatic) {
-        runMode = ctl.getDefaultPathToRun();
-    }
-   
-    if (runMode == bolt::amp::control::SerialCpu) {
-          
-            unsigned int sizeOfOut = gold_reduce_by_key_enqueue( keys_first, keys_last, values_first, keys_output,
-            values_output, binary_pred, binary_op);
-
-            return   bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-
-    } else if (runMode == bolt::amp::control::MultiCoreCpu) {
-
-        #ifdef ENABLE_TBB     
-            unsigned int sizeOfOut = bolt::btbb::reduce_by_key( keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op);
-            return   bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-        #else
-            throw std::runtime_error("MultiCoreCPU Version of ReduceByKey not Enabled! \n");
-        #endif
-    }
-    else {
-    unsigned int sizeOfOut;
-    {
-        // Map the input iterator to a device_vector
-        device_vector< kType, concurrency::array_view > dvKeys(  keys_first, keys_last, false, ctl );
-        device_vector< vType, concurrency::array_view > dvValues( values_first, numElements, false, ctl );
-        device_vector< koType, concurrency::array_view > dvKOutput( keys_output, numElements, true, ctl );
-        device_vector< voType, concurrency::array_view > dvVOutput( values_output, numElements, true, ctl );
-
-        //Now call the actual AMP algorithm
-        sizeOfOut = reduce_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvKOutput.begin( ),
-                                          dvVOutput.begin( ), binary_pred, binary_op);
-
-        // This should immediately map/unmap the buffer
-        dvKOutput.data( );
-        dvVOutput.data( );
-    }
-    return  bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-    }
+	 return sizeOfOut;
 
 }
 
-/*!
-* \brief This overload is called strictly for device_vector iterators
-* \details This template function overload is used to seperate device_vector iterators from all other iterators
-*/
-
-    template<
-    typename DVInputIterator1,
-    typename DVInputIterator2,
-    typename DVOutputIterator1,
-    typename DVOutputIterator2,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-bolt::amp::pair<DVOutputIterator1, DVOutputIterator2>
-reduce_by_key_pick_iterator(
-    control& ctl,
-    const DVInputIterator1& keys_first,
-    const DVInputIterator1& keys_last,
-    const DVInputIterator2& values_first,
-    const DVOutputIterator1& keys_output,
-    const DVOutputIterator2& values_output,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_op,
-	bolt::amp::device_vector_tag,
-	bolt::amp::device_vector_tag )
-{
-
-    typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< DVOutputIterator1 >::value_type koType;
-    typedef typename std::iterator_traits< DVOutputIterator2 >::value_type voType;
-    static_assert( std::is_convertible< vType, voType >::value, "InputValue and Output iterators are incompatible" );
-
-    int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
-    if( numElements == 1 )
-        return  bolt::amp::make_pair( keys_last, values_first+numElements );
-
-    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
-    if(runMode == bolt::amp::control::Automatic)
-    {
-        runMode = ctl.getDefaultPathToRun();
-    }
-    
-    if( runMode == bolt::amp::control::SerialCpu )
-    {
-     
-        typename bolt::amp::device_vector< kType >::pointer keysPtr =  keys_first.getContainer( ).data( );
-        typename bolt::amp::device_vector< vType >::pointer valsPtr =  values_first.getContainer( ).data( );
-        typename bolt::amp::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
-        typename bolt::amp::device_vector< voType >::pointer oValsPtr =  values_output.getContainer( ).data( );
-        unsigned int sizeOfOut = gold_reduce_by_key_enqueue( &keysPtr[keys_first.m_Index], &keysPtr[keys_first.m_Index + numElements],
-                                           &valsPtr[values_first.m_Index], &oKeysPtr[keys_output.m_Index],
-                                          &oValsPtr[values_output.m_Index], binary_pred, binary_op);
-        return  bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-
-    }
-    else if( runMode == bolt::amp::control::MultiCoreCpu )
-    {
-        #ifdef ENABLE_TBB
-        typename bolt::amp::device_vector< kType >::pointer keysPtr =  keys_first.getContainer( ).data( );
-        typename bolt::amp::device_vector< vType >::pointer valsPtr =  values_first.getContainer( ).data( );
-        typename bolt::amp::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
-        typename bolt::amp::device_vector< voType >::pointer oValsPtr =  values_output.getContainer( ).data( );
-
-        unsigned int sizeOfOut = bolt::btbb::reduce_by_key( &keysPtr[keys_first.m_Index], &keysPtr[keys_first.m_Index + numElements],
-                                           &valsPtr[values_first.m_Index], &oKeysPtr[keys_output.m_Index],
-                                          &oValsPtr[values_output.m_Index], binary_pred, binary_op);
-        return  bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-        #else
-            throw std::runtime_error("MultiCoreCPU Version of ReduceByKey not Enabled! \n");
-        #endif
-    }
-    else
-    {
-            //Now call the actual AMP algorithm
-            unsigned int sizeOfOut = reduce_by_key_enqueue( ctl, keys_first, keys_last, values_first, keys_output,
-            values_output, binary_pred, binary_op);
-
-            return   bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-    }
-
-}
-
-/*!
-* \brief This overload is called strictly for non-device_vector iterators
-* \details This template function overload is used to seperate device_vector iterators from all other iterators
-*/
-template<
-    typename InputIterator1,
-    typename InputIterator2,
-    typename OutputIterator1,
-    typename OutputIterator2,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-bolt::amp::pair<OutputIterator1, OutputIterator2>
-reduce_by_key_pick_iterator(
-    control& ctl,
-    const InputIterator1& keys_first,
-    const InputIterator1& keys_last,
-    const InputIterator2& values_first,
-    const OutputIterator1& keys_output,
-    const OutputIterator2& values_output,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_op,
-	bolt::amp::fancy_iterator_tag,
-	std::random_access_iterator_tag )
-{
-
-    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< OutputIterator1 >::value_type koType;
-    typedef typename std::iterator_traits< OutputIterator2 >::value_type voType;
-
-    int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
-    if( numElements == 1 )
-        return  bolt::amp::make_pair( keys_last, values_first+numElements );
-
-    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-    if(runMode == bolt::amp::control::Automatic) {
-        runMode = ctl.getDefaultPathToRun();
-    }
-   
-    if (runMode == bolt::amp::control::SerialCpu) {
-          
-            unsigned int sizeOfOut = gold_reduce_by_key_enqueue( keys_first, keys_last, values_first, keys_output,
-            values_output, binary_pred, binary_op);
-
-            return   bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-
-    } else if (runMode == bolt::amp::control::MultiCoreCpu) {
-
-        #ifdef ENABLE_TBB     
-            unsigned int sizeOfOut = bolt::btbb::reduce_by_key( keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op);
-            return   bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-        #else
-            throw std::runtime_error("MultiCoreCPU Version of ReduceByKey not Enabled! \n");
-        #endif
-    }
-    else {
-    //Now call the actual AMP algorithm
-            unsigned int sizeOfOut = reduce_by_key_enqueue( ctl, keys_first, keys_last, values_first, keys_output,
-            values_output, binary_pred, binary_op);
-            return   bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
-    }
-
-}
-
-
-
-/*********************************************************************************************************************
- * Detect Random Access
- ********************************************************************************************************************/
+}//end of amp namespace
 
 template<
     typename InputIterator1,
@@ -1079,23 +1080,51 @@ template<
     typename BinaryPredicate,
     typename BinaryFunction
     >
-bolt::amp::pair<OutputIterator1, OutputIterator2>
-reduce_by_key_detect_random_access(
+typename std::enable_if< 
+               !(std::is_same< typename std::iterator_traits< InputIterator1>::iterator_category, 
+                             std::input_iterator_tag 
+                           >::value),
+               bolt::amp::pair<OutputIterator1, OutputIterator2>
+                           >::type
+reduce_by_key(
     control &ctl,
-    const InputIterator1  keys_first,
-    const InputIterator1  keys_last,
-    const InputIterator2  values_first,
-    const OutputIterator1  keys_output,
-    const OutputIterator2  values_output,
-    const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op,
-    std::random_access_iterator_tag,
-	std::random_access_iterator_tag )
+    InputIterator1  keys_first,
+    InputIterator1  keys_last,
+    InputIterator2  values_first,
+    OutputIterator1  keys_output,
+    OutputIterator2  values_output,
+    BinaryPredicate binary_pred,
+    BinaryFunction binary_op)
 {
-    return detail::reduce_by_key_pick_iterator( ctl, keys_first, keys_last, values_first, keys_output, values_output,
-        binary_pred, binary_op,
-		typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator2 >::iterator_category( ) );
+
+    int numElements = static_cast< int >( std::distance( keys_first, keys_last ) );
+
+    if( (numElements == 1) || (numElements == 0) )
+        return bolt::amp::make_pair( keys_output+(int)numElements, values_output+(int)numElements );
+
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    if(runMode == bolt::amp::control::Automatic) {
+        runMode = ctl.getDefaultPathToRun();
+    }
+				
+    if (runMode == bolt::amp::control::SerialCpu) {
+            int sizeOfOut = serial::reduce_by_key(ctl, keys_first, keys_last, values_first,keys_output, values_output, binary_pred, binary_op);
+			return bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
+    } 
+	else if (runMode == bolt::amp::control::MultiCoreCpu) {
+        #ifdef ENABLE_TBB
+            unsigned int sizeOfOut = btbb::reduce_by_key(ctl, keys_first, keys_last, values_first,keys_output, values_output, binary_pred, binary_op);
+			return bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
+        #else
+            throw std::runtime_error("MultiCoreCPU Version of ReduceByKey not Enabled! \n");
+        #endif
+    }
+    else {
+	    unsigned int sizeOfOut = amp::reduce_by_key(ctl, keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op);
+	    return bolt::amp::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
+
+	}
+ 
 }
 
 template<
@@ -1105,41 +1134,21 @@ template<
     typename OutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction>
-bolt::amp::pair<OutputIterator1, OutputIterator2>
-reduce_by_key_detect_random_access(
+typename std::enable_if< 
+               (std::is_same< typename std::iterator_traits< InputIterator1>::iterator_category, 
+                             std::input_iterator_tag 
+                           >::value),
+               bolt::amp::pair<OutputIterator1, OutputIterator2>
+                           >::type
+reduce_by_key(
     control &ctl,
-    const InputIterator1  keys_first,
-    const InputIterator1  keys_last,
-    const InputIterator2  values_first,
-    const OutputIterator1  keys_output,
-    const OutputIterator2  values_output,
-    const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op,
-    std::random_access_iterator_tag, bolt::amp::fancy_iterator_tag )
-{
-    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-    //  to a temporary buffer.  Should we?
-	static_assert( std::is_same< OutputIterator2, bolt::amp::fancy_iterator_tag >::value , "It is not possible to output to fancy iterators; they are not mutable" );
-};
-
-template<
-    typename InputIterator1,
-    typename InputIterator2,
-    typename OutputIterator1,
-    typename OutputIterator2,
-    typename BinaryPredicate,
-    typename BinaryFunction>
-bolt::amp::pair<OutputIterator1, OutputIterator2>
-reduce_by_key_detect_random_access(
-    control &ctl,
-    const InputIterator1  keys_first,
-    const InputIterator1  keys_last,
-    const InputIterator2  values_first,
-    const OutputIterator1  keys_output,
-    const OutputIterator2  values_output,
-    const BinaryPredicate binary_pred,
-    const BinaryFunction binary_op,
-    std::input_iterator_tag, std::input_iterator_tag  )
+    InputIterator1  keys_first,
+    InputIterator1  keys_last,
+    InputIterator2  values_first,
+    OutputIterator1  keys_output,
+    OutputIterator2  values_output,
+    BinaryPredicate binary_pred,
+    BinaryFunction binary_op)
 {
     //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
     //  to a temporary buffer.  Should we?
@@ -1172,7 +1181,7 @@ reduce_by_key(
     BinaryFunction binary_op )
 {
     control& ctl = control::getDefault();
-    return detail::reduce_by_key_detect_random_access(
+    return detail::reduce_by_key(
         ctl,
         keys_first,
         keys_last,
@@ -1180,10 +1189,8 @@ reduce_by_key(
         keys_output,
         values_output,
         binary_pred,
-        binary_op,
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator2 >::iterator_category( )
-    ); // return
+        binary_op
+    );
 }
 
 template<
@@ -1204,7 +1211,7 @@ reduce_by_key(
     typedef typename std::iterator_traits<OutputIterator2>::value_type ValOType;
     control& ctl = control::getDefault();
     plus<ValOType> binary_op;
-    return detail::reduce_by_key_detect_random_access(
+    return reduce_by_key(
         ctl,
         keys_first,
         keys_last,
@@ -1212,10 +1219,8 @@ reduce_by_key(
         keys_output,
         values_output,
         binary_pred,
-        binary_op,
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator2 >::iterator_category( )
-    ); // return
+        binary_op
+    ); 
 }
 
 template<
@@ -1235,19 +1240,15 @@ reduce_by_key(
     typedef typename std::iterator_traits<OutputIterator2>::value_type ValOType;
     control& ctl = control::getDefault();
     equal_to <kType> binary_pred;
-    plus <ValOType> binary_op;
-    return detail::reduce_by_key_detect_random_access(
+    return reduce_by_key(
         ctl,
         keys_first,
         keys_last,
         values_first,
         keys_output,
         values_output,
-        binary_pred,
-        binary_op,
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator2 >::iterator_category( )
-    ); // return
+        binary_pred
+    ); 
 }
 
 
@@ -1271,7 +1272,7 @@ reduce_by_key(
     BinaryPredicate binary_pred,
     BinaryFunction binary_op )
 {
-    return detail::reduce_by_key_detect_random_access(
+    return detail::reduce_by_key(
         ctl,
         keys_first,
         keys_last,
@@ -1279,10 +1280,8 @@ reduce_by_key(
         keys_output,
         values_output,
         binary_pred,
-        binary_op,
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator2 >::iterator_category( )
-    ); // return
+        binary_op
+    ); 
 }
 
 template<
@@ -1302,9 +1301,8 @@ reduce_by_key(
     BinaryPredicate binary_pred)
 {
     typedef typename std::iterator_traits<OutputIterator2>::value_type ValOType;
- 
     plus<ValOType> binary_op;
-    return detail::reduce_by_key_detect_random_access(
+    return reduce_by_key(
         ctl,
         keys_first,
         keys_last,
@@ -1312,10 +1310,8 @@ reduce_by_key(
         keys_output,
         values_output,
         binary_pred,
-        binary_op,
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator2 >::iterator_category( )
-    ); // return
+        binary_op
+    ); 
 }
 
 template<
@@ -1336,19 +1332,15 @@ reduce_by_key(
     typedef typename std::iterator_traits<OutputIterator2>::value_type ValOType;
 
     equal_to <kType> binary_pred;
-    plus<ValOType> binary_op;
-    return detail::reduce_by_key_detect_random_access(
+    return reduce_by_key(
         ctl,
         keys_first,
         keys_last,
         values_first,
         keys_output,
         values_output,
-        binary_pred,
-        binary_op,
-        typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-		typename std::iterator_traits< OutputIterator2 >::iterator_category( )
-    ); // return
+        binary_pred
+    ); 
 }
 
 } //namespace amp

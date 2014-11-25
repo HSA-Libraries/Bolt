@@ -24,6 +24,8 @@
 #include "bolt/miniDump.h"
 #include "bolt/cl/scatter.h"
 
+#include "bolt/BoltLog.h"
+
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
 #include <array>
@@ -35,6 +37,7 @@
 
 #define TEST_DOUBLE 1
 #define TEST_LARGE_BUFFERS 0
+#define OPENCL_CPU_PATH 0
 
 #define TEMPORARY_DISABLE_STD_DV_TEST_CASES 0
 
@@ -4562,6 +4565,36 @@ TEST( HostMemoryRandomNo_Double, MulticoreScatter_com_Boost )
 }
 #endif
 
+TEST( UDDTestInt2, Scatter_IfPredicate)
+{
+    int sz = 63;    
+    std::vector<Int2> std_input ( sz );
+    std::vector<int> std_map ( sz );
+    std::vector<int> std_stencil (sz);
+
+	for (int i = 0; i < sz; i++)
+    {
+        std_map[i] = (int)i;
+        std_input[i].a = (int)(i + 2 * i);
+        std_input[i].b = (int)(i + 3 * i);
+        std_stencil[i] = ((i%2)==0)?1:0;
+    }
+    std::random_shuffle( std_map.begin(), std_map.end() );
+
+    bolt::cl::device_vector<Int2> result ( sz );
+    bolt::cl::device_vector<Int2> exp_result ( sz );
+    bolt::cl::device_vector<Int2> input ( std_input.begin(), std_input.end() );
+    bolt::cl::device_vector<int> map ( std_map.begin(), std_map.end() );
+    bolt::cl::device_vector<int> stencil ( std_stencil.begin(), std_stencil.end() );
+    is_even iepred;
+
+
+    bolt::cl::scatter_if(input.begin(), input.end(), map.begin(), stencil.begin(), exp_result.begin(), iepred );
+    bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), result.begin(), iepred );
+    //for(int i=0; i<10 ; i++){ std::co	ut<<result[ i ]<<std::endl; }
+
+    cmpArrays( exp_result, result );
+}
 TEST( UDDTestInt2, SerialScatter_IfPredicate)
 {
     int sz = 63;    
@@ -4619,6 +4652,36 @@ TEST( UDDTestInt2, MulticoreScatter_IfPredicate)
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     bolt::cl::scatter_if(ctl, input.begin(), input.end(), map.begin(), stencil.begin(), exp_result.begin(), iepred );
+    bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), result.begin(), iepred );
+    //for(int i=0; i<10 ; i++){ std::co	ut<<result[ i ]<<std::endl; }
+
+    cmpArrays( exp_result, result );
+}
+
+TEST( UDDTestIntFloat, Scatter_IfPredicate)
+{
+    int sz = 63;    
+    std::vector<IntFloat> std_input ( sz );
+    std::vector<int> std_map ( sz );
+    std::vector<int> std_stencil (sz);
+
+	for (int i = 0; i < sz; i++)
+    {
+        std_map[i] = i;
+        std_input[i].a = i + 2 * i;
+        std_input[i].b = (float)(i + 3 * i);
+        std_stencil[i] = ((i%2)==0)?1:0;
+    }
+    std::random_shuffle( std_map.begin(), std_map.end() );
+
+    bolt::cl::device_vector<IntFloat> result ( sz );
+    bolt::cl::device_vector<IntFloat> exp_result ( sz );
+    bolt::cl::device_vector<IntFloat> input ( std_input.begin(), std_input.end() );
+    bolt::cl::device_vector<int> map ( std_map.begin(), std_map.end() );
+    bolt::cl::device_vector<int> stencil ( std_stencil.begin(), std_stencil.end() );
+    is_even iepred;
+
+    bolt::cl::scatter_if(input.begin(), input.end(), map.begin(), stencil.begin(), exp_result.begin(), iepred );
     bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), result.begin(), iepred );
     //for(int i=0; i<10 ; i++){ std::co	ut<<result[ i ]<<std::endl; }
 
@@ -4689,6 +4752,37 @@ TEST( UDDTestIntFloat, MulticoreScatter_IfPredicate)
 }
 
 #if(TEST_DOUBLE == 1)
+TEST(UDDTestIntFloatDouble, Scatter_IfPredicate )
+{
+    int sz = 63;    
+    std::vector<IntFloatDouble> std_input ( sz );
+    std::vector<int> std_map ( sz );
+    std::vector<int> std_stencil (sz);
+
+	for (int i = 0; i < sz; i++)
+    {
+        std_map[i] = i;
+        std_input[i].a = i + 2 * i;
+        std_input[i].b = (float)(i + 3 * i);
+        std_input[i].c = (double)(i + 5 * i);
+        std_stencil[i] = ((i%2)==0)?1:0;
+    }
+    std::random_shuffle( std_map.begin(), std_map.end() );
+
+    bolt::cl::device_vector<IntFloatDouble> result ( sz );
+    bolt::cl::device_vector<IntFloatDouble> exp_result ( sz );
+    bolt::cl::device_vector<IntFloatDouble> input ( std_input.begin(), std_input.end() );
+    bolt::cl::device_vector<int> map ( std_map.begin(), std_map.end() );
+    bolt::cl::device_vector<int> stencil ( std_stencil.begin(), std_stencil.end() );
+    is_even iepred;
+
+    bolt::cl::scatter_if(input.begin(), input.end(), map.begin(), stencil.begin(), exp_result.begin(), iepred );
+    bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), result.begin(), iepred );
+    //for(int i=0; i<10 ; i++){ std::co	ut<<result[ i ]<<std::endl; }
+
+    cmpArrays( exp_result, result );
+}
+
 TEST(UDDTestIntFloatDouble, SerialScatter_IfPredicate )
 {
     int sz = 63;    
@@ -4755,6 +4849,28 @@ TEST(UDDTestIntFloatDouble, MulticoreScatter_ifPredicate )
     cmpArrays( exp_result, result );
 }
 
+TEST_P(HostMemory_UDDTestInt2, Scatter_IfPredicate)
+{
+    std::vector<Int2> input( myStdVectSize);   
+    std::vector<Int2> exp_result(myStdVectSize);    
+    std::vector<Int2> result ( myStdVectSize);
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i].a =  i + 2 * i;
+            input[i].b = i + 3 * i;
+            stencil[i] = i + 5 * 1;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    is_even iepred;
+     bolt::cl::scatter_if(input.begin(), input.end(), map.begin(), stencil.begin(), exp_result.begin(), iepred );
+     bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), result.begin(), iepred );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
 
 TEST_P(HostMemory_UDDTestInt2, SerialScatter_IfPredicate)
 {
@@ -4800,6 +4916,29 @@ TEST_P(HostMemory_UDDTestInt2, MulticoreScatter_IfPredicate)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
      bolt::cl::scatter_if(ctl, input.begin(), input.end(), map.begin(), stencil.begin(), exp_result.begin(), iepred );
+     bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), result.begin(), iepred );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST_P(HostMemory_UDDTestIntFloat, Scatter_IfPredicate)
+{
+    std::vector<IntFloat> input( myStdVectSize);   
+    std::vector<IntFloat> exp_result(myStdVectSize);    
+    std::vector<IntFloat> result ( myStdVectSize);
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i].a =  i + 2 * i;
+            input[i].b = (float)(i + 3 * i);
+            stencil[i] = i + 5 * 1;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    is_even iepred;
+     bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), exp_result.begin(), iepred );
      bolt::cl::scatter_if( input.begin(), input.end(), map.begin(), stencil.begin(), result.begin(), iepred );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -5378,6 +5517,53 @@ int main(int argc, char* argv[])
     //bolt::cl::control& myControl = bolt::cl::control::getDefault( );
     //myControl.waitMode( bolt::cl::control::NiceWait );
     //myControl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb
+
+	//  Query OpenCL for available platforms
+    cl_int err = CL_SUCCESS;
+
+    // Platform vector contains all available platforms on system
+    std::vector< cl::Platform > platforms;
+    //std::cout << "HelloCL!\nGetting Platform Information\n";
+    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
+
+    //  Do stuff with the platforms
+    std::vector<cl::Platform>::iterator i;
+    if(platforms.size() > 0)
+    {
+        for(i = platforms.begin(); i != platforms.end(); ++i)
+        {
+            if(!strcmp((*i).getInfo<CL_PLATFORM_VENDOR>(&err).c_str(), "Advanced Micro Devices, Inc."))
+            {
+                break;
+            }
+        }
+    }
+    bolt::cl::V_OPENCL( err, "Platform::getInfo() failed" );
+
+    // Device info
+    std::vector< cl::Device > devices;
+    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
+
+	cl_uint userDevice = 0;
+
+#if(OPENCL_CPU_PATH == 1)
+	MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0, 1);
+	bolt::cl::control& myControl = bolt::cl::control(oclcpu._queue); 
+	myControl.setWaitMode( bolt::cl::control::NiceWait );
+    myControl.setForceRunMode( bolt::cl::control::OpenCL );
+    std::string strDeviceName =   myControl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+#else
+	cl::Context myContext( devices.at( userDevice ) );
+    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
+	std::string strDeviceName =  bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+#endif
+
+
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+    std::cout << "Device under test : " << strDeviceName << std::endl;
+	
 
     int retVal = RUN_ALL_TESTS( );
 

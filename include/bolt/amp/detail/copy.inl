@@ -15,17 +15,41 @@
 
 ***************************************************************************/
 
+/***************************************************************************
+ * THIS FILE HAS BEEN MODIFIED BY AMD
+***************************************************************************/
+
+/***************************************************************************
+ *  Copyright 2008-2012 NVIDIA Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ ***************************************************************************/
+
 #if !defined( BOLT_AMP_COPY_INL )
 #define BOLT_AMP_COPY_INL
 #pragma once
 
-#define COPY_WAVEFRONT_SIZE 256 
+#define COPY_WAVEFRONT_SIZE 256
 
 #include <algorithm>
 #include <type_traits>
-#include "bolt/amp/bolt.h"
-#include "bolt/amp/device_vector.h"
-#include "bolt/amp/iterator/iterator_traits.h"
+#include <bolt/amp/bolt.h>
+#include <bolt/amp/device_vector.h>
+#include <bolt/amp/transform.h>
+#include <bolt/amp/scan.h>
+#include <bolt/amp/scatter.h>
+#include <bolt/amp/iterator/iterator_traits.h>
+#include <bolt/amp/iterator/addressof.h>
 #include <amp.h>
 
 #ifdef ENABLE_TBB
@@ -49,7 +73,7 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
 
       typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
       typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-    
+
       const int szElements = static_cast< int >( n );
       const unsigned int leng =  szElements + COPY_WAVEFRONT_SIZE - (szElements % COPY_WAVEFRONT_SIZE);
 
@@ -69,13 +93,13 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
          });
       }
 
-   
+
       catch(std::exception &e)
       {
         std::cout << "Exception while calling bolt::amp::copy parallel_for_each " ;
         std::cout<< e.what() << std::endl;
         throw std::exception();
-      }	
+      }
 
 }
 
@@ -102,7 +126,7 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const InputIterator& first, 
 
      if( runMode == bolt::amp::control::SerialCpu )
      {
-         
+
          #if defined( _WIN32 )
            std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
          #else
@@ -111,7 +135,7 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const InputIterator& first, 
      }
      else if( runMode == bolt::amp::control::MultiCoreCpu )
      {
-        #ifdef ENABLE_TBB   
+        #ifdef ENABLE_TBB
            bolt::btbb::copy_n(first, n, &(*result));
         #else
             throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -143,10 +167,10 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first
      {
          runMode = ctrl.getDefaultPathToRun();
      }
-     
+
      if( runMode == bolt::amp::control::SerialCpu )
      {
-          
+
             typename bolt::amp::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
             typename bolt::amp::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
 #if defined( _WIN32 )
@@ -154,7 +178,7 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first
 #else
             std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
 #endif
-            
+
 
             return;
      }
@@ -164,14 +188,14 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first
          #ifdef ENABLE_TBB
              typename bolt::amp::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
              typename bolt::amp::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
-             bolt::btbb::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );    
+             bolt::btbb::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
             return;
          #else
                 throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
          #endif
      }
      else
-     {	
+     {
          copy_enqueue( ctrl, first, n, result);
      }
 }
@@ -187,17 +211,17 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first
      {
          runMode = ctrl.getDefaultPathToRun();
      }
-     
+
      if( runMode == bolt::amp::control::SerialCpu )
      {
-          
+
             typename bolt::amp::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
 #if defined( _WIN32 )
             std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
 #else
             std::copy_n( first, n, &copyDest[result.m_Index] );
 #endif
-            
+
 
             return;
      }
@@ -206,14 +230,14 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first
 
          #ifdef ENABLE_TBB
              typename bolt::amp::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
-             bolt::btbb::copy_n( first, n, &copyDest[result.m_Index] );    
+             bolt::btbb::copy_n( first, n, &copyDest[result.m_Index] );
             return;
          #else
                 throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
          #endif
      }
      else
-     {	
+     {
          copy_enqueue( ctrl, first, n, result);
      }
 }
@@ -233,17 +257,17 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first
          runMode = ctrl.getDefaultPathToRun();
      }
 
-   
+
      if( runMode == bolt::amp::control::SerialCpu )
      {
-           
+
             typename bolt::amp::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
 #if defined( _WIN32 )
             std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
 #else
             std::copy_n( first, n, &copyDest[result.m_Index] );
 #endif
-           
+
             return;
      }
      else if( runMode == bolt::amp::control::MultiCoreCpu )
@@ -260,7 +284,7 @@ void copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first
      }
      else
      {
-       
+
         device_vector< iType, concurrency::array_view> dvInput( first, n, false, ctrl );
         //Now call the actual algorithm
         copy_enqueue( ctrl, dvInput.begin(), n, result );
@@ -284,7 +308,7 @@ void copy_pick_iterator(bolt::amp::control &ctrl,  const DVInputIterator& first,
     {
         runMode = ctrl.getDefaultPathToRun();
     }
-     
+
      if( runMode == bolt::amp::control::SerialCpu )
      {
          #if defined( _WIN32 )
@@ -329,7 +353,7 @@ void copy_pick_iterator(bolt::amp::control &ctrl,  const DVInputIterator& first,
     {
         runMode = ctrl.getDefaultPathToRun();
     }
-     
+
      if( runMode == bolt::amp::control::SerialCpu )
      {
          #if defined( _WIN32 )
@@ -388,7 +412,7 @@ OutputIterator copy_detect_random_access( bolt::amp::control& ctrl, const InputI
     {
 
       copy_pick_iterator( ctrl, first, n, result, typename std::iterator_traits< InputIterator >::iterator_category( ),
-                          std::iterator_traits< OutputIterator >::iterator_category( )); 
+                          std::iterator_traits< OutputIterator >::iterator_category( ));
     }
     return (result+n);
 };
@@ -405,7 +429,7 @@ OutputIterator copy_detect_random_access( bolt::amp::control& ctrl, const InputI
     {
 
       copy_pick_iterator( ctrl, first, n, result, typename std::iterator_traits< InputIterator >::iterator_category( ),
-                          std::iterator_traits< OutputIterator >::iterator_category( )); 
+                          std::iterator_traits< OutputIterator >::iterator_category( ));
     }
     return (result+n);
 };
@@ -458,6 +482,434 @@ OutputIterator copy_n(bolt::amp::control &ctrl, InputIterator first, Size n, Out
     return detail::copy_detect_random_access( ctrl, first, n, result,
                     typename std::iterator_traits< InputIterator >::iterator_category( ) );
 }
+
+
+/* Copy_if implementation*/
+namespace detail
+{
+
+namespace serial{
+
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       std::random_access_iterator_tag
+                           >::value, OutputIterator
+                           >::type
+    copy_if( bolt::amp::control &ctl, InputIterator1 first, InputIterator1 last,
+             InputIterator2 stencil, OutputIterator result, Predicate pred)
+    {
+        while (first!=last)
+        {
+            if (pred(*stencil))
+            {
+                *result = *first;
+                ++result;
+            }
+            ++first;
+            ++stencil;
+        }
+        return result;
+    }
+
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                           >::value, OutputIterator
+                           >::type
+    copy_if( bolt::amp::control &ctl, InputIterator1 first, InputIterator1 last,
+             InputIterator2 stencil, OutputIterator result, Predicate predicate)
+    {
+        using bolt::amp::detail::serial::copy_if;
+
+        int n = static_cast<int>(std::distance(first,last));
+        auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(),
+                                                           ctl, first);
+        auto mapped_stencil_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(),
+                                                           ctl, stencil);
+        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(),
+                                                           ctl, result);
+        auto return_result = bolt::amp::detail::serial::copy_if(ctl, mapped_first_itr, mapped_first_itr+n, mapped_stencil_itr, mapped_result_itr, predicate);
+
+        return result + (return_result - mapped_result_itr);
+    }
+
+}//end of serial namespace
+
+#ifdef ENABLE_TBB
+namespace btbb{
+
+
+    template<typename InputIterator1,
+             typename InputIterator2,
+             typename OutputIterator,
+             typename Predicate,
+             typename Size>
+    struct body
+    {
+
+      InputIterator1 first;
+      InputIterator2 stencil;
+      OutputIterator result;
+      Predicate pred;
+      Size sum;
+
+      body(InputIterator1 first, InputIterator2 stencil, OutputIterator result, Predicate pred)
+        : first(first), stencil(stencil), result(result), pred(pred), sum(0)
+      {}
+
+      body(body& b, ::tbb::split)
+        : first(b.first), stencil(b.stencil), result(b.result), pred(b.pred), sum(0)
+      {}
+
+      void operator()(const ::tbb::blocked_range<Size>& r, ::tbb::pre_scan_tag)
+      {
+        InputIterator2 iter = stencil + r.begin();
+
+        for (Size i = r.begin(); i != r.end(); ++i, ++iter)
+        {
+          if (pred(*iter))
+            ++sum;
+        }
+      }
+
+      void operator()(const ::tbb::blocked_range<Size>& r, ::tbb::final_scan_tag)
+      {
+        InputIterator1  iter1 = first   + r.begin();
+        InputIterator2  iter2 = stencil + r.begin();
+        OutputIterator  iter3 = result  + sum;
+
+        for (Size i = r.begin(); i != r.end(); ++i, ++iter1, ++iter2)
+        {
+          if (pred(*iter2))
+          {
+            *iter3 = *iter1;
+            ++sum;
+            ++iter3;
+          }
+        }
+      }
+
+      void reverse_join(body& b)
+      {
+        sum = b.sum + sum;
+      }
+
+      void assign(body& b)
+      {
+        sum = b.sum;
+      }
+    }; // end body
+
+
+	/*! \brief This template function overload for copy_if is used for std random access vectors and TBB implementations.
+        \detail Stencil is used
+    */
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                      std::random_access_iterator_tag
+                           >::value, OutputIterator
+                           >::type
+    copy_if( ::bolt::amp::control &ctl, InputIterator1 first, InputIterator1 last,
+                      InputIterator2 stencil, OutputIterator result, Predicate pred)
+    {
+        std::cout<< "random_vector\n";
+        typedef int Size;
+        typedef typename body<InputIterator1,InputIterator2,OutputIterator,Predicate,Size> Body;
+        Size n = std::distance(first, last);
+
+        if (n != 0)
+        {
+            Body body(first, stencil, result, pred);
+            ::tbb::parallel_scan(::tbb::blocked_range<Size>(0,n), body);
+            return result + body.sum;
+        }
+
+       return result;
+    }
+
+
+	/*! \brief This template function overload for copy_if is used for bolt device_vector and TBB implementations.
+        \detail Stencil is used
+    */
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                           >::value, OutputIterator
+                           >::type
+    copy_if( ::bolt::amp::control &ctl, InputIterator1 first, InputIterator1 last,
+                      InputIterator2 stencil, OutputIterator result, Predicate pred)
+    {
+
+        using bolt::amp::detail::serial::copy_if;
+        std::cout<< "device_vector\n";
+        int n = static_cast<int>(std::distance(first,last));
+        auto mapped_first_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator1>::iterator_category(),
+                                                           ctl, first);
+        auto mapped_stencil_itr = create_mapped_iterator(typename std::iterator_traits<InputIterator2>::iterator_category(),
+                                                           ctl, stencil);
+        auto mapped_result_itr = create_mapped_iterator(typename std::iterator_traits<OutputIterator>::iterator_category(),
+                                                           ctl, result);
+        auto return_result = bolt::amp::detail::serial::copy_if(ctl, mapped_first_itr, mapped_first_itr+n, mapped_stencil_itr, mapped_result_itr, pred);
+
+        return result + (return_result - mapped_result_itr);
+    }
+
+}//end of btbb namespace
+#endif
+namespace amp{
+
+    template<typename Predicate>
+    struct bool_to_int
+    {
+      Predicate pred;
+
+      bool_to_int(Predicate& _pred) : pred(_pred) {}
+
+      template <typename T>
+      int operator()(T& x) const restrict(amp, cpu)
+      {
+        return pred(x) ? 1 : 0;
+      }
+    };
+
+    template<typename IndexType>
+    struct is_true
+    {
+      bool operator()(IndexType& x) const restrict(amp, cpu)
+      {
+        return (x) ? true : false;
+      }
+    };
+
+	/*! \brief This template function overload for copy_if is used for bolt device_vector and AMP implementations.
+        \detail Stencil is used
+    */
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                       bolt::amp::device_vector_tag
+                           >::value, OutputIterator
+                           >::type
+    copy_if( ::bolt::amp::control &ctl, InputIterator1& first, InputIterator1& last,
+                      InputIterator2& stencil, OutputIterator& result, Predicate& pred)
+    {
+        typedef int IndexType;
+
+        //Note IndexType is int. and bool_to_int converts to int.
+        bool_to_int<Predicate> internal_pred(pred);
+
+        int sz = static_cast<int>(last - first);
+        device_vector< IndexType, concurrency::array > predicates( sz, 0, true, ctl );
+        device_vector< IndexType, concurrency::array > scatter_indices( sz, 0, true, ctl );
+        //Transform the input routine to fill with 0 for false and 1 for true.
+        bolt::amp::transform( ctl, stencil, stencil + sz, predicates.begin(), internal_pred);
+
+        bolt::amp::exclusive_scan( ctl, predicates.begin(), predicates.begin() + sz, scatter_indices.begin(), 0);
+
+        bolt::amp::scatter_if( ctl, first, last, scatter_indices.begin(), predicates.begin(), result, is_true<IndexType>() );
+
+        return result + scatter_indices[sz - 1];
+    }
+
+	/*! \brief This template function overload is used strictly std random access vectors and AMP implementations.
+        \detail
+    */
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+               std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+                                      std::random_access_iterator_tag
+                           >::value, OutputIterator
+                           >::type
+    copy_if( ::bolt::amp::control &ctl, InputIterator1& first, InputIterator1& last,
+                      InputIterator2& stencil, OutputIterator& result, Predicate& pred)
+    {
+        int sz = static_cast<int>(last - first);
+
+        typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
+
+        // Map the input iterator to a device_vector iterator
+		auto dvInput_itr   = bolt::amp::create_mapped_iterator(
+                                    typename bolt::amp::iterator_traits< InputIterator1 >::iterator_category( ),
+                                    first, sz, false, ctl );
+        auto dvStencil_itr = bolt::amp::create_mapped_iterator(
+                                    typename bolt::amp::iterator_traits< InputIterator2 >::iterator_category( ),
+                                    stencil, sz, false, ctl);
+
+
+        // Map the output iterator to a device_vector
+        device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+
+		auto result_itr = copy_if( ctl, dvInput_itr, dvInput_itr+sz, dvStencil_itr, dvOutput.begin(), pred );
+
+        // This should immediately map/unmap the buffer
+        dvOutput.data( );
+		return result + (result_itr - dvOutput.begin() );
+    }
+
+
+
+    //template<typename InputIterator, typename OutputIterator, typename Predicate>
+    //typename std::enable_if<
+    //           std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+    //                                   bolt::amp::device_vector_tag
+    //                       >::value, OutputIterator
+    //                       >::type
+    //copy_if( ::bolt::amp::control &ctl, InputIterator& first, InputIterator& last,
+    //          OutputIterator& result, Predicate& pred)
+    //{
+    //    return copy_if(ctl, first, last, first, result, pred);
+    //}
+
+
+	/*! \brief This template function overload for copy_if is used strictly for std random access vectors and AMP implementations.
+        \detail Stencil is used
+    */
+  //  template<typename InputIterator, typename OutputIterator, typename Predicate>
+  //  typename std::enable_if<
+  //             std::is_same< typename std::iterator_traits< OutputIterator >::iterator_category ,
+  //                                    std::random_access_iterator_tag
+  //                         >::value, OutputIterator
+  //                         >::type
+  //  copy_if( ::bolt::amp::control &ctl, InputIterator& first, InputIterator& last,
+  //                    OutputIterator& result, Predicate& pred)
+  //  {
+  //      int sz = static_cast<int>(last - first);
+
+  //      typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
+
+  //      // Map the input iterator to a device_vector iterator
+		//auto dvInput_itr   = bolt::amp::create_mapped_iterator(
+  //                                  typename bolt::amp::iterator_traits< InputIterator1 >::iterator_category( ),
+  //                                  first, sz, false, ctl );
+
+  //      // Map the output iterator to a device_vector
+  //      device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+
+		//auto result_itr = copy_if( ctl, dvInput_itr, dvInput_itr+sz, dvInput_itr, dvOutput.begin(), pred );
+
+  //      // This should immediately map/unmap the buffer
+  //      dvOutput.data( );
+		//return result + (result_itr - dvOutput.begin() );
+  //  }
+
+}//end of amp namespace
+
+
+	 /*! \brief This template function overload is used strictly for device vectors and std random access vectors.
+        \detail Here we branch out into the SerialCpu, MultiCore TBB or The AMP code paths.
+    */
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+             !(std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category,
+                             std::input_iterator_tag
+                           >::value ||
+               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category,
+                             bolt::amp::fancy_iterator_tag >::value)
+                           , OutputIterator
+                           >::type
+    copy_if(::bolt::amp::control& ctl, InputIterator1& first,
+         InputIterator1& last, InputIterator2& stencil, OutputIterator& result,  Predicate& pred)
+    {
+        const int sz =  static_cast< int >( std::distance( first, last ) );
+        if (sz == 0)
+            return result;
+
+        bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::amp::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
+
+        if( runMode == bolt::amp::control::SerialCpu )
+        {
+            return serial::copy_if(ctl, first, last, stencil, result, pred );
+        }
+        else if( runMode == bolt::amp::control::MultiCoreCpu )
+        {
+#if defined( ENABLE_TBB )
+            return btbb::copy_if(ctl, first, last, stencil, result, pred);
+#else
+            throw std::runtime_error( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+#endif
+
+        }
+        else
+        {
+            return amp::copy_if( ctl, first, last, stencil, result, pred );
+        }
+        return result;
+    }
+
+
+
+    /*! \brief This template function overload is used to seperate input_iterator and fancy_iterator as destination iterators from all other iterators
+        \detail This template function overload is used to seperate input_iterator and fancy_iterator as destination iterators from all other iterators.
+                We enable this overload and should result in a compilation failure.
+    */
+    // TODO - test the below code path
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    typename std::enable_if<
+               (std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category,
+                             std::input_iterator_tag
+                           >::value ||
+               std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category,
+                             bolt::amp::fancy_iterator_tag >::value)
+                           , OutputIterator
+                           >::type
+    copy_if(::bolt::amp::control& ctl, InputIterator1& first,
+         InputIterator1& last, InputIterator2& stencil, OutputIterator& result,  Predicate& pred)
+    {
+        //TODO - Shouldn't we support transform for input_iterator_tag also.
+        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category,
+                                     std::input_iterator_tag >::value ,
+                       "Output vector should be a mutable vector. It cannot be of the type input_iterator_tag" );
+        static_assert( std::is_same< typename std::iterator_traits< OutputIterator>::iterator_category,
+                                     bolt::amp::fancy_iterator_tag >::value ,
+                       "Output vector should be a mutable vector. It cannot be of type fancy_iterator_tag" );
+    }
+
+
+}//end of detail namespace
+
+
+    template<typename InputIterator, typename OutputIterator, typename Predicate>
+    OutputIterator copy_if(bolt::amp::control &ctrl,  InputIterator first, InputIterator last, OutputIterator result,
+                           Predicate pred)
+    {
+        //using bolt::amp::detail::copy_if;
+        return bolt::amp::detail::copy_if( ctrl, first, last, first, result, pred);
+    }
+
+    // default control
+    template<typename InputIterator, typename OutputIterator, typename Predicate>
+    OutputIterator copy_if( InputIterator first, InputIterator last, OutputIterator result,
+                            Predicate pred)
+    {
+        //using bolt::amp::detail::copy_if;
+        return bolt::amp::detail::copy_if( control::getDefault(), first, last, first, result, pred);
+    }
+
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    OutputIterator copy_if(bolt::amp::control &ctrl,  InputIterator1 first, InputIterator1 last,
+                           InputIterator2 stencil, OutputIterator result,
+                           Predicate pred)
+    {
+        //using bolt::amp::detail::copy_if;
+        return bolt::amp::detail::copy_if( ctrl, first, last, stencil, result, pred);
+    }
+
+    template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Predicate>
+    OutputIterator copy_if(InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result,
+                           Predicate pred)
+    {
+        //using bolt::amp::detail::copy_if;
+        return bolt::amp::detail::copy_if( control::getDefault(), first, last, stencil, result, pred);
+    }
+
 
 }//end of amp namespace
 };//end of bolt namespace

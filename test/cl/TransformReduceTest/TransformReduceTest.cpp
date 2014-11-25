@@ -21,6 +21,7 @@
 #define GOOGLE_TEST 1
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 #define TEST_LARGE_BUFFERS 0
+#define OPENCL_CPU_PATH 0
 
 #if (GOOGLE_TEST == 1)
 
@@ -30,7 +31,7 @@
 #include <bolt/cl/transform_reduce.h>
 #include <bolt/cl/functional.h>
 #include <bolt/miniDump.h>
-
+#include "bolt/BoltLog.h"
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
 #include <array>
@@ -2026,13 +2027,12 @@ TEST(TransformReduce, Float)
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
  
     // call transform_reduce
     //  DivUDD ddd;
     bolt::cl::negate<float> ddd;
     bolt::cl::plus<float> add;
-    float boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, 4.f, add );
+    float boldReduce = bolt::cl::transform_reduce(input.begin(), input.end(),  ddd, 4.f, add );
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
     float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.f, add); //out-of-place scan
 
@@ -2263,15 +2263,13 @@ TEST(TransformReduce, DeviceVectorInt)
      }
      
      bolt::cl::device_vector< int > input(refInput.begin(), refInput.end());
-     
-     bolt::cl::control ctl = bolt::cl::control::getDefault( );
 
      // call transform_reduce
      //  DivUDD ddd;
      bolt::cl::negate<int> ddd;
      bolt::cl::plus<int> add;
 
-     int boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, 0, add );
+     int boldReduce = bolt::cl::transform_reduce(input.begin(), input.end(),  ddd, 0, add );
      ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
      int stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0); // out-of-place scan
      printf("%d %d %d\n", length, boldReduce, stdReduce);  
@@ -2351,14 +2349,13 @@ TEST(TransformReduce, DeviceVectorFloat)
     }
     bolt::cl::device_vector< float> input(refInput.begin(), refInput.end());
     
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
 
     // call transform_reduce
     //  DivUDD ddd;
     bolt::cl::negate<float> ddd;
     bolt::cl::plus<float> add;
 
-    float boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, 0.f, add );
+    float boldReduce = bolt::cl::transform_reduce(input.begin(), input.end(),  ddd, 0.f, add );
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
     float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0.f); // out-of-place scan
 
@@ -2686,6 +2683,52 @@ int main(int argc, char* argv[])
 
     //  Register our minidump generating logic
     //bolt::miniDumpSingleton::enableMiniDumps( );
+
+	 //  Query OpenCL for available platforms
+    cl_int err = CL_SUCCESS;
+
+    // Platform vector contains all available platforms on system
+    std::vector< cl::Platform > platforms;
+    //std::cout << "HelloCL!\nGetting Platform Information\n";
+    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
+
+    //  Do stuff with the platforms
+    std::vector<cl::Platform>::iterator i;
+    if(platforms.size() > 0)
+    {
+        for(i = platforms.begin(); i != platforms.end(); ++i)
+        {
+            if(!strcmp((*i).getInfo<CL_PLATFORM_VENDOR>(&err).c_str(), "Advanced Micro Devices, Inc."))
+            {
+                break;
+            }
+        }
+    }
+    bolt::cl::V_OPENCL( err, "Platform::getInfo() failed" );
+
+    // Device info
+    std::vector< cl::Device > devices;
+    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
+
+	cl_uint userDevice = 0;
+
+#if(OPENCL_CPU_PATH == 1)
+	MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0, 1);
+	bolt::cl::control& myControl = bolt::cl::control(oclcpu._queue); 
+	myControl.setWaitMode( bolt::cl::control::NiceWait );
+    myControl.setForceRunMode( bolt::cl::control::OpenCL );
+    std::string strDeviceName =   myControl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+#else
+	cl::Context myContext( devices.at( userDevice ) );
+    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
+	std::string strDeviceName =  bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+#endif
+
+
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+    std::cout << "Device under test : " << strDeviceName << std::endl;
 
     int retVal = RUN_ALL_TESTS( );
 

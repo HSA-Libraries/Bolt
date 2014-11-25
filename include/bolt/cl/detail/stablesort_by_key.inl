@@ -23,46 +23,27 @@
 //TBB Includes
 #include "bolt/btbb/stable_sort_by_key.h"
 #endif
-
-#define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 256
 #include "bolt/cl/sort_by_key.h"
 
+#define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 256
+#define STABLESORT_BY_KEY_ALG_BRANCH_POINT (1<<20)
 namespace bolt {
 namespace cl {
 
 namespace detail
 {
-    template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    typename std::enable_if<
-        !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
-           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
-         )
-                           >::type
-    sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
-                        const DVKeys& keys_last, const DVValues& values_first,
-                        const StrictWeakOrdering& comp, const std::string& cl_code);
 
     template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
-                                           int
-                                         >::value
-                           >::type  /*If enabled then this typename will be evaluated to void*/
-    sort_by_key_enqueue( control &ctl,
+    void radix_sort_by_key_uint_enqueue( control &ctl,
                          DVKeys keys_first, DVKeys keys_last,
                          DVValues values_first,
                          StrictWeakOrdering comp, const std::string& cl_code);
 
-
     template<typename DVKeys, typename DVValues, typename StrictWeakOrdering>
-    typename std::enable_if< std::is_same< typename std::iterator_traits<DVKeys >::value_type,
-                                           unsigned int
-                                         >::value
-                           >::type  /*If enabled then this typename will be evaluated to void*/
-    sort_by_key_enqueue( control &ctl,
+    void radix_sort_by_key_int_enqueue( control &ctl,
                          DVKeys keys_first, DVKeys keys_last,
                          DVValues values_first,
                          StrictWeakOrdering comp, const std::string& cl_code);
-
 
     enum stableSort_by_keyTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType,
         stableSort_by_key_ValueIterType, stableSort_by_key_lessFunction, stableSort_by_key_end };
@@ -169,50 +150,12 @@ namespace detail
         }
     }
 
-
     /**************************************************************/
-    /**StableSort_by_key with keys as unsigned int specialization**/
-    /**************************************************************/
-    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
-                                           unsigned int
-                                         >::value
-                           >::type   /*If enabled then this typename will be evaluated to void*/
-    stablesort_by_key_enqueue( control& ctrl,
-                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
-                                    const DVRandomAccessIterator2 values_first,
-                                    const StrictWeakOrdering& comp, const std::string& cl_code )
-    {
-		
-        bolt::cl::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
-        return;    
-    }
-
-    /**************************************************************/
-    /*StableSort_by_key with keys as int specialization*/
+    /**Merge Sort for all data types**/
     /**************************************************************/
     template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
-                                           int
-                                         >::value
-                           >::type   /*If enabled then this typename will be evaluated to void*/
-    stablesort_by_key_enqueue( control& ctrl,
-                               const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
-                               const DVRandomAccessIterator2 values_first,
-                               const StrictWeakOrdering& comp, const std::string& cl_code )
-    {
-		
-        bolt::cl::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
-        return;    
-    }
-
-
-    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    typename std::enable_if<
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type, unsigned int >::value || 
-      std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type, int >::value  )
-                       >::type
-    stablesort_by_key_enqueue( control& ctrl,
+    void
+    merge_sort_by_key_enqueue( control& ctrl,
                                     const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
                                     const DVRandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp, const std::string& cl_code )
@@ -264,7 +207,7 @@ namespace detail
         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
         size_t localRange= BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD;
-		
+
 
         //  Make sure that globalRange is a multiple of localRange
         size_t globalRange = vecSize;
@@ -338,8 +281,8 @@ namespace detail
         numMerges += vecPow2? 1: 0;
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-		device_vector< keyType >       tmpKeyBuffer( vecSize);
-		device_vector< valueType >     tmpValueBuffer( vecSize);
+		device_vector< keyType >       tmpKeyBuffer( vecSize, keyType(), CL_MEM_READ_WRITE, false, ctrl);
+		device_vector< valueType >     tmpValueBuffer( vecSize, valueType(), CL_MEM_READ_WRITE, false, ctrl);
 
          // Size of scratch buffer
         V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" );
@@ -448,6 +391,63 @@ namespace detail
         return;
     }// END of sort_enqueue
 
+
+    /**************************************************************/
+    /**StableSort_by_key with keys as unsigned int specialization**/
+    /**************************************************************/
+    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
+                                           unsigned int
+                                         >::value
+                           >::type   /*If enabled then this typename will be evaluated to void*/
+    stablesort_by_key_enqueue( control& ctrl,
+                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
+                                    const DVRandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code )
+    {
+        size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
+        if(szElements > STABLESORT_BY_KEY_ALG_BRANCH_POINT)
+            bolt::cl::detail::radix_sort_by_key_uint_enqueue(ctrl, keys_first, keys_last, values_first, comp,cl_code);
+        else
+            bolt::cl::detail::merge_sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
+            return;
+    }
+
+    /**************************************************************/
+    /*StableSort_by_key with keys as int specialization*/
+    /**************************************************************/
+    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
+    typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type,
+                                           int
+                                         >::value
+                           >::type   /*If enabled then this typename will be evaluated to void*/
+    stablesort_by_key_enqueue( control& ctrl,
+                               const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
+                               const DVRandomAccessIterator2 values_first,
+                               const StrictWeakOrdering& comp, const std::string& cl_code )
+    {
+        size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
+        if(szElements > STABLESORT_BY_KEY_ALG_BRANCH_POINT)
+            bolt::cl::detail::radix_sort_by_key_int_enqueue(ctrl, keys_first, keys_last, values_first, comp,cl_code);
+        else
+            bolt::cl::detail::merge_sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
+            return;
+    }
+
+
+    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
+    typename std::enable_if< !( std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type, int >::value ||
+                                std::is_same< typename std::iterator_traits<DVRandomAccessIterator1 >::value_type, unsigned int >::value )
+                           >::type   /*If enabled then this typename will be evaluated to void*/
+    stablesort_by_key_enqueue( control& ctrl,
+                               const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
+                               const DVRandomAccessIterator2 values_first,
+                               const StrictWeakOrdering& comp, const std::string& cl_code )
+    {
+        bolt::cl::detail::merge_sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
+        return;
+    }
+
     //Non Device Vector specialization.
     //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter.
     //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called.
@@ -471,7 +471,7 @@ namespace detail
 
         bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
 
-				
+
 
         if( runMode == bolt::cl::control::Automatic )
         {
@@ -482,7 +482,7 @@ namespace detail
         BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
         #endif
         if( runMode == bolt::cl::control::SerialCpu )
-        { 
+        {
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Stable_Sort_By_Key::SERIAL_CPU");
             #endif
@@ -506,7 +506,7 @@ namespace detail
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
-			
+
             device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
 
@@ -543,7 +543,7 @@ namespace detail
         #if defined(BOLT_DEBUG_LOG)
         BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
         #endif
-		
+
         if( runMode == bolt::cl::control::SerialCpu )
         {
 		        #if defined(BOLT_DEBUG_LOG)
@@ -575,7 +575,7 @@ namespace detail
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
-			
+
             stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
         }
         return;
@@ -704,4 +704,6 @@ namespace detail
 }//namespace bolt::cl
 }//namespace bolt
 
+
+#undef STABLESORT_BY_KEY_ALG_BRANCH_POINT
 #endif

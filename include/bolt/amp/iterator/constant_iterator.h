@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 #pragma once
-#if !defined( BOLT_CL_CONSTANT_ITERATOR_H )
-#define BOLT_CL_CONSTANT_ITERATOR_H
+#if !defined( BOLT_AMP_CONSTANT_ITERATOR_H )
+#define BOLT_AMP_CONSTANT_ITERATOR_H
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 
@@ -117,6 +117,13 @@ namespace amp {
                 return result;
             }
 
+			 const constant_iterator< value_type > operator- ( const difference_type & n ) const
+            {
+                constant_iterator< value_type > result( *this );
+                result.advance( -n );
+                return result;
+            }
+
             const constant_iterator< value_type > & getBuffer( const_iterator itr ) const
             {
                 return *this;
@@ -147,11 +154,21 @@ namespace amp {
                 m_Index += n;
             }
 
-            // Pre-increment
-            constant_iterator< value_type > operator++ ( ) const
+			value_type* getPointer()
             {
+                return &m_constValue;
+            }
+
+            const value_type* getPointer() const
+            {
+                return &m_constValue;
+            }
+			
+            // Pre-increment
+            constant_iterator< value_type > operator++ ( )
+            {
+                advance( 1 );
                 constant_iterator< value_type > result( *this );
-                result.advance( 1 );
                 return result;
             }
 

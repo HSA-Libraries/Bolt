@@ -1,0 +1,3 @@
+#all the names of the files which are modified should be put into files_modified.txt`
+
+for line in `cat ../files_modified.txt`; do foldername=$(dirname ${line}); echo $foldername; newfolder=../new_folder/$foldername; echo $newfolder; mkdir -p $newfolder; cp $line $newfolder ; done
