@@ -34,8 +34,6 @@
 *  2. "Revisiting Sorting for GPGPU Stream Architectures" 
 *     Duane Merrill and Andrew Grimshaw
 *    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
-*  3. The SHOC Benchmark Suite 
-*     https://github.com/vetter/shoc
 *
 ***************************************************************************/
 
@@ -409,8 +407,8 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 	unsigned int numGroups = (szElements/localSize)>= 32?(32*8):(szElements/localSize); // 32 is no of compute units for Tahiti
 	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
-	device_vector< Keys, concurrency::array_view > dvSwapInputKeys(static_cast<int>(orig_szElements), 0);
-    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<int>(orig_szElements), 0);
+	device_vector< Keys, concurrency::array_view > dvSwapInputKeys(static_cast<int>(orig_szElements), 0, false, ctl);
+    device_vector< Values, concurrency::array_view > dvSwapInputValues(static_cast<int>(orig_szElements), 0, false, ctl);
 
 	bool Asc_sort = 0;
 	if(comp(2,3))
@@ -435,7 +433,7 @@ void sort_by_key_enqueue_int_uint( control &ctl,
 		numGroups = nBlocks;
         cdata.m_nWGs = numGroups;
 	}
-	device_vector< int, concurrency::array_view > dvHistogramBins(static_cast<int>(numGroups * RADICES), 0 );
+	device_vector< int, concurrency::array_view > dvHistogramBins(static_cast<int>(numGroups * RADICES), 0, false, ctl );
 
 	concurrency::extent< 1 > inputExtent( numGroups*localSize );
 	concurrency::tiled_extent< localSize > tileK0 = inputExtent.tile< localSize >();

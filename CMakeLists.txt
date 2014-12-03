@@ -32,7 +32,7 @@ if( NOT DEFINED Bolt_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_MINOR )
-   set( Bolt_VERSION_MINOR 3 )
+   set( Bolt_VERSION_MINOR 2 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_PATCH )

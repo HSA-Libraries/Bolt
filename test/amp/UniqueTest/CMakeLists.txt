@@ -16,12 +16,12 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.TransformIf.Source  TransformIfTest.cpp )
-set( ampBolt.Test.TransformIf.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/transform_if.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/transform_if.inl)
+set( ampBolt.Test.Unique.Source  UniqueTest.cpp )
+set( ampBolt.Test.Unique.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/unique.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/unique.inl)
 
-set( ampBolt.Test.TransformIf.Files ${ampBolt.Test.TransformIf.Source} ${ampBolt.Test.TransformIf.Headers} )
+set( ampBolt.Test.Unique.Files ${ampBolt.Test.Unique.Source} ${ampBolt.Test.Unique.Headers} )
 
-add_executable( ampBolt.Test.TransformIf ${ampBolt.Test.TransformIf.Files} )
+add_executable( ampBolt.Test.Unique ${ampBolt.Test.Unique.Files} )
 
 
 if( MSVC )
@@ -31,20 +31,20 @@ endif()
 
 
 if(BUILD_TBB)
-    target_link_libraries( ampBolt.Test.TransformIf ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+    target_link_libraries( ampBolt.Test.Unique ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( ampBolt.Test.TransformIf ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+    target_link_libraries( ampBolt.Test.Unique ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
 endif()
 
 
 
-set_target_properties( ampBolt.Test.TransformIf PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.TransformIf PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( ampBolt.Test.Unique PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.Unique PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET ampBolt.Test.TransformIf PROPERTY FOLDER "Test/AMP")
+set_property( TARGET ampBolt.Test.Unique PROPERTY FOLDER "Test/AMP")
 
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.TransformIf
+install( TARGETS ampBolt.Test.Unique
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import

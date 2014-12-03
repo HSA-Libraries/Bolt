@@ -204,6 +204,35 @@ namespace amp {
     };
 
 
+	template <typename T> 
+    struct equal_to_value 
+	{
+        equal_to_value(const T &targetValue)  : _targetValue(targetValue)
+        { };
+        equal_to_value(){}
+        bool operator()  (const T &x) const restrict(amp,cpu)
+        {
+               T temp= _targetValue;
+               return x == temp;
+        };
+        private:
+            T _targetValue;
+     };
+
+    template<typename predicate, typename T>
+    struct not_pred
+    {
+		not_pred(const predicate &targetPred)  : _targetPred(targetPred)
+        { };
+        not_pred(){}
+        bool operator()(const T &x)  const restrict(cpu,amp)
+		{
+			return (_targetPred(x)?false:true);
+		}
+		private:
+            predicate _targetPred;
+    };
+	
 };
 };
 

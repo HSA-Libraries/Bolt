@@ -2262,6 +2262,17 @@ struct udd_identity
     }
 };
 
+
+template <typename T>
+struct add_3
+{
+    T operator()(T x) const restrict(amp, cpu)
+    {
+      return x+3;
+    }
+};
+
+
 template <typename InputIterator, typename OutputIterator, typename Predicate, typename UnaryOperator>
 void Serial_transform_if(InputIterator first, InputIterator last, OutputIterator result, UnaryOperator op, Predicate p )
 {
@@ -2306,6 +2317,44 @@ void Serial_transform_if_binary(InputIterator1 first1, InputIterator1 last1, Inp
 
 }
 
+
+TEST( TransformIfStdVector, SimpleTestUint )
+{
+    int length = 1024;
+
+    std::vector<unsigned int> stdInput( length );
+	for(int i=0; i<length; i++)
+		stdInput[i] = rand()%10;
+
+	std::vector<unsigned int> boltOutput( length);
+	std::vector<unsigned int> stdOutput( length);
+
+    Serial_transform_if(  stdInput.begin( ),  stdInput.end( ), stdOutput.begin(), add_3<unsigned int>(), is_odd<unsigned int>() );
+    bolt::amp::transform_if( stdInput.begin( ), stdInput.end( ), boltOutput.begin(), add_3<unsigned int>(), is_odd<unsigned int>() );
+	
+    cmpArrays( stdOutput, boltOutput);
+    
+}
+
+
+TEST( TransformIfDVVector, SimpleTestUint )
+{
+    int length = 1024;
+
+    std::vector<unsigned int> stdInput( length );
+	for(int i=0; i<length; i++)
+		stdInput[i] = rand()%10;
+
+	bolt::amp::device_vector<int> boltInput(stdInput.begin(), stdInput.end());
+	bolt::amp::device_vector<int> boltOutput( length);
+	std::vector<unsigned int> stdOutput( length);
+
+    Serial_transform_if(  stdInput.begin( ),  stdInput.end( ), stdOutput.begin(), add_3<unsigned int>(), is_odd<unsigned int>() );
+    bolt::amp::transform_if( boltInput.begin( ), boltInput.end( ), boltOutput.begin(), add_3<unsigned int>(), is_odd<unsigned int>() );
+	
+    cmpArrays( stdOutput, boltOutput);
+    
+}
 
 
 TEST( TransformIfStdVector, SimpleTest )

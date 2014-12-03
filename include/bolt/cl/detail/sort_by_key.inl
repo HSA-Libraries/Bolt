@@ -16,22 +16,22 @@
 ***************************************************************************/
 
 /***************************************************************************
-* The Radix sort algorithm implementation in BOLT library is a derived work from
+* The Radix sort algorithm implementation in BOLT library is a derived work from 
 * the radix sort sample which is provided in the Book. "Heterogeneous Computing with OpenCL"
 * Link: http://www.heterogeneouscompute.org/?page_id=7
-* The original Authors are: Takahiro Harada and Lee Howes. A detailed explanation of
-* the algorithm is given in the publication linked here.
+* The original Authors are: Takahiro Harada and Lee Howes. A detailed explanation of 
+* the algorithm is given in the publication linked here. 
 * http://www.heterogeneouscompute.org/wordpress/wp-content/uploads/2011/06/RadixSort.pdf
-*
-* The derived work adds support for descending sort and signed integers.
-* Performance optimizations were provided for the AMD GCN architecture.
-*
-*  Besides this following publications were referred:
-*  1. "Parallel Scan For Stream Architectures"
-*     Technical Report CS2009-14Department of Computer Science, University of Virginia.
+* 
+* The derived work adds support for descending sort and signed integers. 
+* Performance optimizations were provided for the AMD GCN architecture. 
+* 
+*  Besides this following publications were referred: 
+*  1. "Parallel Scan For Stream Architectures"  
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
 *     Duane Merrill and Andrew Grimshaw
 *    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
-*  2. "Revisiting Sorting for GPGPU Stream Architectures"
+*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
 *     Duane Merrill and Andrew Grimshaw
 *    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
 *
@@ -84,7 +84,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
         const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
         {
-            const std::string templateSpecializationString =
+            const std::string templateSpecializationString = 
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
                 "         __attribute__((reqd_work_group_size(WG_SIZE,1,1))) \n"
@@ -173,7 +173,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         keyType   key;
         valueType value;
     };
-
+    
     //This is the functor which will sort the std_sort vector.
     template <typename keyType, typename valueType, typename StrictWeakOrdering>
     class std_sort_comp
@@ -340,7 +340,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
     V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(1, (int)numGroups), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(2, localSize * 2 * sizeof(Keys),NULL), "Error setting a kernel argument" );
-
+    
     //Set Permute kernel arguments
     V_OPENCL( permuteKernel.setArg(2, clHistData), "Error setting a kernel argument" );
 
@@ -365,7 +365,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -375,7 +375,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
             {
                 printf(" %d", temp[jj] );
             }
-            printf("\n\n");
+            printf("\n\n"); 
         }
 
 #endif
@@ -393,7 +393,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -407,9 +407,9 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         }
 
 #endif
-        //void permuteAscendingRadixNTemplateInstantiated( __global const u32* restrict gKeys, __global const Values* restrict gValues,
+        //void permuteAscendingRadixNTemplateInstantiated( __global const u32* restrict gKeys, __global const Values* restrict gValues, 
         //                     __global const u32* rHistogram, __global u32* restrict gDstKeys, __global const Values* restrict gDstValues, int4 cb);
-        V_OPENCL( permuteKernel.setArg( 5, cdata), "Error setting a kernel argument" );
+        V_OPENCL( permuteKernel.setArg( 5, cdata), "Error setting a kernel argument" );        
         if (swap == 0)
         {
             V_OPENCL( permuteKernel.setArg(0, clInputKeys), "Error setting kernel argument" );
@@ -528,7 +528,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
     {
         /*Ascending Sort*/
         histKernel = commonKernels[0];
-        histSignedKernel = commonKernels[2];
+        histSignedKernel = commonKernels[2]; 
         scanLocalKernel = commonKernels[4];
         permuteKernel = uintKernels[0];
         permuteSignedKernel = intKernels[0];
@@ -574,7 +574,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
     V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(1, (int)numGroups), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(2, localSize * 2 * sizeof(Keys),NULL), "Error setting a kernel argument" );
-
+    
     //Set Permute kernel arguments
     V_OPENCL( permuteKernel.setArg(2, clHistData), "Error setting a kernel argument" );
     int bits = 0;
@@ -599,7 +599,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -609,7 +609,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
             {
                 printf(" %d", temp[jj] );
             }
-            printf("\n\n");
+            printf("\n\n"); 
         }
 
 #endif
@@ -627,7 +627,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -641,9 +641,9 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         }
 
 #endif
-        //void permuteAscendingRadixNTemplateInstantiated( __global const u32* restrict gKeys, __global const Values* restrict gValues,
+        //void permuteAscendingRadixNTemplateInstantiated( __global const u32* restrict gKeys, __global const Values* restrict gValues, 
         //                     __global const u32* rHistogram, __global u32* restrict gDstKeys, __global const Values* restrict gDstValues, int4 cb);
-        V_OPENCL( permuteKernel.setArg( 5, cdata), "Error setting a kernel argument" );
+        V_OPENCL( permuteKernel.setArg( 5, cdata), "Error setting a kernel argument" );        
         if (swap == 0)
         {
             V_OPENCL( permuteKernel.setArg(0, clInputKeys), "Error setting kernel argument" );
@@ -669,7 +669,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         swap = swap? 0: 1;
     }
     //Perform Signed nibble radix sort operations here operations here
-    {
+    { 
         //Histogram Kernel
         cdata.m_startBit = bits;
         V_OPENCL( histSignedKernel.setArg(0, clSwapKeys), "Error setting a kernel argument" );
@@ -686,7 +686,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -696,7 +696,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
             {
                 printf(" %d", temp[jj] );
             }
-            printf("\n\n");
+            printf("\n\n"); 
         }
 
 #endif
@@ -714,7 +714,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -735,7 +735,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         V_OPENCL( permuteSignedKernel.setArg(2, clHistData), "Error setting a kernel argument" );
         V_OPENCL( permuteSignedKernel.setArg(3, clInputKeys), "Error setting kernel argument" );
         V_OPENCL( permuteSignedKernel.setArg(4, clInputValues), "Error setting kernel argument" );
-        V_OPENCL( permuteSignedKernel.setArg(5, cdata), "Error setting a kernel argument" );
+        V_OPENCL( permuteSignedKernel.setArg(5, cdata), "Error setting a kernel argument" );        
 
         l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                             permuteSignedKernel,
@@ -753,7 +753,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 
     template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
     typename std::enable_if<
-           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value
+           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
                            >::type
     sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
                         const DVKeys& keys_last, const DVValues& values_first,
@@ -762,9 +762,9 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
         if(szElements > SORT_BY_KEY_ALG_BRANCH_POINT)
             bolt::cl::detail::radix_sort_by_key_int_enqueue(ctl, keys_first, keys_last, values_first, comp,cl_code);
-        else
+        else        
             bolt::cl::detail::merge_sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
-        return;
+        return;    
     }// END of sort_by_key_enqueue -> int
 
     template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
@@ -778,15 +778,15 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
         size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
         if(szElements > SORT_BY_KEY_ALG_BRANCH_POINT)
             bolt::cl::detail::radix_sort_by_key_uint_enqueue(ctl, keys_first, keys_last, values_first, comp,cl_code);
-        else
+        else        
             bolt::cl::detail::merge_sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
-        return;
+        return;    
     }// END of sort_by_key_enqueue - > uint
 
     template< typename DVKeys, typename DVValues, typename StrictWeakOrdering>
     typename std::enable_if<
         !( std::is_same< typename std::iterator_traits<DVKeys >::value_type, unsigned int >::value ||
-           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value
+           std::is_same< typename std::iterator_traits<DVKeys >::value_type, int >::value 
          )
                            >::type
     sort_by_key_enqueue(control &ctl, const DVKeys& keys_first,
@@ -832,7 +832,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Sort_By_Key::SERIAL_CPU");
             #endif
-
+						
             typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
             typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
             serialCPU_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index],
@@ -910,7 +910,7 @@ enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
             #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Sort_By_Key::OPENCL_GPU");
             #endif
-
+			
             device_vector< T_values > dvInputValues( values_first, szElements,
                                                      CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
             device_vector< T_keys > dvInputKeys( keys_first, keys_last,
