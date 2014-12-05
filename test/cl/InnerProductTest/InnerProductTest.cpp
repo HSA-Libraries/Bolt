@@ -40,6 +40,8 @@
 
 #include "bolt/BoltLog.h"
 
+#define MY_FLT_EPSILON 1.19209290E-07F
+
 void testDeviceVector()
 {
     const int aSize = 64;
@@ -1302,7 +1304,7 @@ void floatInProd1(int aSize)
     std::vector<float> A(aSize), B(aSize);
 
     for (int i=0; i < aSize; i++) {
-        A[i] = B[i] = FLT_EPSILON;
+        A[i] = B[i] = MY_FLT_EPSILON;
     };
 
     float x = 1.0;
