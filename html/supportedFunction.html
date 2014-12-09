@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.2</span>
+   &#160;<span id="projectnumber">1.3</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -116,7 +116,7 @@ List of Supported Function and Code Paths</h2>
 <tr>
 <td align="center">transform_inclusive_scan </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center"><a class="el" href="classtransform__iterator.html">transform_iterator</a> </td><td align="center">YES </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<td align="center"><a class="el" href="classtransform__iterator.html">transform_iterator</a> </td><td align="center">YES </td><td align="center">YES<sup><b>2</b></sup> </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
 <td align="center">transform_reduce </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
@@ -130,9 +130,47 @@ List of Supported Function and Code Paths</h2>
 <tr>
 <td align="center">gather </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 <tr>
-<td align="center">gather_if </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center"><p class="starttd">YES </p>
-<p class="endtd"></p>
-</td></tr>
+<td align="center">gather_if </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">copy_if </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">find </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">find_if </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">find_if_not </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">for_each </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">for_each_n </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">all_of </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">any_of </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">none_of </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">remove </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">remove_if </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">remove_copy </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">remove_copy_if </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">replace </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">replace_if </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">replace_copy </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">replace_copy_if </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">unique </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">unique_copy </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
+<tr>
+<td align="center">transform_if </td><td align="center">NO </td><td align="center">YES </td><td align="center">YES </td><td align="center">YES  </td></tr>
 </table>
 <h2><a class="anchor" id="Limitations"></a>
 Limitations</h2>
@@ -143,7 +181,7 @@ Limitations</h2>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jul 2 2014 12:04:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Nov 26 2014 18:38:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

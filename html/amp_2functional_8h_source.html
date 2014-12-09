@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/amp/functional.h Source File</title>
+<title>Bolt: //bgldinar16/Jenkins_FS_Root/workspace/Bolt_Clone_Local_develop/include/bolt/amp/functional.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.2</span>
+   &#160;<span id="projectnumber">1.3</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_7bd24fcb403b4a9a7d6ee9bbf740e45c.html">Bolt_Clone_develop</a></li><li class="navelem"><a class="el" href="dir_d1017fc77d40cdf41bf51b649c69d445.html">include</a></li><li class="navelem"><a class="el" href="dir_82df59469531d6ac1bfe1a3d7656a742.html">bolt</a></li><li class="navelem"><a class="el" href="dir_e0116eebaf0c0d90847593bab4a7bef8.html">amp</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0dab30cc2205b701b66757837f3cbf6e.html">bgldinar16</a></li><li class="navelem"><a class="el" href="dir_bd0d9a08ab55d03c54f0820b78676bde.html">Jenkins_FS_Root</a></li><li class="navelem"><a class="el" href="dir_49518ebcf8585b907fbdadb8f51b6a12.html">workspace</a></li><li class="navelem"><a class="el" href="dir_e232ad7ce080f92822df6b9c07102ef7.html">Bolt_Clone_Local_develop</a></li><li class="navelem"><a class="el" href="dir_cc0877a424797ca917b011efdad96568.html">include</a></li><li class="navelem"><a class="el" href="dir_4d75acc0378639e19a6b94889dfd3669.html">bolt</a></li><li class="navelem"><a class="el" href="dir_5a8e5df5b392f7ecbab5efe843225efe.html">amp</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -255,14 +255,43 @@
 <div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;    };</div>
 <div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;</div>
 <div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;</div>
-<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;};</div>
-<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;};</div>
-<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;</div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; </div>
+<div class="line"><a name="l00208"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1equal__to__value.html">  208</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1equal__to__value.html">equal_to_value</a> </div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;    {</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;        <a class="code" href="structbolt_1_1amp_1_1equal__to__value.html">equal_to_value</a>(<span class="keyword">const</span> T &amp;targetValue)  : _targetValue(targetValue)</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;        { };</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;        <a class="code" href="structbolt_1_1amp_1_1equal__to__value.html">equal_to_value</a>(){}</div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;        <span class="keywordtype">bool</span> operator()  (<span class="keyword">const</span> T &amp;x) <span class="keyword">const</span> restrict(amp,cpu)</div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;        {</div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;               T temp= _targetValue;</div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;               <span class="keywordflow">return</span> x == temp;</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;        };</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;        <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;            T _targetValue;</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;     };</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> predicate, <span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a name="l00223"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1not__pred.html">  223</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1not__pred.html">not_pred</a></div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;    {</div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;        <a class="code" href="structbolt_1_1amp_1_1not__pred.html">not_pred</a>(<span class="keyword">const</span> predicate &amp;targetPred)  : _targetPred(targetPred)</div>
+<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;        { };</div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;        <a class="code" href="structbolt_1_1amp_1_1not__pred.html">not_pred</a>(){}</div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;        <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> T &amp;x)  <span class="keyword">const</span> restrict(cpu,amp)</div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;        {</div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;            <span class="keywordflow">return</span> (_targetPred(x)?<span class="keyword">false</span>:<span class="keyword">true</span>);</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;        }</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;        <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;            predicate _targetPred;</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;    };</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;    </div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;};</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;};</div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;</div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jul 2 2014 12:04:31 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Nov 26 2014 18:38:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

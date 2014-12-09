@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.2</span>
+   &#160;<span id="projectnumber">1.3</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -52,6 +52,7 @@
   </div>
   <div id="navrow4" class="tabs3">
     <ul class="tablist">
+      <li><a href="#index_a"><span>a</span></a></li>
       <li><a href="#index_b"><span>b</span></a></li>
       <li><a href="#index_c"><span>c</span></a></li>
       <li><a href="#index_e"><span>e</span></a></li>
@@ -64,12 +65,20 @@
       <li><a href="#index_r"><span>r</span></a></li>
       <li><a href="#index_s"><span>s</span></a></li>
       <li><a href="#index_t"><span>t</span></a></li>
+      <li><a href="#index_u"><span>u</span></a></li>
       <li><a href="#index_v"><span>v</span></a></li>
     </ul>
   </div>
 </div><!-- top -->
 <div class="contents">
 &#160;
+
+<h3><a class="anchor" id="index_a"></a>- a -</h3><ul>
+<li>all_of()
+: <a class="el" href="group__AMP-logical.html#ga3e407bf54b58a3239df47a55885b1cbc">bolt::amp</a>
+</li>
+</ul>
+
 
 <h3><a class="anchor" id="index_b"></a>- b -</h3><ul>
 <li>binary_search()
@@ -91,17 +100,20 @@
 : <a class="el" href="group__CL-copy.html#gafa9a192a2806bd2236c0a659029bc71a">bolt::cl</a>
 , <a class="el" href="group__AMP-copy.html#ga3c8605096cd7595d787ddb3870d78bd2">bolt::amp</a>
 </li>
+<li>copy_if()
+: <a class="el" href="group__stream__compaction.html#gadc7853aa6f839335efbc28bef2ff2369">bolt::amp</a>
+</li>
 <li>copy_n()
-: <a class="el" href="group__AMP-copy.html#ga4cbd21020596fd95eefcc843a1d46cbb">bolt::amp</a>
-, <a class="el" href="group__CL-copy.html#ga8151b13733fc985661375fd20daa95b6">bolt::cl</a>
+: <a class="el" href="group__CL-copy.html#ga8151b13733fc985661375fd20daa95b6">bolt::cl</a>
+, <a class="el" href="group__AMP-copy.html#ga4cbd21020596fd95eefcc843a1d46cbb">bolt::amp</a>
 </li>
 <li>count()
-: <a class="el" href="group__AMP-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4">bolt::amp</a>
-, <a class="el" href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7">bolt::cl</a>
+: <a class="el" href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7">bolt::cl</a>
+, <a class="el" href="group__AMP-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4">bolt::amp</a>
 </li>
 <li>count_if()
-: <a class="el" href="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611">bolt::cl</a>
-, <a class="el" href="group__AMP-counting.html#ga1f99b47f7420737186c5deebfba5c6f6">bolt::amp</a>
+: <a class="el" href="group__AMP-counting.html#ga1f99b47f7420737186c5deebfba5c6f6">bolt::amp</a>
+, <a class="el" href="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611">bolt::cl</a>
 </li>
 </ul>
 
@@ -128,8 +140,17 @@
 , <a class="el" href="group__CL-filling.html#gaa00a5a7c47628a7f914121759c305454">bolt::cl</a>
 </li>
 <li>fill_n()
-: <a class="el" href="group__AMP-filling.html#gae25bbb805ee284f863e5fcbccf20c361">bolt::amp</a>
-, <a class="el" href="group__CL-filling.html#ga6b8d20443883e9dc0f8b92adc2d2c3f7">bolt::cl</a>
+: <a class="el" href="group__CL-filling.html#ga6b8d20443883e9dc0f8b92adc2d2c3f7">bolt::cl</a>
+, <a class="el" href="group__AMP-filling.html#gae25bbb805ee284f863e5fcbccf20c361">bolt::amp</a>
+</li>
+<li>find()
+: <a class="el" href="group__AMP-find.html#ga98749ab2af83ac79d4b823e589f9d3ba">bolt::amp</a>
+</li>
+<li>for_each()
+: <a class="el" href="group__AMP-for__each.html#gaad64b467b6deae8ec476780d48eee3aa">bolt::amp</a>
+</li>
+<li>for_each_n()
+: <a class="el" href="group__AMP-for__each.html#ga3d3fce9488d6d5be4a6ea9356864c82c">bolt::amp</a>
 </li>
 </ul>
 
@@ -244,10 +265,23 @@
 , <a class="el" href="group__CL-reduce.html#ga92e80ec5a73aa6c7d561123c3525f67c">bolt::cl</a>
 </li>
 <li>reduce_by_key()
-: <a class="el" href="group__AMP-reduce__by__key.html#ga61a55216f73f316699e356b071aca0a9">bolt::amp</a>
-, <a class="el" href="group__CL-reduce__by__key.html#ga5679c3c8230106d927e5885373fc0dae">bolt::cl</a>
+: <a class="el" href="group__CL-reduce__by__key.html#ga5679c3c8230106d927e5885373fc0dae">bolt::cl</a>
 , <a class="el" href="group__AMP-reduce__by__key.html#gabc50112048d6dd342971a9a93cfb0689">bolt::amp</a>
 , <a class="el" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005">bolt::cl</a>
+, <a class="el" href="group__AMP-reduce__by__key.html#ga61a55216f73f316699e356b071aca0a9">bolt::amp</a>
+, <a class="el" href="group__CL-reduce__by__key.html#ga19ca4592242058c9e5ed81a55e8858fd">bolt::cl</a>
+</li>
+<li>remove_copy_if()
+: <a class="el" href="group__AMP-remove.html#ga8048ae31ea22e98f9172812527feba80">bolt::amp</a>
+</li>
+<li>remove_if()
+: <a class="el" href="group__AMP-remove.html#gac97200517e80f98ffbb39d4976cc11b1">bolt::amp</a>
+</li>
+<li>replace()
+: <a class="el" href="group__AMP-replace.html#ga4e76fbd5b3455aad18af56cb21a1f629">bolt::amp</a>
+</li>
+<li>replace_copy_if()
+: <a class="el" href="group__AMP-replace.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1">bolt::amp</a>
 </li>
 </ul>
 
@@ -295,6 +329,9 @@
 : <a class="el" href="group__AMPTransformedPrefixSums.html#ga6272c1080694c06d2d1d7ca7cd988b06">bolt::amp</a>
 , <a class="el" href="group__CLTransformedPrefixSums.html#gab4b5121b865ef6fde60b766f6b335d72">bolt::cl</a>
 </li>
+<li>transform_if()
+: <a class="el" href="group__AMP-transform.html#ga0cff181e46474b477c3ec72ae97361b8">bolt::amp</a>
+</li>
 <li>transform_inclusive_scan()
 : <a class="el" href="group__CLTransformedPrefixSums.html#ga794bfe18c0859cbbebb6bef6f5c5d537">bolt::cl</a>
 , <a class="el" href="group__AMPTransformedPrefixSums.html#gafb80ed0e08f8f87b0ae147155e7fbc37">bolt::amp</a>
@@ -302,6 +339,13 @@
 <li>transform_reduce()
 : <a class="el" href="group__CL-transform__reduce.html#gae58c061918f2819ad9df48a133c63f89">bolt::cl</a>
 , <a class="el" href="group__AMP-transform__reduce.html#ga1f8ade0942ce589030eddde488de4d47">bolt::amp</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_u"></a>- u -</h3><ul>
+<li>unique()
+: <a class="el" href="group__AMP-unique.html#ga3ecc71fb22ca898b12e715d22a269a09">bolt::amp</a>
 </li>
 </ul>
 
@@ -314,7 +358,7 @@
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jul 2 2014 12:04:35 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Nov 26 2014 18:38:36 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

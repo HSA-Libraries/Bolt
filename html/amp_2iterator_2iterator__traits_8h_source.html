@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/amp/iterator/iterator_traits.h Source File</title>
+<title>Bolt: //bgldinar16/Jenkins_FS_Root/workspace/Bolt_Clone_Local_develop/include/bolt/amp/iterator/iterator_traits.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.2</span>
+   &#160;<span id="projectnumber">1.3</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_7bd24fcb403b4a9a7d6ee9bbf740e45c.html">Bolt_Clone_develop</a></li><li class="navelem"><a class="el" href="dir_d1017fc77d40cdf41bf51b649c69d445.html">include</a></li><li class="navelem"><a class="el" href="dir_82df59469531d6ac1bfe1a3d7656a742.html">bolt</a></li><li class="navelem"><a class="el" href="dir_e0116eebaf0c0d90847593bab4a7bef8.html">amp</a></li><li class="navelem"><a class="el" href="dir_f7ac5720f881bf9fda05c234a8097188.html">iterator</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0dab30cc2205b701b66757837f3cbf6e.html">bgldinar16</a></li><li class="navelem"><a class="el" href="dir_bd0d9a08ab55d03c54f0820b78676bde.html">Jenkins_FS_Root</a></li><li class="navelem"><a class="el" href="dir_49518ebcf8585b907fbdadb8f51b6a12.html">workspace</a></li><li class="navelem"><a class="el" href="dir_e232ad7ce080f92822df6b9c07102ef7.html">Bolt_Clone_Local_develop</a></li><li class="navelem"><a class="el" href="dir_cc0877a424797ca917b011efdad96568.html">include</a></li><li class="navelem"><a class="el" href="dir_4d75acc0378639e19a6b94889dfd3669.html">bolt</a></li><li class="navelem"><a class="el" href="dir_5a8e5df5b392f7ecbab5efe843225efe.html">amp</a></li><li class="navelem"><a class="el" href="dir_0fb0312f21f9ab1bdd34bee6564adae9.html">iterator</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -78,49 +78,53 @@
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">namespace </span>bolt {</div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">namespace </span>amp {</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    <span class="keyword">template</span>&lt; <span class="keyword">typename</span> iterator &gt;</div>
-<div class="line"><a name="l00032"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">   32</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">iterator_traits</a></div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    {</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::iterator_category iterator_category;</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::value_type value_type;</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::difference_type difference_type;</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::pointer pointer;</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::reference reference;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    };</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    <span class="keyword">template</span>&lt; <span class="keyword">class</span> T &gt;</div>
-<div class="line"><a name="l00042"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1iterator__traits_3_01T_01_5_01_4.html">   42</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">iterator_traits</a>&lt; T* &gt;</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    {</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> std::random_access_iterator_tag iterator_category;</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keyword">typedef</span> T value_type;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;        <span class="comment">//  difference_type set to int for OpenCL backend</span></div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;        <span class="keyword">typedef</span> <span class="keywordtype">int</span> difference_type;</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        <span class="keyword">typedef</span> T* pointer;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;        <span class="keyword">typedef</span> T&amp; reference;</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    };</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    <span class="keyword">template</span>&lt; <span class="keyword">class</span> T &gt;</div>
-<div class="line"><a name="l00053"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1iterator__traits_3_01const_01T_01_5_01_4.html">   53</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">iterator_traits</a>&lt; const T* &gt;</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    {</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> std::random_access_iterator_tag iterator_category;</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        <span class="keyword">typedef</span> T value_type;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        <span class="keyword">typedef</span> <span class="keywordtype">int</span> difference_type;</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">const</span> T* pointer;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">const</span> T&amp; reference;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    };</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00062"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1fancy__iterator__tag.html">   62</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1fancy__iterator__tag.html">fancy_iterator_tag</a> : <span class="keyword">public</span> std::random_access_iterator_tag</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    {</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    };</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;}</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;};</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <span class="keyword">template</span>&lt; <span class="keyword">typename</span> iterator &gt;</div>
+<div class="line"><a name="l00033"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">   33</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">iterator_traits</a></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    {</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::iterator_category iterator_category;</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::value_type value_type;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::difference_type difference_type;</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::pointer pointer;</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> iterator::reference reference;</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    };</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    <span class="keyword">template</span>&lt; <span class="keyword">class</span> T &gt;</div>
+<div class="line"><a name="l00043"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1iterator__traits_3_01T_01_5_01_4.html">   43</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">iterator_traits</a>&lt; T* &gt;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    {</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> std::random_access_iterator_tag iterator_category;</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;        <span class="keyword">typedef</span> T value_type;</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;        <span class="comment">//  difference_type set to int for OpenCL backend</span></div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        <span class="keyword">typedef</span> <span class="keywordtype">int</span> difference_type;</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;        <span class="keyword">typedef</span> T* pointer;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;        <span class="keyword">typedef</span> T&amp; reference;</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    };</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    <span class="keyword">template</span>&lt; <span class="keyword">class</span> T &gt;</div>
+<div class="line"><a name="l00054"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1iterator__traits_3_01const_01T_01_5_01_4.html">   54</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1iterator__traits.html">iterator_traits</a>&lt; const T* &gt;</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    {</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">typename</span> std::random_access_iterator_tag iterator_category;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        <span class="keyword">typedef</span> T value_type;</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;        <span class="keyword">typedef</span> <span class="keywordtype">int</span> difference_type;</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">const</span> T* pointer;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        <span class="keyword">typedef</span> <span class="keyword">const</span> T&amp; reference;</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    };</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    </div>
+<div class="line"><a name="l00063"></a><span class="lineno"><a class="code" href="structbolt_1_1amp_1_1fancy__iterator__tag.html">   63</a></span>&#160;    <span class="keyword">struct </span><a class="code" href="structbolt_1_1amp_1_1fancy__iterator__tag.html">fancy_iterator_tag</a>: <span class="keyword">public</span> std::random_access_iterator_tag</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    {</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        </div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    };</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    </div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    </div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;}</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;};</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jul 2 2014 12:04:31 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Nov 26 2014 18:38:32 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

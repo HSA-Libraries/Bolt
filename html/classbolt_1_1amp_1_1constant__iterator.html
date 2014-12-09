@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.2</span>
+   &#160;<span id="projectnumber">1.3</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -115,6 +115,10 @@ template&lt;typename OtherType &gt; </td></tr>
 const <a class="el" href="classbolt_1_1amp_1_1constant__iterator.html">constant_iterator</a><br class="typebreak"/>
 &lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+</b> (const difference_type &amp;n) const </td></tr>
 <tr class="separator:ga96644b7f3eec04e207b9a315f32d1dfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0293d572d84b9332546caadf02010082"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga0293d572d84b9332546caadf02010082"></a>
+const <a class="el" href="classbolt_1_1amp_1_1constant__iterator.html">constant_iterator</a><br class="typebreak"/>
+&lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator-</b> (const difference_type &amp;n) const </td></tr>
+<tr class="separator:ga0293d572d84b9332546caadf02010082"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga88dcd4ab138c5e2efc780c32f835c688"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga88dcd4ab138c5e2efc780c32f835c688"></a>
 const <a class="el" href="classbolt_1_1amp_1_1constant__iterator.html">constant_iterator</a><br class="typebreak"/>
 &lt; value_type &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getBuffer</b> (<a class="el" href="classbolt_1_1amp_1_1constant__iterator.html">const_iterator</a> itr) const </td></tr>
@@ -129,9 +133,15 @@ difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>operator-<
 <tr class="memitem:gaff7eec975c083d9651e657672c5c29c4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaff7eec975c083d9651e657672c5c29c4"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>advance</b> (difference_type n)</td></tr>
 <tr class="separator:gaff7eec975c083d9651e657672c5c29c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga348f245f9b2ce409afb7c837ab127fe3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga348f245f9b2ce409afb7c837ab127fe3"></a>
-<a class="el" href="classbolt_1_1amp_1_1constant__iterator.html">constant_iterator</a>&lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator++</b> () const </td></tr>
-<tr class="separator:ga348f245f9b2ce409afb7c837ab127fe3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf323fb713e90eb61d35adb865ddb4db6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaf323fb713e90eb61d35adb865ddb4db6"></a>
+value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>getPointer</b> ()</td></tr>
+<tr class="separator:gaf323fb713e90eb61d35adb865ddb4db6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaffd14b3ae003d48b3281d5330acb88a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaaffd14b3ae003d48b3281d5330acb88a"></a>
+const value_type *&#160;</td><td class="memItemRight" valign="bottom"><b>getPointer</b> () const </td></tr>
+<tr class="separator:gaaffd14b3ae003d48b3281d5330acb88a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga258418be1494361664894f35e2463738"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga258418be1494361664894f35e2463738"></a>
+<a class="el" href="classbolt_1_1amp_1_1constant__iterator.html">constant_iterator</a>&lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator++</b> ()</td></tr>
+<tr class="separator:ga258418be1494361664894f35e2463738"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga25d173ad20c52a58435a4e4f78f45439"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga25d173ad20c52a58435a4e4f78f45439"></a>
 <a class="el" href="classbolt_1_1amp_1_1constant__iterator.html">constant_iterator</a>&lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator++</b> (int) const </td></tr>
 <tr class="separator:ga25d173ad20c52a58435a4e4f78f45439"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -204,12 +214,12 @@ class bolt::amp::constant_iterator&lt; value_type &gt;</h3>
 <div class="line"><span class="comment">// vecDest is vector filled with the value 15, the sum of vecSrc and the constant value 5 from the iterator</span></div>
 <div class="line"><span class="comment">// constant_iterator can save bandwidth when used instead of a range of values. </span></div>
 </div><!-- fragment --> </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>D:/Jenkins_FS_Root/workspace/Bolt_Clone_develop/include/bolt/amp/iterator/<a class="el" href="amp_2iterator_2constant__iterator_8h_source.html">constant_iterator.h</a></li>
+<li>//bgldinar16/Jenkins_FS_Root/workspace/Bolt_Clone_Local_develop/include/bolt/amp/iterator/<a class="el" href="amp_2iterator_2constant__iterator_8h_source.html">constant_iterator.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jul 2 2014 12:04:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Nov 26 2014 18:38:34 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

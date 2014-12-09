@@ -5,6 +5,7 @@
 </OBJECT>
 <UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#af1b68fb4ba71d72d397f46a730f03f2f"><param name="Name" value="__CL_ENABLE_EXCEPTIONS"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a9746951e0ea4f83673bad2ecd7b32ab3"><param name="Name" value="__declspec"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1synchronized__view.html#ada251ba1a51718c258ed22181b365026"><param name="Name" value="_Access"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1ArrayPool_1_1PoolEntry.html#aef38cc5aa09fb9ed538b8b839a1a2740"><param name="Name" value="_dBuffer"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1ArrayPool_1_1PoolEntry.html#a3f46a7f32cb7f9c155875b98a6d97782"><param name="Name" value="_stagingBuffer"></OBJECT>
@@ -21,17 +22,25 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaff7eec975c083d9651e657672c5c29c4"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga7663d76846d70628377497280364207b"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga43bbda95cfbc9c667300c848dc79cf04"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaa5c6bf189021b1a0837895edf93b79a0"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaff7eec975c083d9651e657672c5c29c4"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga7663d76846d70628377497280364207b"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#afe0a75c1231a8472f14ba52e8596a9ce"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#ad03bed76b8bdbe37593d0b33ac4fbbb4"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga43bbda95cfbc9c667300c848dc79cf04"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaa5c6bf189021b1a0837895edf93b79a0"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__algorithms.html"><param name="Name" value="Algorithms"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2bolt_8h.html#a4e2ed8881cd7ad9c8fe47fe0d4e60947"><param name="Name" value="ALIGNED"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2bolt_8h.html#a4e2ed8881cd7ad9c8fe47fe0d4e60947"><param name="Name" value="amp/bolt.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a4e2ed8881cd7ad9c8fe47fe0d4e60947"><param name="Name" value="cl/bolt.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga3e407bf54b58a3239df47a55885b1cbc"><param name="Name" value="all_of"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga3e407bf54b58a3239df47a55885b1cbc"><param name="Name" value="AMP-logical"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga3e407bf54b58a3239df47a55885b1cbc"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga3e407bf54b58a3239df47a55885b1cbc"><param name="Name" value="logical.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1ArrayPool.html#a5a6aa056cdd5a34ca270dd537b3b33ba"><param name="Name" value="alloc"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
@@ -45,15 +54,16 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga88dcd4ab138c5e2efc780c32f835c688"><param name="Name" value="getBuffer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga8cfdc2010feb2a2b56d7c67675d9fd21"><param name="Name" value="getContainer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa937ce9621856b45a834e18f56a1043a"><param name="Name" value="getIndex"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaf323fb713e90eb61d35adb865ddb4db6"><param name="Name" value="getPointer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gafe770bbc17efcc2046e960a1e9a4f039"><param name="Name" value="m_Index"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga4a734ef4e137f95827be38cae12daea1"><param name="Name" value="m_Value"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga6f84f61e44aeacaa907cae38774b819b"><param name="Name" value="make_constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa164adcbfc6adaff435e31f20e41ffd6"><param name="Name" value="operator!="></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa6bc15646d0df7decc3419e88541cf89"><param name="Name" value="operator*"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga96644b7f3eec04e207b9a315f32d1dfb"><param name="Name" value="operator+"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga348f245f9b2ce409afb7c837ab127fe3"><param name="Name" value="operator++"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga258418be1494361664894f35e2463738"><param name="Name" value="operator++"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga328ccc9a54e6068529608d292f017661"><param name="Name" value="operator+="></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gad941bd122cd37dd50c468ebc992137bd"><param name="Name" value="operator-"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga0293d572d84b9332546caadf02010082"><param name="Name" value="operator-"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gadcf8ca8648d649b097bb024357a63518"><param name="Name" value="operator--"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gac36633d5479713edf594e9bf175c6933"><param name="Name" value="operator<"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga30e5bea2cd6d26c8e1bb1cbb93c8f2f8"><param name="Name" value="operator="></OBJECT>
@@ -108,6 +118,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gaa4f1367928e33da2502992ddb659b80a"><param name="Name" value="getBuffer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga93b68d322984115d70da7922fa294fc7"><param name="Name" value="getContainer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga180cb5ebae5e6c8c5a8ce02e67e0089e"><param name="Name" value="getIndex"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gabb594489ec417b954f8cafc11de9c965"><param name="Name" value="getPointer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga9d4db4fb6979ba8fbc62c20e3d2290ec"><param name="Name" value="m_Index"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gac33eefcec04b281bbe1175b7e8fb9514"><param name="Name" value="make_counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga489ac3f269f4487643f925d43084e646"><param name="Name" value="operator!="></OBJECT>
@@ -115,7 +126,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gafd4466a6f198c51b3408760211f9a9bf"><param name="Name" value="operator+"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga0d331303d1de54ba9172d68414fa0b13"><param name="Name" value="operator++"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga2a9fe23b5c09d38450072951e7dc7ece"><param name="Name" value="operator+="></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga0dfd4f5d391d2a064558dffa65c06a58"><param name="Name" value="operator-"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gab277749b9f21d8a7baeb8980e8b2939d"><param name="Name" value="operator-"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gad879e40762c263f872b93c5ee09242f8"><param name="Name" value="operator--"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gac54a34f6193bfaafe3ce775ad7726e3a"><param name="Name" value="operator<"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gaa9d064a56cfbe6eaeaae889158f23193"><param name="Name" value="operator="></OBJECT>
@@ -130,6 +141,17 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-filling.html#gabc37258baf6eeec15c0f98a9f6eb33b0"><param name="Name" value="fill"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-filling.html#gae25bbb805ee284f863e5fcbccf20c361"><param name="Name" value="fill_n"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html"><param name="Name" value="AMP-find"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga98749ab2af83ac79d4b823e589f9d3ba"><param name="Name" value="find"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#gac389ee49c4bd2c9c47f5b0090055ab8c"><param name="Name" value="find_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga6ec97cde618a0bc83d9cf3762595e572"><param name="Name" value="find_if_not"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html"><param name="Name" value="AMP-for_each"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#gaad64b467b6deae8ec476780d48eee3aa"><param name="Name" value="for_each"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#ga3d3fce9488d6d5be4a6ea9356864c82c"><param name="Name" value="for_each_n"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-gather.html"><param name="Name" value="AMP-gather"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-gather.html#ga1fa08f3cf0deadb1dc209642ab0caa3c"><param name="Name" value="gather"></OBJECT>
@@ -143,6 +165,12 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-inner__product.html"><param name="Name" value="AMP-inner_product"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-inner__product.html#gab18b59a182c97423bdb8f23ef2ab1460"><param name="Name" value="inner_product"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html"><param name="Name" value="AMP-logical"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga3e407bf54b58a3239df47a55885b1cbc"><param name="Name" value="all_of"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga1ccda0845b4c5c2ca25e9207153822f3"><param name="Name" value="any_of"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga2bcfd87b0de037e50c8f2c9dca36637d"><param name="Name" value="none_of"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-max__element.html"><param name="Name" value="AMP-max_element"></OBJECT>
   <UL>
@@ -195,6 +223,20 @@
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-reduce__by__key.html#ga61a55216f73f316699e356b071aca0a9"><param name="Name" value="reduce_by_key"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html"><param name="Name" value="AMP-remove"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga9af19368e25684343a49f97d58c12678"><param name="Name" value="remove"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gad386bbf0e11076b745dac3709f32a63a"><param name="Name" value="remove_copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga8048ae31ea22e98f9172812527feba80"><param name="Name" value="remove_copy_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gac97200517e80f98ffbb39d4976cc11b1"><param name="Name" value="remove_if"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html"><param name="Name" value="AMP-replace"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga4e76fbd5b3455aad18af56cb21a1f629"><param name="Name" value="replace"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gaa7a6f04c698225e4c47dd32b8c9eb35a"><param name="Name" value="replace_copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1"><param name="Name" value="replace_copy_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga668ec01bf3498782a693a6d29423f464"><param name="Name" value="replace_if"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-scan.html"><param name="Name" value="AMP-scan"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-scan.html#ga19d5200c9b608c7409a588a3ff5b7c1f"><param name="Name" value="exclusive_scan"></OBJECT>
@@ -229,12 +271,48 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform.html"><param name="Name" value="AMP-transform"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform.html#ga9d6bb9e4f1a01391529fe77c7b2cb2f1"><param name="Name" value="transform"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform.html#gab4f9e4ed8024d58a581507b708ed34c1"><param name="Name" value="transform_if"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform__reduce.html"><param name="Name" value="AMP-transform_reduce"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform__reduce.html#ga23ff0a70f9f041fdbc81433e76ba173b"><param name="Name" value="transform_reduce"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMPTransformedPrefixSums.html"><param name="Name" value="AMP-Transformed Prefix Sums"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaa5c6bf189021b1a0837895edf93b79a0"><param name="Name" value="advance"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga72b0e9db1a437709ea02f5fae2d3a05e"><param name="Name" value="amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8beb1a1c259860b7831ed94b1004c9ac"><param name="Name" value="difference_type"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac6d9ab78dde43b3a18b3a3da163293cc"><param name="Name" value="func"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga01a64e610bee97f8eec02141c1295a9d"><param name="Name" value="functor"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga65d66b9133807082100553a2edf6f20c"><param name="Name" value="getBuffer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gafd80684c8b828837114fbdfe0c04197a"><param name="Name" value="getContainer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7d417365059f087d62efcc994d59596a"><param name="Name" value="getIndex"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga41615c1e1d800472016de06d2f1e4be7"><param name="Name" value="getPointer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7811e47de74f1fcd8ad161d35a79d370"><param name="Name" value="iter"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gad12a818dde404d6a64e86dd16e3ab556"><param name="Name" value="m_Index"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac51be38e524ead130db3efae153e8f04"><param name="Name" value="make_transform_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga2fb2c9376829edbb8db918e01571c020"><param name="Name" value="operator!="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga044b45b7d8fa1f4c68aa000613edfa0f"><param name="Name" value="operator*"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7ea0ca138ae1ebd513c8475a26dd21fc"><param name="Name" value="operator+"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1b0216586751d0f7cbb7db9768838969"><param name="Name" value="operator++"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaeee4d2d6efb2e508363d4b35fd8e3164"><param name="Name" value="operator+="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga16132a30efb1c03a23506c01cacb650e"><param name="Name" value="operator-"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8f5e7b6bc639cb4bcde3e3b887044829"><param name="Name" value="operator--"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1a8797c931dd6b9593020fee162a80d5"><param name="Name" value="operator<"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8b9dc58c11cd52caed5936fdcd8cf582"><param name="Name" value="operator="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga47219a5ac448f5c740f383cf0379a7e5"><param name="Name" value="operator=="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1ae3fbb4fdcb6d2b1a4808dd3ea93ada"><param name="Name" value="operator[]"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaf3bb14402ace64ce5af1192bf5f71de1"><param name="Name" value="pointer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga9fa42c9f1479560ece589b2f8585af38"><param name="Name" value="transform_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga696e86e31a8c66ac2249ab2d0dfef94e"><param name="Name" value="unary_func"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga661b424501ba722505558a04c83caa2e"><param name="Name" value="value_type"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html"><param name="Name" value="AMP-unique"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga3ecc71fb22ca898b12e715d22a269a09"><param name="Name" value="unique"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga73c8e6e7c91145896a404416987bcdcb"><param name="Name" value="unique_copy"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2binary__search_8h.html"><param name="Name" value="amp/binary_search.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2bolt_8h.html"><param name="Name" value="amp/bolt.h"></OBJECT>
   <UL>
@@ -246,6 +324,7 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2copy_8h.html"><param name="Name" value="amp/copy.h"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2copy_8h.html#ga3c8605096cd7595d787ddb3870d78bd2"><param name="Name" value="copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2copy_8h.html#gadc7853aa6f839335efbc28bef2ff2369"><param name="Name" value="copy_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2copy_8h.html#ga4cbd21020596fd95eefcc843a1d46cbb"><param name="Name" value="copy_n"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2count_8h.html"><param name="Name" value="amp/count.h"></OBJECT>
@@ -272,6 +351,7 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2iterator_2constant__iterator_8h.html"><param name="Name" value="amp/iterator/constant_iterator.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2iterator_2counting__iterator_8h.html"><param name="Name" value="amp/iterator/counting_iterator.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2iterator_2permutation__iterator_8h.html"><param name="Name" value="amp/iterator/permutation_iterator.h"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2iterator_2transform__iterator_8h.html"><param name="Name" value="amp/iterator/transform_iterator.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2merge_8h.html"><param name="Name" value="amp/merge.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2min__element_8h.html"><param name="Name" value="amp/min_element.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2pair_8h.html"><param name="Name" value="amp/pair.h"></OBJECT>
@@ -304,6 +384,10 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2sort_8h.html"><param name="Name" value="amp/sort.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2sort__by__key_8h.html"><param name="Name" value="amp/sort_by_key.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2transform_8h.html"><param name="Name" value="amp/transform.h"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2transform_8h.html#ga9d6bb9e4f1a01391529fe77c7b2cb2f1"><param name="Name" value="transform"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2transform_8h.html#gab4f9e4ed8024d58a581507b708ed34c1"><param name="Name" value="transform_if"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2transform__reduce_8h.html"><param name="Name" value="amp/transform_reduce.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2transform__scan_8h.html"><param name="Name" value="amp/transform_scan.h"></OBJECT>
   <UL>
@@ -315,6 +399,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga20c717cc0b2b3d3e40ae208191e71b6e"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gacd74c2116ca877e93c2d8f5d068c6828"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga180ec36d42cdf78e40890c46ed6cb2ca"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga72b0e9db1a437709ea02f5fae2d3a05e"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__and.html#a886ce48550a9a8a7543fd9b24ac8b782"><param name="Name" value="bolt::amp::bit_and"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__or.html#a7497e4bb8254d582dc42d38dad36c63e"><param name="Name" value="bolt::amp::bit_or"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__xor.html#a5597a7220eb02fa37d1fdca9bda6f88e"><param name="Name" value="bolt::amp::bit_xor"></OBJECT>
@@ -341,9 +426,11 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1multiplies.html#ae9f8bf0fb6e991ced29725a24fe966ba"><param name="Name" value="bolt::amp::multiplies"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1negate.html#ad41481e80717bac6d86f1bb84538cd1b"><param name="Name" value="bolt::amp::negate"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__equal__to.html#a306e823ef17b96f014f0c9d981ff2640"><param name="Name" value="bolt::amp::not_equal_to"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__pred.html#aa8a3189dd2c6b3475ee03f14fc27c9e3"><param name="Name" value="bolt::amp::not_pred"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga180ec36d42cdf78e40890c46ed6cb2ca"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1plus.html#afcead0c89fe0d2b55cebd7bfcd6f658c"><param name="Name" value="bolt::amp::plus"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1square.html#a4e1a31cb7539ed844a7965c5f8c34c56"><param name="Name" value="bolt::amp::square"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga72b0e9db1a437709ea02f5fae2d3a05e"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMPSegmentedPrefixSums.html"><param name="Name" value="AMPSegmentedPrefixSums"></OBJECT>
   <UL>
@@ -354,6 +441,12 @@
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMPTransformedPrefixSums.html#ga6272c1080694c06d2d1d7ca7cd988b06"><param name="Name" value="transform_exclusive_scan"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMPTransformedPrefixSums.html#gafb80ed0e08f8f87b0ae147155e7fbc37"><param name="Name" value="transform_inclusive_scan"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga1ccda0845b4c5c2ca25e9207153822f3"><param name="Name" value="any_of"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga1ccda0845b4c5c2ca25e9207153822f3"><param name="Name" value="AMP-logical"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga1ccda0845b4c5c2ca25e9207153822f3"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga1ccda0845b4c5c2ca25e9207153822f3"><param name="Name" value="logical.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#aeba16f687322e82e098a877ba2f11084"><param name="Name" value="array_type"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga3b8a6244d46c4fe7c1d5c2a91198da2b"><param name="Name" value="arrayview_type"></OBJECT>
@@ -409,6 +502,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#adcfa66f58ba75564ab14482c5934ee87"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a22bcdac59a8b01cdecfe244baf3a6dac"><param name="Name" value="binary_negate"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-search.html#ga350daf1410b96467b5fa3a238b13b5a7"><param name="Name" value="binary_search"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-search.html#ga350daf1410b96467b5fa3a238b13b5a7"><param name="Name" value="AMP-search"></OBJECT>
@@ -426,6 +520,15 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt.html"><param name="Name" value="bolt"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html"><param name="Name" value="bolt::amp"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__function.html"><param name="Name" value="bolt::amp::binary_function"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html"><param name="Name" value="bolt::amp::binary_negate"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a22bcdac59a8b01cdecfe244baf3a6dac"><param name="Name" value="binary_negate"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#af9c021e1a69912993dfbfafa56eaa086"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#afa6274ec677a94adb0a65148b6af37fb"><param name="Name" value="operator()"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a822ca887b8eda240f2351991601f77f7"><param name="Name" value="pred"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a8ccdebb9fe835f212f76229f584aaf31"><param name="Name" value="result_type"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#ad4f5d3baa297fd8ce99671fdbd33a207"><param name="Name" value="true"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__and.html"><param name="Name" value="bolt::amp::bit_and"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__and.html#a886ce48550a9a8a7543fd9b24ac8b782"><param name="Name" value="amp"></OBJECT>
@@ -457,13 +560,14 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga88dcd4ab138c5e2efc780c32f835c688"><param name="Name" value="getBuffer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga8cfdc2010feb2a2b56d7c67675d9fd21"><param name="Name" value="getContainer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gaa937ce9621856b45a834e18f56a1043a"><param name="Name" value="getIndex"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gaf323fb713e90eb61d35adb865ddb4db6"><param name="Name" value="getPointer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gafe770bbc17efcc2046e960a1e9a4f039"><param name="Name" value="m_Index"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gaa164adcbfc6adaff435e31f20e41ffd6"><param name="Name" value="operator!="></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gaa6bc15646d0df7decc3419e88541cf89"><param name="Name" value="operator*"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga96644b7f3eec04e207b9a315f32d1dfb"><param name="Name" value="operator+"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga348f245f9b2ce409afb7c837ab127fe3"><param name="Name" value="operator++"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga258418be1494361664894f35e2463738"><param name="Name" value="operator++"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga328ccc9a54e6068529608d292f017661"><param name="Name" value="operator+="></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gad941bd122cd37dd50c468ebc992137bd"><param name="Name" value="operator-"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga0293d572d84b9332546caadf02010082"><param name="Name" value="operator-"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gadcf8ca8648d649b097bb024357a63518"><param name="Name" value="operator--"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#gac36633d5479713edf594e9bf175c6933"><param name="Name" value="operator<"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga30e5bea2cd6d26c8e1bb1cbb93c8f2f8"><param name="Name" value="operator="></OBJECT>
@@ -472,6 +576,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1constant__iterator.html#ga06e075d7067d31e53da03897401c0cbd"><param name="Name" value="xy"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__iterator__tag.html"><param name="Name" value="bolt::amp::constant_iterator_tag"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html"><param name="Name" value="bolt::amp::constant_unary"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#ab8e4b23b8b206a68bd8678f92b776725"><param name="Name" value="c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#a1ecad6c5f020dc50908f023909110bed"><param name="Name" value="constant_unary"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#aad016e62e45abd26554e55feeffd239c"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#ac4d4365ba9cc17f0e1a9c6993d24a8a3"><param name="Name" value="operator()"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1control.html"><param name="Name" value="bolt::amp::control"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1control_1_1debug.html"><param name="Name" value="bolt::amp::control::debug"></OBJECT>
   <UL>
@@ -513,13 +624,14 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#gaa4f1367928e33da2502992ddb659b80a"><param name="Name" value="getBuffer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga93b68d322984115d70da7922fa294fc7"><param name="Name" value="getContainer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga180cb5ebae5e6c8c5a8ce02e67e0089e"><param name="Name" value="getIndex"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#gabb594489ec417b954f8cafc11de9c965"><param name="Name" value="getPointer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga9d4db4fb6979ba8fbc62c20e3d2290ec"><param name="Name" value="m_Index"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga489ac3f269f4487643f925d43084e646"><param name="Name" value="operator!="></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga1021d346c9bad2d05bc7a49cd9707ca2"><param name="Name" value="operator*"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#gafd4466a6f198c51b3408760211f9a9bf"><param name="Name" value="operator+"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga0d331303d1de54ba9172d68414fa0b13"><param name="Name" value="operator++"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga2a9fe23b5c09d38450072951e7dc7ece"><param name="Name" value="operator+="></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#ga0dfd4f5d391d2a064558dffa65c06a58"><param name="Name" value="operator-"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#gab277749b9f21d8a7baeb8980e8b2939d"><param name="Name" value="operator-"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#gad879e40762c263f872b93c5ee09242f8"><param name="Name" value="operator--"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#gac54a34f6193bfaafe3ce775ad7726e3a"><param name="Name" value="operator<"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1counting__iterator.html#gaa9d064a56cfbe6eaeaae889158f23193"><param name="Name" value="operator="></OBJECT>
@@ -537,6 +649,18 @@
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1cube.html#a89ea48fe3e639d201ec023c9a2ce8b94"><param name="Name" value="amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1cube.html#a97b1a756a926f2b49c32d75f68bfd872"><param name="Name" value="operator()"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html"><param name="Name" value="bolt::amp::detail::amp::bool_to_int"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#a7cb0446170151c27dcce9e2a23d069dc"><param name="Name" value="bool_to_int"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#a5fc1b88198912a086c8a0fcca8e4dba2"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#ac7f0f68aeed3ae26c4d481ebb629c80b"><param name="Name" value="operator()"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#aed447640a63e82e18be24c0674b502dc"><param name="Name" value="pred"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1is__true.html"><param name="Name" value="bolt::amp::detail::amp::is_true"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1is__true.html#a81ae513d13e9442bc404e5be51489658"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1is__true.html#ac51bdfb54667f90e7bdb8e0fb9f418bb"><param name="Name" value="operator()"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html"><param name="Name" value="bolt::amp::detail::CountIfEqual"></OBJECT>
   <UL>
@@ -692,6 +816,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to.html#a8c489d93b7fb6a007dd05ebd196dc2f6"><param name="Name" value="amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to.html#a31eacc264e13c42951a492d569f49f59"><param name="Name" value="operator()"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html"><param name="Name" value="bolt::amp::equal_to_value"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#ab1a885b6d7f8fe2beb80f5b5db0b8587"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#ac1602f062fe9a30e536df9e2a419f68e"><param name="Name" value="equal_to_value"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#a462454c8604439591daa73d05ef82082"><param name="Name" value="operator()"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#ab3924f7ed299bc91aaba352224139f02"><param name="Name" value="x"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1fancy__iterator__tag.html"><param name="Name" value="bolt::amp::fancy_iterator_tag"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1greater.html"><param name="Name" value="bolt::amp::greater"></OBJECT>
   <UL>
@@ -788,10 +919,24 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1negate.html#ad41481e80717bac6d86f1bb84538cd1b"><param name="Name" value="amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1negate.html#a9ddf5b450b922f97f7f5f2184aba44cb"><param name="Name" value="operator()"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html"><param name="Name" value="bolt::amp::new_value_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#ab0b6d13d0938fc67bd4913215893bc00"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#a65911d1e5a0b4a778837f9703f2c2a4c"><param name="Name" value="new_value"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#a8790f5867c42324d7548be9afde067d5"><param name="Name" value="new_value_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#ac15d300b109de1777ca26a551068f62a"><param name="Name" value="operator()"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#a7dc71b2f016be3a5b24853378044f996"><param name="Name" value="pred"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__equal__to.html"><param name="Name" value="bolt::amp::not_equal_to"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__equal__to.html#a306e823ef17b96f014f0c9d981ff2640"><param name="Name" value="amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__equal__to.html#a4f70b80e9b39421a8f5ab8cee4fc36be"><param name="Name" value="operator()"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__pred.html"><param name="Name" value="bolt::amp::not_pred"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__pred.html#aa8a3189dd2c6b3475ee03f14fc27c9e3"><param name="Name" value="amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__pred.html#a5547898b7ae6f1a6acfa9502b65d11cc"><param name="Name" value="not_pred"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__pred.html#a60fc5b8146395510c172fd57d6ff481b"><param name="Name" value="operator()"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1pair.html"><param name="Name" value="bolt::amp::pair"></OBJECT>
   <UL>
@@ -842,6 +987,36 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1square.html#a4e1a31cb7539ed844a7965c5f8c34c56"><param name="Name" value="amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1square.html#a200cf09d8daa1402ecb4c2f3c068a0f7"><param name="Name" value="operator()"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#gaa5c6bf189021b1a0837895edf93b79a0"><param name="Name" value="advance"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga72b0e9db1a437709ea02f5fae2d3a05e"><param name="Name" value="amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga8beb1a1c259860b7831ed94b1004c9ac"><param name="Name" value="difference_type"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#gac6d9ab78dde43b3a18b3a3da163293cc"><param name="Name" value="func"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga01a64e610bee97f8eec02141c1295a9d"><param name="Name" value="functor"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga65d66b9133807082100553a2edf6f20c"><param name="Name" value="getBuffer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#gafd80684c8b828837114fbdfe0c04197a"><param name="Name" value="getContainer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga7d417365059f087d62efcc994d59596a"><param name="Name" value="getIndex"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga41615c1e1d800472016de06d2f1e4be7"><param name="Name" value="getPointer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga7811e47de74f1fcd8ad161d35a79d370"><param name="Name" value="iter"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#gad12a818dde404d6a64e86dd16e3ab556"><param name="Name" value="m_Index"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga2fb2c9376829edbb8db918e01571c020"><param name="Name" value="operator!="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga044b45b7d8fa1f4c68aa000613edfa0f"><param name="Name" value="operator*"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga7ea0ca138ae1ebd513c8475a26dd21fc"><param name="Name" value="operator+"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga1b0216586751d0f7cbb7db9768838969"><param name="Name" value="operator++"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#gaeee4d2d6efb2e508363d4b35fd8e3164"><param name="Name" value="operator+="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga16132a30efb1c03a23506c01cacb650e"><param name="Name" value="operator-"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga8f5e7b6bc639cb4bcde3e3b887044829"><param name="Name" value="operator--"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga1a8797c931dd6b9593020fee162a80d5"><param name="Name" value="operator<"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga8b9dc58c11cd52caed5936fdcd8cf582"><param name="Name" value="operator="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga47219a5ac448f5c740f383cf0379a7e5"><param name="Name" value="operator=="></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga1ae3fbb4fdcb6d2b1a4808dd3ea93ada"><param name="Name" value="operator[]"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#gaf3bb14402ace64ce5af1192bf5f71de1"><param name="Name" value="pointer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga9fa42c9f1479560ece589b2f8585af38"><param name="Name" value="transform_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga696e86e31a8c66ac2249ab2d0dfef94e"><param name="Name" value="unary_func"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1transform__iterator.html#ga661b424501ba722505558a04c83caa2e"><param name="Name" value="value_type"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1transform__iterator__tag.html"><param name="Name" value="bolt::amp::transform_iterator_tag"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1tuple__element_3_010_00_01pair_3_01T1_00_01T2_01_4_01_4.html"><param name="Name" value="bolt::amp::tuple_element< 0, pair< T1, T2 > >"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1tuple__element_3_010_00_01pair_3_01T1_00_01T2_01_4_01_4.html#ac13c39d54cfcc98c4435945370ba8a20"><param name="Name" value="type"></OBJECT>
@@ -855,17 +1030,43 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1tuple__size_3_01pair_3_01T1_00_01T2_01_4_01_4.html#a71d4e223f4a05955e2ea7abf543eec44"><param name="Name" value="value"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__function.html"><param name="Name" value="bolt::amp::unary_function"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html"><param name="Name" value="bolt::amp::unary_negate"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#a16781a21e666f039dfea501a31078d32"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#ae5d61efea0d673818910feb3d9d3c98c"><param name="Name" value="operator()"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#a16b4caaac27cfc4d5e329d5c0fb756e9"><param name="Name" value="pred"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#a5a28b7972c64ce152751f4f936cd4e5a"><param name="Name" value="result_type"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#ab251fef538f9511d7425c6b59a9cbf84"><param name="Name" value="unary_negate"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html"><param name="Name" value="bolt::amp::unary_transform_if_functor"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a9746951e0ea4f83673bad2ecd7b32ab3"><param name="Name" value="__declspec"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#af259afb4153acc24b5d08fc554bb61cd"><param name="Name" value="cpu"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a3b135c38f304cc63b8174b44beb5a8b4"><param name="Name" value="if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a12d087ca26f420a889af14026fe7a113"><param name="Name" value="operator()"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a6fc6fd432edf8da2d4387c88890477ba"><param name="Name" value="res"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a8b4d55b56a21d90104d4efabab6ca0e1"><param name="Name" value="unary_transform_if_functor"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html"><param name="Name" value="bolt::amp"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga3e407bf54b58a3239df47a55885b1cbc"><param name="Name" value="all_of"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga1ccda0845b4c5c2ca25e9207153822f3"><param name="Name" value="any_of"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga350daf1410b96467b5fa3a238b13b5a7"><param name="Name" value="binary_search"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga3c8605096cd7595d787ddb3870d78bd2"><param name="Name" value="copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gadc7853aa6f839335efbc28bef2ff2369"><param name="Name" value="copy_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga4cbd21020596fd95eefcc843a1d46cbb"><param name="Name" value="copy_n"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="count"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="count_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#af063dda9510af1c37759b78468702779"><param name="Name" value="create_mapped_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga19d5200c9b608c7409a588a3ff5b7c1f"><param name="Name" value="exclusive_scan"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga2fca41e769134c689bc20da16c3f142e"><param name="Name" value="exclusive_scan_by_key"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gabc37258baf6eeec15c0f98a9f6eb33b0"><param name="Name" value="fill"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gae25bbb805ee284f863e5fcbccf20c361"><param name="Name" value="fill_n"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga98749ab2af83ac79d4b823e589f9d3ba"><param name="Name" value="find"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gac389ee49c4bd2c9c47f5b0090055ab8c"><param name="Name" value="find_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga6ec97cde618a0bc83d9cf3762595e572"><param name="Name" value="find_if_not"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gaad64b467b6deae8ec476780d48eee3aa"><param name="Name" value="for_each"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga3d3fce9488d6d5be4a6ea9356864c82c"><param name="Name" value="for_each_n"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga1fa08f3cf0deadb1dc209642ab0caa3c"><param name="Name" value="gather"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga973daae511ecf95e2a06ade654f281d3"><param name="Name" value="gather_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga213848b9e8b6e7ceda4aa40bca0ed317"><param name="Name" value="generate"></OBJECT>
@@ -879,9 +1080,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gac33eefcec04b281bbe1175b7e8fb9514"><param name="Name" value="make_counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga661cb6e33e9ed0e12614e681b52a139c"><param name="Name" value="make_pair"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gaba4acfdf665ece9509f8e2a54db379ed"><param name="Name" value="make_permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gac51be38e524ead130db3efae153e8f04"><param name="Name" value="make_transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga6c436619a0ffd65abbbf1d6b6a5162f5"><param name="Name" value="max_element"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gaa82d7ef3eea0c2ec3160295199eb961b"><param name="Name" value="merge"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gac135d1b5011a92313bb3adbf5cb4aa27"><param name="Name" value="min_element"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga2bcfd87b0de037e50c8f2c9dca36637d"><param name="Name" value="none_of"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#a24b42342eca8b29a61b4e0562b180a2e"><param name="Name" value="not1"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#a11a0e9e07436bb6e84558bf8b0ee53a5"><param name="Name" value="not2"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gab40296d71ccc24cebbd1a41d2ae2c754"><param name="Name" value="operator!="></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gaa000aed72f74d660b4c29835cc90541b"><param name="Name" value="operator<"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga37066f9a42d9877614d5d2eedb0bf14f"><param name="Name" value="operator<="></OBJECT>
@@ -890,6 +1095,14 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga0bfa64d7b0149d8eb7f4b7c4ca0db349"><param name="Name" value="operator>="></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga7cc02de68696520df430df94876e1c99"><param name="Name" value="reduce"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga61a55216f73f316699e356b071aca0a9"><param name="Name" value="reduce_by_key"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga9af19368e25684343a49f97d58c12678"><param name="Name" value="remove"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gad386bbf0e11076b745dac3709f32a63a"><param name="Name" value="remove_copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga8048ae31ea22e98f9172812527feba80"><param name="Name" value="remove_copy_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gac97200517e80f98ffbb39d4976cc11b1"><param name="Name" value="remove_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga4e76fbd5b3455aad18af56cb21a1f629"><param name="Name" value="replace"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gaa7a6f04c698225e4c47dd32b8c9eb35a"><param name="Name" value="replace_copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1"><param name="Name" value="replace_copy_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga668ec01bf3498782a693a6d29423f464"><param name="Name" value="replace_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga0f2f0070322f8040529f4d679d8636de"><param name="Name" value="scatter"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gaaf1d044b0856fa9b4247f28795023153"><param name="Name" value="scatter_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga074871f710393b1dbe9c3fb52ff599ff"><param name="Name" value="sort"></OBJECT>
@@ -898,9 +1111,12 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga8ebf910d497757f342ab72c7c3e494ea"><param name="Name" value="stable_sort_by_key"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga9d6bb9e4f1a01391529fe77c7b2cb2f1"><param name="Name" value="transform"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga6272c1080694c06d2d1d7ca7cd988b06"><param name="Name" value="transform_exclusive_scan"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gab4f9e4ed8024d58a581507b708ed34c1"><param name="Name" value="transform_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gafb80ed0e08f8f87b0ae147155e7fbc37"><param name="Name" value="transform_inclusive_scan"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga23ff0a70f9f041fdbc81433e76ba173b"><param name="Name" value="transform_reduce"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ad9113fcc3a91c00f546179adbffded54"><param name="Name" value="transform_reduce_range"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga3ecc71fb22ca898b12e715d22a269a09"><param name="Name" value="unique"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga73c8e6e7c91145896a404416987bcdcb"><param name="Name" value="unique_copy"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1ArrayPool.html"><param name="Name" value="bolt::ArrayPool"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1ArrayPool_1_1PoolEntry.html"><param name="Name" value="bolt::ArrayPool::PoolEntry"></OBJECT>
@@ -1026,10 +1242,6 @@
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1BinarySearch__KernelTemplateSpecializer.html#a15553a81f6727421780d73afccae7740"><param name="Name" value="operator()"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1BitonicSort__KernelTemplateSpecializer.html"><param name="Name" value="bolt::cl::detail::BitonicSort_KernelTemplateSpecializer"></OBJECT>
-  <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1BitonicSort__KernelTemplateSpecializer.html#ad4a6461c2b8f40dd789913e347eb7a6a"><param name="Name" value="operator()"></OBJECT>
-  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1detail_1_1choose__difference__type.html"><param name="Name" value="bolt::cl::detail::choose_difference_type"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1detail_1_1choose__difference__type_1_1apply.html"><param name="Name" value="bolt::cl::detail::choose_difference_type::apply"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1cl_1_1Count__KernelTemplateSpecializer.html"><param name="Name" value="bolt::cl::detail::cl::Count_KernelTemplateSpecializer"></OBJECT>
@@ -1153,6 +1365,10 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Common__KernelTemplateSpecializer.html"><param name="Name" value="bolt::cl::detail::RadixSort_Common_KernelTemplateSpecializer"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Common__KernelTemplateSpecializer.html#adc94822d495e966074074d78dcfb3193"><param name="Name" value="operator()"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Float__KernelTemplateSpecializer.html"><param name="Name" value="bolt::cl::detail::RadixSort_Float_KernelTemplateSpecializer"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Float__KernelTemplateSpecializer.html#a23fe8ec925392dd70cfcdec125ea86c2"><param name="Name" value="operator()"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Int__KernelTemplateSpecializer.html"><param name="Name" value="bolt::cl::detail::RadixSort_Int_KernelTemplateSpecializer"></OBJECT>
   <UL>
@@ -1577,6 +1793,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a97626283d8bb81b8c43e9dbd1623ea3d"><param name="Name" value="sort_by_key_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a919d37436cf67c6c0702bc67e0fdd5ca"><param name="Name" value="sort_by_key_uint_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a9495a9c2ed4641391b5ffaaae231a853"><param name="Name" value="sort_common_kernels"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a86a8b8a1fb99df15a3f4751b5c9668c7"><param name="Name" value="sort_float_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#adc6ef2f02ee67253ff1f1b9dc0d89aab"><param name="Name" value="sort_int_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#af8b9ccf37615e025f95d15c8047d7eb2"><param name="Name" value="sort_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a04f441dea14bb83c16a6e31a7f3f8fd9"><param name="Name" value="sort_uint_kernels"></OBJECT>
@@ -1706,6 +1923,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2"><param name="Name" value="ClCode"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2"><param name="Name" value="clcode.h"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#a7cb0446170151c27dcce9e2a23d069dc"><param name="Name" value="bool_to_int"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#ac09f73e325921cc50ebcd96bed0f8096"><param name="Name" value="boost::iterator_core_access"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#ac09f73e325921cc50ebcd96bed0f8096"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
@@ -1729,6 +1947,7 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="buildingBolt.html"><param name="Name" value="Building Bolt"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="buildingExamples.html"><param name="Name" value="Building Bolt Example Programs"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="buildingTBB.html"><param name="Name" value="Building TBB (Intel) with Bolt"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#ab8e4b23b8b206a68bd8678f92b776725"><param name="Name" value="c"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12"><param name="Name" value="capacity"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
@@ -2005,6 +2224,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a97626283d8bb81b8c43e9dbd1623ea3d"><param name="Name" value="sort_by_key_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a919d37436cf67c6c0702bc67e0fdd5ca"><param name="Name" value="sort_by_key_uint_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a9495a9c2ed4641391b5ffaaae231a853"><param name="Name" value="sort_common_kernels"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a86a8b8a1fb99df15a3f4751b5c9668c7"><param name="Name" value="sort_float_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#adc6ef2f02ee67253ff1f1b9dc0d89aab"><param name="Name" value="sort_int_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#af8b9ccf37615e025f95d15c8047d7eb2"><param name="Name" value="sort_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a04f441dea14bb83c16a6e31a7f3f8fd9"><param name="Name" value="sort_uint_kernels"></OBJECT>
@@ -2013,8 +2233,8 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a360ef4d9d091f44f6b208ce53c47516d"><param name="Name" value="transform_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a2b60f7f2ebd883569158ab2630bac81e"><param name="Name" value="transform_reduce_kernels"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a1f2bde8fa28f6211346a51116944b475"><param name="Name" value="transform_scan_kernels"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a86aa5bc653847452d5817663bb94edc7"><param name="Name" value="V_OPENCL"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="V_OpenCL"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a86aa5bc653847452d5817663bb94edc7"><param name="Name" value="V_OPENCL"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#aae75f86cee9f23a2c950ce732e164593"><param name="Name" value="wait"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2copy_8h.html"><param name="Name" value="cl/copy.h"></OBJECT>
@@ -2223,6 +2443,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga5ef3cb0bb57905d8bdb2742a6a0fb0fc"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga5ef3cb0bb57905d8bdb2742a6a0fb0fc"><param name="Name" value="CL-ConstantIterator"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#a1ecad6c5f020dc50908f023909110bed"><param name="Name" value="constant_unary"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a58f6cebcbb8f9dfe117c36cf86e82254"><param name="Name" value="container_type"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__Containers.html"><param name="Name" value="Containers"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1ProgramMapKey.html#a05769d2dfc59ed291980ee8a3e42b417"><param name="Name" value="context"></OBJECT>
@@ -2241,6 +2462,12 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-copy.html#gafa9a192a2806bd2236c0a659029bc71a"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-copy.html#gafa9a192a2806bd2236c0a659029bc71a"><param name="Name" value="CL-copy"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-copy.html#gafa9a192a2806bd2236c0a659029bc71a"><param name="Name" value="cl/copy.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__stream__compaction.html#gadc7853aa6f839335efbc28bef2ff2369"><param name="Name" value="copy_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__stream__compaction.html#gadc7853aa6f839335efbc28bef2ff2369"><param name="Name" value="amp/copy.h"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__stream__compaction.html#gadc7853aa6f839335efbc28bef2ff2369"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__stream__compaction.html#gadc7853aa6f839335efbc28bef2ff2369"><param name="Name" value="stream_compaction"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#ab45d44a2e56b3aa8b8675a1dbfadd5bd"><param name="Name" value="copy_kernels"></OBJECT>
   <UL>
@@ -2288,14 +2515,29 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gabd78168e961e6c4c77bb52afdf765794"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gabd78168e961e6c4c77bb52afdf765794"><param name="Name" value="CL-CountingIterator"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a24c81fd0ccf2f204d3718bcf98cf9f97"><param name="Name" value="cpu"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#af9c021e1a69912993dfbfafa56eaa086"><param name="Name" value="cpu"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#af9c021e1a69912993dfbfafa56eaa086"><param name="Name" value="bolt::amp::binary_negate"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#aad016e62e45abd26554e55feeffd239c"><param name="Name" value="bolt::amp::constant_unary"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#a5fc1b88198912a086c8a0fcca8e4dba2"><param name="Name" value="bolt::amp::detail::amp::bool_to_int"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1is__true.html#a81ae513d13e9442bc404e5be51489658"><param name="Name" value="bolt::amp::detail::amp::is_true"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a24c81fd0ccf2f204d3718bcf98cf9f97"><param name="Name" value="bolt::amp::detail::CountIfEqual"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#ab1a885b6d7f8fe2beb80f5b5db0b8587"><param name="Name" value="bolt::amp::equal_to_value"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#ab0b6d13d0938fc67bd4913215893bc00"><param name="Name" value="bolt::amp::new_value_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#a16781a21e666f039dfea501a31078d32"><param name="Name" value="bolt::amp::unary_negate"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#af259afb4153acc24b5d08fc554bb61cd"><param name="Name" value="bolt::amp::unary_transform_if_functor"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a5adeba7bbe408754dfba3814314a4ac9"><param name="Name" value="crbegin"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a5adeba7bbe408754dfba3814314a4ac9"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#a45ba55a2bb0ab91d1ae91e66ea42053f"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a84ddf707418134a8404914eb6498d673"><param name="Name" value="create_device_itr"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#adbcce9320269874c6885134599a4d062"><param name="Name" value="create_mapped_iterator"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#af063dda9510af1c37759b78468702779"><param name="Name" value="create_mapped_iterator"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#af063dda9510af1c37759b78468702779"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#adbcce9320269874c6885134599a4d062"><param name="Name" value="bolt::cl"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a10c66eeee719362525a525bd4f990390"><param name="Name" value="crend"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a10c66eeee719362525a525bd4f990390"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
@@ -2341,6 +2583,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gac1895c29868c49c2b6b374daebfbaed9"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga6c13853df98d113201cd060dbe18cb8f"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga82732eff33443e7e78ced0d0e8dec25b"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8beb1a1c259860b7831ed94b1004c9ac"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gac1895c29868c49c2b6b374daebfbaed9"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga6c13853df98d113201cd060dbe18cb8f"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#ac9a23d958dd4aacf0b7aa6516e2384d3"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
@@ -2348,6 +2591,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits_3_01const_01T_01_5_01_4.html#a2cf68c7feeec3052b194a782efd488cd"><param name="Name" value="bolt::amp::iterator_traits< const T * >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits_3_01T_01_5_01_4.html#a5736cd92aff4fbcf21bd537e06e998b4"><param name="Name" value="bolt::amp::iterator_traits< T * >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga82732eff33443e7e78ced0d0e8dec25b"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8beb1a1c259860b7831ed94b1004c9ac"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga07a1f348081cc329b630a4e91f4b705d"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gaacce85ee6e1d40fc09c82b98bd5fd1bc"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#a8689385ae9214de744c361b680bba8d6"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
@@ -2401,6 +2645,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#a9c8398b4f371f0f469f8cfc4719f8f4e"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#abc494c40253df06d1091f0cafaf37759"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#ac1602f062fe9a30e536df9e2a419f68e"><param name="Name" value="equal_to_value"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#aa17d929192755f87eb607f8ce1a46f12"><param name="Name" value="erase"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#aa17d929192755f87eb607f8ce1a46f12"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
@@ -2454,6 +2699,31 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-filling.html#ga6b8d20443883e9dc0f8b92adc2d2c3f7"><param name="Name" value="CL-filling"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-filling.html#ga6b8d20443883e9dc0f8b92adc2d2c3f7"><param name="Name" value="cl/fill.h"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__find.html"><param name="Name" value="Find"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="find_8h.html"><param name="Name" value="find.h"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="find_8h.html#ga98749ab2af83ac79d4b823e589f9d3ba"><param name="Name" value="find"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="find_8h.html#gac389ee49c4bd2c9c47f5b0090055ab8c"><param name="Name" value="find_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="find_8h.html#ga6ec97cde618a0bc83d9cf3762595e572"><param name="Name" value="find_if_not"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga98749ab2af83ac79d4b823e589f9d3ba"><param name="Name" value="find"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga98749ab2af83ac79d4b823e589f9d3ba"><param name="Name" value="AMP-find"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga98749ab2af83ac79d4b823e589f9d3ba"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga98749ab2af83ac79d4b823e589f9d3ba"><param name="Name" value="find.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#gac389ee49c4bd2c9c47f5b0090055ab8c"><param name="Name" value="find_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#gac389ee49c4bd2c9c47f5b0090055ab8c"><param name="Name" value="AMP-find"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#gac389ee49c4bd2c9c47f5b0090055ab8c"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#gac389ee49c4bd2c9c47f5b0090055ab8c"><param name="Name" value="find.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga6ec97cde618a0bc83d9cf3762595e572"><param name="Name" value="find_if_not"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga6ec97cde618a0bc83d9cf3762595e572"><param name="Name" value="AMP-find"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga6ec97cde618a0bc83d9cf3762595e572"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-find.html#ga6ec97cde618a0bc83d9cf3762595e572"><param name="Name" value="find.h"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1pair.html#a6359182d4d49e3b7a88be1f288c7adff"><param name="Name" value="first"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1pair.html#a6359182d4d49e3b7a88be1f288c7adff"><param name="Name" value="bolt::amp::pair"></OBJECT>
@@ -2463,6 +2733,23 @@
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1pair.html#a13e8406886692922f4754b396eb74c02"><param name="Name" value="bolt::amp::pair"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1pair.html#aa1e499e6d8f09ee3da3677f94540c5b6"><param name="Name" value="bolt::cl::pair"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="for__each_8h.html"><param name="Name" value="for_each.h"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="for__each_8h.html#gaad64b467b6deae8ec476780d48eee3aa"><param name="Name" value="for_each"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="for__each_8h.html#ga3d3fce9488d6d5be4a6ea9356864c82c"><param name="Name" value="for_each_n"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#gaad64b467b6deae8ec476780d48eee3aa"><param name="Name" value="for_each"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#gaad64b467b6deae8ec476780d48eee3aa"><param name="Name" value="AMP-for_each"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#gaad64b467b6deae8ec476780d48eee3aa"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#gaad64b467b6deae8ec476780d48eee3aa"><param name="Name" value="for_each.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#ga3d3fce9488d6d5be4a6ea9356864c82c"><param name="Name" value="for_each_n"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#ga3d3fce9488d6d5be4a6ea9356864c82c"><param name="Name" value="AMP-for_each"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#ga3d3fce9488d6d5be4a6ea9356864c82c"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-for__each.html#ga3d3fce9488d6d5be4a6ea9356864c82c"><param name="Name" value="for_each.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1ArrayPool.html#ae236039f4344dd530ee00894879a4c2c"><param name="Name" value="free"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga9e21cc89ad0384593d3867b73e189222"><param name="Name" value="freeBuffers"></OBJECT>
@@ -2475,8 +2762,15 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#aa8fc5aebcb81a30f8e4f8abd37ab8903"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#a9bd76b33fa6f48589e3a03fb3fbe477d"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga5f1929989389083962d946554f93bf22"><param name="Name" value="functor"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac6d9ab78dde43b3a18b3a3da163293cc"><param name="Name" value="func"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac6d9ab78dde43b3a18b3a3da163293cc"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac6d9ab78dde43b3a18b3a3da163293cc"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga01a64e610bee97f8eec02141c1295a9d"><param name="Name" value="functor"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga01a64e610bee97f8eec02141c1295a9d"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga01a64e610bee97f8eec02141c1295a9d"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga5f1929989389083962d946554f93bf22"><param name="Name" value="bolt::cl::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga5f1929989389083962d946554f93bf22"><param name="Name" value="CL-TransformIterator"></OBJECT>
   </UL>
@@ -2546,10 +2840,12 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga88dcd4ab138c5e2efc780c32f835c688"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gaa4f1367928e33da2502992ddb659b80a"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga2a2a64ab5be3abe61db901f9d4e39aa4"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga65d66b9133807082100553a2edf6f20c"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga88dcd4ab138c5e2efc780c32f835c688"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gaa4f1367928e33da2502992ddb659b80a"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a966abf0b557fc8cca0bf05c356dc0ef7"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga2a2a64ab5be3abe61db901f9d4e39aa4"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga65d66b9133807082100553a2edf6f20c"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#gae7aa4ece1023cafb3b8ed0ea0c4ddfff"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#ga02a2218a9acbc0e9b84f3c1d7eaddb98"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#a6be79cfe0c74aa4593f9164bc9526d75"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
@@ -2576,6 +2872,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga8cfdc2010feb2a2b56d7c67675d9fd21"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga93b68d322984115d70da7922fa294fc7"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gaddd5d9b452805e8984bbb9ebc178beb5"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gafd80684c8b828837114fbdfe0c04197a"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga8cfdc2010feb2a2b56d7c67675d9fd21"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga93b68d322984115d70da7922fa294fc7"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1const__reference__base.html#ae232c090bbebabd13130c501a2aa7fb3"><param name="Name" value="bolt::amp::device_vector::const_reference_base"></OBJECT>
@@ -2583,6 +2880,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reference__base.html#a7c37a93c0ed030f9dae3c6c65388ba55"><param name="Name" value="bolt::amp::device_vector::reference_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#ad2b6a207e6732615169b10ee873d3dff"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gaddd5d9b452805e8984bbb9ebc178beb5"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gafd80684c8b828837114fbdfe0c04197a"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga37ab8b9bcf7e1c97b53cc41927007e47"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gaa2681281d2b49d3849a22bcc9a466030"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html#a8e66302e58f14b962c6ef70ffe6d4526"><param name="Name" value="bolt::cl::device_vector::iterator_base"></OBJECT>
@@ -2648,6 +2946,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa937ce9621856b45a834e18f56a1043a"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga180cb5ebae5e6c8c5a8ce02e67e0089e"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga13bd4beebdca8d3e2a47e7a8e9d380e8"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7d417365059f087d62efcc994d59596a"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa937ce9621856b45a834e18f56a1043a"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga180cb5ebae5e6c8c5a8ce02e67e0089e"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1const__reference__base.html#a98ac1ced61832aaca268f71a9cdcdbd7"><param name="Name" value="bolt::amp::device_vector::const_reference_base"></OBJECT>
@@ -2655,6 +2954,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reference__base.html#a3ee8138a5e9d97ff9636f10c47fb06cd"><param name="Name" value="bolt::amp::device_vector::reference_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#a6d226b9b0ee3eca36bd0ddc9acce8871"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga13bd4beebdca8d3e2a47e7a8e9d380e8"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7d417365059f087d62efcc994d59596a"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector_1_1reference__base.html#a3a48305557d20027563690844f2b1e48"><param name="Name" value="bolt::cl::device_vector::reference_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector_1_1reverse__iterator__base.html#a1eba28d4136a23b5091564c62cb46b81"><param name="Name" value="bolt::cl::device_vector::reverse_iterator_base"></OBJECT>
   </UL>
@@ -2671,8 +2971,14 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a4f8f60e211cf1262683d281251954613"><param name="Name" value="cl/bolt.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1cl_1_1KernelParameterStrings.html#af3411546cdc2fd37cb8b4fd39a9b3b25"><param name="Name" value="getOutputIteratorString"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga6df6983d38a532f6299c869d3914741a"><param name="Name" value="getPointer"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaf323fb713e90eb61d35adb865ddb4db6"><param name="Name" value="getPointer"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaf323fb713e90eb61d35adb865ddb4db6"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gabb594489ec417b954f8cafc11de9c965"><param name="Name" value="AMP-CountingIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga41615c1e1d800472016de06d2f1e4be7"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaf323fb713e90eb61d35adb865ddb4db6"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gabb594489ec417b954f8cafc11de9c965"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga41615c1e1d800472016de06d2f1e4be7"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga6df6983d38a532f6299c869d3914741a"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gaf9dffd57a66eea6b8786d6a3555520d6"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#gac5f4a1c711e4214eca93f223aac6a5ed"><param name="Name" value="bolt::cl::transform_iterator"></OBJECT>
@@ -2742,6 +3048,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#gaceadca296a5d8a66eec091a17e7746ed"><param name="Name" value="CL-TransformIterator"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga4aeb089a36373b8bac8000dbba8073f0"><param name="Name" value="host_ptr"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a3b135c38f304cc63b8174b44beb5a8b4"><param name="Name" value="if"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-scan.html#gaf8552608c570f33a7b3b018a8cedd852"><param name="Name" value="inclusive_scan"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-scan.html#gaf8552608c570f33a7b3b018a8cedd852"><param name="Name" value="AMP-scan"></OBJECT>
@@ -2787,6 +3094,11 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#a268b32f198ba17f70a93e1ab5add4ac2"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga002d3c598b56086e0b81c41cda09b3c3"><param name="Name" value="inUse"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7811e47de74f1fcd8ad161d35a79d370"><param name="Name" value="iter"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7811e47de74f1fcd8ad161d35a79d370"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7811e47de74f1fcd8ad161d35a79d370"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a6243dd5f79d8c3b7eeee67c6374f90a9"><param name="Name" value="iterator"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a6243dd5f79d8c3b7eeee67c6374f90a9"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
@@ -2873,6 +3185,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1std__stable__sort__comp.html#a4bdcb2fe4cc2d378ab457618f7d200e6"><param name="Name" value="bolt::cl::detail::std_stable_sort_comp"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="supportedFunction.html"><param name="Name" value="List of Supported Functions"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__logical.html"><param name="Name" value="Logical"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="logical_8h.html"><param name="Name" value="logical.h"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="logical_8h.html#ga3e407bf54b58a3239df47a55885b1cbc"><param name="Name" value="all_of"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="logical_8h.html#ga1ccda0845b4c5c2ca25e9207153822f3"><param name="Name" value="any_of"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="logical_8h.html#ga2bcfd87b0de037e50c8f2c9dca36637d"><param name="Name" value="none_of"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-PermutationIterator.html#gad525d4e7ea504888afbbd24da64bbaed"><param name="Name" value="m_ElementPtr"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-PermutationIterator.html#gad525d4e7ea504888afbbd24da64bbaed"><param name="Name" value="bolt::cl::permutation_iterator::Payload"></OBJECT>
@@ -2893,11 +3212,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gafe770bbc17efcc2046e960a1e9a4f039"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga9d4db4fb6979ba8fbc62c20e3d2290ec"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gae6dd8db57521c22458ab53c1c7fbd79b"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gad12a818dde404d6a64e86dd16e3ab556"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gafe770bbc17efcc2046e960a1e9a4f039"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga9d4db4fb6979ba8fbc62c20e3d2290ec"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#ab6aadc5ad71d9ebd10b21341c61ede5e"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#a2b8f11348f4c39715b292f8ffaec6cba"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gae6dd8db57521c22458ab53c1c7fbd79b"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gad12a818dde404d6a64e86dd16e3ab556"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga767936ee9452e4986f481f254088a86e"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#ga8fd4aa1dfba6b5547a22575a333cc572"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html#aec0e55c187eb19b58ce364cb8309f3a3"><param name="Name" value="bolt::cl::device_vector::iterator_base"></OBJECT>
@@ -2963,8 +3284,11 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-PermutationIterator.html#ga621f8471639c30fb65795de46ec611ec"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-PermutationIterator.html#ga621f8471639c30fb65795de46ec611ec"><param name="Name" value="CL-PermutationIterator"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga951e79ebb81bcd0b1abc097daab256d7"><param name="Name" value="make_transform_iterator"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac51be38e524ead130db3efae153e8f04"><param name="Name" value="make_transform_iterator"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac51be38e524ead130db3efae153e8f04"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac51be38e524ead130db3efae153e8f04"><param name="Name" value="amp/iterator/transform_iterator.h"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gac51be38e524ead130db3efae153e8f04"><param name="Name" value="bolt::amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga951e79ebb81bcd0b1abc097daab256d7"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga951e79ebb81bcd0b1abc097daab256d7"><param name="Name" value="CL-TransformIterator"></OBJECT>
   </UL>
@@ -3019,6 +3343,8 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__miscellaneous.html"><param name="Name" value="Miscellaneous"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1KernelTemplateSpecializer.html#af4f2b2c71a6e31f8ff7437c712e0c7d1"><param name="Name" value="name"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#a65911d1e5a0b4a778837f9703f2c2a4c"><param name="Name" value="new_value"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#a8790f5867c42324d7548be9afde067d5"><param name="Name" value="new_value_if"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-control.html#ga7da164a4b8261a0b2ecdc173a0dfc0c6"><param name="Name" value="None"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-control.html#ga7da164a4b8261a0b2ecdc173a0dfc0c6"><param name="Name" value="AMP-control"></OBJECT>
@@ -3026,6 +3352,15 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga853aa54974b8cc86ba9b7e44b1c4b4c7"><param name="Name" value="bolt::cl::control::debug"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga853aa54974b8cc86ba9b7e44b1c4b4c7"><param name="Name" value="CL-control"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga2bcfd87b0de037e50c8f2c9dca36637d"><param name="Name" value="none_of"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga2bcfd87b0de037e50c8f2c9dca36637d"><param name="Name" value="AMP-logical"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga2bcfd87b0de037e50c8f2c9dca36637d"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-logical.html#ga2bcfd87b0de037e50c8f2c9dca36637d"><param name="Name" value="logical.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#a24b42342eca8b29a61b4e0562b180a2e"><param name="Name" value="not1"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#a11a0e9e07436bb6e84558bf8b0ee53a5"><param name="Name" value="not2"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__pred.html#a5547898b7ae6f1a6acfa9502b65d11cc"><param name="Name" value="not_pred"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1KernelTemplateSpecializer.html#a5b7eea6bffb6c99bc9de27c2fc0ad40d"><param name="Name" value="numKernels"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1fancy__iterator__tag.html#a1d488225e8ff4f159ff113be62cecbf7"><param name="Name" value="operator fancy_iterator_tag"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1operator__brackets__proxy.html#a9e58cf6ce977d772031a9f894a06bde1"><param name="Name" value="operator reference"></OBJECT>
@@ -3049,21 +3384,27 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa164adcbfc6adaff435e31f20e41ffd6"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga489ac3f269f4487643f925d43084e646"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga67311118f7f3b7ad3542e855a11aae2f"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga2fb2c9376829edbb8db918e01571c020"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gab40296d71ccc24cebbd1a41d2ae2c754"><param name="Name" value="amp/pair.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gab40296d71ccc24cebbd1a41d2ae2c754"><param name="Name" value="bolt::amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa164adcbfc6adaff435e31f20e41ffd6"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga489ac3f269f4487643f925d43084e646"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga67311118f7f3b7ad3542e855a11aae2f"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga2fb2c9376829edbb8db918e01571c020"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#ga52dd51db8c2e700c807703ea68b3173b"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#ga52dd51db8c2e700c807703ea68b3173b"><param name="Name" value="cl/pair.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gab40296d71ccc24cebbd1a41d2ae2c754"><param name="Name" value="pair"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__and.html#aafbced4331e29feedd4646e51f11de50"><param name="Name" value="operator()"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#afa6274ec677a94adb0a65148b6af37fb"><param name="Name" value="operator()"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#afa6274ec677a94adb0a65148b6af37fb"><param name="Name" value="bolt::amp::binary_negate"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__and.html#aafbced4331e29feedd4646e51f11de50"><param name="Name" value="bolt::amp::bit_and"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__or.html#a2513382d877223c04e59fd4d1427f3a2"><param name="Name" value="bolt::amp::bit_or"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1bit__xor.html#a131aa146654acdaf6caf65d79aad396b"><param name="Name" value="bolt::amp::bit_xor"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1constant__unary.html#ac4d4365ba9cc17f0e1a9c6993d24a8a3"><param name="Name" value="bolt::amp::constant_unary"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1cube.html#a97b1a756a926f2b49c32d75f68bfd872"><param name="Name" value="bolt::amp::cube"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#ac7f0f68aeed3ae26c4d481ebb629c80b"><param name="Name" value="bolt::amp::detail::amp::bool_to_int"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1is__true.html#ac51bdfb54667f90e7bdb8e0fb9f418bb"><param name="Name" value="bolt::amp::detail::amp::is_true"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a9ee01482332a38942d3ec1531f82a034"><param name="Name" value="bolt::amp::detail::CountIfEqual"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1pair__get_3_010_00_01Pair_01_4.html#a0fe5ebc6a0d3abc579056301875be0f7"><param name="Name" value="bolt::amp::detail::pair_get< 0, Pair >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1pair__get_3_011_00_01Pair_01_4.html#ac922657489cc0fc9e8c9b2a54c79aaa5"><param name="Name" value="bolt::amp::detail::pair_get< 1, Pair >"></OBJECT>
@@ -3071,6 +3412,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1detail_1_1std__stable__sort__comp.html#a78d201fcaedb78430414c99a71d826a0"><param name="Name" value="bolt::amp::detail::std_stable_sort_comp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1divides.html#ab7962adcfad2fcfa5f0736945a2b38ba"><param name="Name" value="bolt::amp::divides"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to.html#a31eacc264e13c42951a492d569f49f59"><param name="Name" value="bolt::amp::equal_to"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#a462454c8604439591daa73d05ef82082"><param name="Name" value="bolt::amp::equal_to_value"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1greater.html#a48f97a40a055c74d146e195ca7d6b144"><param name="Name" value="bolt::amp::greater"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1greater__equal.html#ae04b9720307c5875756d14597c86c3b0"><param name="Name" value="bolt::amp::greater_equal"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1identity.html#a1cf94b21ee5d3a8527349ebebaf9ae17"><param name="Name" value="bolt::amp::identity"></OBJECT>
@@ -3085,11 +3427,14 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1modulus.html#a1ca51dd271a8ecc1f7bb607fc0979614"><param name="Name" value="bolt::amp::modulus"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1multiplies.html#a6d2c6af4de21d55614e16b167201eeae"><param name="Name" value="bolt::amp::multiplies"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1negate.html#a9ddf5b450b922f97f7f5f2184aba44cb"><param name="Name" value="bolt::amp::negate"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#ac15d300b109de1777ca26a551068f62a"><param name="Name" value="bolt::amp::new_value_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__equal__to.html#a4f70b80e9b39421a8f5ab8cee4fc36be"><param name="Name" value="bolt::amp::not_equal_to"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1not__pred.html#a60fc5b8146395510c172fd57d6ff481b"><param name="Name" value="bolt::amp::not_pred"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1plus.html#a4afe215612e94038decd879fa352ab67"><param name="Name" value="bolt::amp::plus"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1square.html#a200cf09d8daa1402ecb4c2f3c068a0f7"><param name="Name" value="bolt::amp::square"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#ae5d61efea0d673818910feb3d9d3c98c"><param name="Name" value="bolt::amp::unary_negate"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a12d087ca26f420a889af14026fe7a113"><param name="Name" value="bolt::amp::unary_transform_if_functor"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1BinarySearch__KernelTemplateSpecializer.html#a15553a81f6727421780d73afccae7740"><param name="Name" value="bolt::cl::detail::BinarySearch_KernelTemplateSpecializer"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1BitonicSort__KernelTemplateSpecializer.html#ad4a6461c2b8f40dd789913e347eb7a6a"><param name="Name" value="bolt::cl::detail::BitonicSort_KernelTemplateSpecializer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1cl_1_1Count__KernelTemplateSpecializer.html#a2bef9a817cae3e882e2d30ba2b76bfd8"><param name="Name" value="bolt::cl::detail::cl::Count_KernelTemplateSpecializer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1cl_1_1GatherIf__KernelTemplateSpecializer.html#a244cbf691b8b9a08bc8fe90f83093328"><param name="Name" value="bolt::cl::detail::cl::GatherIf_KernelTemplateSpecializer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1cl_1_1GatherKernelTemplateSpecializer.html#a81d126faeda8c9b0cba31c9afee1dded"><param name="Name" value="bolt::cl::detail::cl::GatherKernelTemplateSpecializer"></OBJECT>
@@ -3111,6 +3456,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1detail_1_1pair__get_3_010_00_01Pair_01_4.html#aa8b122202ead24c3dcb69c1b4179c4b8"><param name="Name" value="bolt::cl::detail::pair_get< 0, Pair >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1detail_1_1pair__get_3_011_00_01Pair_01_4.html#ac7b7882a13741339ad6efc9ed689d865"><param name="Name" value="bolt::cl::detail::pair_get< 1, Pair >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Common__KernelTemplateSpecializer.html#adc94822d495e966074074d78dcfb3193"><param name="Name" value="bolt::cl::detail::RadixSort_Common_KernelTemplateSpecializer"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Float__KernelTemplateSpecializer.html#a23fe8ec925392dd70cfcdec125ea86c2"><param name="Name" value="bolt::cl::detail::RadixSort_Float_KernelTemplateSpecializer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Int__KernelTemplateSpecializer.html#a9a8a4de11b8d8f15b8d2033c23f1dfa5"><param name="Name" value="bolt::cl::detail::RadixSort_Int_KernelTemplateSpecializer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSort__Uint__KernelTemplateSpecializer.html#a3beb5bac81bb2ae59064bf8b3d8c111a"><param name="Name" value="bolt::cl::detail::RadixSort_Uint_KernelTemplateSpecializer"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1RadixSortByKey__Common__KernelTemplateSpecializer.html#ae55a355191479828166d720db87ef566"><param name="Name" value="bolt::cl::detail::RadixSortByKey_Common_KernelTemplateSpecializer"></OBJECT>
@@ -3130,21 +3476,25 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa6bc15646d0df7decc3419e88541cf89"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga1021d346c9bad2d05bc7a49cd9707ca2"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga7537f6fd5b44c0c36af8a06aa6039f5d"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga044b45b7d8fa1f4c68aa000613edfa0f"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gaa6bc15646d0df7decc3419e88541cf89"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga1021d346c9bad2d05bc7a49cd9707ca2"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#a11e10cc3386adf0e9033a8f3af56f2e1"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#aced6185f4e0571ac66d69a101d300535"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga7537f6fd5b44c0c36af8a06aa6039f5d"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga044b45b7d8fa1f4c68aa000613edfa0f"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#a1fc5deeb1bad27c6d509516111d33876"><param name="Name" value="bolt::cl::iterator_facade"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga348f245f9b2ce409afb7c837ab127fe3"><param name="Name" value="operator++"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga258418be1494361664894f35e2463738"><param name="Name" value="operator++"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga348f245f9b2ce409afb7c837ab127fe3"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga258418be1494361664894f35e2463738"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga0d331303d1de54ba9172d68414fa0b13"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gaa02d233baf6fe438f3454086fac9e75b"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga348f245f9b2ce409afb7c837ab127fe3"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1b0216586751d0f7cbb7db9768838969"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga258418be1494361664894f35e2463738"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga0d331303d1de54ba9172d68414fa0b13"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gaa02d233baf6fe438f3454086fac9e75b"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1b0216586751d0f7cbb7db9768838969"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#a08335c44854973b50bedff6fdd3e9b38"><param name="Name" value="bolt::cl::iterator_facade"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga328ccc9a54e6068529608d292f017661"><param name="Name" value="operator+="></OBJECT>
@@ -3152,11 +3502,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga328ccc9a54e6068529608d292f017661"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga2a9fe23b5c09d38450072951e7dc7ece"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga899c28dbc6c8dc705d8ff9482ebba22e"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaeee4d2d6efb2e508363d4b35fd8e3164"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga328ccc9a54e6068529608d292f017661"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga2a9fe23b5c09d38450072951e7dc7ece"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#a1ca2ea90268a94a3fea8b9a8959f5ee4"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#a1348fe16be374ea8f22099dc07558ce6"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga899c28dbc6c8dc705d8ff9482ebba22e"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaeee4d2d6efb2e508363d4b35fd8e3164"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga5b87a3a404e9c226a2d0b7ed2fc7910d"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gad2a4101777751eb90b90695e1db5731e"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html#afb34f27bbe3edf4a3a667d6fa7361fa5"><param name="Name" value="bolt::cl::device_vector::iterator_base"></OBJECT>
@@ -3170,11 +3522,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga96644b7f3eec04e207b9a315f32d1dfb"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gafd4466a6f198c51b3408760211f9a9bf"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga3beb7c4071eb462a6708141f95b385e7"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7ea0ca138ae1ebd513c8475a26dd21fc"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga96644b7f3eec04e207b9a315f32d1dfb"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gafd4466a6f198c51b3408760211f9a9bf"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#ac967fecaa1734b99f678185dacea1915"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#a68820a8b3dfe301a11e40892b8634e30"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga3beb7c4071eb462a6708141f95b385e7"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga7ea0ca138ae1ebd513c8475a26dd21fc"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a502e22e0d98d69f2941ee1ae9810dfdc"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#ga2cfd1f5b31bd63f25206e55a3b229e4a"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gabe5e8338057a88cf6484089d2b0c6db7"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
@@ -3189,21 +3543,25 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gadcf8ca8648d649b097bb024357a63518"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gad879e40762c263f872b93c5ee09242f8"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga5cd24ad84b934f1290d1b7b97c4b646f"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8f5e7b6bc639cb4bcde3e3b887044829"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gadcf8ca8648d649b097bb024357a63518"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gad879e40762c263f872b93c5ee09242f8"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga5cd24ad84b934f1290d1b7b97c4b646f"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8f5e7b6bc639cb4bcde3e3b887044829"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#abcdc4f7d5512885893e4970a3712a196"><param name="Name" value="bolt::cl::iterator_facade"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#a8151ae36bff52fc53391ede95d0e76aa"><param name="Name" value="operator-="></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#a120a95c6a8e9ee3851d7e67068b9b43c"><param name="Name" value="operator->"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gad941bd122cd37dd50c468ebc992137bd"><param name="Name" value="operator-"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga0293d572d84b9332546caadf02010082"><param name="Name" value="operator-"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gad941bd122cd37dd50c468ebc992137bd"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga0dfd4f5d391d2a064558dffa65c06a58"><param name="Name" value="AMP-CountingIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga0293d572d84b9332546caadf02010082"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gab277749b9f21d8a7baeb8980e8b2939d"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga783557e3f24efe8767a97ef06e08dce6"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gad941bd122cd37dd50c468ebc992137bd"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga0dfd4f5d391d2a064558dffa65c06a58"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga16132a30efb1c03a23506c01cacb650e"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga0293d572d84b9332546caadf02010082"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gab277749b9f21d8a7baeb8980e8b2939d"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga783557e3f24efe8767a97ef06e08dce6"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga16132a30efb1c03a23506c01cacb650e"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a9c2a5532b5cfa55512aaadbf3bde437b"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__core__access.html#a204232d7784afd9b59ca71d7e5da7fac"><param name="Name" value="bolt::cl::iterator_core_access"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#a49a1499a58b7111d31029ab3f52b53ae"><param name="Name" value="bolt::cl::iterator_facade"></OBJECT>
@@ -3221,11 +3579,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gac36633d5479713edf594e9bf175c6933"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gac54a34f6193bfaafe3ce775ad7726e3a"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gab5ce7cffc49e674dbb4ea186536d4107"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1a8797c931dd6b9593020fee162a80d5"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gaa000aed72f74d660b4c29835cc90541b"><param name="Name" value="amp/pair.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gaa000aed72f74d660b4c29835cc90541b"><param name="Name" value="bolt::amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#gac36633d5479713edf594e9bf175c6933"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gac54a34f6193bfaafe3ce775ad7726e3a"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gab5ce7cffc49e674dbb4ea186536d4107"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1a8797c931dd6b9593020fee162a80d5"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gafd150c808efd3e9205b069bf3f62f3ea"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gafd150c808efd3e9205b069bf3f62f3ea"><param name="Name" value="cl/pair.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gaa000aed72f74d660b4c29835cc90541b"><param name="Name" value="pair"></OBJECT>
@@ -3235,11 +3595,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga735a0a10980bf667eadc6695476e09ff"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga10d79cbd4730ee38ae013b9372798b67"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga7ab5bdd14d6153702de90598acb76237"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga47219a5ac448f5c740f383cf0379a7e5"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gae889ef9a5ed06e8d90c275d1a1cc0405"><param name="Name" value="amp/pair.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gae889ef9a5ed06e8d90c275d1a1cc0405"><param name="Name" value="bolt::amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga735a0a10980bf667eadc6695476e09ff"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga10d79cbd4730ee38ae013b9372798b67"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga7ab5bdd14d6153702de90598acb76237"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga47219a5ac448f5c740f383cf0379a7e5"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gad910ef5165cf37a5e81ec4737f1f5cb3"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gad910ef5165cf37a5e81ec4737f1f5cb3"><param name="Name" value="cl/pair.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__pair.html#gae889ef9a5ed06e8d90c275d1a1cc0405"><param name="Name" value="pair"></OBJECT>
@@ -3249,6 +3611,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga30e5bea2cd6d26c8e1bb1cbb93c8f2f8"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gaa9d064a56cfbe6eaeaae889158f23193"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga12ab20a56f686f4b66da658bc2c4a63f"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8b9dc58c11cd52caed5936fdcd8cf582"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga30e5bea2cd6d26c8e1bb1cbb93c8f2f8"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#gaa9d064a56cfbe6eaeaae889158f23193"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1const__reference__base.html#ae17585a5e360df3228fb19867351b02a"><param name="Name" value="bolt::amp::device_vector::const_reference_base"></OBJECT>
@@ -3256,6 +3619,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reference__base.html#a990d236dcbabf356edb5e2bcf3728b20"><param name="Name" value="bolt::amp::device_vector::reference_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#a226c49d8eba67f3b491d2123d11c66b9"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga12ab20a56f686f4b66da658bc2c4a63f"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga8b9dc58c11cd52caed5936fdcd8cf582"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#gaec3969df01b764e2938762289757ea8d"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#gaeb3f7a23408f30c048e7b032082c28d0"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1operator__brackets__proxy.html#ac055d385b1d5d663250536d5d0c7b012"><param name="Name" value="bolt::cl::detail::operator_brackets_proxy"></OBJECT>
@@ -3288,12 +3652,14 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga675810c26a7877d368114ed6dcfcf101"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga71b790be042a3aa1a105e33f14ebd3ee"><param name="Name" value="AMP-CountingIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gac1824f0f9e84189d883cd38abea90d26"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1ae3fbb4fdcb6d2b1a4808dd3ea93ada"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga675810c26a7877d368114ed6dcfcf101"><param name="Name" value="bolt::amp::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-CountingIterator.html#ga71b790be042a3aa1a105e33f14ebd3ee"><param name="Name" value="bolt::amp::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#ae7f2ef798856d1b6776ebcc28bfcee28"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#a95aab8cba4d4c443d52f6f871da3f280"><param name="Name" value="bolt::amp::device_vector::iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html#a2ee4ae6c1151b21dd8c9f12666418ed8"><param name="Name" value="bolt::amp::device_vector::reverse_iterator_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#gac1824f0f9e84189d883cd38abea90d26"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga1ae3fbb4fdcb6d2b1a4808dd3ea93ada"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#aa9d58494857b26e9cc8bd00a720433ce"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#ab50a7c0354d868a38675fb0e9a1dfd01"><param name="Name" value="bolt::cl::iterator_facade"></OBJECT>
   </UL>
@@ -3338,12 +3704,14 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-PermutationIterator.html#ga8372a75b71e14abe456ba924c42a2521"><param name="Name" value="bolt::cl::permutation_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-PermutationIterator.html#ga8372a75b71e14abe456ba924c42a2521"><param name="Name" value="CL-PermutationIterator"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#ae7c5b5223a235dc74f91c91dc5cf8d55"><param name="Name" value="pointer"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaf3bb14402ace64ce5af1192bf5f71de1"><param name="Name" value="pointer"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaf3bb14402ace64ce5af1192bf5f71de1"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#ae7c5b5223a235dc74f91c91dc5cf8d55"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits.html#a85d4934b1b6ef2a85c9ccbb7fc3538f2"><param name="Name" value="bolt::amp::iterator_traits"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits_3_01const_01T_01_5_01_4.html#a2b65d6d0ae3ab7c2b972d8b9176de1c7"><param name="Name" value="bolt::amp::iterator_traits< const T * >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits_3_01T_01_5_01_4.html#a4292f5dc31cf407a45fbec5d5b766fbd"><param name="Name" value="bolt::amp::iterator_traits< T * >"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#gaf3bb14402ace64ce5af1192bf5f71de1"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-ConstantIterator.html#gad4a487ed26dbd08bf9d08cb8272962f0"><param name="Name" value="bolt::cl::constant_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-CountingIterator.html#ga2e7d3e5e46984a46d19e59ee93d10570"><param name="Name" value="bolt::cl::counting_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#a6204f6f43a5506367ea2fd69e225e5a3"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
@@ -3363,6 +3731,13 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#aaa41ba7679d3b57135f5ac09804b2c79"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#aa6ab6a7133d57fac614232c00fad6880"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a822ca887b8eda240f2351991601f77f7"><param name="Name" value="pred"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a822ca887b8eda240f2351991601f77f7"><param name="Name" value="bolt::amp::binary_negate"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1amp_1_1bool__to__int.html#aed447640a63e82e18be24c0674b502dc"><param name="Name" value="bolt::amp::detail::amp::bool_to_int"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1new__value__if.html#a7dc71b2f016be3a5b24853378044f996"><param name="Name" value="bolt::amp::new_value_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#a16b4caaac27cfc4d5e329d5c0fb756e9"><param name="Name" value="bolt::amp::unary_negate"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__PrefixSums.html"><param name="Name" value="Prefix Sums"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#gaa62f0e5142c1dd4725f82b5289887011"><param name="Name" value="printPlatforms"></OBJECT>
   <UL>
@@ -3377,11 +3752,8 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1ProgramMapValue.html#af99ae5c1002c1c950fabb3f6444bf9d3"><param name="Name" value="program"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aa788480e96d351a0719acd6e71909856"><param name="Name" value="ProgramMap"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="programMap"></OBJECT>
-  <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="bolt::cl"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="cl/bolt.h"></OBJECT>
-  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aa788480e96d351a0719acd6e71909856"><param name="Name" value="ProgramMap"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="programMap"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#ab22c2b00c5aebe16bb2763a0833f3bc4"><param name="Name" value="programMapMutex"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#ab22c2b00c5aebe16bb2763a0833f3bc4"><param name="Name" value="bolt::cl"></OBJECT>
@@ -3449,11 +3821,74 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1reference__base.html#ac1467217cf50163cf7446bfbe0b5af3e"><param name="Name" value="bolt::amp::device_vector::reference_base"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector_1_1reference__base.html#ae7b4fdcddbdfab992336c2bef9729a79"><param name="Name" value="bolt::cl::device_vector::reference_base"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="remove_8h.html"><param name="Name" value="remove.h"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="remove_8h.html#ga9af19368e25684343a49f97d58c12678"><param name="Name" value="remove"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="remove_8h.html#gad386bbf0e11076b745dac3709f32a63a"><param name="Name" value="remove_copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="remove_8h.html#ga8048ae31ea22e98f9172812527feba80"><param name="Name" value="remove_copy_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="remove_8h.html#gac97200517e80f98ffbb39d4976cc11b1"><param name="Name" value="remove_if"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga9af19368e25684343a49f97d58c12678"><param name="Name" value="remove"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga9af19368e25684343a49f97d58c12678"><param name="Name" value="AMP-remove"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga9af19368e25684343a49f97d58c12678"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga9af19368e25684343a49f97d58c12678"><param name="Name" value="remove.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gad386bbf0e11076b745dac3709f32a63a"><param name="Name" value="remove_copy"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gad386bbf0e11076b745dac3709f32a63a"><param name="Name" value="AMP-remove"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gad386bbf0e11076b745dac3709f32a63a"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gad386bbf0e11076b745dac3709f32a63a"><param name="Name" value="remove.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga8048ae31ea22e98f9172812527feba80"><param name="Name" value="remove_copy_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga8048ae31ea22e98f9172812527feba80"><param name="Name" value="AMP-remove"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga8048ae31ea22e98f9172812527feba80"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#ga8048ae31ea22e98f9172812527feba80"><param name="Name" value="remove.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gac97200517e80f98ffbb39d4976cc11b1"><param name="Name" value="remove_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gac97200517e80f98ffbb39d4976cc11b1"><param name="Name" value="AMP-remove"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gac97200517e80f98ffbb39d4976cc11b1"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-remove.html#gac97200517e80f98ffbb39d4976cc11b1"><param name="Name" value="remove.h"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a54c0901192a1c90542c1956192b965e9"><param name="Name" value="rend"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a54c0901192a1c90542c1956192b965e9"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#a2a1d9effa92fa4b6500ec6272c50c631"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="replace_8h.html"><param name="Name" value="replace.h"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="replace_8h.html#ga4e76fbd5b3455aad18af56cb21a1f629"><param name="Name" value="replace"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="replace_8h.html#gaa7a6f04c698225e4c47dd32b8c9eb35a"><param name="Name" value="replace_copy"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="replace_8h.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1"><param name="Name" value="replace_copy_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="replace_8h.html#ga668ec01bf3498782a693a6d29423f464"><param name="Name" value="replace_if"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga4e76fbd5b3455aad18af56cb21a1f629"><param name="Name" value="replace"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga4e76fbd5b3455aad18af56cb21a1f629"><param name="Name" value="AMP-replace"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga4e76fbd5b3455aad18af56cb21a1f629"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga4e76fbd5b3455aad18af56cb21a1f629"><param name="Name" value="replace.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gaa7a6f04c698225e4c47dd32b8c9eb35a"><param name="Name" value="replace_copy"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gaa7a6f04c698225e4c47dd32b8c9eb35a"><param name="Name" value="AMP-replace"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gaa7a6f04c698225e4c47dd32b8c9eb35a"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gaa7a6f04c698225e4c47dd32b8c9eb35a"><param name="Name" value="replace.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1"><param name="Name" value="replace_copy_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1"><param name="Name" value="AMP-replace"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#gace6ad71c2ca0585b2ac2bcbf2d188fd1"><param name="Name" value="replace.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga668ec01bf3498782a693a6d29423f464"><param name="Name" value="replace_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga668ec01bf3498782a693a6d29423f464"><param name="Name" value="AMP-replace"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga668ec01bf3498782a693a6d29423f464"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-replace.html#ga668ec01bf3498782a693a6d29423f464"><param name="Name" value="replace.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a6fc6fd432edf8da2d4387c88890477ba"><param name="Name" value="res"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb"><param name="Name" value="reserve"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#ad6d3b0bfcb2d648aca064c63923017fb"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
@@ -3468,6 +3903,11 @@
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga84fa6f0c767c89e5cd6e542602dd56fb"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga84fa6f0c767c89e5cd6e542602dd56fb"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a8ccdebb9fe835f212f76229f584aaf31"><param name="Name" value="result_type"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#a8ccdebb9fe835f212f76229f584aaf31"><param name="Name" value="bolt::amp::binary_negate"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#a5a28b7972c64ce152751f4f936cd4e5a"><param name="Name" value="bolt::amp::unary_negate"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a20b83f906e42fb3d1485ed514645a627"><param name="Name" value="reverse_iterator"></OBJECT>
   <UL>
@@ -3662,6 +4102,11 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a9495a9c2ed4641391b5ffaaae231a853"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a9495a9c2ed4641391b5ffaaae231a853"><param name="Name" value="cl/bolt.h"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a86a8b8a1fb99df15a3f4751b5c9668c7"><param name="Name" value="sort_float_kernels"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a86a8b8a1fb99df15a3f4751b5c9668c7"><param name="Name" value="bolt::cl"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a86a8b8a1fb99df15a3f4751b5c9668c7"><param name="Name" value="cl/bolt.h"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#adc6ef2f02ee67253ff1f1b9dc0d89aab"><param name="Name" value="sort_int_kernels"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#adc6ef2f02ee67253ff1f1b9dc0d89aab"><param name="Name" value="bolt::cl"></OBJECT>
@@ -3713,6 +4158,8 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1detail_1_1std__stable__sort__comp.html#a0719585f3e49c9b9ee09394395179bb7"><param name="Name" value="bolt::amp::detail::std_stable_sort_comp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1detail_1_1std__stable__sort__comp.html#a20aac53ce8a7c0d41d9186e161d672a9"><param name="Name" value="bolt::cl::detail::std_stable_sort_comp"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__stream__compaction.html"><param name="Name" value="Stream_compaction"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__stream__compaction.html"><param name="Name" value="stream_compaction"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__ClCode.html#ga47ec232b44ad61a83bc726d1665bf39a"><param name="Name" value="STRINGIFY_CODE2"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__ClCode.html#ga47ec232b44ad61a83bc726d1665bf39a"><param name="Name" value="ClCode"></OBJECT>
@@ -3775,6 +4222,12 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CLTransformedPrefixSums.html#gab4b5121b865ef6fde60b766f6b335d72"><param name="Name" value="cl/transform_scan.h"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CLTransformedPrefixSums.html#gab4b5121b865ef6fde60b766f6b335d72"><param name="Name" value="CLTransformedPrefixSums"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform.html#gab4f9e4ed8024d58a581507b708ed34c1"><param name="Name" value="transform_if"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform.html#gab4f9e4ed8024d58a581507b708ed34c1"><param name="Name" value="AMP-transform"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform.html#gab4f9e4ed8024d58a581507b708ed34c1"><param name="Name" value="amp/transform.h"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-transform.html#gab4f9e4ed8024d58a581507b708ed34c1"><param name="Name" value="bolt::amp"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMPTransformedPrefixSums.html#gafb80ed0e08f8f87b0ae147155e7fbc37"><param name="Name" value="transform_inclusive_scan"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMPTransformedPrefixSums.html#gafb80ed0e08f8f87b0ae147155e7fbc37"><param name="Name" value="amp/transform_scan.h"></OBJECT>
@@ -3786,6 +4239,8 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classtransform__iterator.html"><param name="Name" value="transform_iterator"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga9fa42c9f1479560ece589b2f8585af38"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga9fa42c9f1479560ece589b2f8585af38"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga8ceef1833b531af3195b4b4a7cbeb70f"><param name="Name" value="bolt::cl::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga8ceef1833b531af3195b4b4a7cbeb70f"><param name="Name" value="CL-TransformIterator"></OBJECT>
   </UL>
@@ -3826,6 +4281,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a1f2bde8fa28f6211346a51116944b475"><param name="Name" value="cl/bolt.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__transformations.html"><param name="Name" value="Transformations"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1binary__negate.html#ad4f5d3baa297fd8ce99671fdbd33a207"><param name="Name" value="true"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structtuple__element.html"><param name="Name" value="tuple_element"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structtuple__size.html"><param name="Name" value="tuple_size"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1tuple__element_3_010_00_01pair_3_01T1_00_01T2_01_4_01_4.html#ac13c39d54cfcc98c4435945370ba8a20"><param name="Name" value="type"></OBJECT>
@@ -3850,10 +4306,31 @@
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structTypeName.html#gaa59cf6ab9c7029fe983008aa21aea8f3"><param name="Name" value="get"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga25793712854da593557dc0de21e6ad05"><param name="Name" value="unary_func"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga696e86e31a8c66ac2249ab2d0dfef94e"><param name="Name" value="unary_func"></OBJECT>
   <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga696e86e31a8c66ac2249ab2d0dfef94e"><param name="Name" value="AMP-TransformIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga696e86e31a8c66ac2249ab2d0dfef94e"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga25793712854da593557dc0de21e6ad05"><param name="Name" value="bolt::cl::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-TransformIterator.html#ga25793712854da593557dc0de21e6ad05"><param name="Name" value="CL-TransformIterator"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__negate.html#ab251fef538f9511d7425c6b59a9cbf84"><param name="Name" value="unary_negate"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__transform__if__functor.html#a8b4d55b56a21d90104d4efabab6ca0e1"><param name="Name" value="unary_transform_if_functor"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="unique_8h.html"><param name="Name" value="unique.h"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="unique_8h.html#ga3ecc71fb22ca898b12e715d22a269a09"><param name="Name" value="unique"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="unique_8h.html#ga73c8e6e7c91145896a404416987bcdcb"><param name="Name" value="unique_copy"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga3ecc71fb22ca898b12e715d22a269a09"><param name="Name" value="unique"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga3ecc71fb22ca898b12e715d22a269a09"><param name="Name" value="AMP-unique"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga3ecc71fb22ca898b12e715d22a269a09"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga3ecc71fb22ca898b12e715d22a269a09"><param name="Name" value="unique.h"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga73c8e6e7c91145896a404416987bcdcb"><param name="Name" value="unique_copy"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga73c8e6e7c91145896a404416987bcdcb"><param name="Name" value="AMP-unique"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga73c8e6e7c91145896a404416987bcdcb"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-unique.html#ga73c8e6e7c91145896a404416987bcdcb"><param name="Name" value="unique.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga995dfa95e8110902958c1c0b73b4586a"><param name="Name" value="UnlockBuffer"></OBJECT>
   <UL>
@@ -3861,11 +4338,8 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga3a60a46ca2d52aa788d589ef729c1a65"><param name="Name" value="CL-control"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="V_OpenCL"></OBJECT>
-  <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="bolt::cl"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="cl/bolt.h"></OBJECT>
-  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a86aa5bc653847452d5817663bb94edc7"><param name="Name" value="V_OPENCL"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="V_OpenCL"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1detail_1_1std__sort.html#a1093e109042b6aea16abba12450fd22a"><param name="Name" value="value"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1detail_1_1std__sort.html#a1093e109042b6aea16abba12450fd22a"><param name="Name" value="bolt::amp::detail::std_sort"></OBJECT>
@@ -3878,11 +4352,13 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga41b26ba1be64402c98a05ae989c3c958"><param name="Name" value="value_type"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga41b26ba1be64402c98a05ae989c3c958"><param name="Name" value="AMP-PermutationIterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga661b424501ba722505558a04c83caa2e"><param name="Name" value="AMP-TransformIterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a6b79197b8b185e6256dced0ed0ed75d5"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits.html#ae0343259c331c749bb919bbea43f6d48"><param name="Name" value="bolt::amp::iterator_traits"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits_3_01const_01T_01_5_01_4.html#a98c156b50307da0e2160aa13bd4b28ab"><param name="Name" value="bolt::amp::iterator_traits< const T * >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1iterator__traits_3_01T_01_5_01_4.html#aacaffc7db3891a2d8dab6e231dd61caa"><param name="Name" value="bolt::amp::iterator_traits< T * >"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-PermutationIterator.html#ga41b26ba1be64402c98a05ae989c3c958"><param name="Name" value="bolt::amp::permutation_iterator"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-TransformIterator.html#ga661b424501ba722505558a04c83caa2e"><param name="Name" value="bolt::amp::transform_iterator"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1device__vector.html#aaae3c93d7988ef9cf43846ec5ac71a89"><param name="Name" value="bolt::cl::device_vector"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1cl_1_1iterator__facade.html#a4c240a9b865a7063aebf2da469c6304e"><param name="Name" value="bolt::cl::iterator_facade"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1iterator__traits.html#ad52f32d2d8548993dff610bf58c9363a"><param name="Name" value="bolt::cl::iterator_traits"></OBJECT>
@@ -3901,6 +4377,10 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aae75f86cee9f23a2c950ce732e164593"><param name="Name" value="cl/bolt.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#af04f7ef6169e2ab42a6114a1fa12e7de"><param name="Name" value="x"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#af04f7ef6169e2ab42a6114a1fa12e7de"><param name="Name" value="bolt::amp::detail::CountIfEqual"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1equal__to__value.html#ab3924f7ed299bc91aaba352224139f02"><param name="Name" value="bolt::amp::equal_to_value"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga06e075d7067d31e53da03897401c0cbd"><param name="Name" value="xy"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__AMP-ConstantIterator.html#ga06e075d7067d31e53da03897401c0cbd"><param name="Name" value="AMP-ConstantIterator"></OBJECT>
