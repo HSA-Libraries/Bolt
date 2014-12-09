@@ -233,7 +233,7 @@
 <tr>
 <td align="center">transform_iterator</td>
 <td align="center">YES</td>
-<td align="center">NO</td>
+<td align="center">YES<sup><b>2</b></sup></td>
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
@@ -286,9 +286,146 @@
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
-
-
-
+<tr>
+<td align="center">copy_if</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">find</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">find_if</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">find_if_not</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">for_each</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">for_each_n</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">all_of</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">any_of</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">none_of</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">remove</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">remove_if</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">remove_copy</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">remove_copy_if</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">replace</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">replace_if</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">replace_copy</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">replace_copy_if</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">unique</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">unique_copy</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">transform_if</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
 </table>
 
 \subsection Limitations

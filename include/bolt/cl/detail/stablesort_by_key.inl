@@ -207,7 +207,7 @@ namespace detail
         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
         size_t localRange= BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD;
-
+		
 
         //  Make sure that globalRange is a multiple of localRange
         size_t globalRange = vecSize;
@@ -408,9 +408,9 @@ namespace detail
         size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
         if(szElements > STABLESORT_BY_KEY_ALG_BRANCH_POINT)
             bolt::cl::detail::radix_sort_by_key_uint_enqueue(ctrl, keys_first, keys_last, values_first, comp,cl_code);
-        else
+        else        
             bolt::cl::detail::merge_sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
-            return;
+            return;    
     }
 
     /**************************************************************/
@@ -429,9 +429,9 @@ namespace detail
         size_t szElements = static_cast< size_t >( std::distance( keys_first, keys_last ) );
         if(szElements > STABLESORT_BY_KEY_ALG_BRANCH_POINT)
             bolt::cl::detail::radix_sort_by_key_int_enqueue(ctrl, keys_first, keys_last, values_first, comp,cl_code);
-        else
+        else        
             bolt::cl::detail::merge_sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
-            return;
+            return;    
     }
 
 
@@ -445,7 +445,7 @@ namespace detail
                                const StrictWeakOrdering& comp, const std::string& cl_code )
     {
         bolt::cl::detail::merge_sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
-        return;
+        return;    
     }
 
     //Non Device Vector specialization.
@@ -471,7 +471,7 @@ namespace detail
 
         bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
 
-
+				
 
         if( runMode == bolt::cl::control::Automatic )
         {
@@ -482,7 +482,7 @@ namespace detail
         BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
         #endif
         if( runMode == bolt::cl::control::SerialCpu )
-        {
+        { 
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Stable_Sort_By_Key::SERIAL_CPU");
             #endif
@@ -506,7 +506,7 @@ namespace detail
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
-
+			
             device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
 
@@ -543,7 +543,7 @@ namespace detail
         #if defined(BOLT_DEBUG_LOG)
         BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
         #endif
-
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
 		        #if defined(BOLT_DEBUG_LOG)
@@ -575,7 +575,7 @@ namespace detail
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
-
+			
             stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
         }
         return;

@@ -306,7 +306,7 @@ stablesort_enqueue(control &ctl,
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if<
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value ||
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
       std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value  )
                        >::type
 stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
@@ -369,7 +369,7 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
         #if defined(BOLT_DEBUG_LOG)
         dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort::OPENCL_GPU");
         #endif
-
+						
         device_vector< Type > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
 
         //Now call the actual cl algorithm
@@ -535,5 +535,5 @@ void stablesort_detect_random_access( control &ctl,
 }//namespace bolt::cl
 }//namespace bolt
 
-#undef STABLESORT_ALG_BRANCH_POINT
+#undef STABLESORT_ALG_BRANCH_POINT 
 #endif

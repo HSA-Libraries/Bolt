@@ -21,6 +21,8 @@
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
 #include "gtest/gtest.h"
+#define MY_FLT_EPSILON  1.19209290E-07F
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //CL and AMP device_vector tests are integrated.To use AMP tests change AMP_TESTS to 1
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -1059,7 +1061,7 @@ TEST(DeviceVectorFill, device_vector_constructor)
 {
 
   DUMMY init;
-  init.a = init.b = init.c = FLT_EPSILON;
+  init.a = init.b = init.c = MY_FLT_EPSILON;
 
   bolt::cl::device_vector<DUMMY> dvec( 1024, init );
   std::vector<DUMMY> hvec( 1024, init );
@@ -1086,7 +1088,7 @@ TEST(DeviceVectorFill, ResizeEmptyVector)
 TEST(DeviceVectorFill, ResizeEmptyVectorUDDWithValues)
 {
   DUMMY init;
-  init.a = init.b = init.c = FLT_EPSILON;
+  init.a = init.b = init.c = MY_FLT_EPSILON;
 
   bolt::cl::device_vector<DUMMY> dv;
   std::vector<DUMMY> hv;
@@ -1102,7 +1104,7 @@ TEST(DeviceVectorFill, ResizeEmptyVectorUDDWithValues)
 TEST(DeviceVectorFill, ResizeEmptyVectorFltWithValues)
 {
   float init;
-  init = FLT_EPSILON;
+  init = MY_FLT_EPSILON;
 
   bolt::cl::device_vector<float> dv;
   std::vector<float> hv;

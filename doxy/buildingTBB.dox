@@ -51,38 +51,43 @@
 *
 * \subsection bolt_tbb TBB (Intel) routines in Bolt
 * These are the Bolt routines with TBB (Intel) support for MultiCore path enlisted along with the backend:
-*   - Copy - OpenCL
-*   - Copy_n - OpenCL
+*   - Copy - OpenCL/AMP
+*   - Copy_n - OpenCL/AMP
 *   - Count - OpenCL/AMP
 *   - Count_if - OpenCL/AMP
 *   - Exclusive_Scan - OpenCL/AMP
-*   - Exclusive_Scan_by_key - OpenCL
-*   - Fill - OpenCL
-*   - Fill_n - OpenCL
-*   - Generate - OpenCL
-*   - Generate_n - OpenCL
+*   - Exclusive_Scan_by_key - OpenCL/AMP
+*   - Fill - OpenCL/AMP
+*   - Fill_n - OpenCL/AMP
+*   - Generate - OpenCL/AMP
+*   - Generate_n - OpenCL/AMP
 *   - Inclusive_Scan - OpenCL/AMP
-*   - Inclusive_Scan_by_key - OpenCL
-*   - Inner_Product - OpenCL
-*   - Max_Element - OpenCL
-*   - Min_Element - OpenCL
+*   - Inclusive_Scan_by_key - OpenCL/AMP
+*   - Inner_Product - OpenCL/AMP
+*   - Max_Element - OpenCL/AMP
+*   - Min_Element - OpenCL/AMP
 *   - Reduce - OpenCL/AMP
-*   - Reduce_By_Key - OpenCL
+*   - Reduce_By_Key - OpenCL/AMP
 *   - Sort - OpenCL/AMP
-*   - Sort_By_Key - OpenCL
+*   - Sort_By_Key - OpenCL/AMP
 *   - Stable_Sort - OpenCL/AMP
-*   - StableSort_By_Key - OpenCL
+*   - StableSort_By_Key - OpenCL/AMP
 *   - Transform - OpenCL/AMP
-*   - Transform_Exclusive_Scan - OpenCL
-*   - Transform_Inclusive_Scan - OpenCL
+*   - Transform_Exclusive_Scan - OpenCL/AMP
+*   - Transform_Inclusive_Scan - OpenCL/AMP
 *   - Transform_Reduce - OpenCL/AMP
-*   - Binary_Search - OpenCL
-*   - Merge - OpenCL
-*   - Scatter - OpenCL
-*   - Scatter_if - OpenCL
-*   - Gather - OpenCL
-*   - Gather_if - OpenCL
-
+*   - Binary_Search - OpenCL/AMP
+*   - Merge - OpenCL/AMP
+*   - Scatter - OpenCL/AMP
+*   - Scatter_if - OpenCL/AMP
+*   - Gather - OpenCL/AMP
+*   - Gather_if - OpenCL/AMP
+*   - Copy_if - AMP
+*   - Find - AMP
+*   - Find_if - AMP
+*   - Find_if_not - AMP
+*   - For_Each - AMP
+*   - For_Each_n - AMP
 
 *   
 * \section using_tbb Running TBB (Intel) routines in Bolt
