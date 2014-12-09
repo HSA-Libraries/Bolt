@@ -60,8 +60,13 @@ The latest Catalyst driver contains the most recent OpenCL runtime. Recommended 
 +	6400 Series (6450)
 +	6xxxM Series
 
+<strong><em> AMD Radeon™ Rx 2xx Graphics </em></strong>
++	R9 2xx Series
++	R8 2xx Series
++	R7 2xx Series
 
-
+<strong><em> AMD FirePro™ Professional Graphics  </em></strong>
++ 	W9100
 
 Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
 
