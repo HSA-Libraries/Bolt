@@ -197,6 +197,7 @@ set( tbb.Runtime.Headers
     ${tbb.Include.Dir}/transform.h
     ${tbb.Include.Dir}/transform_reduce.h
 	${tbb.Include.Dir}/for_each.h
+	${tbb.Include.Dir}/find.h
     )
 
 set( tbb.Runtime.Headers.Detail
@@ -221,6 +222,7 @@ set( tbb.Runtime.Headers.Detail
     ${tbb.Include.Dir}/detail/transform.inl
     ${tbb.Include.Dir}/detail/transform_reduce.inl
 	${tbb.Include.Dir}/detail/for_each.inl
+	${tbb.Include.Dir}/detail/find.inl
     )
 
 # Create a list of .cl files that we would like to be a part of the IDE

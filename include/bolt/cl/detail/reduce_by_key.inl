@@ -635,8 +635,10 @@ reduce_by_key(
     l_Error = kernel0Event.wait( );
     V_OPENCL( l_Error, "post-kernel[0] failed wait" );
 
+	int init = 0;
+	bool inclusive = true;
 
-    bolt::cl::detail::cl::scan(ctl, tempArray.begin(), tempArray.end(), tempArray.begin(), 0, true, plus< int >( ), user_code);
+    bolt::cl::detail::cl::scan(ctl, tempArray.begin(), tempArray.end(), tempArray.begin(), init, inclusive, plus< int >( ), user_code);
 
     control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( int ) );
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );

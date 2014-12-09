@@ -25,40 +25,28 @@
 namespace bolt{
 namespace amp{
 
-    template <typename Iterator>
-    typename bolt::amp::device_vector<typename Iterator::value_type>::iterator 
+    template < typename Iterator >
+    Iterator
     create_mapped_iterator(bolt::amp::permutation_iterator_tag, Iterator first1, int sz, bool var, ::bolt::amp::control &ctl)
     {
-        typedef typename std::iterator_traits<Iterator>::value_type  iType;
-        typedef typename std::iterator_traits<Iterator>::pointer pointer1;
-        
-
-        typedef typename bolt::amp::permutation_iterator<value_type, index_type>::pointer pointer;
-        pointer first_pointer1 = const_cast<pointer>(itr.getPointer());
-
-        device_vector< iType, concurrency::array_view > dvInput1( first_pointer1, sz, var, ctl );
-
-        return permutation_iterator<Iterator, bolt::amp::device_vector<typename Iterator::value_type>::iterator > (first1, dvInput1.begin());
-
+        return first1;
     }  
-
-
-    template <typename Iterator>
-    typename bolt::amp::device_vector<typename Iterator::value_type>::iterator 
+ 
+	template <typename Iterator>
+    Iterator
     create_mapped_iterator(bolt::amp::transform_iterator_tag, Iterator first1, int sz, bool var, ::bolt::amp::control &ctl)
     {
-        typedef typename std::iterator_traits<Iterator>::value_type  iType;
-        typedef typename bolt::amp::transform_iterator<typename Iterator::unary_func, Iterator>::pointer pointer1;
-        pointer1 first_pointer1 = const_cast<pointer1>(first1.getPointer());
-        
-
-        device_vector< iType, concurrency::array_view > dvInput1( first_pointer1, sz, var, ctl );
-        return dvInput1.begin();
-        //return transform_iterator<Iterator::unary_func, DeviceIterator > (dvInput1.begin(), first1.functor); 
-
+        return first1;
     }   
-
-    template <typename Iterator>
+	
+	template <typename Iterator>
+    typename bolt::amp::device_vector<typename Iterator::value_type>::iterator 
+    create_mapped_iterator(bolt::amp::device_vector_tag, Iterator itr, int sz, bool var, ::bolt::amp::control &ctl)
+    {
+        return itr;
+    }
+ 
+	template <typename Iterator>
     typename bolt::amp::device_vector<typename Iterator::value_type>::iterator 
     create_mapped_iterator(std::random_access_iterator_tag, Iterator first1, int sz, bool var, ::bolt::amp::control &ctl)
     {
@@ -72,6 +60,7 @@ namespace amp{
 
     }
 
+
     template <typename T>
     typename bolt::amp::device_vector<T>::iterator 
     create_mapped_iterator(std::random_access_iterator_tag, T* first1, int sz, bool var, ::bolt::amp::control &ctl)
@@ -79,7 +68,6 @@ namespace amp{
         device_vector< T, concurrency::array_view > dvInput1( first1, sz, var, ctl );
         return dvInput1.begin();
     }
-
 
     template <typename Iterator>
     const constant_iterator<typename Iterator::value_type> 
@@ -95,7 +83,7 @@ namespace amp{
         return itr;
     }
 
-
+  
 
     template <typename Iterator>
     Iterator
@@ -110,6 +98,22 @@ namespace amp{
     {      
         return itr;
     }   
+
+
+	template <typename T>
+    T * 
+    create_mapped_iterator(std::random_access_iterator_tag, bolt::amp::control &ctl, T* first1)
+    {
+        return first1;
+    }
+
+
+    template <typename Iterator>
+    typename std::vector<typename Iterator::value_type>::iterator 
+    create_mapped_iterator(std::random_access_iterator_tag, bolt::amp::control &ctl, Iterator &itr)
+    {
+        return itr;
+    }
 
 
     template <typename Iterator>

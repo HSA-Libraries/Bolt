@@ -169,7 +169,7 @@ namespace amp{
 		numTiles = static_cast< int >((szElements/REDUCE_WAVEFRONT_SIZE)>= numTiles?(numTiles):
 							(std::ceil( static_cast< float >( szElements ) / REDUCE_WAVEFRONT_SIZE) ));
 
-		concurrency::array<iType, 1> result(numTiles);
+		concurrency::array<iType, 1> result(numTiles, ctl.getAccelerator().default_view);
 
 		concurrency::extent< 1 > inputExtent(length);
         concurrency::tiled_extent< REDUCE_WAVEFRONT_SIZE > tiledExtentReduce = inputExtent.tile< REDUCE_WAVEFRONT_SIZE >();

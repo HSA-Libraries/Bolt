@@ -191,6 +191,60 @@ namespace bolt
 
 		//Transform If Variants...
 
+		 /*! \breif This version of transform_if conditionally applies a unary function to each element in the input sequence and 
+		 *  stores the result in the corresponding position in the output sequence, if the corresponding position in the input sequence satisfies a predicate. 
+		 *  Otherwise, the corresponding position in the output sequence is not modified.
+         *
+         *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
+         *  \param first The beginning of theinput sequence.
+         *  \param last The end of the input sequence.
+         *  \param result The beginning of the output sequence.
+         *  \param op The tranformation operation.
+		 *  \param pred The predicate to test on every value of the range <tt>[first, last)</tt>.
+         *  \return The end of the output sequence.
+         *
+         *  \tparam InputIterator is a model of InputIterator
+         *                        and \c InputIterator's \c value_type is convertible to \c UnaryFunction's
+         *  \tparam OutputIterator is a model of OutputIterator
+         *  \tparam UnaryFunction is a model of UnaryFunction
+         *                              and \c UnaryFunction's \c result_type is convertible to \c OutputIterator's
+         *  \c value_type.
+         *
+         *  \details The following code snippet demonstrates how to use \p transform_if.
+         *
+         *  \code
+         *  #include <bolt/amp/transform.h>
+         *  #include <bolt/amp/functional.h>
+         *
+         *  int input[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
+         *  int output[10];
+         * 
+		 *  struct is_even
+         *  {
+         *    bool operator()(const int x)
+         *    {
+         *      return (x % 2) == 0;
+         *    }
+         *  };
+		 *  template <typename T>
+         *  struct add_3
+         *  {
+         *      T operator()(T x) const restrict(amp, cpu)
+         *      {
+         *        return x+3;
+         *      }
+         *  };
+		 *
+         *  //Create an AMP Control object using the default accelerator
+         *  ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+         *  bolt::amp::control ctl(accel);
+         *  bolt::amp::transform_if(ctl, input, input + 10, output, add_3<int>(), is_even());
+         *
+         *  // output is now {-5,  3,  5,  3,  5,  7, 1, 1, 5, 3};
+         *  \endcode
+         *
+         */
+
 
 		template<typename InputIterator, typename OutputIterator, typename UnaryFunction, typename Predicate>
         OutputIterator transform_if(control &ctl,
@@ -207,6 +261,57 @@ namespace bolt
                        UnaryFunction op,
 					   Predicate  	pred);
 
+
+		 /*! \breif This version of transform_if conditionally applies a unary function to each element of an input sequence 
+		 *  and stores the result in the corresponding position in an output sequence
+		 *  if the corresponding position in a stencil sequence satisfies a predicate. 
+		 *  Otherwise, the corresponding position in the output sequence is not modified.
+         *
+         *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
+         *  \param first The beginning of the input sequence.
+         *  \param last The end of the input sequence.
+		 *  \param stencil The beginning of the stencil sequence.
+         *  \param result The beginning of the output sequence.
+         *  \param op The tranformation operation.
+		 *  \param pred The predicate to test on every value of the range <tt>[first, last)</tt>.
+         *  \return The end of the output sequence.
+         *
+         *  \tparam InputIterator is a model of InputIterator
+         *                        and \c InputIterator's \c value_type is convertible to \c UnaryFunction's
+         *  \tparam OutputIterator is a model of OutputIterator
+         *  \tparam UnaryFunction is a model of UnaryFunction
+         *                              and \c UnaryFunction's \c result_type is convertible to \c OutputIterator's
+         *  \c value_type.
+         *
+         *  \details The following code snippet demonstrates how to use \p transform_if.
+         *
+         *  \code
+         *  #include <bolt/amp/transform.h>
+         *  #include <bolt/amp/functional.h>
+         *
+         *  int input[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
+		 *  int stencil[10] = {0,  1,  1,  1,  0,  1, 1,  1,  0,  1};
+         *  int output[10];
+         * 
+		 *  template <typename T>
+         *  struct add_3
+         *  {
+         *      T operator()(T x) const restrict(amp, cpu)
+         *      {
+         *        return x+3;
+         *      }
+         *  };
+		 *
+         *  //Create an AMP Control object using the default accelerator
+         *  ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+         *  bolt::amp::control ctl(accel);
+         *  bolt::amp::transform_if(ctl, input, input + 10, stencil, output, add_3<int>(), bolt::amp::identity<int>());
+         *
+         *  // output is now {-5,  3,  5,  6,  2,  7, 1, 4, 2, 6};
+         *  \endcode
+         *
+         */
+
 		template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename UnaryFunction, typename Predicate>
 		OutputIterator  transform_if (InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result, UnaryFunction op, Predicate pred); 
 
@@ -214,6 +319,61 @@ namespace bolt
 		template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename UnaryFunction, typename Predicate>
 		OutputIterator  transform_if (control &ctl, InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result, UnaryFunction op, Predicate pred); 
 
+
+		/*! \breif This version of transform_if conditionally applies a binary function to each pair of elements from two input sequences
+		 *  and stores the result in the corresponding position in an output sequence
+		 *  if the corresponding position in a stencil sequence satifies a predicate.
+		 *  Otherwise, the corresponding position in the output sequence is not modified.
+         *
+         *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
+         *  \param first1 The beginning of the first input sequence.
+         *  \param last1 The end of the first input sequence.
+		 *  \param first2 The beginning of the second input sequence.
+         *  \param last2 The end of the second input sequence.
+		 *  \param stencil The beginning of the stencil sequence.
+         *  \param result The beginning of the output sequence.
+         *  \param op The tranformation operation.
+		 *  \param pred The predicate to test on every value of the range <tt>[first, last)</tt>.
+         *  \return The end of the output sequence.
+         *
+         *  \tparam InputIterator1 is a model of InputIterator
+         *                        and \c InputIterator1's \c value_type is convertible to \c BinaryFunction's
+		 *  \tparam InputIterator2 is a model of InputIterator
+         *                        and \c InputIterator2's \c value_type is convertible to \c BinaryFunction's
+         *  \tparam OutputIterator is a model of OutputIterator
+         *  \tparam BinaryFunction is a model of BinaryFunction
+         *                              and \c BinaryFunction's \c result_type is convertible to \c OutputIterator's
+         *  \c value_type.
+         *
+         *  \details The following code snippet demonstrates how to use \p transform_if.
+         *
+         *  \code
+         *  #include <bolt/amp/transform.h>
+         *  #include <bolt/amp/functional.h>
+         *
+         *  int input1[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
+		 *  int input2[10] = {5,  10,  12,  5,  1,  3, 2,  1,  0,  30};
+		 *  int stencil[10] = {0,  1,  1,  0,  0,  1, 1,  0,  0,  1};
+         *  int output[10];
+         * 
+		 *  template <typename T>
+         *  struct add_3
+         *  {
+         *      T operator()(T x) const restrict(amp, cpu)
+         *      {
+         *        return x+3;
+         *      }
+         *  };
+		 *
+         *  //Create an AMP Control object using the default accelerator
+         *  ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+         *  bolt::amp::control ctl(accel);
+         *  bolt::amp::transform_if(ctl, input1, input1 + 10, input2, stencil, output, bolt::amp::plus<int>(), bolt::amp::identity<int>());
+         *
+         *  // output is now {-5,  10,  14,  3,  2,  7, 0, 1, 2, 33};
+         *  \endcode
+         *
+         */
 
 
 		template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>

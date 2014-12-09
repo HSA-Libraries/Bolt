@@ -16,22 +16,22 @@
 ***************************************************************************/
 
 /***************************************************************************
-* The Radix sort algorithm implementation in BOLT library is a derived work from
+* The Radix sort algorithm implementation in BOLT library is a derived work from 
 * the radix sort sample which is provided in the Book. "Heterogeneous Computing with OpenCL"
 * Link: http://www.heterogeneouscompute.org/?page_id=7
-* The original Authors are: Takahiro Harada and Lee Howes. A detailed explanation of
-* the algorithm is given in the publication linked here.
+* The original Authors are: Takahiro Harada and Lee Howes. A detailed explanation of 
+* the algorithm is given in the publication linked here. 
 * http://www.heterogeneouscompute.org/wordpress/wp-content/uploads/2011/06/RadixSort.pdf
-*
-* The derived work adds support for descending sort and signed integers.
-* Performance optimizations were provided for the AMD GCN architecture.
-*
-*  Besides this following publications were referred:
-*  1. "Parallel Scan For Stream Architectures"
-*     Technical Report CS2009-14Department of Computer Science, University of Virginia.
+* 
+* The derived work adds support for descending sort and signed integers. 
+* Performance optimizations were provided for the AMD GCN architecture. 
+* 
+*  Besides this following publications were referred: 
+*  1. "Parallel Scan For Stream Architectures"  
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. 
 *     Duane Merrill and Andrew Grimshaw
 *    https://sites.google.com/site/duanemerrill/ScanTR2.pdf
-*  2. "Revisiting Sorting for GPGPU Stream Architectures"
+*  2. "Revisiting Sorting for GPGPU Stream Architectures" 
 *     Duane Merrill and Andrew Grimshaw
 *    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
 *
@@ -305,7 +305,7 @@ void radix_sort_uint_enqueue(control &ctl,
     V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(1, (int)numGroups), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(2, localSize * 2 * sizeof(T),NULL), "Error setting a kernel argument" );
-
+    
     //Set Permute kernel arguments
     V_OPENCL( permuteKernel.setArg(1, clHistData), "Error setting a kernel argument" );
 
@@ -330,7 +330,7 @@ void radix_sort_uint_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -340,7 +340,7 @@ void radix_sort_uint_enqueue(control &ctl,
             {
                 printf(" %d", temp[jj] );
             }
-            printf("\n\n");
+            printf("\n\n"); 
         }
 
 #endif
@@ -358,7 +358,7 @@ void radix_sort_uint_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -372,7 +372,7 @@ void radix_sort_uint_enqueue(control &ctl,
         }
 
 #endif
-        V_OPENCL( permuteKernel.setArg(3, cdata), "Error setting a kernel argument" );
+        V_OPENCL( permuteKernel.setArg(3, cdata), "Error setting a kernel argument" );        
         if (swap == 0)
         {
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
@@ -471,7 +471,7 @@ void radix_sort_float_enqueue(control &ctl,
     ::cl::Buffer clInputData = first.getContainer().getBuffer();
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
-
+    
     //Float Specific kernels
     ::cl::Kernel flipFloatKernel;
     ::cl::Kernel inverseFlipFloatKernel;
@@ -479,7 +479,7 @@ void radix_sort_float_enqueue(control &ctl,
     ::cl::Kernel histKernel;
     ::cl::Kernel permuteKernel;
     ::cl::Kernel scanLocalKernel;
-
+    
     flipFloatKernel = floatKernels[0];
     inverseFlipFloatKernel = floatKernels[1];
     if(comp(2,3))
@@ -528,11 +528,11 @@ void radix_sort_float_enqueue(control &ctl,
     V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(1, (int)numGroups), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(2, localSize * 2 * sizeof(T),NULL), "Error setting a kernel argument" );
-
+    
     //Set Permute kernel arguments
     V_OPENCL( permuteKernel.setArg(1, clHistData), "Error setting a kernel argument" );
-
-    //First Launch the float flip kernel.
+    
+    //First Launch the float flip kernel. 
     V_OPENCL( flipFloatKernel.setArg(0, clInputData), "Error setting a kernel argument" );
     V_OPENCL( flipFloatKernel.setArg(1, cdata), "Error setting a kernel argument" );
     l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
@@ -543,7 +543,7 @@ void radix_sort_float_enqueue(control &ctl,
                         NULL,
                         NULL);
     //std::cout << "Total numOfGroups = " << numGroups << "\n";
-    //Then sort the data as if they were an unsigned ints.
+    //Then sort the data as if they were an unsigned ints. 
     for(int bits = 0; bits < (sizeof(T) * 8); bits += RADIX)
     {
         //Launch Kernel
@@ -565,7 +565,7 @@ void radix_sort_float_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -575,7 +575,7 @@ void radix_sort_float_enqueue(control &ctl,
             {
                 printf(" %d", temp[jj] );
             }
-            printf("\n\n");
+            printf("\n\n"); 
         }
 
 #endif
@@ -593,7 +593,7 @@ void radix_sort_float_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             unsigned int * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -607,7 +607,7 @@ void radix_sort_float_enqueue(control &ctl,
         }
 
 #endif
-        V_OPENCL( permuteKernel.setArg(3, cdata), "Error setting a kernel argument" );
+        V_OPENCL( permuteKernel.setArg(3, cdata), "Error setting a kernel argument" );        
         if (swap == 0)
         {
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
@@ -730,7 +730,7 @@ void radix_sort_int_enqueue(control &ctl,
     {
         /*Ascending Sort*/
         histKernel = commonKernels[0];
-        histSignedKernel = commonKernels[2];
+        histSignedKernel = commonKernels[2]; 
         scanLocalKernel = commonKernels[4];
         permuteKernel = uintKernels[0];
         permuteSignedKernel = intKernels[0];
@@ -776,7 +776,7 @@ void radix_sort_int_enqueue(control &ctl,
     V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(1, (int)numGroups), "Error setting a kernel argument" );
     V_OPENCL( scanLocalKernel.setArg(2, localSize * 2 * sizeof(T),NULL), "Error setting a kernel argument" );
-
+    
     //Set Permute kernel arguments
     V_OPENCL( permuteKernel.setArg(1, clHistData), "Error setting a kernel argument" );
     int bits = 0;
@@ -801,7 +801,7 @@ void radix_sort_int_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             T * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -811,7 +811,7 @@ void radix_sort_int_enqueue(control &ctl,
             {
                 printf(" %d", temp[jj] );
             }
-            printf("\n\n");
+            printf("\n\n"); 
         }
 
 #endif
@@ -829,7 +829,7 @@ void radix_sort_int_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             T * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -843,7 +843,7 @@ void radix_sort_int_enqueue(control &ctl,
         }
 
 #endif
-        V_OPENCL( permuteKernel.setArg(3, cdata), "Error setting a kernel argument" );
+        V_OPENCL( permuteKernel.setArg(3, cdata), "Error setting a kernel argument" );        
         if (swap == 0)
         {
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
@@ -885,7 +885,7 @@ void radix_sort_int_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             T* temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -895,7 +895,7 @@ void radix_sort_int_enqueue(control &ctl,
             {
                 printf(" %d", temp[jj] );
             }
-            printf("\n\n");
+            printf("\n\n"); 
         }
 
 #endif
@@ -913,7 +913,7 @@ void radix_sort_int_enqueue(control &ctl,
 #if defined(DEBUG_ENABLED)
         {
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);
+            printf("histogramAscending Kernel global_wsize=%d, local_wsize=%d\n", localSize * numGroups, localSize);            
 
             T * temp = dvHistogramBins.data().get();
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -942,7 +942,7 @@ void radix_sort_int_enqueue(control &ctl,
                             NULL);
 
     }//End of signed integer sorting
-
+    
     V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     return;
 }
@@ -981,7 +981,7 @@ sort_enqueue(control &ctl,
         bolt::cl::detail::radix_sort_int_enqueue(ctl, first, last,comp,cl_code);
     else
         bolt::cl::detail::merge_sort_enqueue(ctl, first, last,comp,cl_code);
-
+    
     return;
 }
 
@@ -1020,7 +1020,7 @@ sort_enqueue(control &ctl,
 #if defined(DISABLE_BITONIC_SORT)
     cl_int l_Error = CL_SUCCESS;
     ::bolt::cl::detail::merge_sort_enqueue(ctl,first,last,comp,cl_code);
-    return;
+    return;    
 #else
     cl_int l_Error = CL_SUCCESS;
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
@@ -1145,7 +1145,7 @@ void sort_pick_iterator( control &ctl,
     #if defined(BOLT_DEBUG_LOG)
     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
     #endif
-
+    
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
         #if defined(BOLT_DEBUG_LOG)
         dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_SERIAL_CPU,"::Sort::SERIAL_CPU");
@@ -1200,7 +1200,7 @@ void sort_pick_iterator( control &ctl,
     #if defined(BOLT_DEBUG_LOG)
     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
     #endif
-
+    
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < BITONIC_SORT_WGSIZE)) {
         #if defined(BOLT_DEBUG_LOG)
         dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_SERIAL_CPU,"::Sort::SERIAL_CPU");
@@ -1220,7 +1220,7 @@ void sort_pick_iterator( control &ctl,
         #if defined(BOLT_DEBUG_LOG)
         dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_OPENCL_GPU,"::Sort::OPENCL_GPU");
         #endif
-
+        
         device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         //Now call the actual cl algorithm
         sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);

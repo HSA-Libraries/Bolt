@@ -365,6 +365,11 @@ namespace amp{
 
         concurrency::extent< 1 > inputExtent(leng);
 
+
+
+		auto dvInput1_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< DVInputIterator1 >::iterator_category( ), first1, szElements, false, ctl );
+        auto dvInput2_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< DVInputIterator2 >::iterator_category( ), first2, szElements, false, ctl);
+
         try
         {
 
@@ -375,7 +380,8 @@ namespace amp{
                 if( globalId >= szElements)
                 return;
 
-                result[globalId] = f(first1[globalId],first2[globalId]);
+                //result[globalId] = f(first1[globalId],first2[globalId]);
+				result[globalId] = f(dvInput1_itr[globalId], dvInput2_itr[globalId]);
             });
         }
 
@@ -446,6 +452,9 @@ namespace amp{
 
         concurrency::extent< 1 > inputExtent(leng);
 
+
+		auto dvInput1_itr  = bolt::amp::create_mapped_iterator(typename bolt::amp::iterator_traits< DVInputIterator >::iterator_category( ), first, szElements, false, ctl );
+
         try
         {
 
@@ -456,7 +465,8 @@ namespace amp{
                 if( globalId >= szElements)
                 return;
 
-                result[globalId] = f(first[globalId]);
+                //result[globalId] = f(first[globalId]);
+				result[globalId] = f(dvInput1_itr[globalId]);
             });
         }
 
@@ -888,38 +898,13 @@ namespace amp{
         //////////////////////////////////////////
 
 
-
-		template<typename UnaryFunction, typename Predicate, typename iType, typename oType>
+		template<typename UnaryFunction, typename Predicate, typename iType, typename oType, typename S>
         struct unary_transform_if_functor
         {
           __declspec(align(4)) UnaryFunction unary_op;
           __declspec(align(4)) Predicate pred;
 	    
           unary_transform_if_functor(UnaryFunction unary_op, Predicate pred)
-            : unary_op(unary_op), pred(pred)
-          {}
-	    
-	    
-          oType operator()(iType &temp) const restrict(amp,cpu)
-          {
-	    	oType res;
-            if(pred(temp))
-                res = unary_op(temp);
-	    	else
-	    		res = temp;
-	    	return res;
-          }
-	    
-        }; // end unary_transform_if_functor
-
-
-		template<typename UnaryFunction, typename Predicate, typename iType, typename oType, typename S>
-        struct unary_transform_if_stencil_functor
-        {
-          __declspec(align(4)) UnaryFunction unary_op;
-          __declspec(align(4)) Predicate pred;
-	    
-          unary_transform_if_stencil_functor(UnaryFunction unary_op, Predicate pred)
             : unary_op(unary_op), pred(pred)
           {}
 	    
@@ -936,7 +921,7 @@ namespace amp{
 	    
           }
 
-        }; // end unary_transform_if_stencil_functor
+        }; // end unary_transform_if_functor
 
 
 		template<typename InputIterator1, typename InputIterator2, typename InputIterator3, typename OutputIterator, typename BinaryFunction, typename Predicate>
@@ -979,11 +964,12 @@ namespace amp{
         {
 			  typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
 			  typedef typename std::iterator_traits<InputIterator>::value_type  iType;
-		      typedef unary_transform_if_functor<UnaryFunction,Predicate, iType, oType> UnaryTransformIfFunctor;
+			  typedef unary_transform_if_functor<UnaryFunction,Predicate, iType, oType, iType> UnaryTransformIfFunctor;
 
 			  bolt::amp::transform(ctl,
                      first1,
                      last1,
+					 first1,
 					 result,
                      UnaryTransformIfFunctor(f, pred));
 			  return result;
@@ -1007,7 +993,7 @@ namespace amp{
 			 typedef typename std::iterator_traits<OutputIterator>::value_type  oType;
 			 typedef typename std::iterator_traits<InputIterator1>::value_type  iType;
 		     typedef typename std::iterator_traits<InputIterator2>::value_type  sType;
-		     typedef unary_transform_if_stencil_functor<UnaryFunction,Predicate, iType, oType, sType> UnaryTransformIfFunctor;
+		     typedef unary_transform_if_functor<UnaryFunction,Predicate, iType, oType, sType> UnaryTransformIfFunctor;
 
 			 bolt::amp::transform(ctl,
                      first,
