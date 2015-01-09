@@ -3358,12 +3358,15 @@ int _tmain(int argc, _TCHAR* argv[])
                 break;
             }
         }
+
+        if( err == CL_SUCCESS && i == platforms.end() ) // No AMD platform found, use the first platform
+            i = platforms.begin();
     }
     bolt::cl::V_OPENCL( err, "Platform::getInfo() failed" );
 
     // Device info
     std::vector< cl::Device > devices;
-    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
+    bolt::cl::V_OPENCL( (*i).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
 
     
 

@@ -185,6 +185,7 @@ endif( )
 find_package( Bolt REQUIRED )
 
 add_subdirectory( DeviceVector )
+add_subdirectory( RadixSort )
 add_subdirectory( Scan )
 add_subdirectory( Sort )
 add_subdirectory( StdDev )
