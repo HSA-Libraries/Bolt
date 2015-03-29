@@ -1,19 +1,19 @@
-############################################################################                                                                                     
-#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.                                     
-#                                                                                    
-#   Licensed under the Apache License, Version 2.0 (the "License");   
-#   you may not use this file except in compliance with the License.                 
-#   You may obtain a copy of the License at                                          
-#                                                                                    
-#       http://www.apache.org/licenses/LICENSE-2.0                      
-#                                                                                    
-#   Unless required by applicable law or agreed to in writing, software              
-#   distributed under the License is distributed on an "AS IS" BASIS,              
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-#   See the License for the specific language governing permissions and              
-#   limitations under the License.                                                   
+############################################################################
+#   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
-############################################################################                                                                                     
+############################################################################
 
 # We require 2.8.10 because of the added support to download from https URL's
 cmake_minimum_required( VERSION 2.8.10 )
@@ -40,6 +40,8 @@ if( NOT DEFINED Bolt_VERSION_PATCH )
 endif( )
 
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
+set( USE_SYSTEM_BOOST ON)
+set( USE_SYSTEM_TEST OFF)
 
 message( STATUS "Bolt_VERSION_MAJOR=${Bolt_VERSION_MAJOR}" )
 message( STATUS "Bolt_VERSION_MINOR=${Bolt_VERSION_MINOR}" )
@@ -51,7 +53,7 @@ set( BOLT_LIBRARY_DIR ${PROJECT_SOURCE_DIR}/bolt )
 # The binary directory is in the list of includes because files may be configured at build time, such as version.h
 set( BOLT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include )
 
-# Set the test folder directory. This is common to cl and amp. 
+# Set the test folder directory. This is common to cl and amp.
 set( BOLT_TEST_DIR ${PROJECT_SOURCE_DIR}/test )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
@@ -71,7 +73,7 @@ if( MSVC_IDE )
     set( Bolt_BUILD64 ${CMAKE_CL_64} )
 else()
 #    option( Bolt_BUILD64 "Build a 64-bit product" ON )
- set( CMAKE_BUILD_TYPE ${BOLT_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )   
+ set( CMAKE_BUILD_TYPE ${BOLT_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
 endif()
 
 if (UNIX AND NOT WIN32)
@@ -100,12 +102,12 @@ if ( MSVC )
     set(Bolt_ampDefault ON)
 else ()
     set(Bolt_ampDefault OFF)
-endif() 
+endif()
 
 option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP"  ${Bolt_ampDefault})
 option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
 option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
- 
+
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/test" )
     option( BUILD_tests "Add projects for testing Bolt" ON )
 endif( )
@@ -145,23 +147,23 @@ get_filename_component( C_COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE )
 if( C_COMPILER_NAME STREQUAL "cl" )
     # Following options for nMake
     message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
-    
+
     # CMake uses huge stack frames for windows, for some reason.  We remove.
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
-    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
-    
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" )
+
     if( BUILD_StripSymbols )
         string( REGEX REPLACE "/Zi" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" )
     endif()
 elseif( ( C_COMPILER_NAME STREQUAL "gcc" ) OR ( CMAKE_COMPILER_IS_GNUCXX GREATER  0 ))
     message( STATUS "Detected GNU fortran compiler." )
     set( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}" )
-    
+
     if( Bolt_BUILD64 )
         set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
-        execute_process(COMMAND lsb_release -irc 
+        execute_process(COMMAND lsb_release -irc
 	OUTPUT_VARIABLE suse-ubuntu)
 	STRING(FIND $(suse_ubuntu) "Ubuntu" pos)
 	SET(com -1)
@@ -183,7 +185,7 @@ else( )
     message( AUTHOR_WARNING "Compiler not recognized.  Using default flags." )
 endif( )
 
-# If UNICODE is defined, pass extra definitions into 
+# If UNICODE is defined, pass extra definitions into
 if( BUILD_UNICODE )
     add_definitions( "/DUNICODE /D_UNICODE" )
 endif( )
@@ -218,7 +220,7 @@ if( BUILD_ampBolt )
         add_subdirectory( ${BOLT_LIBRARY_DIR}/amp )
     endif( )
 endif( )
-    
+
 # Build OpenCL library
 if( BUILD_clBolt )
     # This will define OPENCL_FOUND
@@ -238,7 +240,7 @@ if( BUILD_TBB )
     if ( TBB_FOUND )
         message( STATUS "TBB is found installed in the path:" ${TBB_ROOT} )
         #list( APPEND Bolt.Dependencies TBB )
-    else ( ) 
+    else ( )
         message( FATAL_ERROR "TBB not found. Install TBB and set TBB_ROOT env variable" )
         #message( STATUS "Setting up TBB external..." )
         #include( ExternalTBB )
@@ -252,7 +254,7 @@ endif( )
 # After libraries are built, built tests
 if( BUILD_tests )
     add_subdirectory( test )
-endif( )    
+endif( )
 
 # After libraries are built, built benchmarks
 if( BUILD_benchmarks )
@@ -271,34 +273,34 @@ endif( )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
 configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/BoltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" @ONLY )
-install( FILES 
-            "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" 
-        DESTINATION 
+install( FILES
+            "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h"
+        DESTINATION
             ${INCLUDE_DIR}/bolt )
 
 configure_file( "${PROJECT_SOURCE_DIR}/examples/CMakeLists.txt.in" "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" @ONLY )
 
 # Right now, always install the examples folder
-install( DIRECTORY 
+install( DIRECTORY
             examples
         DESTINATION
             .
         PATTERN "Hessian" EXCLUDE
         PATTERN "*.in" EXCLUDE )
-        
-install( FILES 
-            "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" 
-        DESTINATION 
+
+install( FILES
+            "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt"
+        DESTINATION
             examples )
 
 # Copy over the documentation related files
-install( FILES 
+install( FILES
             doxy/README.html
             LICENSE.txt
         DESTINATION
             . )
 
-# The following code is setting variables to control the behavior of CPack to generate our 
+# The following code is setting variables to control the behavior of CPack to generate our
 if( WIN32 )
     set( CPACK_SOURCE_GENERATOR "ZIP" )
     set( CPACK_GENERATOR "ZIP" )
