@@ -23,7 +23,7 @@ set( Boost_DETAILED_FAILURE_MSG   ON )
 # set( Boost_DEBUG ON )
 # set( BOOST_LIB_DIAGNOSTIC ON )
 
-if( BOOST_ROOT )
+if( BOOST_ROOT OR USE_SYSTEM_BOOST )
     # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
     find_package( Boost ${Boost.VERSION} COMPONENTS thread system date_time chrono REQUIRED )
     # This will define Boost_FOUND
@@ -328,6 +328,7 @@ install( FILES
 set( ROOT_EXTERNAL_BOOST ${PROJECT_BINARY_DIR}/../external/boost/src/Boost/boost )
 
 # smart_ptr library
+if (NOT USE_SYSTEM_BOOST)
 install( DIRECTORY
             ${ROOT_EXTERNAL_BOOST}/smart_ptr
             ${ROOT_EXTERNAL_BOOST}/detail
@@ -429,6 +430,7 @@ install( FILES
     DESTINATION ${LIB_DIR}
     CONFIGURATIONS Release
     )
+endif()
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Runtime
