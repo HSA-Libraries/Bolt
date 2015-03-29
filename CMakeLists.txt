@@ -73,6 +73,14 @@ else()
 #    option( Bolt_BUILD64 "Build a 64-bit product" ON )
  set( CMAKE_BUILD_TYPE ${BOLT_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )   
 endif()
+
+if (UNIX AND NOT WIN32)
+    if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+        add_definitions(-fPIC)
+        set(Bolt_BUILD64 ON)
+    endif (CMAKE_SIZEOF_VOID_P MATCHES "8")
+endif (UNIX AND NOT WIN32)
+
  message( STATUS "64bit build :" ${Bolt_BUILD64} )
  message( STATUS "Build Type R/D:" ${CMAKE_BUILD_TYPE} )
 
