@@ -1,5 +1,5 @@
 /***************************************************************************
-*   © 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
+*   Â© 2012,2014 Advanced Micro Devices, Inc. All rights reserved.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -541,7 +541,7 @@ namespace cl{
                     return_string += "A_iter.init( in0_ptr_0);\n";
                 return_string += 
                 "    Z_iter.init( out_ptr_0 ); \n"
-                "    int gx = get_global_id( 0 );   printf(\"%d , gx  \");\n"
+                "    int gx = get_global_id( 0 );\n"
                 "    typename iIterType::value_type aa = A_iter[ gx ];\n"
                 "    Z_iter[ gx ] = (*userFunctor)( aa );\n"
                 "}\n";
